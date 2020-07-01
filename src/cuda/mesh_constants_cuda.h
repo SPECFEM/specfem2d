@@ -311,7 +311,7 @@ typedef struct mesh_ {
   int simulation_type;
   int save_forward;
   int stacey_absorbing_conditions;
-  int pml;
+  int pml_boundary_conditions;
   int source_is_moving;
 
   // ------------------------------------------------------------------ //
@@ -365,7 +365,7 @@ typedef struct mesh_ {
 
   // sources
   int nsources_local;
-  realw* d_sourcearrays;         // Will have shape nsources_local*NDIM*NGLL2
+  realw* d_sourcearrays;         // Will have shape NDIM*NGLL2*nsources_local
   int* d_ispec_selected_source;  // Will have shape nsources_local
   realw* d_source_time_function;
   // When the source is moving we don't know where it is going: all the slices
@@ -470,7 +470,7 @@ typedef struct mesh_ {
   int nspec_pml;
   int nspec_pml_x;
   int nspec_pml_z;
-  int* spec_to_pml;
+  int* d_spec_to_pml;
   realw* PML_dpotentialdxl_old;
   realw* PML_dpotentialdzl_old;
   realw* dpotential_old;
@@ -516,8 +516,6 @@ typedef struct mesh_ {
   realw* d_b_dsxx;
   realw* d_b_dsxz;
   realw* d_b_dszz;
-
-  // JC JC here we will need to add GPU support for the new C-PML routines
 
   // ------------------------------------------------------------------ //
   // acoustic wavefield

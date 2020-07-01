@@ -1056,7 +1056,7 @@
       end select
 
       ! stores sourcearray for all sources
-      sourcearrays(i_source,:,:,:) = sourcearray(:,:,:)
+      sourcearrays(:,:,:,i_source) = sourcearray(:,:,:)
 
     endif
   enddo

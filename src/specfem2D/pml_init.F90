@@ -190,7 +190,7 @@
       enddo
     endif
 
-    do ispec= 1,nspec
+    do ispec = 1,nspec
       if (ispec_is_PML(ispec)) then
         ! element is in the left cpml layer
         if ((which_PML_elem(ILEFT,ispec) .eqv. .true.) .and. (which_PML_elem(IRIGHT,ispec) .eqv. .false.) .and. &
@@ -272,7 +272,7 @@
 
     nglob_interface = 0
     if (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) then
-      do ispec= 1,nspec
+      do ispec = 1,nspec
         if (region_CPML(ispec) /= 0) then
           do i = 1, NGLLX; do j = 1, NGLLZ
             iglob = ibool(i,j,ispec)
@@ -603,6 +603,12 @@
   thickness_PML_z_bottom = PML_z_max_bottom - PML_z_min_bottom
   thickness_PML_z_top = PML_z_max_top - PML_z_min_top
 
+  !! DK DK March 2018: added this to detect if some PML edges are not set, to avoid triggering a stop statement below otherwise
+  if (abs(thickness_PML_x_left) > 1.d30) thickness_PML_x_left = 0.d0
+  if (abs(thickness_PML_x_right) > 1.d30) thickness_PML_x_right = 0.d0
+  if (abs(thickness_PML_z_bottom) > 1.d30) thickness_PML_z_bottom = 0.d0
+  if (abs(thickness_PML_z_top) > 1.d30) thickness_PML_z_top = 0.d0
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) "    thickness PML: left   = ",sngl(thickness_PML_x_left)
@@ -611,12 +617,6 @@
     write(IMAIN,*) "                   top    = ",sngl(thickness_PML_z_top)
     call flush_IMAIN()
   endif
-
-  !! DK DK March 2018: added this to detect if some PML edges are not set, to avoid triggering a stop statement below otherwise
-  if (abs(thickness_PML_x_left) > 1.d30) thickness_PML_x_left = 0.d0
-  if (abs(thickness_PML_x_right) > 1.d30) thickness_PML_x_right = 0.d0
-  if (abs(thickness_PML_z_bottom) > 1.d30) thickness_PML_z_bottom = 0.d0
-  if (abs(thickness_PML_z_top) > 1.d30) thickness_PML_z_top = 0.d0
 
 ! origin of the PML layer (position of right edge minus thickness, in meters)
   xoriginleft = thickness_PML_x_left+xmin
@@ -634,12 +634,12 @@
         ! lambdalplus2mul_relaxed = kappal  = poroelastcoef(3,1,kmato(ispec)) = rhol * vp_acoustic * vp_acoustic
         lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
         rhol = density(1,kmato(ispec))
-        vpmax_acoustic=max(vpmax_acoustic,sqrt(lambdalplus2mul_relaxed/rhol))
+        vpmax_acoustic = max(vpmax_acoustic,sqrt(lambdalplus2mul_relaxed/rhol))
       else if (ispec_is_elastic(ispec)) then
         ! get relaxed elastic parameters of current spectral element
         lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
         rhol = density(1,kmato(ispec))
-        vpmax_elastic=max(vpmax_elastic,sqrt(lambdalplus2mul_relaxed/rhol))
+        vpmax_elastic = max(vpmax_elastic,sqrt(lambdalplus2mul_relaxed/rhol))
       else
         call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
       endif
@@ -1235,6 +1235,7 @@
 
   distance_min = dsqrt(distance_min)
   call min_all_all_dp(distance_min,distance_min_glob)
+  ! checks
   if (myrank == 0) then
     if (distance_min_glob <= 0.d0) call exit_mpi(myrank,"error: GLL points minimum distance")
   endif
@@ -1244,6 +1245,7 @@
   call max_all_all_dp(CPML_thickness_z_max,CPML_thickness_z_max_glob)
   CPML_thickness_x_max = max(thickness_PML_x_left,thickness_PML_x_right)
   call max_all_all_dp(CPML_thickness_x_max,CPML_thickness_x_max_glob)
+  ! checks
   if (myrank == 0) then
     if (CPML_thickness_x_max_glob < 0.d0 .or. CPML_thickness_z_max_glob < 0.d0) &
       call exit_mpi(myrank,"error: PML thickness set is wrong")

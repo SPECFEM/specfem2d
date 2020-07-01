@@ -88,15 +88,15 @@
 
             ! solid contribution
             accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + &
-                        fac_s * sourcearrays(i_source,1,i,j) * stf_used
+                        fac_s * sourcearrays(1,i,j,i_source) * stf_used
             accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + &
-                        fac_s * sourcearrays(i_source,2,i,j) * stf_used
+                        fac_s * sourcearrays(2,i,j,i_source) * stf_used
 
             ! fluid contribution
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) + &
-                        fac_w * sourcearrays(i_source,1,i,j) * stf_used
+                        fac_w * sourcearrays(1,i,j,i_source) * stf_used
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + &
-                        fac_w * sourcearrays(i_source,2,i,j) * stf_used
+                        fac_w * sourcearrays(2,i,j,i_source) * stf_used
           enddo
         enddo
       endif

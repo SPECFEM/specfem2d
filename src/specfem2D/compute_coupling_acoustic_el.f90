@@ -94,7 +94,7 @@
       ! PML elements
       ! overwrites displ_x and displ_z
       if (PML_BOUNDARY_CONDITIONS) then
-        if (ispec_is_PML(ispec_elastic) .and. nspec_PML > 0) then
+        if (nspec_PML > 0 .and. ispec_is_PML(ispec_elastic)) then
           ispec_PML = spec_to_PML(ispec_elastic)
           CPML_region_local = region_CPML(ispec_elastic)
           kappa_x = K_x_store(i,j,ispec_PML)

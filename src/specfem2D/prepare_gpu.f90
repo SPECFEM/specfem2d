@@ -44,6 +44,8 @@
   real :: free_mb,used_mb,total_mb
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: cosrot_irecf, sinrot_irecf
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx,rmassz
+  ! PML
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: alphax_store_GPU,alphaz_store_GPU,betax_store_GPU,betaz_store_GPU
 
   ! checks if anything to do
   if (.not. GPU_MODE) return
@@ -62,12 +64,15 @@
     call stop_the_code('Axisym not implemented on GPU yet.')
   if (NGLLX /= NGLLZ) &
     call stop_the_code('GPU simulations require NGLLX == NGLLZ')
-  if ( (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. ATTENUATION_VISCOACOUSTIC) &
+
+  if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1)) &
     call stop_the_code('GPU simulations require USE_A_STRONG_FORMULATION_FOR_E1 set to true')
-  if ( ATTENUATION_VISCOELASTIC .and. SIMULATION_TYPE == 3) &
+
+  if (ATTENUATION_VISCOELASTIC .and. SIMULATION_TYPE == 3) &
     call stop_the_code('GPU mode do not support yet adjoint simulations with attenuation viscoelastic')
-  if ( (ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_VISCOELASTIC) .and. any_elastic .and. any_acoustic) &
+  if ((ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_VISCOELASTIC) .and. any_elastic .and. any_acoustic) &
     call stop_the_code('GPU mode do not support yet coupled fluid-solid simulations with attenuation')
+
   if (PML_BOUNDARY_CONDITIONS .and. any_elastic) &
     call stop_the_code('PML on GPU do not support elastic case yet')
   if (PML_BOUNDARY_CONDITIONS .and. ATTENUATION_VISCOACOUSTIC) &
@@ -99,9 +104,6 @@
   ! ispec_selected_rec_loc(i)            : Index of the spectral element containing local receiver i
   ! nrecloc                              : Number of local receivers
   ! nspec_acoustic                       : Number of local acoustic spectral elements
-
-  ! prepares general fields on GPU
-  !! JC JC here we will need to add GPU support for the C-PML routines
 
   call prepare_constants_device(Mesh_pointer, &
                                 NGLLX, nspec, nglob, &
@@ -356,6 +358,7 @@
 
   ! frees temporary arrays
   deallocate(cosrot_irecf,sinrot_irecf)
+  deallocate(alphax_store_GPU,alphaz_store_GPU,betax_store_GPU,betaz_store_GPU)
 
   ! synchronizes all processes
   call synchronize_all()
@@ -374,7 +377,7 @@
   implicit none
 
   ! local parameters
-  integer :: i_spec_free, ipoint1D, i, j, k, ispec, i_source
+  integer :: i_spec_free,ipoint1D,i,j,ispec,i_source,i_source_local,ispec_PML,ielem
   integer :: ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic
   integer :: inum
   real(kind=CUSTOM_REAL) :: zxi,xgamma,jacobian1D
@@ -407,19 +410,11 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '  number of MPI interfaces                        = ',ninterface
-    write(IMAIN,*) '  number of acoustic elements at free surface     = ',nelem_acoustic_surface
     call flush_IMAIN()
   endif
 
-  ! acoustic elements at free surface
-  allocate(free_ac_ispec(nelem_acoustic_surface))
-  if (nelem_acoustic_surface > 0) then
-    ! gets ispec indices for acoustic elements at free surface
-    free_ac_ispec(:) = acoustic_surface(1,:)
-  endif
-
-  if (nspec_PML == 0) &
-    PML_BOUNDARY_CONDITIONS = .false.
+  ! PML
+  if (nspec_PML == 0) PML_BOUNDARY_CONDITIONS = .false.
 
   if (PML_BOUNDARY_CONDITIONS) then
     ! EB EB : We create spec_to_PML_GPU such that :
@@ -427,63 +422,80 @@
     ! spec_to_PML_GPU(ispec) \in [1, NSPEC_PML_X] indicates the element is not in the region CPML_X_ONLY
     ! spec_to_PML_GPU(ispec) \in [NSPEC_PML_X + 1, NSPEC_PML_X + NSPEC_PML_Z] indicates the element is in the region CPML_Z_ONLY
     ! spec_to_PML_GPU(ispec) >  NSPEC_PML_X + NSPEC_PML_Z indicates the element is in the region CPML_XZ
-    ! Finally, spec_to_PML_GPU(ispec) = ispec_pml, where ispec_pml the local
-    ! number of the element in the PML
+    ! Finally, spec_to_PML_GPU(ispec) = ielem, where ielem the local number of the element in the PML
     allocate(spec_to_PML_GPU(nspec))
     spec_to_PML_GPU(:) = 0
     nspec_PML_X = 0
-    do ispec= 1,nspec
+    do ispec = 1,nspec
       if (region_CPML(ispec) == CPML_X_ONLY ) then
         nspec_PML_X = nspec_PML_X+1
         spec_to_PML_GPU(ispec) = nspec_PML_X
       endif
     enddo
     nspec_PML_Z = 0
-    do ispec= 1,nspec
+    do ispec = 1,nspec
       if (region_CPML(ispec) == CPML_Z_ONLY ) then
         nspec_PML_Z = nspec_PML_Z+1
         spec_to_PML_GPU(ispec) = nspec_PML_X + nspec_PML_Z
       endif
     enddo
     nspec_PML_XZ = 0
-    do ispec= 1,nspec
+    do ispec = 1,nspec
       if (region_CPML(ispec) == CPML_XZ ) then
         nspec_PML_XZ = nspec_PML_XZ+1
         spec_to_PML_GPU(ispec) = nspec_PML_X + nspec_PML_Z + nspec_PML_XZ
       endif
     enddo
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  number of PML elements in this process slice    = ',nspec_PML
+      write(IMAIN,*) '      elements X only                             = ',nspec_PML_X
+      write(IMAIN,*) '      elements Z only                             = ',nspec_PML_Z
+      write(IMAIN,*) '      elements XZ                                 = ',nspec_PML_XZ
+      call flush_IMAIN()
+    endif
+
     ! Safety check
-    if (nspec_PML_X + nspec_PML_Z + nspec_PML_XZ /= nspec_PML) &
+    if (nspec_PML_X + nspec_PML_Z + nspec_PML_XZ /= nspec_PML) then
+      print *,'Error: rank ',myrank,' has invalid number of PML elements ',nspec_PML, &
+              ' X ',nspec_PML_X,'Z ',nspec_PML_Z, 'XZ', nspec_PML_XZ
       stop 'Error with the number of PML elements in GPU mode'
+    endif
 
     ! EB EB : We reorganize the arrays abs_normalized and abs_normalized2 that
     ! don't have the correct dimension and new local element numbering
     allocate(abs_normalized_temp(NGLLX,NGLLZ,NSPEC))
-    abs_normalized_temp = abs_normalized
+    abs_normalized_temp(:,:,:) = abs_normalized(:,:,:)
     deallocate(abs_normalized)
     allocate(abs_normalized(NGLLX,NGLLZ,NSPEC_PML))
-    do ispec= 1,nspec
-     if (spec_to_PML_GPU(ispec) > 0) abs_normalized(:,:,spec_to_PML_GPU(ispec)) = abs_normalized_temp(:,:,ispec)
+    do ispec = 1,nspec
+      if (spec_to_PML_GPU(ispec) > 0) abs_normalized(:,:,spec_to_PML_GPU(ispec)) = abs_normalized_temp(:,:,ispec)
     enddo
     deallocate(abs_normalized_temp)
 
     allocate(alphax_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ),alphaz_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ), &
              betax_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ),betaz_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ))
-    do ispec= 1,nspec
+    alphax_store_GPU(:,:,:) = 0.0_CUSTOM_REAL
+    alphaz_store_GPU(:,:,:) = 0.0_CUSTOM_REAL
+    betax_store_GPU(:,:,:) = 0.0_CUSTOM_REAL
+    betaz_store_GPU(:,:,:) = 0.0_CUSTOM_REAL
+    do ispec = 1,nspec
       if (region_CPML(ispec) == CPML_XZ) then
-        do j=1,NGLLZ
+        ispec_PML = spec_to_PML(ispec)
+        ! element index in range [1,NSPEC_PML_XZ]
+        ielem = spec_to_PML_GPU(ispec)-(nspec_PML_X + nspec_PML_Z)
+        do j = 1,NGLLZ
           do i = 1,NGLLX
-            alphax_store_GPU(i,j,spec_to_PML_GPU(ispec)-(nspec_PML_X + nspec_PML_Z)) = sngl(alpha_x_store(i,j,spec_to_PML(ispec)))
-            alphaz_store_GPU(i,j,spec_to_PML_GPU(ispec)-(nspec_PML_X + nspec_PML_Z)) = sngl(alpha_z_store(i,j,spec_to_PML(ispec)))
-            betax_store_GPU(i,j,spec_to_PML_GPU(ispec)-(nspec_PML_X + nspec_PML_Z)) = sngl(alpha_x_store(i,j,spec_to_PML(ispec)) + &
-              d_x_store(i,j,spec_to_PML(ispec)))
-            betaz_store_GPU(i,j,spec_to_PML_GPU(ispec)-(nspec_PML_X + nspec_PML_Z)) = sngl(alpha_z_store(i,j,spec_to_PML(ispec)) + &
-              d_z_store(i,j,spec_to_PML(ispec)))
+            alphax_store_GPU(i,j,ielem) = sngl(alpha_x_store(i,j,ispec_PML))
+            alphaz_store_GPU(i,j,ielem) = sngl(alpha_z_store(i,j,ispec_PML))
+            betax_store_GPU(i,j,ielem) = sngl(alpha_x_store(i,j,ispec_PML) + d_x_store(i,j,ispec_PML))
+            betaz_store_GPU(i,j,ielem) = sngl(alpha_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML))
            enddo
          enddo
       endif
     enddo
   else
+    ! dummy allocations
     allocate(spec_to_PML_GPU(1))
     allocate(alphax_store_GPU(1,1,1),alphaz_store_GPU(1,1,1), &
              betax_store_GPU(1,1,1),betaz_store_GPU(1,1,1))
@@ -500,39 +512,35 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  number of sources                               = ',NSOURCES
+    write(IMAIN,*) '  total number of sources                         = ',NSOURCES
     write(IMAIN,*) '  number of sources in this process slice         = ',nsources_local
     call flush_IMAIN()
   endif
 
-  allocate(source_time_function_loc(nsources_local,NSTEP))
-  allocate(ispec_selected_source_loc(nsources_local))
-
-  source_time_function_loc(:,:) = 0.0
-  ispec_selected_source_loc(:) = 1
-
-  j = 0
-  do i = 1, NSOURCES
-    if (myrank == islice_selected_source(i)) then
-      if (j > nsources_local) stop 'Error with the number of local sources'
-      j = j + 1
-      source_time_function_loc(j,:) = source_time_function(i,:,1)
-      ispec_selected_source_loc(j)  = ispec_selected_source(i)
-    endif
-  enddo
-
+  ! creates arrays to hold only local source entries
   if (nsources_local > 0) then
-    allocate(sourcearray_loc(nsources_local,NDIM,NGLLX,NGLLX))
+    allocate(sourcearray_loc(NDIM,NGLLX,NGLLX,nsources_local))
+    allocate(source_time_function_loc(nsources_local,NSTEP))
+    allocate(ispec_selected_source_loc(nsources_local))
   else
+    ! dummy
     allocate(sourcearray_loc(1,1,1,1))
+    allocate(source_time_function_loc(1,1))
+    allocate(ispec_selected_source_loc(1))
   endif
-
-  k = 0
-  do i_source = 1,NSOURCES
+  source_time_function_loc(:,:) = 0.0_CUSTOM_REAL
+  ispec_selected_source_loc(:) = 1
+  sourcearray_loc(:,:,:,:) = 0.0_CUSTOM_REAL
+  i_source_local = 0
+  do i_source = 1, NSOURCES
     if (myrank == islice_selected_source(i_source)) then
       ! source belongs to this process
-      k = k + 1
-      sourcearray_loc(k,:,:,:) = sourcearrays(i_source,:,:,:)
+      i_source_local = i_source_local + 1
+      if (i_source_local > nsources_local) stop 'Error with the number of local sources'
+      ! stores local sources infos
+      source_time_function_loc(i_source_local,:) = source_time_function(i_source,:,1)
+      ispec_selected_source_loc(i_source_local)  = ispec_selected_source(i_source)
+      sourcearray_loc(:,:,:,i_source_local) = sourcearrays(:,:,:,i_source)
     endif
   enddo
 
@@ -555,41 +563,59 @@
 !!!!!!! Init to prepare acoustics
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+  ! acoustic elements at free surface
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of acoustic elements at free surface     = ',nelem_acoustic_surface
+    call flush_IMAIN()
+  endif
+  allocate(free_ac_ispec(nelem_acoustic_surface))
+  if (nelem_acoustic_surface > 0) then
+    ! gets ispec indices for acoustic elements at free surface
+    free_ac_ispec(:) = acoustic_surface(1,:)
+  endif
+
   ! free surface
   allocate(free_surface_ij(2,NGLLX,nelem_acoustic_surface))
-
+  free_surface_ij(:,:,:) = 0
   do i_spec_free = 1, nelem_acoustic_surface
     if (acoustic_surface(2,i_spec_free) == acoustic_surface(3,i_spec_free)) then
-      do j =1,NGLLX
+      do j = 1,NGLLX
         free_surface_ij(1,j,i_spec_free) = acoustic_surface(2,i_spec_free)
       enddo
     else
-      j=1
+      j = 1
       do i = acoustic_surface(2,i_spec_free), acoustic_surface(3,i_spec_free)
         free_surface_ij(1,j,i_spec_free) = i
-        j=j+1
+        j = j+1
       enddo
     endif
 
     if (acoustic_surface(4,i_spec_free) == acoustic_surface(5,i_spec_free)) then
-      do j =1,NGLLX
+      do j = 1,NGLLX
         free_surface_ij(2,j,i_spec_free) = acoustic_surface(4,i_spec_free)
       enddo
     else
-      j=1
+      j = 1
       do i = acoustic_surface(4,i_spec_free), acoustic_surface(5,i_spec_free)
         free_surface_ij(2,j,i_spec_free) = i
-        j=j+1
+        j = j+1
       enddo
     endif
   enddo
 
   ! coupling surfaces for acoustic-elastic domains
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of coupled fluid-solid edges             = ',num_fluid_solid_edges
+    call flush_IMAIN()
+  endif
   allocate(coupling_ac_el_ispec(num_fluid_solid_edges))
   allocate(coupling_ac_el_ij(2,NGLLX,num_fluid_solid_edges))
   allocate(coupling_ac_el_normal(2,NGLLX,num_fluid_solid_edges))
   allocate(coupling_ac_el_jacobian1Dw(NGLLX,num_fluid_solid_edges))
-
+  coupling_ac_el_ispec(:) = 0
+  coupling_ac_el_ij(:,:,:) = 0
+  coupling_ac_el_normal(:,:,:) = 0.0_CUSTOM_REAL
+  coupling_ac_el_jacobian1Dw(:,:) = 0.00_CUSTOM_REAL
   do inum = 1,num_fluid_solid_edges
     ! get the edge of the acoustic element
     ispec_acoustic = fluid_solid_acoustic_ispec(inum)
@@ -647,6 +673,7 @@
 
   ! user output
   if (myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) '  init_host_to_dev_variable done successfully'
     call flush_IMAIN()
   endif

@@ -71,7 +71,7 @@
               iglob = ibool(i,j,ispec)
 
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
-                                  real(sourcearrays(i_source,1,i,j) * stf_used / kappastore(i,j,ispec),kind=CUSTOM_REAL)
+                                  real(sourcearrays(1,i,j,i_source) * stf_used / kappastore(i,j,ispec),kind=CUSTOM_REAL)
             enddo
           enddo
 

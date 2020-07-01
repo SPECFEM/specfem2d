@@ -92,7 +92,7 @@
       ! PML
       ! (overwrites pressure value if needed)
       if (PML_BOUNDARY_CONDITIONS) then
-        if (ispec_is_PML(ispec_acoustic) .and. nspec_PML > 0) then
+        if (nspec_PML > 0 .and. ispec_is_PML(ispec_acoustic)) then
           ispec_PML = spec_to_PML(ispec_acoustic)
 
           CPML_region_local = region_CPML(ispec_acoustic)

@@ -187,7 +187,7 @@ void FC_FUNC_(prepare_constants_device,
   // constants
   mp->simulation_type = *SIMULATION_TYPE;
   mp->stacey_absorbing_conditions = *STACEY_BOUNDARY_CONDITIONS;
-  mp->pml = *PML_BOUNDARY_CONDITIONS;
+  mp->pml_boundary_conditions = *PML_BOUNDARY_CONDITIONS;
   mp->save_forward = *SAVE_FORWARD;
 
   // safety check
@@ -309,7 +309,7 @@ void FC_FUNC_(prepare_constants_device,
   mp->nsources_local = *nsources_local_f;
   if (mp->nsources_local > 0){
     copy_todevice_realw((void**)&mp->d_source_time_function,h_source_time_function,(*NSTEP)*(mp->nsources_local));
-    copy_todevice_realw((void**)&mp->d_sourcearrays,h_sourcearrays,mp->nsources_local*NDIM*NGLL2);
+    copy_todevice_realw((void**)&mp->d_sourcearrays,h_sourcearrays,NDIM*NGLL2*mp->nsources_local);
     copy_todevice_int((void**)&mp->d_ispec_selected_source,h_ispec_selected_source,mp->nsources_local);
   }
 
@@ -916,33 +916,47 @@ void FC_FUNC_(prepare_pml_device,
 
   Mesh* mp = (Mesh*)(*Mesh_pointer);
 
-  if (mp->pml){
+  if (mp->pml_boundary_conditions){
     mp->deltat = *deltat;
     mp->nspec_pml    = *NSPEC_PML;
     mp->nspec_pml_x  = *NSPEC_PML_X;
     mp->nspec_pml_z  = *NSPEC_PML_Z;
     mp->ALPHA_MAX_PML = *ALPHA_MAX_PML;
     mp->d0_max = *d0_max;
-    copy_todevice_int((void**)&mp->spec_to_pml,h_spec_to_pml,mp->NSPEC_AB);
+
+    copy_todevice_int((void**)&mp->d_spec_to_pml,h_spec_to_pml,mp->NSPEC_AB);
+
+    // PML wavefields
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->PML_dpotentialdxl_old,NGLL2*mp->nspec_pml*sizeof(realw)),1301);
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->PML_dpotentialdzl_old,NGLL2*mp->nspec_pml*sizeof(realw)),1302);
+    // initializes
     print_CUDA_error_if_any(cudaMemset(mp->PML_dpotentialdxl_old,0,sizeof(realw)*NGLL2*mp->nspec_pml),2007);
     print_CUDA_error_if_any(cudaMemset(mp->PML_dpotentialdzl_old,0,sizeof(realw)*NGLL2*mp->nspec_pml),2007);
+
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->dpotential_old,NGLL2*mp->nspec_pml*sizeof(realw)),1303);
+    // initializes
     print_CUDA_error_if_any(cudaMemset(mp->dpotential_old,0,sizeof(realw)*NGLL2*mp->nspec_pml),2007);
+
     copy_todevice_realw((void**)&mp->abscissa_norm,h_abs_normalized,NGLL2*mp->nspec_pml);
+
+    // PML memory variables
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->rmemory_acoustic_dux_dx,NGLL2*mp->nspec_pml*sizeof(realw)),1290);
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->rmemory_acoustic_dux_dz,NGLL2*mp->nspec_pml*sizeof(realw)),1291);
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->rmemory_acoustic_dux_dx2,NGLL2*(*NSPEC_PML_XZ)*sizeof(realw)),1292);
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->rmemory_acoustic_dux_dz2,NGLL2*(*NSPEC_PML_XZ)*sizeof(realw)),1292);
+    // initializes
     print_CUDA_error_if_any(cudaMemset(mp->rmemory_acoustic_dux_dx,0,sizeof(realw)*NGLL2*mp->nspec_pml),2007);
     print_CUDA_error_if_any(cudaMemset(mp->rmemory_acoustic_dux_dz,0,sizeof(realw)*NGLL2*mp->nspec_pml),2007);
     print_CUDA_error_if_any(cudaMemset(mp->rmemory_acoustic_dux_dx2,0,sizeof(realw)*NGLL2*(*NSPEC_PML_XZ)),2007);
     print_CUDA_error_if_any(cudaMemset(mp->rmemory_acoustic_dux_dz2,0,sizeof(realw)*NGLL2*(*NSPEC_PML_XZ)),2007);
+
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->rmemory_pot_acoustic,NGLL2*mp->nspec_pml*sizeof(realw)),1293);
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->rmemory_pot_acoustic2,NGLL2*(*NSPEC_PML_XZ)*sizeof(realw)),1294);
+    // initializes
     print_CUDA_error_if_any(cudaMemset(mp->rmemory_pot_acoustic,0,sizeof(realw)*NGLL2*(mp->nspec_pml)),2007);
     print_CUDA_error_if_any(cudaMemset(mp->rmemory_pot_acoustic2,0,sizeof(realw)*NGLL2*(*NSPEC_PML_XZ)),2007);
+
+    // PML coefficients
     copy_todevice_realw((void**)&mp->alphax_store,h_alphax_store,NGLL2*(*NSPEC_PML_XZ));
     copy_todevice_realw((void**)&mp->alphaz_store,h_alphaz_store,NGLL2*(*NSPEC_PML_XZ));
     copy_todevice_realw((void**)&mp->betax_store,h_betax_store,NGLL2*(*NSPEC_PML_XZ));
@@ -1153,7 +1167,7 @@ void FC_FUNC_(prepare_moving_sources_cuda,
 //  // sources
 //  mp->nsources_local = *nsources_local_f;
 //  if (mp->nsources_local > 0){
-//    copy_todevice_realw((void**)&mp->d_sourcearrays,h_sourcearrays,mp->nsources_local*NDIM*NGLL2);
+//    copy_todevice_realw((void**)&mp->d_sourcearrays,h_sourcearrays,NDIM*NGLL2*mp->nsources_local);
 //    copy_todevice_int((void**)&mp->d_ispec_selected_source,h_ispec_selected_source,mp->nsources_local);
 //  }
 //
@@ -1254,8 +1268,8 @@ TRACE("prepare_cleanup_device");
   }
 
   // PML
-  if (mp->pml){
-    cudaFree(mp->spec_to_pml);
+  if (mp->pml_boundary_conditions){
+    cudaFree(mp->d_spec_to_pml);
     cudaFree(mp->PML_dpotentialdxl_old);
     cudaFree(mp->PML_dpotentialdzl_old);
     cudaFree(mp->dpotential_old);

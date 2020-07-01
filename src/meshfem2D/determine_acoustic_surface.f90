@@ -101,6 +101,12 @@
   acoustic_surface(:,:) = 0
   nelem_acoustic_surface = 0
 
+  ! 'acoustic_surface' contains
+  ! 1/ element number,
+  ! 2/ number of nodes that form the free surface,
+  ! 3/ first node on the free surface,
+  ! 4/ second node on the free surface, if relevant (if 2/ is equal to 2)
+
   if (.not. absorbtop) then
     j = nzread
     do i = 1,nxread

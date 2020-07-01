@@ -370,8 +370,6 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
                           rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
-                          alphax_store_GPU,alphaz_store_GPU,betax_store_GPU,betaz_store_GPU
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &

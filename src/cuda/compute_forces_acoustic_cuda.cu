@@ -120,7 +120,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
                        realw_const_p d_wxgll,
                        const realw* d_rhostore,
                        int PML,
-                       int* spec_to_PML){
+                       int* d_spec_to_pml){
 
   // block-id == number of local element id in phase_ispec array
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
@@ -180,7 +180,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
   offset = (d_phase_ispec_inner_acoustic[bx + num_phase_ispec_acoustic*(d_iphase-1)]-1)*NGLL2_PADDED + tx;
 
   //checks if element is outside the PML
-  if(PML) if (spec_to_PML[(offset -tx)/NGLL2_PADDED] > 0) return;
+  if(PML) if (d_spec_to_pml[(offset -tx)/NGLL2_PADDED] > 0) return;
 
 
   // global index
@@ -365,7 +365,7 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
                            realw_const_p d_hprimewgll_xx,
                            realw_const_p d_wxgll,
                            const realw* d_rhostore,
-                           int* spec_to_PML,
+                           int* d_spec_to_pml,
                            realw ALPHA_MAX_PML,
                            realw d0,
                            realw* abs_normalized,
@@ -422,7 +422,7 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
   if (bx >= nb_blocks_to_compute ) return;
 
   ispec = d_phase_ispec_inner_acoustic[bx + num_phase_ispec_acoustic*(d_iphase-1)]-1;
-  ispec_pml = spec_to_PML[ispec];
+  ispec_pml = d_spec_to_pml[ispec];
 
   //checks if element is inside the PML
   if (ispec_pml==0) return;
@@ -804,8 +804,10 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                        mp->d_phase_ispec_inner_acoustic,
                                                                        mp->num_phase_ispec_acoustic,
                                                                        d_iphase,
-                                                                       mp->d_potential_acoustic, mp->d_potential_dot_dot_acoustic,
-                                                                       mp->d_b_potential_acoustic,mp->d_b_potential_dot_dot_acoustic,
+                                                                       mp->d_potential_acoustic,
+                                                                       mp->d_potential_dot_dot_acoustic,
+                                                                       mp->d_b_potential_acoustic,
+                                                                       mp->d_b_potential_dot_dot_acoustic,
                                                                        nb_field,
                                                                        d_xix, d_xiz,
                                                                        d_gammax, d_gammaz,
@@ -813,8 +815,8 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                        mp->d_hprimewgll_xx,
                                                                        mp->d_wxgll,
                                                                        d_rhostore,
-                                                                       mp->pml,
-                                                                       mp->spec_to_pml);
+                                                                       mp->pml_boundary_conditions,
+                                                                       mp->d_spec_to_pml);
     }else{ // nb_field==1
       if (compute_wavefield_1){
         // forward wavefields -> FORWARD_OR_ADJOINT == 1
@@ -823,8 +825,10 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                          mp->d_phase_ispec_inner_acoustic,
                                                                          mp->num_phase_ispec_acoustic,
                                                                          d_iphase,
-                                                                         mp->d_potential_acoustic, mp->d_potential_dot_dot_acoustic,
-                                                                         mp->d_b_potential_acoustic,mp->d_b_potential_dot_dot_acoustic,
+                                                                         mp->d_potential_acoustic,
+                                                                         mp->d_potential_dot_dot_acoustic,
+                                                                         mp->d_b_potential_acoustic,
+                                                                         mp->d_b_potential_dot_dot_acoustic,
                                                                          nb_field,
                                                                          d_xix, d_xiz,
                                                                          d_gammax, d_gammaz,
@@ -832,44 +836,45 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                          mp->d_hprimewgll_xx,
                                                                          mp->d_wxgll,
                                                                          d_rhostore,
-                                                                         mp->pml,
-                                                                         mp->spec_to_pml);
+                                                                         mp->pml_boundary_conditions,
+                                                                         mp->d_spec_to_pml);
 
-        if (mp->pml){
+        if (mp->pml_boundary_conditions){
           Kernel_2_acoustic_PML_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                                           d_ibool,
-                                                                           mp->d_phase_ispec_inner_acoustic,
-                                                                           mp->num_phase_ispec_acoustic,
-                                                                           d_iphase,
-                                                                           mp->d_potential_acoustic, mp->d_potential_dot_dot_acoustic,
-                                                                           d_xix, d_xiz,
-                                                                           d_gammax, d_gammaz,
-                                                                           mp->d_hprime_xx,
-                                                                           mp->d_hprimewgll_xx,
-                                                                           mp->d_wxgll,
-                                                                           d_rhostore,
-                                                                           mp->spec_to_pml,
-                                                                           mp->ALPHA_MAX_PML,
-                                                                           mp->d0_max,
-                                                                           mp->abscissa_norm,
-                                                                           mp->nspec_pml_x,
-                                                                           mp->nspec_pml_z,
-                                                                           mp->deltat,
-                                                                           mp->PML_dpotentialdxl_old,
-                                                                           mp->PML_dpotentialdzl_old,
-                                                                           mp->dpotential_old,
-                                                                           mp->rmemory_acoustic_dux_dx,
-                                                                           mp->rmemory_acoustic_dux_dz,
-                                                                           mp->rmemory_acoustic_dux_dx2,
-                                                                           mp->rmemory_acoustic_dux_dz2,
-                                                                           mp->rmemory_pot_acoustic,
-                                                                           mp->rmemory_pot_acoustic2,
-                                                                           mp->d_potential_dot_acoustic,
-                                                                           mp->d_kappastore,
-                                                                           mp->alphax_store,
-                                                                           mp->alphaz_store,
-                                                                           mp->betax_store,
-                                                                           mp->betaz_store);
+                                                                               d_ibool,
+                                                                               mp->d_phase_ispec_inner_acoustic,
+                                                                               mp->num_phase_ispec_acoustic,
+                                                                               d_iphase,
+                                                                               mp->d_potential_acoustic,
+                                                                               mp->d_potential_dot_dot_acoustic,
+                                                                               d_xix, d_xiz,
+                                                                               d_gammax, d_gammaz,
+                                                                               mp->d_hprime_xx,
+                                                                               mp->d_hprimewgll_xx,
+                                                                               mp->d_wxgll,
+                                                                               d_rhostore,
+                                                                               mp->d_spec_to_pml,
+                                                                               mp->ALPHA_MAX_PML,
+                                                                               mp->d0_max,
+                                                                               mp->abscissa_norm,
+                                                                               mp->nspec_pml_x,
+                                                                               mp->nspec_pml_z,
+                                                                               mp->deltat,
+                                                                               mp->PML_dpotentialdxl_old,
+                                                                               mp->PML_dpotentialdzl_old,
+                                                                               mp->dpotential_old,
+                                                                               mp->rmemory_acoustic_dux_dx,
+                                                                               mp->rmemory_acoustic_dux_dz,
+                                                                               mp->rmemory_acoustic_dux_dx2,
+                                                                               mp->rmemory_acoustic_dux_dz2,
+                                                                               mp->rmemory_pot_acoustic,
+                                                                               mp->rmemory_pot_acoustic2,
+                                                                               mp->d_potential_dot_acoustic,
+                                                                               mp->d_kappastore,
+                                                                               mp->alphax_store,
+                                                                               mp->alphaz_store,
+                                                                               mp->betax_store,
+                                                                               mp->betaz_store);
         } //PML
       } // compute_wavefield1
       if (compute_wavefield_2){
@@ -880,8 +885,10 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                          mp->d_phase_ispec_inner_acoustic,
                                                                          mp->num_phase_ispec_acoustic,
                                                                          d_iphase,
-                                                                         mp->d_b_potential_acoustic, mp->d_b_potential_dot_dot_acoustic,
-                                                                         mp->d_b_potential_acoustic,mp->d_b_potential_dot_dot_acoustic,
+                                                                         mp->d_b_potential_acoustic,
+                                                                         mp->d_b_potential_dot_dot_acoustic,
+                                                                         mp->d_b_potential_acoustic,
+                                                                         mp->d_b_potential_dot_dot_acoustic,
                                                                          nb_field,
                                                                          d_xix, d_xiz,
                                                                          d_gammax, d_gammaz,
@@ -889,8 +896,8 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                          mp->d_hprimewgll_xx,
                                                                          mp->d_wxgll,
                                                                          d_rhostore,
-                                                                         mp->pml,
-                                                                         mp->spec_to_pml);
+                                                                         mp->pml_boundary_conditions,
+                                                                         mp->d_spec_to_pml);
       } //compute_wavefield_1
     } //nb_field
   }else{ // ATTENUATION_VISCOACOUSTIC== .true. below
@@ -900,7 +907,8 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                             mp->d_phase_ispec_inner_acoustic,
                                                                             mp->num_phase_ispec_acoustic,
                                                                             d_iphase,
-                                                                            mp->d_potential_acoustic, mp->d_potential_dot_dot_acoustic,
+                                                                            mp->d_potential_acoustic,
+                                                                            mp->d_potential_dot_dot_acoustic,
                                                                             d_xix, d_xiz,
                                                                             d_gammax, d_gammaz,
                                                                             mp->d_hprime_xx,
@@ -918,7 +926,8 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                             mp->d_phase_ispec_inner_acoustic,
                                                                             mp->num_phase_ispec_acoustic,
                                                                             d_iphase,
-                                                                            mp->d_b_potential_acoustic, mp->d_b_potential_dot_dot_acoustic,
+                                                                            mp->d_b_potential_acoustic,
+                                                                            mp->d_b_potential_dot_dot_acoustic,
                                                                             d_xix, d_xiz,
                                                                             d_gammax, d_gammaz,
                                                                             mp->d_hprime_xx,

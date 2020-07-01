@@ -56,24 +56,21 @@ __global__ void compute_add_sources_kernel(realw* accel,
   int isource  = blockIdx.x + gridDim.x*blockIdx.y; // bx
 
   int ispec,iglob;
-  realw stf;
+  realw stf,accel_x,accel_z;
 
   if (isource < nsources_local) { // when NSOURCES > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.
 
       ispec = ispec_selected_source[isource]-1;
 
       if (ispec_is_elastic[ispec]) {
-
-
-        stf = d_source_time_function[INDEX2(nsources_local,isource,it)];
         iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
+        stf = d_source_time_function[INDEX2(nsources_local,isource,it)];
+        accel_x = sourcearrays[INDEX4(NDIM,NGLLX,NGLLX, 0,i,j,isource)] * stf;
+        accel_z = sourcearrays[INDEX4(NDIM,NGLLX,NGLLX, 1,i,j,isource)] * stf;
 
-        atomicAdd(&accel[iglob*2],sourcearrays[INDEX4(nsources_local,NDIM,NGLLX,isource, 0,i,j)]*stf);
-        atomicAdd(&accel[iglob*2+1],sourcearrays[INDEX4(nsources_local,NDIM,NGLLX,isource, 1,i,j)]*stf);
-
-
-
+        atomicAdd(&accel[iglob*2],accel_x);
+        atomicAdd(&accel[iglob*2+1],accel_z);
     }
   }
 

@@ -386,7 +386,7 @@
 !            endif
 !
 !            ! stores sourcearray for all sources
-!            sourcearrays(i_source,:,:,:) = sourcearray(:,:,:)
+!            sourcearrays(:,:,:,i_source) = sourcearray(:,:,:)
 !
 !          endif
 !        endif
@@ -423,7 +423,7 @@
 !        if (myrank == islice_selected_source(i_source)) then
 !          ! source belongs to this process
 !          k = k + 1
-!          sourcearray_loc(k,:,:,:) = sourcearrays(i_source,:,:,:)
+!          sourcearray_loc(k,:,:,:) = sourcearrays(:,:,:,i_source)
 !        endif
 !      enddo
 !

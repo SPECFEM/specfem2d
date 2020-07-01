@@ -59,21 +59,20 @@ __global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_aco
   int isource  = blockIdx.x + gridDim.x*blockIdx.y; // bx
 
   int ispec,iglob;
-  realw stf,kappal;
+  realw stf,kappal,accel;
 
   if (isource < nsources_local) {
 
       ispec = ispec_selected_source[isource]-1;
 
       if (ispec_is_acoustic[ispec]) {
-
         iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
         kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
-
         stf = source_time_function[INDEX2(nsources_local,isource,it)]/kappal;
-        atomicAdd(&potential_dot_dot_acoustic[iglob],
-                  +sourcearrays[INDEX4(nsources_local,NDIM,NGLLX,isource, 0,i,j)]*stf);
+        accel = sourcearrays[INDEX4(NDIM,NGLLX,NGLLX, 0,i,j,isource)] * stf;
+
+        atomicAdd(&potential_dot_dot_acoustic[iglob], accel);
     }
   }
 }
@@ -101,17 +100,16 @@ __global__ void compute_add_moving_sources_acoustic_kernel(realw* potential_dot_
   int isource = blockIdx.x + gridDim.x*blockIdx.y;
 
   int ispec, iglob;
-  realw stf, kappal;
+  realw stf, kappal, accel;
 
   if (isource < nsources_local) {
     ispec = ispec_selected_source_moving[INDEX2(nsources, isource, it)] - 1;
     if (ispec_is_acoustic[ispec]) {
       iglob = d_ibool[INDEX3_PADDED(NGLLX, NGLLX, i, j, ispec)] - 1;
+
       kappal = kappastore[INDEX3(NGLLX, NGLLX, i, j, ispec)];
       stf = source_time_function_moving[INDEX2(nsources, isource, it)]/kappal;
-
-      // local source contribution
-      realw accel = sourcearrays_moving[INDEX5(NDIM, NGLLX, NGLLX, nsources, 0, i, j, isource, it)] * stf;
+      accel = sourcearrays_moving[INDEX5(NDIM, NGLLX, NGLLX, nsources, 0, i, j, isource, it)] * stf;
 
       atomicAdd(&potential_dot_dot_acoustic[iglob], accel);
     }
