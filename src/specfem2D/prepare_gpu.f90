@@ -216,18 +216,15 @@
   if (PML_BOUNDARY_CONDITIONS) then
     call prepare_PML_device(Mesh_pointer, &
                             nspec_PML, &
-                            NSPEC_PML_X, &
-                            NSPEC_PML_Z, &
-                            NSPEC_PML_XZ, &
+                            NSPEC_PML_X,NSPEC_PML_Z,NSPEC_PML_XZ, &
                             spec_to_PML_GPU, &
                             abs_normalized, &
                             sngl(ALPHA_MAX_PML), &
                             d0_max, &
                             sngl(deltat), &
-                            alphax_store_GPU, &
-                            alphaz_store_GPU, &
-                            betax_store_GPU, &
-                            betaz_store_GPU)
+                            alphax_store_GPU,alphaz_store_GPU, &
+                            betax_store_GPU,betaz_store_GPU, &
+                            PML_nglob_abs_acoustic,PML_abs_points_acoustic)
   endif
 
 ! abs_boundary_ispec                     : Array containing spectral element indices in absorbing areas
@@ -383,7 +380,6 @@
   real(kind=CUSTOM_REAL) :: zxi,xgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: xxi,zgamma
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_normalized_temp
-
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! Initialize variables for subroutine prepare_constants_device

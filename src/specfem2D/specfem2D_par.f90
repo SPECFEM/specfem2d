@@ -390,6 +390,12 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential_dot
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential_dot_dot
 
+  ! PML points on absorbing boundary in acoustic domains (for Dirichlet condition)
+  integer :: PML_nglob_abs_acoustic
+  integer, dimension(:),allocatable :: PML_abs_points_acoustic
+  integer :: PML_nglob_abs_elastic
+  integer, dimension(:),allocatable :: PML_abs_points_elastic
+
   ! buffer for I/O
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: no_backward_acoustic_buffer
 

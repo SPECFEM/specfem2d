@@ -63,7 +63,7 @@ __global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_aco
 
   if (isource < nsources_local) {
 
-      ispec = ispec_selected_source[isource]-1;
+      ispec = ispec_selected_source[isource] - 1;
 
       if (ispec_is_acoustic[ispec]) {
         iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
@@ -303,14 +303,13 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
   // because of grid shape, irec_local can be too big
   if (irec_local < nadj_rec_local) {
 
-    int ispec = ispec_selected_rec_loc[irec_local]-1;
-    if (ispec_is_acoustic[ispec]) {
+    int ispec = ispec_selected_rec_loc[irec_local] - 1;
 
+    if (ispec_is_acoustic[ispec]) {
       int i = threadIdx.x;
       int j = threadIdx.y;
 
-
-      int iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
+      int iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
       realw  kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
       realw  xir = xir_store[INDEX2(nadj_rec_local,irec_local,i)];
@@ -323,8 +322,6 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
       // this would have to be done when constructing the adjoint source.
       //
       //          the idea is to have e.g. a pressure source, where all 3 components would be the same
-
-
       realw stf = source_adj * gammar * xir / kappal ;
 
       atomicAdd(&potential_dot_dot_acoustic[iglob],-stf);

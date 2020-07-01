@@ -290,6 +290,135 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine determine_boundary_abs_points_PML()
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IMAIN
+
+  use specfem_par, only: ibool,nglob,myrank, &
+    ispec_is_elastic,ispec_is_acoustic, &
+    num_abs_boundary_faces,codeabs,anyabs,abs_boundary_ispec
+
+  ! PML arrays
+  use specfem_par, only: ispec_is_PML, &
+                         PML_nglob_abs_acoustic,PML_abs_points_acoustic, &
+                         PML_nglob_abs_elastic,PML_abs_points_elastic
+
+  implicit none
+
+  ! local parameters
+  integer :: ispecabs,i,j,ispec,iglob,icounter
+  logical, dimension(nglob) :: mask_iglob_acoustic,mask_iglob_elastic
+
+  ! PML boundary points
+  ! counts global points on absorbing boundary faces for acoustic/elastic PML
+  PML_nglob_abs_acoustic = 0
+  PML_nglob_abs_elastic = 0
+
+  mask_iglob_acoustic(:) = .false.
+  mask_iglob_elastic(:) = .false.
+
+  if (anyabs) then
+    ! to set Dirichelet boundary condition on outer boundary of CFS-PML
+    do ispecabs = 1,num_abs_boundary_faces
+      ispec = abs_boundary_ispec(ispecabs)
+
+      if (ispec_is_PML(ispec)) then
+        ! left absorbing boundary
+        if (codeabs(IEDGE4,ispecabs)) then
+          i = 1
+          do j = 1,NGLLZ
+            iglob = ibool(i,j,ispec)
+            ! marks global point on acoustic boundary
+            if (ispec_is_acoustic(ispec)) mask_iglob_acoustic(iglob) = .true.
+            ! marks global point on elastic boundary
+            if (ispec_is_elastic(ispec)) mask_iglob_elastic(iglob) = .true.
+          enddo
+        endif
+        ! right absorbing boundary
+        if (codeabs(IEDGE2,ispecabs)) then
+          i = NGLLX
+          do j = 1,NGLLZ
+            iglob = ibool(i,j,ispec)
+            ! marks global point on acoustic boundary
+            if (ispec_is_acoustic(ispec)) mask_iglob_acoustic(iglob) = .true.
+            ! marks global point on elastic boundary
+            if (ispec_is_elastic(ispec)) mask_iglob_elastic(iglob) = .true.
+          enddo
+        endif
+        ! bottom absorbing boundary
+        if (codeabs(IEDGE1,ispecabs)) then
+          j = 1
+          do i = 1,NGLLX
+            iglob = ibool(i,j,ispec)
+            ! marks global point on acoustic boundary
+            if (ispec_is_acoustic(ispec)) mask_iglob_acoustic(iglob) = .true.
+            ! marks global point on elastic boundary
+            if (ispec_is_elastic(ispec)) mask_iglob_elastic(iglob) = .true.
+          enddo
+        endif
+        ! top absorbing boundary
+        if (codeabs(IEDGE3,ispecabs)) then
+          j = NGLLZ
+          do i = 1,NGLLX
+            iglob = ibool(i,j,ispec)
+            ! marks global point on acoustic boundary
+            if (ispec_is_acoustic(ispec)) mask_iglob_acoustic(iglob) = .true.
+            ! marks global point on elastic boundary
+            if (ispec_is_elastic(ispec)) mask_iglob_elastic(iglob) = .true.
+          enddo
+        endif  !  end of top absorbing boundary
+      endif ! end of ispec_is_PML
+    enddo ! end specabs loop
+  endif
+
+  ! array with global points on acoustic boundary for Dirichlet condition
+  PML_nglob_abs_acoustic = count(mask_iglob_acoustic(:))
+  PML_nglob_abs_elastic = count(mask_iglob_elastic(:))
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of points on acoustic abs in this slice = ',PML_nglob_abs_acoustic
+    write(IMAIN,*) '  number of points on  elastic abs in this slice = ',PML_nglob_abs_elastic
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  allocate(PML_abs_points_acoustic(PML_nglob_abs_acoustic), &
+           PML_abs_points_elastic(PML_nglob_abs_elastic))
+  PML_abs_points_acoustic(:) = 0
+  PML_abs_points_elastic(:) = 0
+
+  ! stores global point indices
+  ! acoustic boundary
+  if (PML_nglob_abs_acoustic > 0) then
+    icounter = 0
+    do iglob = 1,nglob
+      if (mask_iglob_acoustic(iglob)) then
+        icounter = icounter + 1
+        PML_abs_points_acoustic(icounter) = iglob
+      endif
+    enddo
+    if (icounter /= PML_nglob_abs_acoustic) stop 'Invalid PML counter of global points on acoustic boundary'
+  endif
+
+  ! elastic boundary
+  if (PML_nglob_abs_elastic > 0) then
+    icounter = 0
+    do iglob = 1,nglob
+      if (mask_iglob_elastic(iglob)) then
+        icounter = icounter + 1
+        PML_abs_points_elastic(icounter) = iglob
+      endif
+    enddo
+    if (icounter /= PML_nglob_abs_elastic) stop 'Invalid PML counter of global points on elastic boundary'
+  endif
+
+  end subroutine determine_boundary_abs_points_PML
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine determine_interface_pml_interior()
 
   use constants, only: NGLLX,NGLLZ,IRIGHT,ILEFT,IBOTTOM,ITOP

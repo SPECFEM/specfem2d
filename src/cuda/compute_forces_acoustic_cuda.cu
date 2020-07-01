@@ -133,7 +133,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
   int tx = threadIdx.x;
 
   int I,J;
-  int iglob,offset;
+  int ispec,iglob,offset;
 
   realw temp1l,temp3l;
   realw xixl,xizl,gammaxl,gammazl;
@@ -176,16 +176,16 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 //
 // + 0 BYTE
 
-  // local padded index
-  offset = (d_phase_ispec_inner_acoustic[bx + num_phase_ispec_acoustic*(d_iphase-1)]-1)*NGLL2_PADDED + tx;
+  ispec = d_phase_ispec_inner_acoustic[bx + num_phase_ispec_acoustic*(d_iphase-1)] - 1; // array indexing starts at 0
 
   //checks if element is outside the PML
-  if(PML) if (d_spec_to_pml[(offset -tx)/NGLL2_PADDED] > 0) return;
+  if (PML){ if (d_spec_to_pml[ispec] > 0) return; }
 
+  // local padded index
+  offset = ispec * NGLL2_PADDED + tx;
 
   // global index
   iglob = d_ibool[offset] - 1;
-
 
 // counts:
 // + 7 FLOP
@@ -270,7 +270,6 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
     temp3l = 0.f;
 
     for (int l=0;l<NGLLX;l++) {
-
       //assumes that hprime_xx = hprime_yy = hprime_zz
       // 1. cut-plane along xi-direction
       temp1l += s_dummy_loc[NGLL2*k+J*NGLLX+l] * sh_hprime_xx[l*NGLLX+I];
@@ -285,8 +284,8 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 
     // compute derivatives of ux, uy and uz with respect to x, y and z
     // derivatives of potential
-    dpotentialdxl = xixl*temp1l +  gammaxl*temp3l;
-    dpotentialdzl = xizl*temp1l +  gammazl*temp3l;
+    dpotentialdxl = xixl*temp1l + gammaxl*temp3l;
+    dpotentialdzl = xizl*temp1l + gammazl*temp3l;
 
 // counts:
 // + 2 * 3 FLOP = 6 FLOP
@@ -374,7 +373,7 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
                            realw deltat,
                            realw* PML_dpotentialdxl_old,
                            realw* PML_dpotentialdzl_old,
-                           realw* dpotential_old,
+                           realw* d_potential_old,
                            realw* rmemory_acoustic_dux_dx,
                            realw* rmemory_acoustic_dux_dz,
                            realw* rmemory_acoustic_dux_dx2,
@@ -394,7 +393,7 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
   int tx = threadIdx.x;
 
   int I,J;
-  int iglob,offset;
+  int iglob,offset,offset_pml,offset_local_pml;
 
   realw temp1l,temp3l;
   realw xixl,xizl,gammaxl,gammazl;
@@ -417,18 +416,19 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
   realw alpha1,beta1,alphax,betax,abs_norm;
   realw coef1,coef2,coef3,coef4,pml_contrib;
   realw r1,r2,r3,r4,r5,r6;
+  realw rhol,kappal;
 
   // checks if anything to do
   if (bx >= nb_blocks_to_compute ) return;
 
-  ispec = d_phase_ispec_inner_acoustic[bx + num_phase_ispec_acoustic*(d_iphase-1)]-1;
-  ispec_pml = d_spec_to_pml[ispec];
+  ispec = d_phase_ispec_inner_acoustic[bx + num_phase_ispec_acoustic*(d_iphase-1)] - 1; // array indexing starts at 0
+  ispec_pml = d_spec_to_pml[ispec] - 1;
 
-  //checks if element is inside the PML
-  if (ispec_pml==0) return;
+  // checks if element is inside the PML
+  if (ispec_pml < 0) return;
 
   // local padded index
-  offset = ispec*NGLL2_PADDED + tx;
+  offset = ispec * NGLL2_PADDED + tx;
 
   // global index
   iglob = d_ibool[offset] - 1;
@@ -450,7 +450,10 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
   gammaxl = d_gammax[offset];
   gammazl = d_gammaz[offset];
 
-  rho_invl_times_jacobianl = 1.f /(d_rhostore[offset] * (xixl*gammazl-gammaxl*xizl));
+  rhol = d_rhostore[offset];
+  kappal = d_kappastore[ispec*NGLL2 + tx]; // non-padded
+
+  rho_invl_times_jacobianl = 1.f /(rhol * (xixl*gammazl-gammaxl*xizl));
 
   // loads hprime into shared memory
 
@@ -478,7 +481,6 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
   temp3l = 0.f;
 
   for (int l=0;l<NGLLX;l++) {
-
     //assumes that hprime_xx = hprime_yy = hprime_zz
     // 1. cut-plane along xi-direction
     temp1l += s_dummy_loc[J*NGLLX+l] * sh_hprime_xx[l*NGLLX+I];
@@ -488,102 +490,105 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
 
   // compute derivatives of ux, uy and uz with respect to x and z
   // derivatives of potential
-  dpotentialdxl = xixl*temp1l +  gammaxl*temp3l;
-  dpotentialdzl = xizl*temp1l +  gammazl*temp3l;
+  dpotentialdxl = xixl*temp1l + gammaxl*temp3l;
+  dpotentialdzl = xizl*temp1l + gammazl*temp3l;
 
-  if (ispec_pml - 1 < NSPEC_PML_X + NSPEC_PML_Z){
-    abs_norm = abs_normalized[(ispec_pml-1)*NGLL2 + tx ];
+  // local PML array index
+  offset_pml = ispec_pml*NGLL2 + tx;  // ispec_pml elements in range [0,NSPEC_PML-1]
+  offset_local_pml = (ispec_pml-(NSPEC_PML_X + NSPEC_PML_Z))*NGLL2 + tx; // local pml elements in range [0,NSPEC_PML_XZ-1]
+
+  if (ispec_pml < (NSPEC_PML_X + NSPEC_PML_Z)){
+    abs_norm = abs_normalized[offset_pml];
     alpha1 = ALPHA_MAX_PML * ( 1.f - abs_norm ) ;
     beta1 =  alpha1 + 2.f * d0  * abs_norm * abs_norm;}
   else{
-    alpha1 = alphaz_store[(ispec_pml-1-(NSPEC_PML_X + NSPEC_PML_Z))*NGLL2 + tx ];
-    beta1  = betaz_store[(ispec_pml-1-(NSPEC_PML_X + NSPEC_PML_Z))*NGLL2 + tx ];
-    alphax = alphax_store[(ispec_pml-1-(NSPEC_PML_X + NSPEC_PML_Z))*NGLL2 + tx ];
-    betax  = betax_store[(ispec_pml-1-(NSPEC_PML_X + NSPEC_PML_Z))*NGLL2 + tx ];
+    alpha1 = alphaz_store[offset_local_pml];
+    beta1  = betaz_store[offset_local_pml];
+    alphax = alphax_store[offset_local_pml];
+    betax  = betax_store[offset_local_pml];
   }
   coef1 = __expf(-0.5f * deltat * alpha1);
   coef2 = __expf(-0.5f * deltat * beta1);
   // Update memory variables of derivatives
-  r1 = rmemory_acoustic_dux_dx[(ispec_pml-1)*NGLL2 + tx ];
-  r2 = rmemory_acoustic_dux_dz[(ispec_pml-1)*NGLL2 + tx ];
-  if (ispec_pml - 1 < NSPEC_PML_X){
+  r1 = rmemory_acoustic_dux_dx[offset_pml];
+  r2 = rmemory_acoustic_dux_dz[offset_pml];
+  if (ispec_pml < NSPEC_PML_X){
     r1 *= coef2 * coef2;
     if (abs(beta1) > 0.00001){
-      r1 += ( 1.f - coef2 ) / beta1 * dpotentialdxl + coef2 * ( 1.f - coef2 ) / beta1 * PML_dpotentialdxl_old[(ispec_pml-1)*NGLL2 + tx];}
+      r1 += ( 1.f - coef2 ) / beta1 * dpotentialdxl + coef2 * ( 1.f - coef2 ) / beta1 * PML_dpotentialdxl_old[offset_pml];}
     else{
-      r1 += 0.5f * deltat * dpotentialdxl + 0.5f* deltat * PML_dpotentialdxl_old[(ispec_pml-1)*NGLL2 + tx];
+      r1 += 0.5f * deltat * dpotentialdxl + 0.5f* deltat * PML_dpotentialdxl_old[offset_pml];
     }
     r2 *= coef1 * coef1;
     if (abs(alpha1) > 0.00001){
-      r2 += ( 1.f - coef1 ) / alpha1 * dpotentialdzl + coef1 * ( 1.f - coef1 ) / alpha1 * PML_dpotentialdzl_old[(ispec_pml-1)*NGLL2 + tx];}
+      r2 += ( 1.f - coef1 ) / alpha1 * dpotentialdzl + coef1 * ( 1.f - coef1 ) / alpha1 * PML_dpotentialdzl_old[offset_pml];}
     else{
-      r2 += 0.5f * deltat * dpotentialdzl + 0.5f* deltat * PML_dpotentialdzl_old[(ispec_pml-1)*NGLL2 + tx];
+      r2 += 0.5f * deltat * dpotentialdzl + 0.5f* deltat * PML_dpotentialdzl_old[offset_pml];
     }
   }else{
     r1 *= coef1 * coef1;
     if (abs(alpha1) > 0.00001){
-      r1 += ( 1.f - coef1 ) / alpha1 * dpotentialdxl + coef1 * ( 1.f - coef1 ) / alpha1 * PML_dpotentialdxl_old[(ispec_pml-1)*NGLL2 + tx];}
+      r1 += ( 1.f - coef1 ) / alpha1 * dpotentialdxl + coef1 * ( 1.f - coef1 ) / alpha1 * PML_dpotentialdxl_old[offset_pml];}
     else{
-      r1 += 0.5f * deltat * dpotentialdxl + 0.5f* deltat * PML_dpotentialdxl_old[(ispec_pml-1)*NGLL2 + tx];
+      r1 += 0.5f * deltat * dpotentialdxl + 0.5f* deltat * PML_dpotentialdxl_old[offset_pml];
     }
     r2 *= coef2 * coef2;
      if (abs(beta1) > 0.00001){
-       r2 += ( 1.f - coef2 ) / beta1 * dpotentialdzl + coef2 * ( 1.f - coef2 ) / beta1 * PML_dpotentialdzl_old[(ispec_pml-1)*NGLL2 + tx];}
+       r2 += ( 1.f - coef2 ) / beta1 * dpotentialdzl + coef2 * ( 1.f - coef2 ) / beta1 * PML_dpotentialdzl_old[offset_pml];}
      else{
-       r2 += 0.5f * deltat * dpotentialdzl + 0.5f * deltat * PML_dpotentialdzl_old[(ispec_pml-1)*NGLL2 + tx];
+       r2 += 0.5f * deltat * dpotentialdzl + 0.5f * deltat * PML_dpotentialdzl_old[offset_pml];
      }
   }
-  rmemory_acoustic_dux_dx[(ispec_pml-1)*NGLL2 + tx ] = r1;
-  rmemory_acoustic_dux_dz[(ispec_pml-1)*NGLL2 + tx ] = r2;
+  rmemory_acoustic_dux_dx[offset_pml] = r1;
+  rmemory_acoustic_dux_dz[offset_pml] = r2;
 
-  if (ispec_pml - 1 >= NSPEC_PML_X + NSPEC_PML_Z){
+  if (ispec_pml >= (NSPEC_PML_X + NSPEC_PML_Z)){
     coef3 = __expf(-0.5f * deltat * betax);
     coef4 = __expf(-0.5f * deltat * alphax);
 
-    r3 = coef3 * coef3 * rmemory_acoustic_dux_dx2[(ispec_pml-1- NSPEC_PML_X - NSPEC_PML_Z)*NGLL2 + tx ];
+    r3 = coef3 * coef3 * rmemory_acoustic_dux_dx2[offset_local_pml];
     if (abs(betax) > 0.00001){
-      r3 += ( 1.f - coef3 ) / betax * dpotentialdxl + coef3 * ( 1.f - coef3 ) / betax * PML_dpotentialdxl_old[(ispec_pml-1)*NGLL2 + tx];
+      r3 += ( 1.f - coef3 ) / betax * dpotentialdxl + coef3 * ( 1.f - coef3 ) / betax * PML_dpotentialdxl_old[offset_pml];
     }else{
-      r3 += 0.5f * deltat * dpotentialdxl + 0.5f * deltat * PML_dpotentialdxl_old[(ispec_pml-1)*NGLL2 + tx];
+      r3 += 0.5f * deltat * dpotentialdxl + 0.5f * deltat * PML_dpotentialdxl_old[offset_pml];
     }
-    r4 = coef4 * coef4 * rmemory_acoustic_dux_dz2[(ispec_pml-1- NSPEC_PML_X - NSPEC_PML_Z)*NGLL2 + tx ];
+    r4 = coef4 * coef4 * rmemory_acoustic_dux_dz2[offset_local_pml];
     if (abs(alphax) > 0.00001){
-      r4 += ( 1.f - coef4 ) / alphax * dpotentialdzl + coef4 * ( 1.f - coef4 ) / alphax * PML_dpotentialdzl_old[(ispec_pml-1)*NGLL2 + tx];
+      r4 += ( 1.f - coef4 ) / alphax * dpotentialdzl + coef4 * ( 1.f - coef4 ) / alphax * PML_dpotentialdzl_old[offset_pml];
     }else{
-      r4 += 0.5f * deltat * dpotentialdzl + 0.5f * deltat * PML_dpotentialdzl_old[(ispec_pml-1)*NGLL2 + tx];
+      r4 += 0.5f * deltat * dpotentialdzl + 0.5f * deltat * PML_dpotentialdzl_old[offset_pml];
     }
-    rmemory_acoustic_dux_dx2[(ispec_pml-1- NSPEC_PML_X - NSPEC_PML_Z)*NGLL2 + tx ] = r3;
-    rmemory_acoustic_dux_dz2[(ispec_pml-1- NSPEC_PML_X - NSPEC_PML_Z)*NGLL2 + tx ] = r4;
-
+    rmemory_acoustic_dux_dx2[offset_local_pml] = r3;
+    rmemory_acoustic_dux_dz2[offset_local_pml] = r4;
   } // ispec \in REGION_XZ
 
   // Update memory variables of potential
-  r5 = coef1 * coef1 * rmemory_pot_acoustic[(ispec_pml-1)*NGLL2 + tx ];
+  r5 = coef1 * coef1 * rmemory_pot_acoustic[offset_pml];
   if (abs(alpha1) > 0.00001){
-    r5 += ( 1.f - coef1 ) / alpha1 *  s_dummy_loc[tx] + coef1 * ( 1.f - coef1 ) / alpha1 * dpotential_old[(ispec_pml-1)*NGLL2 + tx];}
+    r5 += ( 1.f - coef1 ) / alpha1 *  s_dummy_loc[tx] + coef1 * ( 1.f - coef1 ) / alpha1 * d_potential_old[offset_pml];}
   else{
-    r5 += 0.5f * deltat *  s_dummy_loc[tx] + 0.5f * deltat * dpotential_old[(ispec_pml-1)*NGLL2 + tx];
+    r5 += 0.5f * deltat *  s_dummy_loc[tx] + 0.5f * deltat * d_potential_old[offset_pml];
   }
-  rmemory_pot_acoustic[(ispec_pml-1)*NGLL2 + tx ] = r5 ;
-  if (ispec_pml - 1 >= NSPEC_PML_X + NSPEC_PML_Z){
-    r6 = coef4 * coef4 * rmemory_pot_acoustic2[(ispec_pml-1- NSPEC_PML_X - NSPEC_PML_Z)*NGLL2 + tx ];
+  rmemory_pot_acoustic[offset_pml] = r5 ;
+  if (ispec_pml >= (NSPEC_PML_X + NSPEC_PML_Z)){
+    r6 = coef4 * coef4 * rmemory_pot_acoustic2[offset_local_pml];
     if (abs(alphax) > 0.00001){
-      r6 += ( 1.f - coef4 ) / alphax *  s_dummy_loc[tx] + coef4 * ( 1.f - coef4 ) / alphax * dpotential_old[(ispec_pml-1)*NGLL2 + tx];
+      r6 += ( 1.f - coef4 ) / alphax *  s_dummy_loc[tx] + coef4 * ( 1.f - coef4 ) / alphax * d_potential_old[offset_pml];
     }else{
-      r6 += 0.5f * deltat * s_dummy_loc[tx] + 0.5f * deltat * dpotential_old[(ispec_pml-1)*NGLL2 + tx];
+      r6 += 0.5f * deltat * s_dummy_loc[tx] + 0.5f * deltat * d_potential_old[offset_pml];
     }
-    rmemory_pot_acoustic2[(ispec_pml-1- NSPEC_PML_X - NSPEC_PML_Z)*NGLL2 + tx ] = r6;
+    rmemory_pot_acoustic2[offset_local_pml] = r6;
   } // ispec \in REGION_XZ
 
   // Update old potential
-  PML_dpotentialdxl_old[(ispec_pml-1)*NGLL2 + tx] = dpotentialdxl;
-  PML_dpotentialdzl_old[(ispec_pml-1)*NGLL2 + tx] = dpotentialdzl;
-  dpotential_old[(ispec_pml-1)*NGLL2 + tx] = s_dummy_loc[tx];
+  PML_dpotentialdxl_old[offset_pml] = dpotentialdxl;
+  PML_dpotentialdzl_old[offset_pml] = dpotentialdzl;
+  d_potential_old[offset_pml] = s_dummy_loc[tx];
 
   // Compute contribution of the PML to second derivative of potential
-  coef2 = rho_invl_times_jacobianl* d_rhostore[offset] / d_kappastore[ispec*NGLL2 + tx];
+  coef2 = rho_invl_times_jacobianl * rhol / kappal;
 
-  if (ispec_pml - 1 < NSPEC_PML_X + NSPEC_PML_Z){
+  if (ispec_pml < (NSPEC_PML_X + NSPEC_PML_Z)){
     pml_contrib = sh_wxgll[J] * sh_wxgll[I] * coef2 * ( (beta1-alpha1) * potential_dot[iglob] - alpha1 * (beta1-alpha1) * s_dummy_loc[tx] + alpha1 * alpha1 * (beta1-alpha1) * r5 );
   }else{
     coef3 = (alphax * alpha1 + alphax*alphax + 2.f * betax * beta1 - 2.f * alphax * (betax + beta1)) / (alpha1 - alphax);
@@ -592,10 +597,10 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
   }
 
   // Update derivatives
-  if (ispec_pml - 1 < NSPEC_PML_X){
+  if (ispec_pml < NSPEC_PML_X){
     dpotentialdxl += (alpha1-beta1) * r1;
     dpotentialdzl -= (alpha1-beta1) * r2;}
-  else if (ispec_pml - 1 < NSPEC_PML_X + NSPEC_PML_Z){
+  else if (ispec_pml < (NSPEC_PML_X + NSPEC_PML_Z)){
     dpotentialdxl -= (alpha1-beta1) * r1;
     dpotentialdzl += (alpha1-beta1) * r2;}
   else{
@@ -620,7 +625,7 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
   }
 
   // assembles potential array
-  atomicAdd(&d_potential_dot_dot_acoustic[iglob],sum_terms-pml_contrib);
+  atomicAdd(&d_potential_dot_dot_acoustic[iglob],sum_terms - pml_contrib);
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -862,7 +867,7 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                                mp->deltat,
                                                                                mp->PML_dpotentialdxl_old,
                                                                                mp->PML_dpotentialdzl_old,
-                                                                               mp->dpotential_old,
+                                                                               mp->d_potential_old,
                                                                                mp->rmemory_acoustic_dux_dx,
                                                                                mp->rmemory_acoustic_dux_dz,
                                                                                mp->rmemory_acoustic_dux_dx2,
@@ -997,99 +1002,4 @@ void FC_FUNC_(compute_forces_acoustic_cuda,
                     *compute_wavefield_2);
 
 }
-
-/* ----------------------------------------------------------------------------------------------- */
-
-/* KERNEL for enforce free surface */
-
-/* ----------------------------------------------------------------------------------------------- */
-
-
-__global__ void enforce_free_surface_cuda_kernel(realw_p potential_acoustic,
-                                                 realw_p potential_dot_acoustic,
-                                                 realw_p potential_dot_dot_acoustic,
-                                                 const int num_free_surface_faces,
-                                                 const int* free_surface_ispec,
-                                                 const int* free_surface_ij,
-                                                 const int* d_ibool,
-                                                 const int* ispec_is_acoustic) {
-  // gets spectral element face id
-  int iface = blockIdx.x + gridDim.x*blockIdx.y;
-
-  // for all faces on free surface
-  if (iface < num_free_surface_faces) {
-
-    int ispec = free_surface_ispec[iface]-1;
-
-    // checks if element is in acoustic domain
-    if (ispec_is_acoustic[ispec]) {
-
-      // gets global point index
-      int igll = threadIdx.x + threadIdx.y*blockDim.x;
-
-      int i = free_surface_ij[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1; // (1,igll,iface)
-      int j = free_surface_ij[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
-
-      int iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
-
-      // sets potentials to zero at free surface
-      potential_acoustic[iglob] = 0.f;
-      potential_dot_acoustic[iglob] = 0.f;
-      potential_dot_dot_acoustic[iglob] = 0.f;
-    }
-  }
-}
-
-
-/* ----------------------------------------------------------------------------------------------- */
-
-extern "C"
-void FC_FUNC_(acoustic_enforce_free_surf_cuda,
-              ACOUSTIC_ENFORCE_FREE_SURF_CUDA)(long* Mesh_pointer,int* compute_wavefield_1,int* compute_wavefield_2) {
-
-  TRACE("acoustic_enforce_free_surf_cuda");
-
-  Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
-
-  // does not absorb free surface, thus we enforce the potential to be zero at surface
-
-  // checks if anything to do
-  if (mp->num_free_surface_faces == 0) return;
-
-  // block sizes
-  int num_blocks_x, num_blocks_y;
-  get_blocks_xy(mp->num_free_surface_faces,&num_blocks_x,&num_blocks_y);
-
-  dim3 grid(num_blocks_x,num_blocks_y,1);
-  dim3 threads(NGLLX,1,1);
-
-
-  // sets potentials to zero at free surface
-  if (*compute_wavefield_1) {
-  enforce_free_surface_cuda_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_acoustic,
-                                                                          mp->d_potential_dot_acoustic,
-                                                                          mp->d_potential_dot_dot_acoustic,
-                                                                          mp->num_free_surface_faces,
-                                                                          mp->d_free_surface_ispec,
-                                                                          mp->d_free_surface_ijk,
-                                                                          mp->d_ibool,
-                                                                          mp->d_ispec_is_acoustic);
-  }
-  // for backward/reconstructed potentials
-  if (*compute_wavefield_2) {
-    enforce_free_surface_cuda_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_acoustic,
-                                                                            mp->d_b_potential_dot_acoustic,
-                                                                            mp->d_b_potential_dot_dot_acoustic,
-                                                                            mp->num_free_surface_faces,
-                                                                            mp->d_free_surface_ispec,
-                                                                            mp->d_free_surface_ijk,
-                                                                            mp->d_ibool,
-                                                                            mp->d_ispec_is_acoustic);
-  }
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("enforce_free_surface_cuda");
-#endif
-}
-
 

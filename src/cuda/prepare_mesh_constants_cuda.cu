@@ -910,7 +910,9 @@ void FC_FUNC_(prepare_pml_device,
                                   realw* h_alphax_store,
                                   realw* h_alphaz_store,
                                   realw* h_betax_store,
-                                  realw* h_betaz_store){
+                                  realw* h_betaz_store,
+                                  int *PML_nglob_abs_acoustic_f,
+                                  int *h_PML_abs_points_acoustic){
 
   TRACE("prepare_PML_device");
 
@@ -933,9 +935,9 @@ void FC_FUNC_(prepare_pml_device,
     print_CUDA_error_if_any(cudaMemset(mp->PML_dpotentialdxl_old,0,sizeof(realw)*NGLL2*mp->nspec_pml),2007);
     print_CUDA_error_if_any(cudaMemset(mp->PML_dpotentialdzl_old,0,sizeof(realw)*NGLL2*mp->nspec_pml),2007);
 
-    print_CUDA_error_if_any(cudaMalloc((void**)&mp->dpotential_old,NGLL2*mp->nspec_pml*sizeof(realw)),1303);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_potential_old,NGLL2*mp->nspec_pml*sizeof(realw)),1303);
     // initializes
-    print_CUDA_error_if_any(cudaMemset(mp->dpotential_old,0,sizeof(realw)*NGLL2*mp->nspec_pml),2007);
+    print_CUDA_error_if_any(cudaMemset(mp->d_potential_old,0,sizeof(realw)*NGLL2*mp->nspec_pml),2007);
 
     copy_todevice_realw((void**)&mp->abscissa_norm,h_abs_normalized,NGLL2*mp->nspec_pml);
 
@@ -961,6 +963,10 @@ void FC_FUNC_(prepare_pml_device,
     copy_todevice_realw((void**)&mp->alphaz_store,h_alphaz_store,NGLL2*(*NSPEC_PML_XZ));
     copy_todevice_realw((void**)&mp->betax_store,h_betax_store,NGLL2*(*NSPEC_PML_XZ));
     copy_todevice_realw((void**)&mp->betaz_store,h_betaz_store,NGLL2*(*NSPEC_PML_XZ));
+
+    // acoustic boundary
+    mp->pml_nglob_abs_acoustic = *PML_nglob_abs_acoustic_f;
+    copy_todevice_int((void**)&mp->d_pml_abs_points_acoustic,h_PML_abs_points_acoustic,mp->pml_nglob_abs_acoustic);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -1272,7 +1278,7 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_spec_to_pml);
     cudaFree(mp->PML_dpotentialdxl_old);
     cudaFree(mp->PML_dpotentialdzl_old);
-    cudaFree(mp->dpotential_old);
+    cudaFree(mp->d_potential_old);
     cudaFree(mp->abscissa_norm);
     cudaFree(mp->rmemory_acoustic_dux_dx);
     cudaFree(mp->rmemory_acoustic_dux_dz);
@@ -1284,6 +1290,7 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->alphaz_store);
     cudaFree(mp->betax_store);
     cudaFree(mp->betaz_store);
+    cudaFree(mp->d_pml_abs_points_acoustic);
   }
 
   // ACOUSTIC arrays

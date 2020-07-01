@@ -224,9 +224,6 @@ void FC_FUNC_(compute_forces_acoustic_cuda,
                                             int* compute_wavefield_1,
                                             int* compute_wavefield_2) {}
 
-void FC_FUNC_(acoustic_enforce_free_surf_cuda,
-              ACOUSTIC_ENFORCE_FREE_SURF_CUDA)(long* Mesh_pointer,int* compute_wavefield_1,int* compute_wavefield_2) {}
-
 
 //
 // src/cuda/compute_forces_viscoelastic_cuda.cu
@@ -288,6 +285,14 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
 
 
 //
+// src/cuda/enforce_acoustic_free_surface_cuda.cu
+//
+
+void FC_FUNC_(acoustic_enforce_free_surf_cuda,
+              ACOUSTIC_ENFORCE_FREE_SURF_CUDA)(long* Mesh_pointer,int* compute_wavefield_1,int* compute_wavefield_2) {}
+
+
+//
 // src/cuda/initialize_cuda.cu
 //
 
@@ -299,6 +304,14 @@ void FC_FUNC_(initialize_cuda_device,
 
 void FC_FUNC_(initialize_cuda_aware_mpi,
               INITIALIZE_CUDA_AWARE_MPI)() {}
+
+
+//
+// src/cuda/pml_compute_cuda.cu
+//
+
+void FC_FUNC_(pml_boundary_acoustic_cuda,
+              PML_BOUNDARY_ACOUSTIC_CUDA)(long* Mesh_pointer,int* compute_wavefield_1,int* compute_wavefield_2) {}
 
 
 //
@@ -402,7 +415,9 @@ void FC_FUNC_(prepare_pml_device,
                                   realw* h_alphax_store,
                                   realw* h_alphaz_store,
                                   realw* h_betax_store,
-                                  realw* h_betaz_store){}
+                                  realw* h_betaz_store,
+                                  int *PML_nglob_abs_acoustic_f,
+                                  int *h_PML_abs_points_acoustic){}
 
 void FC_FUNC_(prepare_stacey_device,
               PREPARE_STACEY_DEVICE)(long* Mesh_pointer,

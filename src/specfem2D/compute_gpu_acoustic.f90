@@ -36,7 +36,8 @@
   use specfem_par, only: NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
     my_neighbors,ninterface_acoustic,inum_interfaces_acoustic, &
     nelem_acoustic_surface,num_fluid_solid_edges,UNDO_ATTENUATION_AND_OR_PML, &
-    STACEY_ABSORBING_CONDITIONS,any_elastic,any_poroelastic, &
+    STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS, &
+    any_elastic,any_poroelastic, &
     SIMULATION_TYPE,ATTENUATION_VISCOACOUSTIC
 
   use specfem_par, only: nspec_outer_acoustic, nspec_inner_acoustic,NO_BACKWARD_RECONSTRUCTION
@@ -83,6 +84,11 @@
     call compute_forces_acoustic_cuda(Mesh_pointer, iphase, &
                                       nspec_outer_acoustic, nspec_inner_acoustic,ATTENUATION_VISCOACOUSTIC, &
                                       compute_wavefield_1,compute_wavefield_2)
+
+    ! PML boundary conditions enforces zero potentials on boundary
+    if (PML_BOUNDARY_CONDITIONS) then
+      call pml_boundary_acoustic_cuda(Mesh_pointer,compute_wavefield_1,compute_wavefield_2)
+    endif
 
     ! computes additional contributions
     if (iphase == 1) then

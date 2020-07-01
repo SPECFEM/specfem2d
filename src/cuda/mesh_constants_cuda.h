@@ -470,10 +470,11 @@ typedef struct mesh_ {
   int nspec_pml;
   int nspec_pml_x;
   int nspec_pml_z;
+
   int* d_spec_to_pml;
   realw* PML_dpotentialdxl_old;
   realw* PML_dpotentialdzl_old;
-  realw* dpotential_old;
+  realw* d_potential_old;
   realw* abscissa_norm;
   realw ALPHA_MAX_PML;
   realw d0_max;
@@ -488,6 +489,9 @@ typedef struct mesh_ {
   realw* alphaz_store;
   realw* betax_store;
   realw* betaz_store;
+
+  int pml_nglob_abs_acoustic;
+  int* d_pml_abs_points_acoustic;
 
   // surface elements (to save for noise tomography and acoustic simulations)
   int* d_free_surface_ispec;

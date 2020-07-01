@@ -53,7 +53,9 @@ cuda_OBJECTS = \
 	$O/compute_kernels_cuda.cuda.o \
 	$O/compute_stacey_acoustic_cuda.cuda.o \
 	$O/compute_stacey_viscoelastic_cuda.cuda.o \
+	$O/enforce_acoustic_free_surface_cuda.cuda.o \
 	$O/initialize_cuda.cuda.o \
+	$O/pml_compute_cuda.cuda.o \
 	$O/prepare_mesh_constants_cuda.cuda.o \
 	$O/transfer_fields_cuda.cuda.o \
 	$O/update_displacement_cuda.cuda.o \

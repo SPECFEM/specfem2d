@@ -448,18 +448,19 @@ void FC_FUNC_(kernel_3_b_cuda,
 
 
 __global__ void kernel_3_acoustic_cuda_device(realw* potential_dot_dot_acoustic,
-                                                realw* b_potential_dot_dot_acoustic,
-                                                realw* potential_dot_acoustic,
-                                                realw* b_potential_dot_acoustic,
-                                                int size,
-                                                int compute_wavefield_1,
-                                                int compute_wavefield_2,
-                                                realw deltatover2,
-                                                realw b_deltatover2,
-                                                realw* rmass_acoustic) {
+                                              realw* b_potential_dot_dot_acoustic,
+                                              realw* potential_dot_acoustic,
+                                              realw* b_potential_dot_acoustic,
+                                              int size,
+                                              int compute_wavefield_1,
+                                              int compute_wavefield_2,
+                                              realw deltatover2,
+                                              realw b_deltatover2,
+                                              realw* rmass_acoustic) {
 
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
   realw p_dot_dot;
+
   // because of block and grid sizing problems, there is a small
   // amount of buffer at the end of the calculation
   if (id < size) {

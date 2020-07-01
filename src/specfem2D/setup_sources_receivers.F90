@@ -175,7 +175,7 @@
   allocate(ispec_selected_source(NSOURCES), &
            iglob_source(NSOURCES), &
            islice_selected_source(NSOURCES), &
-           sourcearrays(NSOURCES,NDIM,NGLLX,NGLLZ),stat=ier)
+           sourcearrays(NDIM,NGLLX,NGLLZ,NSOURCES),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating ispec source arrays')
 
   ! source locations
