@@ -76,10 +76,13 @@
   do j = 1,N
     select case (label)
     case (1,4)
+      ! Ricker
       FUN = ric(j,tp,ts,dt)
     case (2)
+      ! first derivative Ricker
       FUN = deric(j,tp,ts,dt)
     case (3)
+      ! second derivative Ricker
       FUN = de2ric(j,tp,ts,dt)
     case default
       call stop_the_code('Invalid label in paco_convolve_fft')
@@ -88,6 +91,7 @@
     CR(j) = CMPLX(FUN,0.0d0)
   enddo
 
+  ! forward FFT
   call fourier_transform(N,CR,-1.0d0)
 
   RAIZ = SQRT(AN)

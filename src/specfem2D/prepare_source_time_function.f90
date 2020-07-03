@@ -364,7 +364,7 @@
             ! external type
             ! opens external file to read in source time function
             if (it == 1) then
-              coeff = factor(i_source)
+              ! reads in from external source time function file
               open(unit=num_file,file=trim(name_of_source_file(i_source)),status='old',action='read',iostat=ier)
               if (ier /= 0) then
                 error_msg = trim(error_msg1)//trim(name_of_source_file(i_source))
@@ -377,6 +377,13 @@
 
             ! closes external file
             if (it == NSTEP ) close(num_file)
+
+            ! amplifies STF by factor
+            ! note: the amplification factor will amplify the external source time function.
+            !       in case this is not desired, one just needs to set the amplification factor to 1 in DATA/SOURCE:
+            !         factor  = 1.0
+            coeff = factor(i_source)
+            source_time_function(i_source,it,i_stage) = source_time_function(i_source,it,i_stage) * coeff
 
           case (9)
             ! burst type
