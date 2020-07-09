@@ -245,10 +245,12 @@
 
       ! compute dot product
       displ_n = displ_x*nx + displ_z*nz
+
 !! DK DK QUENTIN visco begin ici comme tu disais il faudrait coupler la composante tangentielle
 !! DK DK QUENTIN en plus de la composante normale je suppose
       if (.not. iglob_is_forced(iglob)) then
         potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+
         if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1 ) &
           dot_e1(iglob,:) = dot_e1(iglob,:) + weight*displ_n
       endif

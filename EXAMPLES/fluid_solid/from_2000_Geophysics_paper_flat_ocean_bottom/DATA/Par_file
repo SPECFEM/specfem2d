@@ -266,7 +266,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing th
 #-----------------------------------------------------------------------------
 
 # file containing interfaces for internal mesh
-interfacesfile                  = ../interfaces_fluid_flat.dat
+interfacesfile                  = interfaces_fluid_flat.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model

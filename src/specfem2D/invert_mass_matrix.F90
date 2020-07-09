@@ -124,7 +124,6 @@
           else
             kappal_relaxed = lambda_relaxed + mu_relaxed
           endif
-
         endif
 
         if (ispec_is_poroelastic(ispec)) then
@@ -534,17 +533,17 @@
                 vx = deltatover2
                 vz = deltatover2
 
-                vn = nx*vx+nz*vz
+                vn = nx * vx + nz * vz
 
-                tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
-                tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+                tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
+                tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
 
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
                 rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
               else
                 ! SH-case
                 vy = deltatover2
-                ty = rho_vs*vy
+                ty = rho_vs * vy
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
                 ! ficticous for SH case, but to be save when inverting
                 rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
@@ -584,16 +583,16 @@
                 vx = deltatover2
                 vz = deltatover2
 
-                vn = nx*vx+nz*vz
+                vn = nx * vx + nz * vz
 
-                tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
-                tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+                tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
+                tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
                 rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
               else
                 ! SH-case
                 vy = deltatover2
-                ty = rho_vs*vy
+                ty = rho_vs * vy
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
                 ! ficticous for SH case, but to be save when inverting
                 rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
@@ -635,16 +634,16 @@
                 vx = deltatover2
                 vz = deltatover2
 
-                vn = nx*vx+nz*vz
+                vn = nx * vx + nz * vz
 
-                tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
-                tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+                tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
+                tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
                 rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
               else
                 ! SH-case
                 vy = deltatover2
-                ty = rho_vs*vy
+                ty = rho_vs * vy
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
                 ! ficticous for SH case, but to be save when inverting
                 rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
@@ -686,16 +685,16 @@
                 vx = deltatover2
                 vz = deltatover2
 
-                vn = nx*vx+nz*vz
+                vn = nx * vx + nz * vz
 
-                tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
-                tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+                tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
+                tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
                 rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
               else
                 ! SH-case
                 vy = deltatover2
-                ty = rho_vs*vy
+                ty = rho_vs * vy
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
                 ! ficticous for SH case, but to be save when inverting
                 rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)

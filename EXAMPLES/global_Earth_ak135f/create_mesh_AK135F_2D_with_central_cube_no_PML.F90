@@ -207,6 +207,7 @@
   delta_theta = 2. * pi / dble(nspec_surf_whole_circle/2)
   size_of_a_surface_element_in_km = delta_theta*R_EARTH/1000.
 
+  print *,'Generate mesh PREM'
   print *
   print *,'Number of elements at the surface of the whole circle = ',nspec_surf_whole_circle
   print *
@@ -225,6 +226,7 @@
 !
 
   print *,'Generating the grid for SPECFEM2D...'
+  print *
 
 ! generate only half the mesh or the whole mesh
   if (factor_divide_mesh < 1 .or. factor_divide_mesh > 2) stop 'incorrect value of factor_divide_mesh'
@@ -1294,59 +1296,63 @@
 
   if (output_gnuplot_grid) then
 
-  print *
-  print *,'Writing the grid in GNUPLOT format...'
+    print *
+    print *,'Writing the grid in GNUPLOT format...'
 
-  open(unit=20,file='gridfile.gnu',status='unknown')
+    open(unit=20,file='gridfile.gnu',status='unknown')
 
-  do ispec=1,nspec
+    do ispec=1,nspec
 
-! draw the four edges of each element (using straight lines to simplify)
-    ia1 = 1
-    ia2 = 2
-    write(20,15) sngl(xcoord(ia1,ispec)),sngl(ycoord(ia1,ispec))
-    write(20,15) sngl(xcoord(ia2,ispec)),sngl(ycoord(ia2,ispec))
-    write(20,10)
+  ! draw the four edges of each element (using straight lines to simplify)
+      ia1 = 1
+      ia2 = 2
+      write(20,15) sngl(xcoord(ia1,ispec)),sngl(ycoord(ia1,ispec))
+      write(20,15) sngl(xcoord(ia2,ispec)),sngl(ycoord(ia2,ispec))
+      write(20,10)
 
-    ia1 = 2
-    ia2 = 3
-    write(20,15) sngl(xcoord(ia1,ispec)),sngl(ycoord(ia1,ispec))
-    write(20,15) sngl(xcoord(ia2,ispec)),sngl(ycoord(ia2,ispec))
-    write(20,10)
+      ia1 = 2
+      ia2 = 3
+      write(20,15) sngl(xcoord(ia1,ispec)),sngl(ycoord(ia1,ispec))
+      write(20,15) sngl(xcoord(ia2,ispec)),sngl(ycoord(ia2,ispec))
+      write(20,10)
 
-    ia1 = 3
-    ia2 = 4
-    write(20,15) sngl(xcoord(ia1,ispec)),sngl(ycoord(ia1,ispec))
-    write(20,15) sngl(xcoord(ia2,ispec)),sngl(ycoord(ia2,ispec))
-    write(20,10)
+      ia1 = 3
+      ia2 = 4
+      write(20,15) sngl(xcoord(ia1,ispec)),sngl(ycoord(ia1,ispec))
+      write(20,15) sngl(xcoord(ia2,ispec)),sngl(ycoord(ia2,ispec))
+      write(20,10)
 
-    ia1 = 4
-    ia2 = 1
-    write(20,15) sngl(xcoord(ia1,ispec)),sngl(ycoord(ia1,ispec))
-    write(20,15) sngl(xcoord(ia2,ispec)),sngl(ycoord(ia2,ispec))
-    write(20,10)
+      ia1 = 4
+      ia2 = 1
+      write(20,15) sngl(xcoord(ia1,ispec)),sngl(ycoord(ia1,ispec))
+      write(20,15) sngl(xcoord(ia2,ispec)),sngl(ycoord(ia2,ispec))
+      write(20,10)
 
-  enddo
+    enddo
 
-  close(20)
+    close(20)
 
-! cree le script de dessin pour gnuplot
-  open(unit=20,file='plotgrid.gnu',status='unknown')
-  write(20,*) '#set term postscript landscape monochrome solid "Helvetica" 22'
-  write(20,*) '#set output "grille.ps"'
-  write(20,*) 'set term x11'
-  write(20,*) 'set size ratio -1'
-  write(20,*) 'plot "gridfile.gnu" title "Macroblocs mesh" w l'
-  write(20,*) 'pause -1 "Hit any key..."'
-  close(20)
+  ! cree le script de dessin pour gnuplot
+    open(unit=20,file='plotgrid.gnu',status='unknown')
+    write(20,*) '#set term postscript landscape monochrome solid "Helvetica" 22'
+    write(20,*) '#set output "grille.ps"'
+    write(20,*) 'set term x11'
+    write(20,*) 'set size ratio -1'
+    write(20,*) 'plot "gridfile.gnu" title "Macroblocs mesh" w l'
+    write(20,*) 'pause -1 "Hit any key..."'
+    close(20)
 
-  print *,'Done writing the grid in GNUPLOT format'
-  print *
+    print *,'Done writing the grid in GNUPLOT format'
+    print *
 
  10   format('')
  15   format(e12.5,1x,e12.5)
 
   endif
+
+  print *
+  print *,'All Done'
+  print *
 
   end
 
