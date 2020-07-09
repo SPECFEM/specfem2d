@@ -294,7 +294,9 @@
         enddo ! i_stage
 
         ! computes kinetic and potential energy
-        if (OUTPUT_ENERGY .and. mod(it,NTSTEP_BETWEEN_OUTPUT_ENERGY) == 0) call compute_and_output_energy()
+        if (OUTPUT_ENERGY) then
+          call compute_and_output_energy()
+        endif
 
         ! loop on all the receivers to compute and store the seismograms
         call write_seismograms()
@@ -549,13 +551,15 @@
         enddo !i_stage
 
         ! computes kinetic and potential energy
-        if (OUTPUT_ENERGY .and. mod(it,NTSTEP_BETWEEN_OUTPUT_ENERGY) == 0) call compute_and_output_energy()
+        if (OUTPUT_ENERGY) then
+          call compute_and_output_energy()
+        endif
 
         ! loop on all the receivers to compute and store the seismograms
         !call write_seismograms()
 
         ! kernels calculation
-        if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0) call compute_kernels()
+        call compute_kernels()
 
         ! display results at given time steps
         call write_movie_output(compute_b_wavefield)

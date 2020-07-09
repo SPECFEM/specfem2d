@@ -40,9 +40,12 @@
 
   use constants, only: APPROXIMATE_HESS_KL
 
-  use specfem_par, only: any_acoustic,any_elastic,any_poroelastic
+  use specfem_par, only: any_acoustic,any_elastic,any_poroelastic,it,NSTEP_BETWEEN_COMPUTE_KERNELS
 
   implicit none
+
+  ! checks if anything to do
+  if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) /= 0) return
 
   ! acoustic simulations
   if (any_acoustic) then

@@ -233,20 +233,21 @@ subroutine iterate_time()
       call manage_no_backward_reconstruction_io()
     endif
 
-    if (output_energy) then
+    if (OUTPUT_ENERGY) then
       call compute_and_output_energy()
     endif
 
     ! computes integrated_energy_field
     if (COMPUTE_INTEGRATED_ENERGY_FIELD) then
-      call it_compute_integrated_energy_field_and_output() ! compute the field int_0^t v^2 dt and write it on file if needed
+      ! compute the field int_0^t v^2 dt and write it on file if needed
+      call compute_integrated_energy_field_and_output()
     endif
 
     ! loop on all the receivers to compute and store the seismograms
     call write_seismograms()
 
     ! kernels calculation
-    if (SIMULATION_TYPE == 3 .and. mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0) then
+    if (SIMULATION_TYPE == 3) then
       call compute_kernels()
     endif
 
@@ -389,187 +390,6 @@ subroutine it_transfer_from_GPU()
 
 end subroutine it_transfer_from_GPU
 
-!
-!----------------------------------------------------------------------------------------
-!
-
-subroutine it_compute_integrated_energy_field_and_output()
-
-  ! compute int_0^t v^2 dt and write it on file if needed
-
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IIN,MAX_STRING_LEN,OUTPUT_FILES
-
-  use specfem_par, only: myrank,it,coord,nspec,ibool,integrated_kinetic_energy_field,max_kinetic_energy_field, &
-                         integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
-                         potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
-                         total_effective_duration_field,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
-
-  implicit none
-
-  ! local variables
-  integer :: ispec,iglob
-!!!! DK DK commenting this out for now because "call execute_command_line" is Fortran 2008
-!!!! DK DK and some older compilers do not support it yet. We can probably put it back in a few years.
-  !integer :: statMkdir
-  character(len=MAX_STRING_LEN)  :: filename
-
-  !! ABAB Uncomment to write the velocity profile in acoustic part
-  !real(kind=CUSTOM_REAL) :: cpl,kappal
-  !double precision :: rhol
-  !double precision :: lambdal_unrelaxed_elastic
-  !! ABAB
-
-  ! computes maximum energy and integrated energy fields
-  call compute_energy_fields()
-
-  ! Create directories
-  if (it == 1) then
-    if (myrank == 0) then
-!!!! DK DK commenting this out for now because "call execute_command_line" is Fortran 2008
-!!!! DK DK and some older compilers do not support it yet. We can probably put it back in a few years.
-     !call execute_command_line('mkdir -p '//trim(OUTPUT_FILES)//'energyFields',wait = .true.,cmdstat = statMkdir)
-     !if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create '//trim(OUTPUT_FILES)//'energyFields')
-
-     !call execute_command_line('mkdir -p '//trim(OUTPUT_FILES)//'energyFields/kinetic',wait = .true.,cmdstat = statMkdir)
-     !if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create '//trim(OUTPUT_FILES)//'energyFields/kinetic')
-
-     !call execute_command_line('mkdir -p '//trim(OUTPUT_FILES)//'energyFields/potential',wait = .true.,cmdstat = statMkdir)
-     !if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create '//trim(OUTPUT_FILES)//'energyFields/potential')
-
-     !call execute_command_line('mkdir -p '//trim(OUTPUT_FILES)//'energyFields/total',wait = .true.,cmdstat = statMkdir)
-     !if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create '//trim(OUTPUT_FILES)//'energyFields/total')
-    endif
-    !call synchronize_all() ! Wait for first proc to create directories
-  endif
-
-  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
-    ! write integrated kinetic energy field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/kinetic/integrated_kinetic_energy_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(integrated_kinetic_energy_field(ispec),4)
-    enddo
-    close(IIN)
-
-    ! write max kinetic energy field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/kinetic/max_kinetic_energy_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(max_kinetic_energy_field(ispec),4)
-    enddo
-    close(IIN)
-
-    ! write integrated potential energy field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/potential/integrated_potential_energy_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(integrated_potential_energy_field(ispec),4)
-    enddo
-    close(IIN)
-
-    ! write max potential energy field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/potential/max_potential_energy_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(max_potential_energy_field(ispec),4)
-    enddo
-    close(IIN)
-
-    ! write potential effective duration field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/potential/potential_effective_duration_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(potential_effective_duration_field(ispec),4)
-    enddo
-    close(IIN)
-
-   ! write kinetic effective duration field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/kinetic/kinetic_effective_duration_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(kinetic_effective_duration_field(ispec),4)
-    enddo
-    close(IIN)
-
-    ! write total integrated energy field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/total/total_integrated_energy_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(total_integrated_energy_field(ispec),4)
-    enddo
-    close(IIN)
-
-    ! write max total energy field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/total/max_total_energy_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(max_total_energy_field(ispec),4)
-    enddo
-    close(IIN)
-
-    ! write total effective duration field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/total/total_effective_duration_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(total_effective_duration_field(ispec),4)
-    enddo
-    close(IIN)
-  endif
-
-  ! ABAB Uncomment to write the velocity profile in the acoustic part in file
-  !
-  !  write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'velocities',myrank
-  !  open(unit=IIN,file=trim(filename),status='unknown',action='write')
-  !
-  !  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
-  !    ! loop over spectral elements
-  !    do ispec = 1,nspec
-  !      if (ispec_is_acoustic(ispec)) then
-  !        ! get density of current spectral element
-  !        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-  !        rhol  = density(1,kmato(ispec))
-  !        kappal = lambdal_unrelaxed_elastic
-  !        cpl = sqrt(kappal/rhol)
-  !
-  !        !--- if external medium, get density of current grid point
-  !        if (assign_external_model) then
-  !          cpl = rho_vpstore(2,2,ispec)/rhostore(2,2,ispec)
-  !        endif
-  !        iglob = ibool(2,2,ispec)
-  !        write(IIN,*) real(coord(2,iglob),4),cpl
-  !      endif
-  !    enddo
-  !  endif
-  !  close(IIN)
-
-end subroutine it_compute_integrated_energy_field_and_output
 
 !
 !----------------------------------------------------------------------------------------
