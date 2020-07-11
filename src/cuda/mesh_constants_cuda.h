@@ -314,7 +314,7 @@ typedef struct mesh_ {
   int pml_boundary_conditions;
   int source_is_moving;
   int p_sv;
-  
+
   // ------------------------------------------------------------------ //
   // GLL points & weights
   // ------------------------------------------------------------------ //
