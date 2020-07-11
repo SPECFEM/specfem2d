@@ -589,6 +589,7 @@ void FC_FUNC_(prepare_fields_elastic_device,
                                              int* num_phase_ispec_elastic,
                                              int* phase_ispec_inner_elastic,
                                              int* ispec_is_elastic,
+                                             int* ispec_is_anisotropic,
                                              int* ANISOTROPY,
                                              realw *c11store,realw *c12store,realw *c13store,
                                              realw *c15store,
@@ -675,6 +676,7 @@ void FC_FUNC_(prepare_fields_elastic_device,
 
   // element indices
   copy_todevice_int((void**)&mp->d_ispec_is_elastic,ispec_is_elastic,mp->NSPEC_AB);
+  copy_todevice_int((void**)&mp->d_ispec_is_anisotropic,ispec_is_anisotropic,mp->NSPEC_AB);
 
   // phase elements
   mp->num_phase_ispec_elastic = *num_phase_ispec_elastic;
@@ -1368,6 +1370,7 @@ TRACE("prepare_cleanup_device");
 
     cudaFree(mp->d_phase_ispec_inner_elastic);
     cudaFree(mp->d_ispec_is_elastic);
+    cudaFree(mp->d_ispec_is_anisotropic);
     cudaFree(mp->d_inum_interfaces_elastic);
 
     if (mp->stacey_absorbing_conditions && mp->d_num_abs_boundary_faces > 0){

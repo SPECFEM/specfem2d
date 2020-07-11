@@ -411,6 +411,7 @@ typedef struct mesh_ {
   // elastic elements
   int nspec_elastic;
   int* d_ispec_is_elastic;
+  int* d_ispec_is_anisotropic;
 
   // elastic domain parameters
   int* d_phase_ispec_inner_elastic;

@@ -626,7 +626,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
                         realw_const_p d_kappav,
                         realw_const_p d_muv,
                         const int SIMULATION_TYPE,
-                        const int ANISOTROPY,
+                        const int* ispec_is_anisotropic,
                         realw* d_c11store,realw* d_c12store,realw* d_c13store,
                         realw* d_c15store,
                         realw* d_c23store,
@@ -683,7 +683,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
   __shared__ realw sh_hprimewgll_xx[NGLL2];
 
   // loads hprime's into shared memory
-  if (tx < NGLL2) {
+  if (threadIdx.x < NGLL2) {
     // copy hprime from global memory to shared memory
     load_shared_memory_hprime(&tx,d_hprime_xx,sh_hprime_xx);
     // copy hprime from global memory to shared memory
@@ -744,8 +744,9 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
   // precompute some sums to save CPU time
   duzdxl_plus_duxdzl = duzdxl + duxdzl;
 
-  // full anisotropic case, stress calculations
-  if (ANISOTROPY){
+  // stress calculations
+  if (ispec_is_anisotropic[working_element]){
+    // full anisotropic case
     c11 = d_c11store[offset];
     c13 = d_c13store[offset];
     c15 = d_c15store[offset];
@@ -757,6 +758,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
     sigma_zz = c13*duxdxl + c35*duzdxl_plus_duxdzl + c33*duzdzl;
     sigma_xz = c15*duxdxl + c55*duzdxl_plus_duxdzl + c35*duzdzl;
     sigma_zx = sigma_xz;
+
   }else{
     // isotropic case
 
@@ -764,8 +766,13 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
     kappal = d_kappav[offset];
     mul = d_muv[offset];
 
-    lambdalplus2mul = kappal + 1.33333333333333333333f * mul;  // 4./3. = 1.3333333
-    lambdal = lambdalplus2mul - 2.0f * mul;
+    // original
+    //lambdalplus2mul = kappal + 1.33333333333333333333f * mul;  // 4./3. = 1.3333333
+    //lambdal = lambdalplus2mul - 2.0f * mul;
+
+    // new
+    lambdal = kappal - mul;
+    lambdalplus2mul = kappal + mul;
 
     // compute the three components of the stress tensor sigma
     sigma_xx = lambdalplus2mul*duxdxl + lambdal*duzdzl;
@@ -1108,7 +1115,7 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
                                                                       d_kappav,
                                                                       d_muv,
                                                                       mp->simulation_type,
-                                                                      ANISOTROPY,
+                                                                      mp->d_ispec_is_anisotropic,
                                                                       d_c11store,d_c12store,d_c13store,
                                                                       d_c15store,
                                                                       d_c23store,
@@ -1134,7 +1141,7 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
                                                                       d_kappav,
                                                                       d_muv,
                                                                       mp->simulation_type,
-                                                                      ANISOTROPY,
+                                                                      mp->d_ispec_is_anisotropic,
                                                                       d_c11store,d_c12store,d_c13store,
                                                                       d_c15store,
                                                                       d_c23store,

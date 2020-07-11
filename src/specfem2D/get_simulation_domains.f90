@@ -249,17 +249,17 @@
   ! acoustic
   ! number of acoustic elements in this partition
   nspec_acoustic = count(ispec_is_acoustic(:))
-  if (nspec_acoustic > 0 ) any_acoustic = .true.
+  if (nspec_acoustic > 0) any_acoustic = .true.
 
   ! elastic
   ! number of elastic elements in this partition
   nspec_elastic = count(ispec_is_elastic(:))
-  if (nspec_elastic > 0 ) any_elastic = .true.
+  if (nspec_elastic > 0) any_elastic = .true.
 
   ! poroelastic
   ! number of elastic elements in this partition
   nspec_poroelastic = count(ispec_is_poroelastic(:))
-  if (nspec_poroelastic > 0 ) any_poroelastic = .true.
+  if (nspec_poroelastic > 0) any_poroelastic = .true.
 
   ! aniso
   nspec_aniso = count(ispec_is_anisotropic(:))

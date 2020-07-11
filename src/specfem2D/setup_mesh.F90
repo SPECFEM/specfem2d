@@ -698,6 +698,7 @@
     ! user output
     if (myrank == 0) then
       write(IMAIN,*) '  setting up anisotropic arrays'
+      write(IMAIN,*)
       call flush_IMAIN()
     endif
 
@@ -822,7 +823,7 @@
   implicit none
 
   ! local parameters
-  integer :: nspec_acoustic_all,nspec_elastic_all,nspec_poroelastic_all
+  integer :: nspec_acoustic_all,nspec_elastic_all,nspec_poroelastic_all,nspec_anisotropic_all
   integer :: nspec_total,nspec_in_domains
 
   ! re-counts domain elements
@@ -832,12 +833,16 @@
   call sum_all_i(nspec_acoustic,nspec_acoustic_all)
   call sum_all_i(nspec_elastic,nspec_elastic_all)
   call sum_all_i(nspec_poroelastic,nspec_poroelastic_all)
+  call sum_all_i(nspec_aniso,nspec_anisotropic_all)
 
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) 'Domains:'
     write(IMAIN,*) '  total number of acoustic elements        = ',nspec_acoustic_all
     write(IMAIN,*) '  total number of elastic elements         = ',nspec_elastic_all
+    if (nspec_anisotropic_all > 0) then
+      write(IMAIN,*) '    with number of anisotropic elements         = ',nspec_anisotropic_all
+    endif
     write(IMAIN,*) '  total number of poroelastic elements     = ',nspec_poroelastic_all
   endif
 

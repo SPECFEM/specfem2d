@@ -191,7 +191,7 @@
     call prepare_fields_elastic_device(Mesh_pointer, &
                                        rmassx,rmassz, &
                                        num_phase_ispec_elastic,phase_ispec_inner_elastic, &
-                                       ispec_is_elastic, &
+                                       ispec_is_elastic,ispec_is_anisotropic, &
                                        any_anisotropy, &
                                        c11store,c12store,c13store, &
                                        c15store,c23store, &
@@ -671,6 +671,7 @@
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '  init_host_to_dev_variable done successfully'
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
