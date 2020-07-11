@@ -40,26 +40,27 @@
 
 __global__ void compute_stacey_elastic_kernel(realw* veloc,
                                               realw* accel,
-                                              int* abs_boundary_ispec,
-                                              int* abs_boundary_ij,
-                                              realw* abs_boundary_normal,
-                                              realw* abs_boundary_jacobian1Dw,
-                                              int* d_ibool,
-                                              realw* rho_vp,
-                                              realw* rho_vs,
-                                              int* ispec_is_elastic,
-                                              int SIMULATION_TYPE,
-                                              int SAVE_FORWARD,
-                                              int num_abs_boundary_faces,
+                                              const int* abs_boundary_ispec,
+                                              const int* abs_boundary_ij,
+                                              const realw* abs_boundary_normal,
+                                              const realw* abs_boundary_jacobian1Dw,
+                                              const int* d_ibool,
+                                              const realw* rho_vp,
+                                              const realw* rho_vs,
+                                              const int* ispec_is_elastic,
+                                              const int simulation_type,
+                                              const int p_sv,
+                                              const int SAVE_FORWARD,
+                                              const int num_abs_boundary_faces,
                                               realw* b_absorb_elastic_left,
                                               realw* b_absorb_elastic_right,
                                               realw* b_absorb_elastic_top,
                                               realw* b_absorb_elastic_bottom,
-                                              int* ib_left,
-                                              int* ib_right,
-                                              int* ib_top,
-                                              int* ib_bottom,
-                                              int* edge_abs) {
+                                              const int* ib_left,
+                                              const int* ib_right,
+                                              const int* ib_top,
+                                              const int* ib_bottom,
+                                              const int* edge_abs) {
 
   int igll = threadIdx.x; // tx
   int iface = blockIdx.x + gridDim.x*blockIdx.y; // bx
@@ -108,16 +109,22 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
       rho_vp_temp = rho_vp[INDEX3(NGLLX,NGLLX,i,j,ispec)];
       rho_vs_temp = rho_vs[INDEX3(NGLLX,NGLLX,i,j,ispec)];
 
-      tx = rho_vp_temp*vn*nx + rho_vs_temp*(vx-vn*nx);
-      tz = rho_vp_temp*vn*nz + rho_vs_temp*(vz-vn*nz);
+      if (p_sv){
+        // P_SV case
+        tx = rho_vp_temp*vn*nx + rho_vs_temp*(vx-vn*nx);
+        tz = rho_vp_temp*vn*nz + rho_vs_temp*(vz-vn*nz);
+      }else{
+        // SH-case
+        tx = rho_vs_temp*vx;  // would be vy = veloc_elastic(1,iglob); ty = rho_vs*vy for CPU-case
+        tz = 0.f;             // second component not needed
+      }
 
       jacobianw = abs_boundary_jacobian1Dw[INDEX2(NGLLX,igll,iface)];
 
       atomicAdd(&accel[iglob*2],-tx*jacobianw);
       atomicAdd(&accel[iglob*2+1],-tz*jacobianw);
 
-      if (SAVE_FORWARD && SIMULATION_TYPE == 1) {
-
+      if (SAVE_FORWARD && simulation_type == 1) {
         if (edge_abs[iface] == 1) {
           num_local = ib_bottom[iface]-1;
           b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
@@ -135,8 +142,7 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
           b_absorb_elastic_left[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
           b_absorb_elastic_left[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;
         }
-
-      } // SIMULATION_TYPE
+      }
     }
   } // num_abs_boundary_faces
 
@@ -261,6 +267,7 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
                                                                         mp->d_rho_vs,
                                                                         mp->d_ispec_is_elastic,
                                                                         mp->simulation_type,
+                                                                        mp->p_sv,
                                                                         mp->save_forward,
                                                                         mp->d_num_abs_boundary_faces,
                                                                         mp->d_b_absorb_elastic_left,

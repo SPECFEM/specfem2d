@@ -135,7 +135,6 @@
             b_duz_dxi = b_duz_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
             b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
             b_duz_dgamma = b_duz_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-
           enddo
 
           xixl = xix(i,j,ispec)

@@ -314,8 +314,11 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
                         realw_const_p wxgll,
                         realw* d_kappav,
                         realw* d_muv,
-                        int simulation_type,
-                        realw* dsxx,realw* dsxz,realw* dszz){
+                        const int simulation_type,
+                        const int p_sv,
+                        realw* dsxx,
+                        realw* dsxz,
+                        realw* dszz){
 
 // elastic compute kernel without attenuation for isotropic elements
 //
@@ -328,6 +331,9 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
 
   // block-id == number of local element id in phase_ispec array
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
+
+  // checks if anything to do
+  if (bx >= nb_blocks_to_compute ) return;
 
   // thread-id == GLL node id
   // note: use only NGLL^3 = 125 active threads, plus 3 inactive/ghost threads,
@@ -368,10 +374,6 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
 
 // counts:
 // 2 FLOP
-
-  // checks if anything to do
-  if (bx >= nb_blocks_to_compute ) return;
-
 
   // limits thread ids to range [0,25-1]
   if (tx >= NGLL2 ) tx = tx - NGLL2 ;
@@ -507,10 +509,16 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
   lambdalplus2mul = kappal + mul;
 
   // compute the three components of the stress tensor sigma
-
-  sigma_xx = lambdalplus2mul*duxdxl + lambdal*duzdzl;
-  sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl;
-  sigma_xz = mul*duzdxl_plus_duxdzl;
+  if (p_sv){
+    // P_SV case
+    sigma_xx = lambdalplus2mul*duxdxl + lambdal*duzdzl;
+    sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl;
+    sigma_xz = mul*duzdxl_plus_duxdzl;
+  }else{
+    // SH-case
+    sigma_xx = mul * duxdxl;  // would be sigma_xy in CPU-version
+    sigma_xz = mul * duxdzl;  // sigma_zy
+  }
 
 // counts:
 // + 22 FLOP
@@ -521,8 +529,15 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
   // 1. cut-plane xi
   __syncthreads();
   if (threadIdx.x < NGLL2) {
-    sh_tempx[tx] = sh_wxgll[J] *jacobianl * (sigma_xx*xixl + sigma_xz*xizl); // sh_tempx1
-    sh_tempz[tx] = sh_wxgll[J] *jacobianl * (sigma_xz*xixl + sigma_zz*xizl); // sh_tempz1
+    if (p_sv){
+      // P_SV case
+      sh_tempx[tx] = sh_wxgll[J] *jacobianl * (sigma_xx*xixl + sigma_xz*xizl); // sh_tempx1
+      sh_tempz[tx] = sh_wxgll[J] *jacobianl * (sigma_xz*xixl + sigma_zz*xizl); // sh_tempz1
+    }else{
+      // SH-case
+      sh_tempx[tx] = sh_wxgll[J] *jacobianl * (sigma_xx*xixl + sigma_xz*xizl); // sh_tempx1
+      sh_tempz[tx] = 0.f;
+    }
   }
   __syncthreads();
 
@@ -531,8 +546,15 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
   __syncthreads();
 
   if (threadIdx.x < NGLL2) {
-    sh_tempx[tx] = sh_wxgll[I] * jacobianl * (sigma_xx*gammaxl +  sigma_xz*gammazl); // sh_tempx3
-    sh_tempz[tx] = sh_wxgll[I] * jacobianl * (sigma_xz*gammaxl +  sigma_zz*gammazl); // sh_tempz3
+    if (p_sv){
+      // P_SV case
+      sh_tempx[tx] = sh_wxgll[I] * jacobianl * (sigma_xx*gammaxl +  sigma_xz*gammazl); // sh_tempx3
+      sh_tempz[tx] = sh_wxgll[I] * jacobianl * (sigma_xz*gammaxl +  sigma_zz*gammazl); // sh_tempz3
+    }else{
+      // SH-case
+      sh_tempx[tx] = sh_wxgll[I] * jacobianl * (sigma_xx*gammaxl +  sigma_xz*gammazl); // sh_tempx3
+      sh_tempz[tx] = 0.f; // sh_tempz3
+    }
   }
   __syncthreads();
 
@@ -559,7 +581,13 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
     if (threadIdx.x < NGLL2) {
       dsxx[iglob] = duxdxl;
       dszz[iglob] = duzdzl;
-      dsxz[iglob] = 0.5f * duzdxl_plus_duxdzl;
+      if (p_sv){
+        // P_SV case
+        dsxz[iglob] = 0.5f * duzdxl_plus_duxdzl;
+      }else{
+        // SH-case
+        dsxz[iglob] = duxdzl;
+      }
     }
   }
 
@@ -625,7 +653,8 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
                         realw_const_p wxgll,
                         realw_const_p d_kappav,
                         realw_const_p d_muv,
-                        const int SIMULATION_TYPE,
+                        const int simulation_type,
+                        const int p_sv,
                         const int* ispec_is_anisotropic,
                         realw* d_c11store,realw* d_c12store,realw* d_c13store,
                         realw* d_c15store,
@@ -775,18 +804,32 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
     lambdalplus2mul = kappal + mul;
 
     // compute the three components of the stress tensor sigma
-    sigma_xx = lambdalplus2mul*duxdxl + lambdal*duzdzl;
-    sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl;
-    sigma_xz = mul*duzdxl_plus_duxdzl;
-    sigma_zx = sigma_xz;
+    if (p_sv){
+      // P_SV case
+      sigma_xx = lambdalplus2mul*duxdxl + lambdal*duzdzl;
+      sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl;
+      sigma_xz = mul*duzdxl_plus_duxdzl;
+      sigma_zx = sigma_xz;
+    }else{
+      // SH-case
+      sigma_xx = mul * duxdxl;  // would be sigma_xy in CPU-version
+      sigma_xz = mul * duxdzl;  // sigma_zy
+    }
   }
 
   // form dot product with test vector, non-symmetric form
   // 1. cut-plane xi
   __syncthreads();
   if (threadIdx.x < NGLL2) {
-    sh_tempx[tx] = wxgll[J] *jacobianl * (sigma_xx*xixl + sigma_zx*xizl); // sh_tempx1
-    sh_tempz[tx] = wxgll[J] *jacobianl * (sigma_xz*xixl + sigma_zz*xizl); // sh_tempz1
+    if (p_sv){
+      // P_SV case
+      sh_tempx[tx] = wxgll[J] *jacobianl * (sigma_xx*xixl + sigma_zx*xizl); // sh_tempx1
+      sh_tempz[tx] = wxgll[J] *jacobianl * (sigma_xz*xixl + sigma_zz*xizl); // sh_tempz1
+    }else{
+      // SH-case
+      sh_tempx[tx] = wxgll[J] *jacobianl * (sigma_xx*xixl + sigma_xz*xizl); // sh_tempx1
+      sh_tempz[tx] = 0.f;
+    }
   }
   __syncthreads();
 
@@ -796,8 +839,15 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
   // 3. cut-plane gamma
   __syncthreads();
   if (threadIdx.x < NGLL2) {
-    sh_tempx[tx] = wxgll[I] * jacobianl * (sigma_xx*gammaxl +  sigma_zx*gammazl); // sh_tempx3
-    sh_tempz[tx] = wxgll[I] * jacobianl * (sigma_xz*gammaxl +  sigma_zz*gammazl); // sh_tempz3
+    if (p_sv){
+      // P_SV case
+      sh_tempx[tx] = wxgll[I] * jacobianl * (sigma_xx*gammaxl + sigma_zx*gammazl); // sh_tempx3
+      sh_tempz[tx] = wxgll[I] * jacobianl * (sigma_xz*gammaxl + sigma_zz*gammazl); // sh_tempz3
+    }else{
+      // SH-case
+      sh_tempx[tx] = wxgll[I] * jacobianl * (sigma_xx*gammaxl + sigma_xz*gammazl); // sh_tempx3
+      sh_tempz[tx] = 0.f; // sh_tempz3
+    }
   }
   __syncthreads();
 
@@ -845,8 +895,11 @@ Kernel_2_att_iso_impl(const int nb_blocks_to_compute,
                       realw_const_p wxgll,
                       realw* d_kappav,
                       realw* d_muv,
-                      int simulation_type,
-                      realw* dsxx,realw* dsxz,realw* dszz,
+                      const int simulation_type,
+                      const int p_sv,
+                      realw* dsxx,
+                      realw* dsxz,
+                      realw* dszz,
                       realw_const_p A_newmark_mu,realw_const_p B_newmark_mu,
                       realw_const_p A_newmark_kappa,realw_const_p B_newmark_kappa,
                       realw_p e1,realw_p e11,realw_p e13,
@@ -965,9 +1018,16 @@ Kernel_2_att_iso_impl(const int nb_blocks_to_compute,
   lambdalplus2mul = kappal + mul;
 
   // compute the three components of the stress tensor sigma
-  sigma_xx = lambdalplus2mul*duxdxl + lambdal*duzdzl;
-  sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl;
-  sigma_xz = mul*duzdxl_plus_duxdzl;
+  if (p_sv){
+    // P_SV case
+    sigma_xx = lambdalplus2mul*duxdxl + lambdal*duzdzl;
+    sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl;
+    sigma_xz = mul*duzdxl_plus_duxdzl;
+  }else{
+    // SH-case
+    sigma_xx = mul * duxdxl;  // would be sigma_xy in CPU-version
+    sigma_xz = mul * duxdzl;  // sigma_zy
+  }
 
   //get the contribution of attenuation and update the memory variables
   duxdxl_plus_duzdzl = duxdxl + duzdzl;
@@ -1001,9 +1061,16 @@ Kernel_2_att_iso_impl(const int nb_blocks_to_compute,
   }
 
   // add the contribution of the attenuation
-  sigma_xx += (lambdalplus2mul-mul) * e1_sum + 2.0f * mul * e11_sum;
-  sigma_xz += mul * e13_sum;
-  sigma_zz += (lambdalplus2mul-mul) * e1_sum - 2.0f * mul * e11_sum;
+  if (p_sv){
+    // P_SV case
+    sigma_xx += (lambdalplus2mul-mul) * e1_sum + 2.0f * mul * e11_sum;
+    sigma_xz += mul * e13_sum;
+    sigma_zz += (lambdalplus2mul-mul) * e1_sum - 2.0f * mul * e11_sum;
+  }else{
+    // SH-case
+    sigma_xx += 0.f;  // attenuation not implemented yet for SH
+    sigma_xz += 0.f;
+  }
 
   // saves the grad(displ) to use at the next iteration
   dux_dxl_old[offset_align] = duxdxl;
@@ -1014,8 +1081,15 @@ Kernel_2_att_iso_impl(const int nb_blocks_to_compute,
   // 1. cut-plane xi
   __syncthreads();
   if (threadIdx.x < NGLL2) {
-    sh_tempx[tx] = sh_wxgll[J] *jacobianl * (sigma_xx*xixl + sigma_xz*xizl); // sh_tempx1
-    sh_tempz[tx] = sh_wxgll[J] *jacobianl * (sigma_xz*xixl + sigma_zz*xizl); // sh_tempz1
+    if (p_sv){
+      // P_SV case
+      sh_tempx[tx] = sh_wxgll[J] *jacobianl * (sigma_xx*xixl + sigma_xz*xizl); // sh_tempx1
+      sh_tempz[tx] = sh_wxgll[J] *jacobianl * (sigma_xz*xixl + sigma_zz*xizl); // sh_tempz1
+    }else{
+      // SH-case
+      sh_tempx[tx] = sh_wxgll[J] *jacobianl * (sigma_xx*xixl + sigma_xz*xizl); // sh_tempx1
+      sh_tempz[tx] = 0.f;
+    }
   }
   __syncthreads();
 
@@ -1024,8 +1098,15 @@ Kernel_2_att_iso_impl(const int nb_blocks_to_compute,
   __syncthreads();
 
   if (threadIdx.x < NGLL2) {
-    sh_tempx[tx] = sh_wxgll[I] * jacobianl * (sigma_xx*gammaxl +  sigma_xz*gammazl); // sh_tempx3
-    sh_tempz[tx] = sh_wxgll[I] * jacobianl * (sigma_xz*gammaxl +  sigma_zz*gammazl); // sh_tempz3
+    if (p_sv){
+      // P_SV case
+      sh_tempx[tx] = sh_wxgll[I] * jacobianl * (sigma_xx*gammaxl +  sigma_xz*gammazl); // sh_tempx3
+      sh_tempz[tx] = sh_wxgll[I] * jacobianl * (sigma_xz*gammaxl +  sigma_zz*gammazl); // sh_tempz3
+    }else{
+      // SH-case
+      sh_tempx[tx] = sh_wxgll[I] * jacobianl * (sigma_xx*gammaxl +  sigma_xz*gammazl); // sh_tempx3
+      sh_tempz[tx] = 0.f; // sh_tempz3
+    }
   }
   __syncthreads();
 
@@ -1047,7 +1128,13 @@ Kernel_2_att_iso_impl(const int nb_blocks_to_compute,
     if (threadIdx.x < NGLL2) {
       dsxx[iglob] = duxdxl;
       dszz[iglob] = duzdzl;
-      dsxz[iglob] = 0.5f * duzdxl_plus_duxdzl;
+      if (p_sv){
+        // P_SV case
+        dsxz[iglob] = 0.5f * duzdxl_plus_duxdzl;
+      }else{
+        // SH-case
+        dsxz[iglob] = duxdzl;
+      }
     }
   }
 
@@ -1064,15 +1151,7 @@ Kernel_2_att_iso_impl(const int nb_blocks_to_compute,
 
 
 void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
-              int ANISOTROPY,int ATTENUATION_VISCOELASTIC,
-              int* d_ibool,
-              realw* d_xix,realw* d_xiz,
-              realw* d_gammax,realw* d_gammaz,
-              realw* d_kappav,
-              realw* d_muv,
-              realw* d_c11store,realw* d_c12store,realw* d_c13store,
-              realw* d_c15store,realw* d_c23store,realw* d_c25store,
-              realw* d_c33store,realw* d_c35store,realw* d_c55store) {
+              int ANISOTROPY,int ATTENUATION_VISCOELASTIC) {
 
   TRACE("\tKernel_2");
 
@@ -1102,71 +1181,68 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
     // forward wavefields -> FORWARD_OR_ADJOINT == 1
     TRACE("\tKernel_2_noatt_ani_impl 1");
     Kernel_2_noatt_ani_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                                      d_ibool,
+                                                                      mp->d_ibool,
                                                                       mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
                                                                       d_iphase,
                                                                       mp->d_displ,
                                                                       mp->d_accel,
-                                                                      d_xix, d_xiz,
-                                                                      d_gammax, d_gammaz,
+                                                                      mp->d_xix, mp->d_xiz,
+                                                                      mp->d_gammax, mp->d_gammaz,
                                                                       mp->d_hprime_xx,
                                                                       mp->d_hprimewgll_xx,
                                                                       mp->d_wxgll,
-                                                                      d_kappav,
-                                                                      d_muv,
+                                                                      mp->d_kappav,
+                                                                      mp->d_muv,
                                                                       mp->simulation_type,
+                                                                      mp->p_sv,
                                                                       mp->d_ispec_is_anisotropic,
-                                                                      d_c11store,d_c12store,d_c13store,
-                                                                      d_c15store,
-                                                                      d_c23store,
-                                                                      d_c25store,d_c33store,
-                                                                      d_c35store,
-                                                                      d_c55store);
+                                                                      mp->d_c11store,mp->d_c12store,mp->d_c13store,
+                                                                      mp->d_c15store,mp->d_c23store,mp->d_c25store,
+                                                                      mp->d_c33store,mp->d_c35store,mp->d_c55store);
 
     // backward/reconstructed wavefield
     if (mp->simulation_type == 3) {
       // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
       TRACE("\tKernel_2_noatt_ani_impl 3");
       Kernel_2_noatt_ani_impl<3><<< grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                                      d_ibool,
-                                                                      mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
-                                                                      d_iphase,
-                                                                      mp->d_b_displ,
-                                                                      mp->d_b_accel,
-                                                                      d_xix, d_xiz,
-                                                                      d_gammax, d_gammaz,
-                                                                      mp->d_hprime_xx,
-                                                                      mp->d_hprimewgll_xx,
-                                                                      mp->d_wxgll,
-                                                                      d_kappav,
-                                                                      d_muv,
-                                                                      mp->simulation_type,
-                                                                      mp->d_ispec_is_anisotropic,
-                                                                      d_c11store,d_c12store,d_c13store,
-                                                                      d_c15store,
-                                                                      d_c23store,
-                                                                      d_c25store,d_c33store,
-                                                                      d_c35store,
-                                                                      d_c55store);
+                                                                         mp->d_ibool,
+                                                                         mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
+                                                                         d_iphase,
+                                                                         mp->d_b_displ,
+                                                                         mp->d_b_accel,
+                                                                         mp->d_xix, mp->d_xiz,
+                                                                         mp->d_gammax, mp->d_gammaz,
+                                                                         mp->d_hprime_xx,
+                                                                         mp->d_hprimewgll_xx,
+                                                                         mp->d_wxgll,
+                                                                         mp->d_kappav,
+                                                                         mp->d_muv,
+                                                                         mp->simulation_type,
+                                                                         mp->p_sv,
+                                                                         mp->d_ispec_is_anisotropic,
+                                                                         mp->d_c11store,mp->d_c12store,mp->d_c13store,
+                                                                         mp->d_c15store,mp->d_c23store,mp->d_c25store,
+                                                                         mp->d_c33store,mp->d_c35store,mp->d_c55store);
     }
   }else{
     // isotropic
     if (ATTENUATION_VISCOELASTIC){
       TRACE("\tKernel_2_att_iso_impl 1");
       Kernel_2_att_iso_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                                      d_ibool,
+                                                                      mp->d_ibool,
                                                                       mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
                                                                       d_iphase,
                                                                       mp->d_displ,
                                                                       mp->d_accel,
-                                                                      d_xix, d_xiz,
-                                                                      d_gammax, d_gammaz,
+                                                                      mp->d_xix, mp->d_xiz,
+                                                                      mp->d_gammax, mp->d_gammaz,
                                                                       mp->d_hprime_xx,
                                                                       mp->d_hprimewgll_xx,
                                                                       mp->d_wxgll,
-                                                                      d_kappav,
-                                                                      d_muv,
+                                                                      mp->d_kappav,
+                                                                      mp->d_muv,
                                                                       mp->simulation_type,
+                                                                      mp->p_sv,
                                                                       mp->d_dsxx,
                                                                       mp->d_dsxz,
                                                                       mp->d_dszz,
@@ -1185,22 +1261,23 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
       // forward wavefields -> FORWARD_OR_ADJOINT == 1
       TRACE("\tKernel_2_noatt_iso_impl 1");
       Kernel_2_noatt_iso_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                                      d_ibool,
-                                                                      mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
-                                                                      d_iphase,
-                                                                      mp->d_displ,
-                                                                      mp->d_accel,
-                                                                      d_xix, d_xiz,
-                                                                      d_gammax, d_gammaz,
-                                                                      mp->d_hprime_xx,
-                                                                      mp->d_hprimewgll_xx,
-                                                                      mp->d_wxgll,
-                                                                      d_kappav,
-                                                                      d_muv,
-                                                                      mp->simulation_type,
-                                                                      mp->d_dsxx,
-                                                                      mp->d_dsxz,
-                                                                      mp->d_dszz);
+                                                                        mp->d_ibool,
+                                                                        mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
+                                                                        d_iphase,
+                                                                        mp->d_displ,
+                                                                        mp->d_accel,
+                                                                        mp->d_xix, mp->d_xiz,
+                                                                        mp->d_gammax, mp->d_gammaz,
+                                                                        mp->d_hprime_xx,
+                                                                        mp->d_hprimewgll_xx,
+                                                                        mp->d_wxgll,
+                                                                        mp->d_kappav,
+                                                                        mp->d_muv,
+                                                                        mp->simulation_type,
+                                                                        mp->p_sv,
+                                                                        mp->d_dsxx,
+                                                                        mp->d_dsxz,
+                                                                        mp->d_dszz);
 
     }
     // backward/reconstructed wavefield
@@ -1208,19 +1285,20 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
       // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
       TRACE("\tKernel_2_noatt_iso_impl 3");
       Kernel_2_noatt_iso_impl<3><<< grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                                         d_ibool,
+                                                                         mp->d_ibool,
                                                                          mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
                                                                          d_iphase,
                                                                          mp->d_b_displ,
                                                                          mp->d_b_accel,
-                                                                         d_xix, d_xiz,
-                                                                         d_gammax,d_gammaz,
+                                                                         mp->d_xix, mp->d_xiz,
+                                                                         mp->d_gammax,mp->d_gammaz,
                                                                          mp->d_hprime_xx,
                                                                          mp->d_hprimewgll_xx,
                                                                          mp->d_wxgll,
-                                                                         d_kappav,
-                                                                         d_muv,
+                                                                         mp->d_kappav,
+                                                                         mp->d_muv,
                                                                          mp->simulation_type,
+                                                                         mp->p_sv,
                                                                          mp->d_b_dsxx,
                                                                          mp->d_b_dsxz,
                                                                          mp->d_b_dszz);
@@ -1280,13 +1358,6 @@ void FC_FUNC_(compute_forces_viscoelastic_cuda,
   if (num_elements == 0) return;
 
   // no mesh coloring: uses atomic updates
-  Kernel_2(num_elements,mp,*iphase,*deltat,*ANISOTROPY,*ATTENUATION_VISCOELASTIC,
-           mp->d_ibool,
-           mp->d_xix,mp->d_xiz,
-           mp->d_gammax,mp->d_gammaz,
-           mp->d_kappav,
-           mp->d_muv,
-           mp->d_c11store,mp->d_c12store,mp->d_c13store,
-           mp->d_c15store,mp->d_c23store,mp->d_c25store,
-           mp->d_c33store,mp->d_c35store,mp->d_c55store);
+  Kernel_2(num_elements,mp,*iphase,*deltat,*ANISOTROPY,*ATTENUATION_VISCOELASTIC);
+
 }

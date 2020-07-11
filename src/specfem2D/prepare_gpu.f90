@@ -58,8 +58,6 @@
   endif
 
   ! safety checks
-  if (any_elastic .and. (.not. P_SV)) &
-    call stop_the_code('Invalid GPU simulation, SH waves not implemented yet. Please use P_SV instead.')
   if (AXISYM) &
     call stop_the_code('Axisym not implemented on GPU yet.')
   if (NGLLX /= NGLLZ) &
@@ -123,7 +121,7 @@
                                 ispec_selected_rec_loc, &
                                 nrecloc, &
                                 cosrot_irecf,sinrot_irecf, &
-                                SIMULATION_TYPE, &
+                                SIMULATION_TYPE,P_SV, &
                                 nspec_acoustic,nspec_elastic, &
                                 myrank,SAVE_FORWARD, &
                                 xir_store_loc, &
@@ -527,6 +525,7 @@
   source_time_function_loc(:,:) = 0.0_CUSTOM_REAL
   ispec_selected_source_loc(:) = 1
   sourcearray_loc(:,:,:,:) = 0.0_CUSTOM_REAL
+
   i_source_local = 0
   do i_source = 1, NSOURCES
     if (myrank == islice_selected_source(i_source)) then
@@ -536,7 +535,11 @@
       ! stores local sources infos
       source_time_function_loc(i_source_local,:) = source_time_function(i_source,:,1)
       ispec_selected_source_loc(i_source_local)  = ispec_selected_source(i_source)
-      sourcearray_loc(:,:,:,i_source_local) = sourcearrays(:,:,:,i_source)
+      if (P_SV) then
+        sourcearray_loc(:,:,:,i_source_local) = sourcearrays(:,:,:,i_source)
+      else
+        sourcearray_loc(1,:,:,i_source_local) = sourcearrays(1,:,:,i_source) ! only single component for SH
+      endif
     endif
   enddo
 

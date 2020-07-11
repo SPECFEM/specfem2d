@@ -151,8 +151,9 @@ __global__ void compute_kernels_ani_cudakernel(int* ispec_is_elastic,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void compute_kernels_cudakernel(int* ispec_is_elastic,
-                                           int* d_ibool,
+__global__ void compute_kernels_cudakernel(const int* ispec_is_elastic,
+                                           const int p_sv,
+                                           const int* d_ibool,
                                            realw* accel,
                                            realw* b_displ,
                                            realw* rho_kl,
@@ -177,18 +178,26 @@ __global__ void compute_kernels_cudakernel(int* ispec_is_elastic,
       int iglob = d_ibool[ij + NGLL2_PADDED*ispec] - 1 ;
       int ij_ispec = ij + NGLL2*ispec;
 
+      realw prod = (dsxx[iglob] + dszz[iglob]) * (b_dsxx[iglob] + b_dszz[iglob]);
+
       // isotropic kernels:
       // density kernel
       rho_kl[ij_ispec] += (accel[2*iglob]*b_displ[2*iglob] + accel[2*iglob+1]*b_displ[2*iglob+1]);
 
-      realw prod = (dsxx[iglob] + dszz[iglob]) * (b_dsxx[iglob] + b_dszz[iglob]);
+      if (p_sv){
+        // P_SV case
+        // shear modulus kernel
+        mu_kl[ij_ispec] += dsxx[iglob] * b_dsxx[iglob] + dszz[iglob] * b_dszz[iglob] +
+                            2.0f * dsxz[iglob] * b_dsxz[iglob] - prod/3.0f;
 
-      // shear modulus kernel
-      mu_kl[ij_ispec] += dsxx[iglob] * b_dsxx[iglob] + dszz[iglob] * b_dszz[iglob] +
-                           2.0f * dsxz[iglob] * b_dsxz[iglob] - prod/3.0f;
-
-      // bulk modulus kernel
-      kappa_kl[ij_ispec] += prod;
+        // bulk modulus kernel
+        kappa_kl[ij_ispec] += prod;
+      }else{
+        // SH-case (membrane) waves
+        mu_kl[ij_ispec] += dsxx[iglob] * b_dsxx[iglob] + dsxz[iglob] * b_dsxz[iglob]; // dux_dxl * b_dux_dxl + dux_dzl * b_dux_dzl
+        // zero kappa kernel
+        //kappa_kl[ij_ispec] = 0.f;
+      }
     }
   }
 }
@@ -211,7 +220,9 @@ void FC_FUNC_(compute_kernels_elastic_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  compute_kernels_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ispec_is_elastic,mp->d_ibool,
+  compute_kernels_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ispec_is_elastic,
+                                                                    mp->p_sv,
+                                                                    mp->d_ibool,
                                                                     mp->d_accel, mp->d_b_displ,
                                                                     mp->d_rho_kl,
                                                                     mp->d_mu_kl,

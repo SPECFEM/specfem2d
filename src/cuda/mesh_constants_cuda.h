@@ -313,7 +313,8 @@ typedef struct mesh_ {
   int stacey_absorbing_conditions;
   int pml_boundary_conditions;
   int source_is_moving;
-
+  int p_sv;
+  
   // ------------------------------------------------------------------ //
   // GLL points & weights
   // ------------------------------------------------------------------ //

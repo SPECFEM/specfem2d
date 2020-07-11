@@ -163,6 +163,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* nrec_local,
                                         realw * h_cosrot,realw * h_sinrot,
                                         int* SIMULATION_TYPE,
+                                        int* P_SV,
                                         int* nspec_acoustic,int* nspec_elastic,
                                         int* h_myrank,
                                         int* SAVE_FORWARD,
@@ -189,6 +190,7 @@ void FC_FUNC_(prepare_constants_device,
   mp->stacey_absorbing_conditions = *STACEY_BOUNDARY_CONDITIONS;
   mp->pml_boundary_conditions = *PML_BOUNDARY_CONDITIONS;
   mp->save_forward = *SAVE_FORWARD;
+  mp->p_sv = *P_SV;
 
   // safety check
   if (*h_NGLLX != NGLLX) {
