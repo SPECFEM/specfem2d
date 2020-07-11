@@ -111,6 +111,9 @@ env:
     # moving sources
     - TESTID=27 TESTDIR=19 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
 
+    # anisotropic/isotropic model
+    - TESTID=28 TESTDIR=20 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
+
 before_install:
   # informations on git
   - |

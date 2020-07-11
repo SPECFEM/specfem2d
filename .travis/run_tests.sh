@@ -28,6 +28,7 @@ case "$TESTDIR" in
 17) dir=EXAMPLES/poroelastic_semi_infinite_homogeneous/ ;;
 18) dir=EXAMPLES/initial_mode_LDDRK/ ;;
 19) dir=EXAMPLES/moving_sources_acoustic/ ;;
+20) dir=EXAMPLES/anisotropic_isotropic_model/ ;;
 *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
 esac
 
@@ -388,6 +389,19 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.moving_sources\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.anisotropic_isotropic_model\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## moving sources
+  ##
+  cd EXAMPLES/anisotropic_isotropic_model/
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.anisotropic_isotropic_model\\r'
 
 
 # done
