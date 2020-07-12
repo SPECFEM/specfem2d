@@ -913,7 +913,7 @@ end subroutine init_moving_sources_GPU
         endif
       endif
 
-      ! master collects info
+      ! main collects info
       call gather_all_singlei(is_proc_source,allgather_is_proc_source,NPROC)
 
       if (myrank == 0) then
@@ -926,14 +926,14 @@ end subroutine init_moving_sources_GPU
       call bcast_all_singlei(islice_selected_source)
 
       ! if (islice_selected_source /= 0) then
-      !   ! source is in another slice than the master process
+      !   ! source is in another slice than the main process
       !   if (myrank == islice_selected_source) then
       !     ! send information from process holding source
       !     call send_singlei(ispec_selected_source,0,0)
       !     call send_singledp(xi_source,0,2)
       !     call send_singledp(gamma_source,0,3)
       !   else if (myrank == 0) then
-      !     ! master collects
+      !     ! main collects
       !     call recv_singlei(ispec_selected_source,islice_selected_source,0)
       !     call recv_singledp(xi_source,islice_selected_source,2)
       !     call recv_singledp(gamma_source,islice_selected_source,3)

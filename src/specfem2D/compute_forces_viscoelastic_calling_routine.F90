@@ -100,7 +100,7 @@
           endif
 
         case (1)
-          ! noise source at master station
+          ! noise source at main station
           call add_point_source_noise()
 
         case (2)

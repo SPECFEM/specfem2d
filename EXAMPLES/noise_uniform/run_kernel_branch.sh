@@ -4,11 +4,11 @@
 ## USER PARAMETERS
 
 # input parameters
-# slave station id
-SLAVE=$1
+# secondary station id
+SECONDARY=$1
 
-# master station id
-MASTER=$2
+# main station id
+MAIN=$2
 
 # cross-correlation branch
 BRANCH=$3
@@ -19,7 +19,7 @@ FC=gfortran         # or: ifort
 ############################################
 
 if [ $# -ne 3 ]; then
- echo "USAGE: ./run_kernel_branch.sh  slave-station-id  master-station-id branch(0=negative/1=positive)"
+ echo "USAGE: ./run_kernel_branch.sh  secondary-station-id  main-station-id branch(0=negative/1=positive)"
  exit 1
 fi
 
@@ -36,8 +36,8 @@ currentdir=`pwd`
 echo
 echo "   setting up example..."
 echo
-echo "master: $MASTER"
-echo "slave : $SLAVE"
+echo "main: $MAIN"
+echo "secondary : $SECONDARY"
 if [ "$BRANCH" == "0" ]; then echo "using negative branch"; fi
 if [ "$BRANCH" == "1" ]; then echo "using positive branch"; fi
 
@@ -50,7 +50,7 @@ rm -rf OUTPUT_ALL
 mkdir -p OUTPUT_ALL
 
 # sets up local DATA/ directory
-echo "$MASTER" > NOISE_TOMOGRAPHY/irec_master_noise
+echo "$MAIN" > NOISE_TOMOGRAPHY/irec_main_noise
 
 # noise source
 #if [ -f S_squared ]; then cp -v S_squared NOISE_TOMOGRAPHY/; fi
@@ -195,8 +195,8 @@ echo "## creating adjoint source                   ##"
 echo "##                                           ##"
 echo "###############################################"
 
-TRACE=`printf 'AA.S%04d.BXY.semd' $SLAVE`
-TRACE_ADJ=`printf 'AA.S%04d.BXY.adj' $SLAVE`
+TRACE=`printf 'AA.S%04d.BXY.semd' $SECONDARY`
+TRACE_ADJ=`printf 'AA.S%04d.BXY.adj' $SECONDARY`
 
 echo "using trace: OUTPUT_FILES/$TRACE"
 if [ ! -f OUTPUT_FILES/$TRACE ]; then echo "trace file OUTPUT_FILES/$TRACE is missing"; exit 1; fi
@@ -209,7 +209,7 @@ awk '{printf(" %12.6f %12.6f\n",$1,0.0)}' < OUTPUT_FILES/$TRACE > SEM/zero
 cd SEM/
 for ((ii=1; ii<=3; ++ii))
 do
-  if [ "$ii" -ne "$SLAVE" ]; then
+  if [ "$ii" -ne "$SECONDARY" ]; then
     #cp zero `printf AA.S%04d.BXX.adj $ii`
     cp -v zero `printf AA.S%04d.BXY.adj $ii`
     #cp zero `printf AA.S%04d.BXZ.adj $ii`
@@ -217,7 +217,7 @@ do
 done
 cd ../
 
-# compile and write master trace
+# compile and write main trace
 ADJCC='adj_traveltime_filter.f90'
 if [ "$BRANCH" == "0" ]; then
   echo "negative branch"

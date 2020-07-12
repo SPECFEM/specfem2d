@@ -63,7 +63,7 @@
 !
 !       allowing to read in different interfaces here defeats this original idea for simultaneous runs
 !       we'll disable it for now and require the mesh setup (interface,tomography, external mesh files)
-!       be read from a master reference folder DATA/, not run****/DATA/..
+!       be read from a main reference folder DATA/, not run****/DATA/..
 !
 ! please uncomment in case needed and make sure you know how to run your simultaneous runs properly :)
 

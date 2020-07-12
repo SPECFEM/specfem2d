@@ -5,8 +5,8 @@
 #
 ##########################################
 
-# master station #id
-master_id=1
+# main station #id
+main_id=1
 
 ##########################################
 
@@ -29,9 +29,9 @@ echo "using noise Par_file $1"
 cp -v DATA/Par_file_noise_$1 DATA/Par_file
 fi
 
-# sets a master station
-echo "master id: $master_id"
-echo $master_id > NOISE_TOMOGRAPHY/irec_master_noise
+# sets a main station
+echo "main id: $main_id"
+echo $main_id > NOISE_TOMOGRAPHY/irec_main_noise
 
 # cleans output files
 rm -rf OUTPUT_FILES/*

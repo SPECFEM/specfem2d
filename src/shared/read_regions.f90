@@ -56,8 +56,8 @@
   integer,external :: err_occurred
 
   ! safety check
-  ! only master process is supposed to read in file parameters
-  if (myrank /= 0) call stop_the_code('Only master process should read regions, exiting...')
+  ! only main process is supposed to read in file parameters
+  if (myrank /= 0) call stop_the_code('Only main process should read regions, exiting...')
 
   ! user output
   write(IMAIN,*) 'Regions:'

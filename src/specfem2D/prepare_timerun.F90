@@ -475,7 +475,7 @@
     allocate(data_pixel_send(nb_pixel_loc))
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
           call recv_i(num_pixel_recv(1,iproc+1), nb_pixel_per_proc(iproc), iproc, 42)
 

@@ -737,7 +737,7 @@ module specfem_par_noise
   implicit none
 
   ! noise simulations:
-  ! master station
+  ! main station
   integer :: ispec_noise
   double precision :: xi_noise, gamma_noise
 

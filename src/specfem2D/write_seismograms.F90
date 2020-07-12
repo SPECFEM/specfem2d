@@ -186,8 +186,8 @@
       ! output
       write(IMAIN,*)
       write(IMAIN,*) 'Total number of time steps written: ', it-it_begin+1
-      if (WRITE_SEISMOGRAMS_BY_MASTER) then
-        write(IMAIN,*) 'Writing the seismograms by master proc alone took ',sngl(write_time),' seconds'
+      if (WRITE_SEISMOGRAMS_BY_MAIN) then
+        write(IMAIN,*) 'Writing the seismograms by main proc alone took ',sngl(write_time),' seconds'
       else
         write(IMAIN,*) 'Writing the seismograms in parallel took ',sngl(write_time),' seconds'
       endif
@@ -208,7 +208,7 @@
                          NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos,nrecloc, &
                          P_SV,SU_FORMAT,save_ASCII_seismograms, &
                          save_binary_seismograms_single,save_binary_seismograms_double,x_source,z_source, &
-                         WRITE_SEISMOGRAMS_BY_MASTER
+                         WRITE_SEISMOGRAMS_BY_MAIN
 
   implicit none
 
@@ -244,7 +244,7 @@
   file_unit_17_has_been_opened = .false.
 
   ! safety stop
-  if (.not. WRITE_SEISMOGRAMS_BY_MASTER) &
+  if (.not. WRITE_SEISMOGRAMS_BY_MAIN) &
     stop 'Error writing seismograms in parallel not supported yet!'
 
 ! write seismograms
@@ -369,8 +369,8 @@
 #ifdef WITH_MPI
       else
         ! gets from other processes
-        if (WRITE_SEISMOGRAMS_BY_MASTER) then
-          ! collects seismogram components on master
+        if (WRITE_SEISMOGRAMS_BY_MAIN) then
+          ! collects seismogram components on main
           call recv_dp(buffer_binary(1,irec,1), seismo_current_l, islice_selected_rec(irec), irec)
 
           if (number_of_components == 2) then
@@ -388,9 +388,9 @@
 
 #ifdef WITH_MPI
     else
-      ! slave processes (myrank > 0)
-      if (WRITE_SEISMOGRAMS_BY_MASTER) then
-        ! sends seismogram values to master
+      ! secondary processes (myrank > 0)
+      if (WRITE_SEISMOGRAMS_BY_MAIN) then
+        ! sends seismogram values to main
         if (myrank == islice_selected_rec(irec)) then
           irecloc = irecloc + 1
           call send_dp(sisux_l(1,irecloc), seismo_current_l, 0, irec)

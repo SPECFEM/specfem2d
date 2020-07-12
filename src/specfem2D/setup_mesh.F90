@@ -829,7 +829,7 @@
   ! re-counts domain elements
   call get_simulation_domain_counts()
 
-  ! gets total numbers for all slices (collected on master only)
+  ! gets total numbers for all slices (collected on main only)
   call sum_all_i(nspec_acoustic,nspec_acoustic_all)
   call sum_all_i(nspec_elastic,nspec_elastic_all)
   call sum_all_i(nspec_poroelastic,nspec_poroelastic_all)

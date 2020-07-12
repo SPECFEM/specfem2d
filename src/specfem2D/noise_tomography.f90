@@ -163,23 +163,23 @@
   implicit none
 
   ! local parameters
-  integer :: ier,irec_master
+  integer :: ier,irec_main
 
-  ! master noise source angle (in rad) use for P_SV-case: 0 for vertical along z-direction
+  ! main noise source angle (in rad) use for P_SV-case: 0 for vertical along z-direction
   angle_noise = 0._CUSTOM_REAL
 
-  !define master receiver
-  open(unit=IIN,file='NOISE_TOMOGRAPHY/irec_master_noise',status='old',action='read',iostat=ier)
+  ! define main receiver
+  open(unit=IIN,file='NOISE_TOMOGRAPHY/irec_main_noise',status='old',action='read',iostat=ier)
   if (ier /= 0) then
     ! we will be strict on input format
     print *
-    write(*,*) 'Error opening NOISE_TOMOGRAPHY/irec_master_noise file'
+    write(*,*) 'Error opening NOISE_TOMOGRAPHY/irec_main_noise file'
     write(*,*) 'Please make sure all noise setup files exist in NOISE_TOMOGRAPHY/ directory...'
     print *
-    call stop_the_code('Error opening NOISE_TOMOGRAPHY/irec_master_noise file')
+    call stop_the_code('Error opening NOISE_TOMOGRAPHY/irec_main_noise file')
   endif
 
-  read(IIN,*) irec_master
+  read(IIN,*) irec_main
   close(IIN)
 
   ! user output
@@ -187,7 +187,7 @@
     write(IMAIN,*) '  noise simulation type           = ',NOISE_TOMOGRAPHY
     write(IMAIN,*) '  noise source time function type = ',noise_source_time_function_type
     write(IMAIN,*)
-    write(IMAIN,*) '  master station is #',irec_master,': ',trim(network_name(irec_master))//'.'//trim(station_name(irec_master))
+    write(IMAIN,*) '  main station is #',irec_main,': ',trim(network_name(irec_main))//'.'//trim(station_name(irec_main))
     if (P_SV) then
       write(IMAIN,*) '  using P_SV waves'
       write(IMAIN,*) '  angle of the noise source is ',angle_noise * 180./PI,'degrees (0=vertical)'
@@ -201,12 +201,12 @@
   endif
 
   ! checks value
-  if ((NOISE_TOMOGRAPHY == 1) .and. (irec_master > nrec .or. irec_master < 1) ) &
-    call exit_MPI(myrank,'irec_master out of range of given number of receivers. Exiting.')
+  if ((NOISE_TOMOGRAPHY == 1) .and. (irec_main > nrec .or. irec_main < 1) ) &
+    call exit_MPI(myrank,'irec_main out of range of given number of receivers. Exiting.')
 
-  xi_noise    = xi_receiver(irec_master)
-  gamma_noise = gamma_receiver(irec_master)
-  ispec_noise = ispec_selected_rec(irec_master)
+  xi_noise    = xi_receiver(irec_main)
+  gamma_noise = gamma_receiver(irec_main)
+  ispec_noise = ispec_selected_rec(irec_main)
 
   ! check simulation parameters
   if ((NOISE_TOMOGRAPHY /= 0) .and. (P_SV)) write(*,*) 'Warning: For P-SV case, noise tomography subroutines not yet fully tested'
@@ -432,7 +432,7 @@
 
   call lagrange_any(gamma_noise,NGLLZ,zigll,hgamma,hpgamma)
 
-  ! master station for noise source: located in element ispec_noise
+  ! main station for noise source: located in element ispec_noise
   noise_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
   if (P_SV) then
     ! P-SV simulation

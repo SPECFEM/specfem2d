@@ -96,7 +96,7 @@
   Mxz(:) = 0.d0
   Mzz(:) = 0.d0
 
-  ! only master process reads file
+  ! only main process reads file
   if (myrank == 0) then
     source_filename = trim(IN_DATA_FILES)//'SOURCE'
 

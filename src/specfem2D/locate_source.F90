@@ -306,7 +306,7 @@
   ! check if this process contains the source
   if (abs(sqrt(dist_glob_squared) - sqrt(final_distance)) < TINYVAL ) is_proc_source = 1
 
-  ! master collects info
+  ! main collects info
   call gather_all_singlei(is_proc_source,allgather_is_proc_source,NPROC)
   if (myrank == 0) then
     ! select slice with maximum rank which contains source
@@ -319,7 +319,7 @@
 #ifdef WITH_MPI
   ! for MPI version, gather information from all the nodes
   if (islice_selected_source /= 0) then
-    ! source is in another slice than the master process
+    ! source is in another slice than the main process
     if (myrank == islice_selected_source) then
       ! send information from process holding source
       call send_singlei(ispec_selected_source,0,0)
@@ -328,7 +328,7 @@
       call send_singledp(gamma_source,0,3)
       call send_singledp(final_distance,0,4)
     else if (myrank == 0) then
-      ! master collects
+      ! main collects
       call recv_singlei(ispec_selected_source,islice_selected_source,0)
       call recv_singlei(idomain,islice_selected_source,1)
       call recv_singledp(xi_source,islice_selected_source,2)

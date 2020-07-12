@@ -332,7 +332,7 @@
   allocate(gather_ispec_selected_rec(nrec,NPROC),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error allocating gather array')
 
-  ! gathers infos onto master process
+  ! gathers infos onto main process
   call gather_all_dp(final_distance(1),nrec,gather_final_distance(1,1),nrec,NPROC)
   call gather_all_dp(xi_receiver(1),nrec,gather_xi_receiver(1,1),nrec,NPROC)
   call gather_all_dp(gamma_receiver(1),nrec,gather_gamma_receiver(1,1),nrec,NPROC)

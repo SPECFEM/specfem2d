@@ -397,7 +397,7 @@
   remove_min_to_start_at_zero = 0
 
   ! mesher works only for single process
-  ! (slave processes can sit idle)
+  ! (secondary processes can sit idle)
   if (myrank == 0) then
     ! ***
     ! *** read the parameter file
@@ -718,7 +718,7 @@
   ! close main output file
   if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
 
-  ! slave processes wait
+  ! secondary processes wait
   call synchronize_all()
 
   ! MPI finish

@@ -4,7 +4,7 @@
 #
 # Note that one noise sensitivity kernel contains two contributions,
 # both the 1st and the 2nd contributions may be obtained through THREE steps.
-# Each contribution requires a distinct 'master' receiver, as shown in Tromp et al., 2010, GJI,
+# Each contribution requires a distinct 'main' receiver, as shown in Tromp et al., 2010, GJI,
 # each step requires slightly different Par_file, as documented in the Manual
 #
 # Please see the paper & Manual for more details on noise simulations

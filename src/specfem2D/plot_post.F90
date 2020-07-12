@@ -528,7 +528,7 @@
 #ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
 
           call recv_singlei(nspec_recv, iproc, 42)
@@ -856,7 +856,7 @@
 #ifdef WITH_MPI
   if (NPROC > 1) then
     if (myrank == 0) then
-      ! master collects
+      ! main collects
       do iproc = 1, NPROC-1
         call recv_singlei(nspec_recv,iproc,43)
 
@@ -1065,7 +1065,7 @@
 #ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
           call recv_singlei(nspec_recv,iproc, 44)
           if (nspec_recv > 0) then
@@ -1153,7 +1153,7 @@
 #ifdef WITH_MPI
   if (NPROC > 1) then
     if (myrank == 0) then
-      ! master collects
+      ! main collects
       do iproc = 1, NPROC-1
         call recv_singlei(nspec_recv, iproc, 44)
         if (nspec_recv > 0) then
@@ -1251,7 +1251,7 @@
 #ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
           call recv_singlei(nspec_recv, iproc, 45)
           if (nspec_recv > 0) then
@@ -1352,7 +1352,7 @@
 #ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
           call recv_singlei(nspec_recv, iproc, 45)
           if (nspec_recv > 0) then
@@ -1454,7 +1454,7 @@
 #ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
           call recv_singlei(nspec_recv, iproc, 45)
           if (nspec_recv > 0) then
@@ -1654,7 +1654,7 @@
 
 #ifdef WITH_MPI
     if (myrank == 0) then
-      ! master collects
+      ! main collects
       do iproc = 1, NPROC-1
         call recv_singlei(nspec_recv, iproc, 46)
         if (nspec_recv > 0) then
@@ -1786,7 +1786,7 @@
 
 #ifdef WITH_MPI
     if (myrank == 0) then
-      ! master collects
+      ! main collects
       do iproc = 1, NPROC-1
         call recv_singlei(nspec_recv, iproc, 47)
 

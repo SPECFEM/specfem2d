@@ -464,7 +464,7 @@
     endif
   endif
 
-  ! master sends to all others
+  ! main sends to all others
   call bcast_all_singledp(lambdaPmin_in_fluid_histo)
   call bcast_all_singledp(lambdaPmax_in_fluid_histo)
   call bcast_all_singledp(lambdaSmin_histo)

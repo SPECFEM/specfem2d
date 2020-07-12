@@ -110,7 +110,7 @@
       if (myrank == 0) write(*,*) 'Noise simulation ', NOISE_TOMOGRAPHY, ' of 3'
     endif
 
-    ! master collects norm from all processes
+    ! main collects norm from all processes
     call max_all_cr(displnorm_all, displnorm_all_glob)
     if (myrank == 0) &
       write(IMAIN,*) 'Max norm of vector field in solid (elastic) = ', displnorm_all_glob
@@ -142,7 +142,7 @@
       displnorm_all = 0._CUSTOM_REAL
     endif
 
-    ! master collects norm from all processes
+    ! main collects norm from all processes
     call max_all_cr(displnorm_all, displnorm_all_glob)
     if (myrank == 0) &
       write(IMAIN,*) 'Max norm of vector field in solid (poroelastic) = ',displnorm_all_glob
@@ -161,7 +161,7 @@
       displnorm_all = 0._CUSTOM_REAL
     endif
 
-    ! master collects norm from all processes
+    ! main collects norm from all processes
     call max_all_cr(displnorm_all, displnorm_all_glob)
     if (myrank == 0) &
       write(IMAIN,*) 'Max norm of vector field in fluid (poroelastic) = ',displnorm_all_glob
@@ -187,7 +187,7 @@
       displnorm_all = 0._CUSTOM_REAL
     endif
 
-    ! master collects norm from all processes
+    ! main collects norm from all processes
     call max_all_cr(displnorm_all, displnorm_all_glob)
     if (myrank == 0) &
       write(IMAIN,*) 'Max absolute value of scalar field in fluid (acoustic) = ',displnorm_all_glob

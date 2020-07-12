@@ -46,7 +46,7 @@
   ! initializes
   call read_parameter_file_init()
 
-  ! only master process reads in Par_file
+  ! only main process reads in Par_file
   if (myrank == 0) then
 
     ! user output
@@ -118,7 +118,7 @@
     call close_parameter_file()
   endif
 
-  ! master process broadcasts to all
+  ! main process broadcasts to all
   ! note: this is only needed at the moment for the solver to setup a simulation run
   if (BROADCAST_AFTER_READ) then
 
@@ -1587,7 +1587,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine open_parameter_file_from_master_only()
+  subroutine open_parameter_file_from_main_only()
 
   use constants, only: MAX_STRING_LEN,IN_DATA_FILES
 
@@ -1600,7 +1600,7 @@
   filename_main = IN_DATA_FILES(1:len_trim(IN_DATA_FILES))//'Par_file'
 
 ! also see if we are running several independent runs in parallel
-! to do so, add the right directory for that run for the master process only here
+! to do so, add the right directory for that run for the main process only here
   filename_run0001 = 'run0001/'//filename_main(1:len_trim(filename_main))
   call param_open(filename_main, len(filename_main), ier)
   if (ier == 0) then
@@ -1633,7 +1633,7 @@
     endif
   endif
 
-  end subroutine open_parameter_file_from_master_only
+  end subroutine open_parameter_file_from_main_only
 
 !
 !-------------------------------------------------------------------------------------------------

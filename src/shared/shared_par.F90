@@ -432,7 +432,7 @@ module shared_parameters
   integer, dimension(:), allocatable :: nz_layer
 
   ! seismogram output
-  logical, parameter :: WRITE_SEISMOGRAMS_BY_MASTER = .true.
+  logical, parameter :: WRITE_SEISMOGRAMS_BY_MAIN = .true.
 
 end module shared_parameters
 

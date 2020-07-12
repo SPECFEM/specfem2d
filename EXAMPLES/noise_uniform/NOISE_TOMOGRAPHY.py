@@ -240,7 +240,7 @@ def NOISE_TOMOGRAPHY(NSTEP=None,dt=None,Tmin=None,Tmax=None,NOISE_MODEL=None,sho
     ## prepare source time function for ensemble forward source -- S_squared
     print('  preparing source time function S_squared:\n    NSTEP = %i / dt = %f' % (NSTEP,dt))
     # the file S_squared should be put into directory ./NOISE_TOMOGRAPHY/
-    # together with other two files: irec_master_noise & nu_master
+    # together with other two files: irec_main_noise & nu_main
     S_squared = zeros((NSTEP,2))
 
     # second column: source time function
