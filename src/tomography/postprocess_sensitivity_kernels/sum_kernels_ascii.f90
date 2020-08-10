@@ -60,8 +60,7 @@
 
 program sum_kernels_ascii
 
-  use postprocess_par, only: MAX_STRING_LEN, MAX_KERNEL_PATHS, MAX_KERNEL_NAMES, &
-    IIN
+  use postprocess_par, only: MAX_STRING_LEN, MAX_KERNEL_PATHS, IIN
 
   implicit none
 
@@ -72,7 +71,7 @@ program sum_kernels_ascii
   double precision, allocatable, dimension(:) :: kernel_sum1, kernel_sum2, kernel_sum3
   double precision, allocatable, dimension(:,:) :: coord
   character(len=MAX_STRING_LEN) :: input_file, output_dir, kernel_name
-  character(len=MAX_STRING_LEN) :: kernel_paths(MAX_KERNEL_PATHS)
+  character(len=MAX_STRING_LEN),dimension(:),allocatable :: kernel_paths
   character(len=MAX_STRING_LEN) :: filename, arg(2), line
   integer :: ier
   double precision :: dummy1, dummy2
@@ -86,6 +85,11 @@ program sum_kernels_ascii
     print *
     call stop_the_code('Please check command line arguments')
   endif
+
+  ! allocates array
+  allocate(kernel_paths(MAX_KERNEL_PATHS),stat=ier)
+  if (ier /= 0) stop 'Error allocating kernel_paths array'
+  kernel_paths(:) = ''
 
   ! parse command line arguments
   do i = 1, NARGS

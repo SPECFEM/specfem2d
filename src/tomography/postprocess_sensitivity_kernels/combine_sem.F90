@@ -65,7 +65,7 @@ program combine_sem
 
   implicit none
 
-  character(len=MAX_STRING_LEN) :: kernel_paths(MAX_KERNEL_PATHS), kernel_names(MAX_KERNEL_NAMES)
+  character(len=MAX_STRING_LEN),dimension(:),allocatable :: kernel_paths, kernel_names
   character(len=MAX_STRING_LEN) :: kernel_names_comma_delimited
   character(len=MAX_STRING_LEN) :: line,filename,output_dir,input_file
   character(len=MAX_STRING_LEN) :: arg(3)
@@ -91,6 +91,13 @@ program combine_sem
     endif
   endif
 
+  ! allocates arrays
+  allocate(kernel_paths(MAX_KERNEL_PATHS), kernel_names(MAX_KERNEL_NAMES), stat=ier)
+  if (ier /= 0) stop 'Error allocating kernel_paths array'
+  kernel_paths(:) = ''
+  kernel_names(:) = ''
+
+  ! parse command line arguments
   do i = 1, 3
     call get_command_argument(i,arg(i), status=ier)
   enddo
