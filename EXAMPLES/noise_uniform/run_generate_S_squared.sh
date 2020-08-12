@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # get the number of time steps, ignoring comments in the Par_file
-NSTEP=`grep '^NSTEP ' DATA/Par_file_noise_1 | grep -v -E '^[[:space:]]*#' | cut -d = -f 2`
-DT=`grep '^DT ' DATA/Par_file_noise_1 | grep -v -E '^[[:space:]]*#' | cut -d = -f 2`
+NSTEP=`grep '^NSTEP ' DATA/Par_file | grep -v -E '^[[:space:]]*#' | cut -d = -f 2`
+DT=`grep '^DT ' DATA/Par_file | grep -v -E '^[[:space:]]*#' | cut -d = -f 2`
 
 noise_nstep=$((2*NSTEP - 1))
 noise_model=NLNM

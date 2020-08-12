@@ -78,7 +78,11 @@ echo "##                                           ##"
 echo "## noise simulation: step 1                  ##"
 echo "##                                           ##"
 echo "###############################################"
-cp -v DATA/Par_file_noise_1  DATA/Par_file
+# Par_file settings
+sed -i "s:^SIMULATION_TYPE .*:SIMULATION_TYPE = 1:" DATA/Par_file
+sed -i "s:^NOISE_TOMOGRAPHY .*:NOISE_TOMOGRAPHY = 1:" DATA/Par_file
+sed -i "s:^SAVE_FORWARD .*:SAVE_FORWARD = .false.:" DATA/Par_file
+cp -v DATA/Par_file  DATA/Par_file_noise_1
 echo
 
 # Get the number of processors
@@ -120,15 +124,18 @@ if [[ $? -ne 0 ]]; then exit 1; fi
 
 # backup
 mkdir -p OUTPUT_ALL/step_1
-mv OUTPUT_FILES/*image*.jpg  OUTPUT_ALL/step_1
-mv OUTPUT_FILES/*.semd       OUTPUT_ALL/step_1
-mv OUTPUT_FILES/plot*        OUTPUT_ALL/step_1
-mv OUTPUT_FILES/output*.log  OUTPUT_ALL/step_1
-mv DATA/Par_file             OUTPUT_ALL/step_1
 
-mv OUTPUT_FILES/mask*        OUTPUT_ALL/
-mv OUTPUT_FILES/mesh_????    OUTPUT_ALL/
-mv OUTPUT_FILES/model*       OUTPUT_ALL/
+echo
+mv -v OUTPUT_FILES/*image*.jpg  OUTPUT_ALL/step_1
+mv -v OUTPUT_FILES/*.semd       OUTPUT_ALL/step_1
+mv -v OUTPUT_FILES/plot*        OUTPUT_ALL/step_1
+mv -v OUTPUT_FILES/output*.log  OUTPUT_ALL/step_1
+cp -v DATA/Par_file             OUTPUT_ALL/step_1
+
+mv -v OUTPUT_FILES/mask*        OUTPUT_ALL/
+mv -v OUTPUT_FILES/mesh_????    OUTPUT_ALL/
+mv -v OUTPUT_FILES/model*       OUTPUT_ALL/
+echo
 
 ##
 ## simulation 2
@@ -138,7 +145,11 @@ echo "##                                           ##"
 echo "## noise simulation: step 2                  ##"
 echo "##                                           ##"
 echo "###############################################"
-cp -v DATA/Par_file_noise_2  DATA/Par_file
+# Par_file settings
+sed -i "s:^SIMULATION_TYPE .*:SIMULATION_TYPE = 1:" DATA/Par_file
+sed -i "s:^NOISE_TOMOGRAPHY .*:NOISE_TOMOGRAPHY = 2:" DATA/Par_file
+sed -i "s:^SAVE_FORWARD .*:SAVE_FORWARD = .true.:" DATA/Par_file
+cp -v DATA/Par_file  DATA/Par_file_noise_2
 echo
 
 # Get the number of processors
@@ -181,10 +192,12 @@ if [[ $? -ne 0 ]]; then exit 1; fi
 # backup
 mkdir -p OUTPUT_ALL/step_2
 
-mv OUTPUT_FILES/*image*.jpg  OUTPUT_ALL/step_2
-cp OUTPUT_FILES/*.semd       OUTPUT_ALL/step_2
-mv OUTPUT_FILES/output*.log  OUTPUT_ALL/step_2
-mv DATA/Par_file             OUTPUT_ALL/step_2
+echo
+mv -v OUTPUT_FILES/*image*.jpg  OUTPUT_ALL/step_2
+cp -v OUTPUT_FILES/*.semd       OUTPUT_ALL/step_2
+mv -v OUTPUT_FILES/output*.log  OUTPUT_ALL/step_2
+cp -v DATA/Par_file             OUTPUT_ALL/step_2
+echo
 
 ##
 ## adjoint source
@@ -254,7 +267,11 @@ echo "##                                           ##"
 echo "## noise simulation: step 3                  ##"
 echo "##                                           ##"
 echo "###############################################"
-cp -v DATA/Par_file_noise_3  DATA/Par_file
+# Par_file settings
+sed -i "s:^SIMULATION_TYPE .*:SIMULATION_TYPE = 3:" DATA/Par_file
+sed -i "s:^NOISE_TOMOGRAPHY .*:NOISE_TOMOGRAPHY = 3:" DATA/Par_file
+sed -i "s:^SAVE_FORWARD .*:SAVE_FORWARD = .false.:" DATA/Par_file
+cp -v DATA/Par_file  DATA/Par_file_noise_3
 echo
 
 # Get the number of processors
@@ -296,14 +313,16 @@ if [[ $? -ne 0 ]]; then exit 1; fi
 
 # backup
 mkdir -p OUTPUT_ALL/step_3
-cp OUTPUT_FILES/*image*.jpg  OUTPUT_ALL/step_3
-cp OUTPUT_FILES/*.semd       OUTPUT_ALL/step_3
-cp OUTPUT_FILES/output*.log  OUTPUT_ALL/step_3
-cp SEM/*Y.adj                OUTPUT_ALL/step_3
-cp DATA/Par_file             OUTPUT_ALL/step_3
-# kernels
-cp OUTPUT_FILES/proc*        OUTPUT_ALL/
 
+echo
+cp -v OUTPUT_FILES/*image*.jpg  OUTPUT_ALL/step_3
+cp -v OUTPUT_FILES/*.semd       OUTPUT_ALL/step_3
+cp -v OUTPUT_FILES/output*.log  OUTPUT_ALL/step_3
+cp -v SEM/*Y.adj                OUTPUT_ALL/step_3
+cp -v DATA/Par_file             OUTPUT_ALL/step_3
+# kernels
+cp -v OUTPUT_FILES/proc*        OUTPUT_ALL/
+echo
 
 echo
 echo "see results in directory: OUTPUT_ALL/"

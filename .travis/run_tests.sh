@@ -105,6 +105,7 @@ else
     ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS}
   fi
 fi
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # (default already) we output to console
 #sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
@@ -121,6 +122,7 @@ echo -en 'travis_fold:end:configure\\r'
 echo 'Build...' && echo -en 'travis_fold:start:build\\r'
 echo "compilation:"
 make clean; make -j2 all
+if [[ $? -ne 0 ]]; then exit 1; fi
 echo -en 'travis_fold:end:build\\r'
 
 
@@ -184,8 +186,10 @@ else
     # seismogram comparison
     my_test
   fi
+  if [[ $? -ne 0 ]]; then exit 1; fi
   cd $WORKDIR
 fi
+if [[ $? -ne 0 ]]; then exit 1; fi
 echo -en 'travis_fold:end:tests\\r'
 
 
@@ -200,8 +204,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
   ## testing noise example
   ##
   cd EXAMPLES/noise_uniform/
-  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file_noise_1
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
@@ -215,6 +220,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
   cd EXAMPLES/Tape2007/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
@@ -230,6 +236,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
   sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   my_test
   cd $WORKDIR
 fi
@@ -243,6 +250,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/Gmsh_example_Stacey_MPI/
   sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # tests mesh quality output
   awk '{if(NR==1){dy=sqrt(($2-13.3242693)^2);if(dy>1.e-5){print $0,"failed",dy;exit 1;}else{print $0,"good",dy;exit 0;}}}' OUTPUT_FILES/mesh_quality_histogram.txt
   if [[ $? -ne 0 ]]; then exit 1; fi
@@ -259,6 +267,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/Tromp2005_kernel/
   sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   ./run_this_example_kernel.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # no kernel value testing: only execution failure
   #my_test_kernel
   cd $WORKDIR
@@ -273,6 +282,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/poroelastic_acoustic/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
@@ -287,6 +297,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
@@ -300,6 +311,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
@@ -313,6 +325,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/Industrial_Format_SEP/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
@@ -330,6 +343,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   sed -i "s:28:7:g" DATA/Par_file
   sed -i "s:28:7:g" DATA/interfaces_Rayleigh_flat.dat
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
@@ -343,6 +357,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/fluid_solid/fluid_solid_external_mesh/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
@@ -356,6 +371,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/initial_mode_LDDRK
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
@@ -371,6 +387,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   sed -i "s:^NO_BACKWARD_RECONSTRUCTION .*:NO_BACKWARD_RECONSTRUCTION = .true.:" DATA/Par_file
   sed -i "s:^NSTEP_BETWEEN_COMPUTE_KERNELS .*:NSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
   ./run_this_example_kernel.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # no kernel value testing: only execution failure
   #my_test_kernel
   cd $WORKDIR
@@ -385,6 +402,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/moving_sources_acoustic/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
@@ -398,6 +416,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/anisotropic_isotropic_model/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
