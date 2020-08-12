@@ -13,9 +13,9 @@ echo "plotting kernel: $file"
 # example proc000000_rhop_alpha_beta_kernel.dat  -> rhop
 filename=`basename $file`
 kernelrho=`echo "$filename" | cut -d '_' -f 2`
-# sets image name 
+# sets image name
 if [ "$kernelrho" == "rhop" ]; then
-  imagename=image_rhop_alpha_beta_kernels.png 
+  imagename=image_rhop_alpha_beta_kernels.png
 else
   imagename=image_rho_kappa_mu_kernels.png
 fi
