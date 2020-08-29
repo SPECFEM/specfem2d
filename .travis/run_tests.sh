@@ -29,6 +29,7 @@ case "$TESTDIR" in
 18) dir=EXAMPLES/initial_mode_LDDRK/ ;;
 19) dir=EXAMPLES/moving_sources_acoustic/ ;;
 20) dir=EXAMPLES/anisotropic_isotropic_model/ ;;
+21) dir=EXAMPLES/infinite_homogeneous_moment_tensor_vertical_dip_slip/ ;;
 *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
 esac
 
@@ -225,6 +226,20 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.tape\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.moment_tensor\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
+  ##
+  ## testing infinite_homogeneous_moment_tensor_vertical_dip_slip example
+  ##
+  cd EXAMPLES/infinite_homogeneous_moment_tensor_vertical_dip_slip/
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.moment_tensor\\r'
 
 # second coverage tester (with mpi)
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.semi_infinite\\r'
