@@ -46,8 +46,8 @@
   double precision,intent(in) :: ATTENUATION_f0_REFERENCE
 
   integer,intent(in) :: N_SLS
-  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: inv_tau_sigma_nu1_sent,phi_nu1_sent
-  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: inv_tau_sigma_nu2_sent,phi_nu2_sent
+  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: inv_tau_sigma_nu1_sent,phi_nu1_sent  ! bulk attenuation (Qkappa)
+  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: inv_tau_sigma_nu2_sent,phi_nu2_sent  ! shear attenuation (Qmu)
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: tau_epsilon_nu1_sent,tau_epsilon_nu2_sent
   real(kind=CUSTOM_REAL),intent(out) :: Mu_nu1_sent,Mu_nu2_sent
 
@@ -281,20 +281,24 @@
   xtmp2_nu2 = ONE
 
   do i_sls = 1,N_SLS
+    ! shear attenuation
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls) - ONE
-     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2(i_sls) - ONE
-     xtmp1_nu2 = xtmp1_nu2 + xtmp_ak_nu2/N_SLS
-     xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + ONE/(TWO * PI * ATTENUATION_f0_REFERENCE / inv_tau_sigma_nu2(i_sls))**2)/N_SLS
+    xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2(i_sls) - ONE
+    xtmp1_nu2 = xtmp1_nu2 + xtmp_ak_nu2/N_SLS
+    xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + ONE/(TWO * PI * ATTENUATION_f0_REFERENCE / inv_tau_sigma_nu2(i_sls))**2)/N_SLS
 
+    ! bulk attenuation
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls) - ONE
-     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1(i_sls) - ONE
-     xtmp1_nu1 = xtmp1_nu1 + xtmp_ak_nu1/N_SLS
-     xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + ONE/(TWO * PI * ATTENUATION_f0_REFERENCE / inv_tau_sigma_nu1(i_sls))**2)/N_SLS
+    xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1(i_sls) - ONE
+    xtmp1_nu1 = xtmp1_nu1 + xtmp_ak_nu1/N_SLS
+    xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + ONE/(TWO * PI * ATTENUATION_f0_REFERENCE / inv_tau_sigma_nu1(i_sls))**2)/N_SLS
   enddo
 
+  ! shear attenuation
   factor_mu = xtmp1_nu2/xtmp2_nu2
   mu    = mu    * factor_mu
 
+  ! bulk attenuation
   factor_kappa = xtmp1_nu1/xtmp2_nu1
   kappa = kappa * factor_kappa
 

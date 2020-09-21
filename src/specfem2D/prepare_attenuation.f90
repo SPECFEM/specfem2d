@@ -61,13 +61,14 @@
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'Attenuation:'
-    write(IMAIN,*) '  viscoelastic  attenuation:',ATTENUATION_VISCOELASTIC
-    write(IMAIN,*) '  viscoacoustic attenuation:',ATTENUATION_VISCOACOUSTIC
+    write(IMAIN,*) '  viscoelastic  attenuation:',ATTENUATION_VISCOELASTIC,'(shear & bulk attenuation in elastic domains)'
+    write(IMAIN,*) '  viscoacoustic attenuation:',ATTENUATION_VISCOACOUSTIC,'(bulk attenuation in acoustic domains)'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
 
-  ! array allocations
+  ! attenuation array allocations
+  ! elastic domains
   if (ATTENUATION_VISCOELASTIC) then
     nspec_ATT_el = nspec
   else
@@ -86,7 +87,7 @@
            A_newmark_nu2(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
            B_newmark_nu2(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), stat=ier)
 
-  ! attenuation
+  ! acoustic domains
   if (ATTENUATION_VISCOACOUSTIC) then
     nglob_ATT = nglob
     nspec_ATT_ac = nspec
@@ -159,6 +160,7 @@
   sum_forces_old = 0._CUSTOM_REAL
 
   if (SIMULATION_TYPE == 3) then
+    ! acoustic domains
     if (any_acoustic) then
       allocate(b_e1_acous_sf(N_SLS,NGLLX,NGLLZ,nspec_ATT_ac), &
                b_sum_forces_old(NGLLX,NGLLZ,nspec_ATT_ac),stat=ier)
@@ -166,6 +168,7 @@
       b_e1_acous_sf(:,:,:,:) = 0._CUSTOM_REAL
       b_sum_forces_old(:,:,:) = 0._CUSTOM_REAL
     endif
+    ! elastic domains
     if (any_elastic) then
       allocate(b_e1(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
                b_e11(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
@@ -184,6 +187,7 @@
   endif
 
   if (time_stepping_scheme == 2) then
+    ! elastic domains
     if (ATTENUATION_VISCOELASTIC) then
       allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
       allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
@@ -193,7 +197,7 @@
       allocate(e11_LDDRK(1,1,1,1))
       allocate(e13_LDDRK(1,1,1,1))
     endif
-
+    ! acoustic domains
     if (ATTENUATION_VISCOACOUSTIC) then
         allocate(e1_LDDRK_acous(nglob_att,N_SLS))
     else
@@ -213,13 +217,14 @@
   e1_LDDRK_acous(:,:) = 0._CUSTOM_REAL
 
   if (time_stepping_scheme == 3) then
+    ! elastic domains
     allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
     allocate(e11_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
     allocate(e13_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
     allocate(e1_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
     allocate(e11_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
     allocate(e13_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
-
+    ! acoustic domains
     if (ATTENUATION_VISCOACOUSTIC) then
       allocate(e1_initial_rk_acous(nglob_att,N_SLS))
       allocate(e1_force_rk_acous(nglob_att,N_SLS,stage_time_scheme))
@@ -337,8 +342,11 @@
 
       ! get values for internal meshes
       if (.not. assign_external_model) then
+        ! bulk attenuation
         qkappal = QKappa_attenuationcoef(kmato(ispec))
+        ! shear attenuation
         qmul = Qmu_attenuationcoef(kmato(ispec))
+
         ! if no attenuation in that elastic element
         if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
 
@@ -353,8 +361,9 @@
 
           ! get values for external meshes
           if (assign_external_model) then
-
+            ! bulk attenuation
             qkappal = QKappa_attenuationext(i,j,ispec)
+            ! shear attenuation
             qmul = Qmu_attenuationext(i,j,ispec)
 
             ! if no attenuation in that elastic element
@@ -367,10 +376,12 @@
           endif
 
           ! stores attenuation values
+          ! bulk attenuation (Qkappa)
           inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
           tau_epsilon_nu1(i,j,ispec,:) = tau_epsilon_nu1_sent(:)
           phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
 
+          ! shear attenuation (Qmu)
           inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:)
           tau_epsilon_nu2(i,j,ispec,:) = tau_epsilon_nu2_sent(:)
           phi_nu2(i,j,ispec,:) = phi_nu2_sent(:)
@@ -378,7 +389,9 @@
           Mu_nu1(i,j,ispec) = Mu_nu1_sent
           Mu_nu2(i,j,ispec) = Mu_nu2_sent
 
+          ! acoustic domains
           if (ATTENUATION_VISCOACOUSTIC .and. USE_A_STRONG_FORMULATION_FOR_E1 .and. time_stepping_scheme == 1 ) then
+            ! bulk attenuation (Qkappa)
             phinu(:)    = phi_nu1(i,j,ispec,:)
             tauinvnu(:) = inv_tau_sigma_nu1(i,j,ispec,:)
             temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
@@ -387,7 +400,9 @@
             B_newmark_e1_sf(:,i,j,ispec) = phinu(:) * coef(:)
           endif
 
+          ! elastic domains
           if (ATTENUATION_VISCOELASTIC .and. time_stepping_scheme == 1 ) then
+            ! bulk attenuation (Qkappa)
             phinu(:)    = phi_nu1(i,j,ispec,:)
             tauinvnu(:) = inv_tau_sigma_nu1(i,j,ispec,:)
             temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
@@ -395,6 +410,7 @@
             A_newmark_nu1(:,i,j,ispec) = temp(:)
             B_newmark_nu1(:,i,j,ispec) = phinu(:) * coef(:)
 
+            ! shear attenuation (Qmu)
             phinu(:)    = phi_nu2(i,j,ispec,:)
             tauinvnu(:) = inv_tau_sigma_nu2(i,j,ispec,:)
             temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
