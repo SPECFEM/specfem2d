@@ -834,7 +834,8 @@ module specfem_par_movie
 
   implicit none
 
-  double precision, dimension(:,:), allocatable :: flagrange,xinterp,zinterp,Uxinterp,Uzinterp
+  double precision, dimension(:,:), allocatable :: flagrange
+  double precision, dimension(:,:), allocatable :: xinterp,zinterp,Uxinterp,Uzinterp
   double precision, dimension(:,:), allocatable :: vector_field_display
 
   double precision, dimension(:,:,:), allocatable :: shape2D_display

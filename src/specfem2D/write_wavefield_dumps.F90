@@ -270,7 +270,8 @@
       ! Start gathering with proc 0 data
       dump_gather(:,1:dump_recv_counts(0)) = dump_recv(:,1:dump_recv_counts(0))
       gcounter = dump_recv_counts(0)
-      ! The receiver counts dump_recv_counts has already been found and stored and these does not change from first to subsequent dumps.
+      ! The receiver counts dump_recv_counts has already been found and stored
+      ! and these does not change from first to subsequent dumps.
       do iproc = 1, NPROC-1
         call recv_dp(dump_recv(1,1),2*dump_recv_counts(iproc), iproc, 43)
         dump_gather(:,gcounter+1:gcounter+dump_recv_counts(iproc)) = dump_recv(:,1:dump_recv_counts(iproc))

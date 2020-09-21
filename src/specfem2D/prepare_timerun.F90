@@ -305,6 +305,7 @@
   allocate(shape2D_display(ngnod,pointsdisp,pointsdisp), &
            dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating shape arrays for display')
+  shape2D_display(:,:,:) = 0.d0; dershape2D_display(:,:,:,:) = 0.d0
 
   ! computes shape functions and their derivatives for regular interpolated display grid
   do j = 1,pointsdisp
@@ -318,11 +319,14 @@
   ! for postscript snapshots
   ! arrays for display images as snapshot postscript images
   allocate(flagrange(NGLLX,pointsdisp))
+  flagrange(:,:) = 0.d0
+
   if (AXISYM) then
     allocate(flagrange_GLJ(NGLJ,pointsdisp))
   else
     allocate(flagrange_GLJ(1,1))
   endif
+  flagrange_GLJ(:,:) = 0.d0
 
   ! compute Lagrange interpolants on a regular interpolated grid in (xi,gamma)
   ! for display (assumes NGLLX = NGLLZ)
@@ -338,12 +342,13 @@
   allocate(zinterp(pointsdisp,pointsdisp))
   allocate(Uxinterp(pointsdisp,pointsdisp))
   allocate(Uzinterp(pointsdisp,pointsdisp))
+  xinterp(:,:) = 0.d0; zinterp(:,:) = 0.d0
+  Uxinterp(:,:) = 0.d0; Uzinterp(:,:) = 0.d0
 
   ! to display the whole vector field (it needs to be computed from the potential in acoustic elements,
   ! thus it does not exist as a whole in case of simulations that contain some acoustic elements
   ! and it thus needs to be computed specifically for display purposes)
   allocate(vector_field_display(NDIM,nglob))
-
   ! when periodic boundary conditions are on, some global degrees of freedom are going to be removed,
   ! thus we need to set this array to zero otherwise some of its locations may contain random values
   ! if the memory is not cleaned
@@ -425,12 +430,14 @@
     if (ier /= 0) call stop_the_code('error in an allocate statement 1')
     allocate(image_color_vp_display(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
     if (ier /= 0) call stop_the_code('error in an allocate statement 2')
+    image_color_data(:,:) = 0.d0; image_color_vp_display(:,:) = 0.d0
 
     ! allocate an array for the grid point that corresponds to a given image data point
     allocate(iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
     if (ier /= 0) call stop_the_code('error in an allocate statement 3')
     allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
     if (ier /= 0) call stop_the_code('error in an allocate statement 4')
+    iglob_image_color(:,:) = 0; copy_iglob_image_color(:,:) = 0
 
     !remember which image are going to produce
     if (USE_SNAPSHOT_NUMBER_IN_FILENAME) then
@@ -444,7 +451,7 @@
     ! creating and filling array num_pixel_loc with the positions of each colored
     ! pixel owned by the local process (useful for parallel jobs)
     allocate(num_pixel_loc(nb_pixel_loc))
-
+    num_pixel_loc(:) = 0
     ipixel = 0
     do i = 1, NX_IMAGE_color
        do j = 1, NZ_IMAGE_color
@@ -470,9 +477,11 @@
     if (myrank == 0) then
       allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),NPROC))
       allocate(data_pixel_recv(maxval(nb_pixel_per_proc(:))))
+      num_pixel_recv(:,:) = 0; data_pixel_recv(:) = 0.d0
     endif
-
     allocate(data_pixel_send(nb_pixel_loc))
+    data_pixel_send(:) = 0.d0
+
     if (NPROC > 1) then
       if (myrank == 0) then
         ! main collects
@@ -674,12 +683,17 @@
     ! allocates temporary arrays for wavefield outputs
     allocate(dump_send(d1_dump_send, d2_dump_send))
     allocate(dump_recv(d1_dump_recv, d2_dump_recv))
+    dump_send(:,:) = 0.d0
+    dump_recv(:,:) = 0.d0
 
     allocate(dump_duplicate_send(d2_dump_send))
     allocate(dump_duplicate_recv(d2_dump_recv))
+    dump_duplicate_send(:) = .false.
+    dump_duplicate_recv(:) = .false.
 
     allocate(dump_recv_counts(0:NPROC-1),stat=ier)
     if (ier /= 0) call stop_the_code('Error allocating wavefield_dumps arrays')
+    dump_recv_counts(:) = 0
 
     this_is_the_first_time_we_dump = .true.
 

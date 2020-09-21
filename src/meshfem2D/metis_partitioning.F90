@@ -72,11 +72,13 @@
   edgecut = 0
 
 #ifdef USE_METIS
-  call METIS_PartGraphRecursive(nelmnts, xadj(0), adjncy(0), elmnts_load(0), adjwgt(0), wgtflag, remove_min_to_start_at_zero, nparts, &
-      metis_options, edgecut, part(0))
+  call METIS_PartGraphRecursive(nelmnts, xadj(0), adjncy(0), elmnts_load(0), adjwgt(0), &
+                                wgtflag, remove_min_to_start_at_zero, nparts, &
+                                metis_options, edgecut, part(0))
 
-  !call METIS_PartGraphVKway(nelmnts, xadj(0), adjncy(0), elmnts_load(0), adjwgt(0), wgtflag, remove_min_to_start_at_zero, nparts, &
-  !     options, edgecut, part(0))
+  !call METIS_PartGraphVKway(nelmnts, xadj(0), adjncy(0), elmnts_load(0), adjwgt(0), &
+  !                          wgtflag, remove_min_to_start_at_zero, nparts, &
+  !                          options, edgecut, part(0))
 #else
   ! safety stop
   write(IMAIN,*) 'This version of SPECFEM was not compiled with support of METIS.'
