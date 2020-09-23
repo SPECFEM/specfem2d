@@ -176,17 +176,21 @@
 
   subroutine prepare_timerun_constants()
 
-  use constants, only: HALF,ZERO
+  use constants, only: HALF,CUSTOM_REAL
   use specfem_par
 
   implicit none
 
-  ! local parameters
-  integer :: ier
-
   ! defines coefficients of the Newmark time scheme
-  deltatover2 = HALF * deltat
-  deltatsquareover2 = HALF * deltat * deltat
+  !
+  ! note: whenever possible, we will use deltat,.. values with CUSTOM_REAL precision to avoid implicit conversions
+  !       when multiplying with custom_real wavefields etc.
+  !
+  !       DT will be kept in double precision and used when higher accuracy is needed or for non-critical computation
+  !       (e.g., determining time for seismogram trace outputs)
+  deltat = real(DT,kind=CUSTOM_REAL)
+  deltatover2 = real(HALF * deltat,kind=CUSTOM_REAL)
+  deltatsquareover2 = real(HALF * deltat * deltat,kind=CUSTOM_REAL)
 
   !  define coefficients of the Newmark time scheme for the backward wavefield
   if (SIMULATION_TYPE == 3) then
@@ -198,34 +202,14 @@
     else
       ! reconstructed wavefield moves backward in time from last snapshot
       b_deltat = - deltat
-      b_deltatover2 = HALF * b_deltat
-      b_deltatsquareover2 = HALF * b_deltat * b_deltat
+      b_deltatover2 = real(HALF * b_deltat,kind=CUSTOM_REAL)
+      b_deltatsquareover2 = real(HALF * b_deltat * b_deltat,kind=CUSTOM_REAL)
     endif
   else
     ! will not be used, but initialized
     b_deltat = 0._CUSTOM_REAL
     b_deltatover2 = 0._CUSTOM_REAL
     b_deltatsquareover2 = 0._CUSTOM_REAL
-  endif
-
-  ! seismograms
-  allocate(seismo_current(NSIGTYPE),seismo_offset(NSIGTYPE))
-
-  ! allocate seismogram arrays
-  allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc,NSIGTYPE), &
-           sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc,NSIGTYPE), &
-           siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc,NSIGTYPE),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating seismogram arrays')
-
-  sisux(:,:,:) = ZERO ! double precision zero
-  sisuz(:,:,:) = ZERO
-  siscurl(:,:,:) = ZERO
-
-  ! Check SU_FORMAT
-  if (SU_FORMAT .and. (NSTEP/subsamp_seismos > 32768)) then
-    print *
-    print *,"!!! BEWARE !!! Two many samples for SU format ! The .su file created won't be usable"
-    print *
   endif
 
   ! synchronizes all processes
@@ -1541,6 +1525,63 @@
              edge_abs(1),stat=ier)
     if (ier /= 0) stop 'error allocating dummy array abs_boundary_ij etc.'
   endif ! STACEY_ABSORBING_CONDITIONS
+
+  ! allocates arrays for backward field
+  if (anyabs .and. STACEY_ABSORBING_CONDITIONS .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) then
+    ! files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
+    ! elastic domains
+    if (any_elastic) then
+      allocate(b_absorb_elastic_left(NDIM,NGLLZ,nspec_left,NSTEP))
+      allocate(b_absorb_elastic_right(NDIM,NGLLZ,nspec_right,NSTEP))
+      allocate(b_absorb_elastic_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
+      allocate(b_absorb_elastic_top(NDIM,NGLLX,nspec_top,NSTEP))
+    endif
+    ! poroelastic domains
+    if (any_poroelastic) then
+      allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_left,NSTEP))
+      allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_right,NSTEP))
+      allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
+      allocate(b_absorb_poro_s_top(NDIM,NGLLX,nspec_top,NSTEP))
+      allocate(b_absorb_poro_w_left(NDIM,NGLLZ,nspec_left,NSTEP))
+      allocate(b_absorb_poro_w_right(NDIM,NGLLZ,nspec_right,NSTEP))
+      allocate(b_absorb_poro_w_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
+      allocate(b_absorb_poro_w_top(NDIM,NGLLX,nspec_top,NSTEP))
+    endif
+    ! acoustic domains
+    if (any_acoustic) then
+      allocate(b_absorb_acoustic_left(NGLLZ,nspec_left,NSTEP))
+      allocate(b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP))
+      allocate(b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP))
+      allocate(b_absorb_acoustic_top(NGLLX,nspec_top,NSTEP))
+    endif
+  else
+    ! dummy arrays
+    ! elastic domains
+    if (.not. allocated(b_absorb_elastic_left)) then
+      allocate(b_absorb_elastic_left(1,1,1,1))
+      allocate(b_absorb_elastic_right(1,1,1,1))
+      allocate(b_absorb_elastic_bottom(1,1,1,1))
+      allocate(b_absorb_elastic_top(1,1,1,1))
+    endif
+    ! poroelastic domains
+    if (.not. allocated(b_absorb_poro_s_left)) then
+      allocate(b_absorb_poro_s_left(1,1,1,1))
+      allocate(b_absorb_poro_s_right(1,1,1,1))
+      allocate(b_absorb_poro_s_bottom(1,1,1,1))
+      allocate(b_absorb_poro_s_top(1,1,1,1))
+      allocate(b_absorb_poro_w_left(1,1,1,1))
+      allocate(b_absorb_poro_w_right(1,1,1,1))
+      allocate(b_absorb_poro_w_bottom(1,1,1,1))
+      allocate(b_absorb_poro_w_top(1,1,1,1))
+    endif
+    ! acoustic domains
+    if (.not. allocated(b_absorb_acoustic_left)) then
+      allocate(b_absorb_acoustic_left(1,1,1))
+      allocate(b_absorb_acoustic_right(1,1,1))
+      allocate(b_absorb_acoustic_bottom(1,1,1))
+      allocate(b_absorb_acoustic_top(1,1,1))
+    endif
+  endif
 
   ! done
   call synchronize_all()

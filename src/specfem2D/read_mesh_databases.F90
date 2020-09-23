@@ -318,8 +318,9 @@
   call process_seismotype_line()
 
   !-------- finish reading init section
+
   ! sets time step for time scheme
-  deltat = DT
+  deltat = real(DT,kind=CUSTOM_REAL)
 
   ! user output
   if (myrank == 0) then
@@ -1064,80 +1065,6 @@
         write(IMAIN,*)
       endif
       call flush_IMAIN()
-    endif
-  endif
-
-  ! allocates arrays
-  if (anyabs) then
-    ! files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
-    if (any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_ABSORBING_CONDITIONS) then
-      allocate(b_absorb_elastic_left(NDIM,NGLLZ,nspec_left,NSTEP))
-      allocate(b_absorb_elastic_right(NDIM,NGLLZ,nspec_right,NSTEP))
-      allocate(b_absorb_elastic_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
-      allocate(b_absorb_elastic_top(NDIM,NGLLX,nspec_top,NSTEP))
-    else
-      allocate(b_absorb_elastic_left(1,1,1,1))
-      allocate(b_absorb_elastic_right(1,1,1,1))
-      allocate(b_absorb_elastic_bottom(1,1,1,1))
-      allocate(b_absorb_elastic_top(1,1,1,1))
-    endif
-    if (any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_ABSORBING_CONDITIONS) then
-      allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_left,NSTEP))
-      allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_right,NSTEP))
-      allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
-      allocate(b_absorb_poro_s_top(NDIM,NGLLX,nspec_top,NSTEP))
-      allocate(b_absorb_poro_w_left(NDIM,NGLLZ,nspec_left,NSTEP))
-      allocate(b_absorb_poro_w_right(NDIM,NGLLZ,nspec_right,NSTEP))
-      allocate(b_absorb_poro_w_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
-      allocate(b_absorb_poro_w_top(NDIM,NGLLX,nspec_top,NSTEP))
-    else
-      allocate(b_absorb_poro_s_left(1,1,1,1))
-      allocate(b_absorb_poro_s_right(1,1,1,1))
-      allocate(b_absorb_poro_s_bottom(1,1,1,1))
-      allocate(b_absorb_poro_s_top(1,1,1,1))
-      allocate(b_absorb_poro_w_left(1,1,1,1))
-      allocate(b_absorb_poro_w_right(1,1,1,1))
-      allocate(b_absorb_poro_w_bottom(1,1,1,1))
-      allocate(b_absorb_poro_w_top(1,1,1,1))
-    endif
-    if (any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_ABSORBING_CONDITIONS) then
-      allocate(b_absorb_acoustic_left(NGLLZ,nspec_left,NSTEP))
-      allocate(b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP))
-      allocate(b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP))
-      allocate(b_absorb_acoustic_top(NGLLX,nspec_top,NSTEP))
-    else
-      allocate(b_absorb_acoustic_left(1,1,1))
-      allocate(b_absorb_acoustic_right(1,1,1))
-      allocate(b_absorb_acoustic_bottom(1,1,1))
-      allocate(b_absorb_acoustic_top(1,1,1))
-    endif
-
-  else
-    ! dummy arrays
-    ! elastic domains
-    if (.not. allocated(b_absorb_elastic_left)) then
-      allocate(b_absorb_elastic_left(1,1,1,1))
-      allocate(b_absorb_elastic_right(1,1,1,1))
-      allocate(b_absorb_elastic_bottom(1,1,1,1))
-      allocate(b_absorb_elastic_top(1,1,1,1))
-    endif
-    ! poroelastic domains
-    if (.not. allocated(b_absorb_poro_s_left)) then
-      allocate(b_absorb_poro_s_left(1,1,1,1))
-      allocate(b_absorb_poro_s_right(1,1,1,1))
-      allocate(b_absorb_poro_s_bottom(1,1,1,1))
-      allocate(b_absorb_poro_s_top(1,1,1,1))
-      allocate(b_absorb_poro_w_left(1,1,1,1))
-      allocate(b_absorb_poro_w_right(1,1,1,1))
-      allocate(b_absorb_poro_w_bottom(1,1,1,1))
-      allocate(b_absorb_poro_w_top(1,1,1,1))
-    endif
-    ! acoustic domains
-    if (.not. allocated(b_absorb_acoustic_left)) then
-      allocate(b_absorb_acoustic_left(1,1,1))
-      allocate(b_absorb_acoustic_right(1,1,1))
-      allocate(b_absorb_acoustic_bottom(1,1,1))
-      allocate(b_absorb_acoustic_top(1,1,1))
     endif
   endif
 
