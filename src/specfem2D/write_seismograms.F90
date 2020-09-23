@@ -60,14 +60,15 @@
   ! checks subsampling recurrence
   if (mod(it-1,subsamp_seismos) == 0) then
 
+    ! update position in seismograms
+    seismo_current = seismo_current + 1
+
+    ! check for edge effects
+    if (seismo_current < 1 .or. seismo_current > nlength_seismogram) &
+      call stop_the_code('Error: seismo_current out of bounds in recording of seismograms')
+
     do i_sig = 1,NSIGTYPE
       seismotype_l = seismotypeVec(i_sig)
-      ! update position in seismograms
-      seismo_current(i_sig) = seismo_current(i_sig) + 1
-
-      ! check for edge effects
-      if (seismo_current(i_sig) < 1 .or. seismo_current(i_sig) > NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos) &
-        call stop_the_code('Error: seismo_current out of bounds in recording of seismograms')
 
       ! updates local receiver records
       if (nrecloc > 0) then
@@ -129,33 +130,27 @@
             ! rotate seismogram components if needed, except if recording pressure, which is a scalar
             if (seismotype_l == 4 .or. seismotype_l == 6) then
               ! pressure/potential type has only single component
-              sisux(seismo_current(i_sig),irecloc,i_sig) = valux
-              sisuz(seismo_current(i_sig),irecloc,i_sig) = ZERO
+              sisux(seismo_current,irecloc,i_sig) = valux
+              sisuz(seismo_current,irecloc,i_sig) = ZERO
             else
               if (P_SV) then
-                sisux(seismo_current(i_sig),irecloc,i_sig) =   cosrot_irec(irecloc)*valux + sinrot_irec(irecloc)*valuz
-                sisuz(seismo_current(i_sig),irecloc,i_sig) = - sinrot_irec(irecloc)*valux + cosrot_irec(irecloc)*valuz
+                sisux(seismo_current,irecloc,i_sig) =   cosrot_irec(irecloc)*valux + sinrot_irec(irecloc)*valuz
+                sisuz(seismo_current,irecloc,i_sig) = - sinrot_irec(irecloc)*valux + cosrot_irec(irecloc)*valuz
               else
-                sisux(seismo_current(i_sig),irecloc,i_sig) = valux
-                sisuz(seismo_current(i_sig),irecloc,i_sig) = ZERO
+                sisux(seismo_current,irecloc,i_sig) = valux
+                sisuz(seismo_current,irecloc,i_sig) = ZERO
               endif
               ! additional curl case
-              if (seismotype_l == 5) siscurl(seismo_current(i_sig),irecloc,i_sig) = valcurl
+              if (seismotype_l == 5) siscurl(seismo_current,irecloc,i_sig) = valcurl
             endif
           enddo ! irecloc
 
         else
           ! on GPU
           ! Simulating seismograms
-          if (USE_TRICK_FOR_BETTER_PRESSURE) then
-            call compute_seismograms_cuda(Mesh_pointer,i_sig,sisux(:,:,i_sig),sisuz(:,:,i_sig),seismo_current(i_sig), &
-                                                       NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
-                                                       ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,1,it,NSTEP)
-          else
-            call compute_seismograms_cuda(Mesh_pointer,i_sig,sisux(:,:,i_sig),sisuz(:,:,i_sig),seismo_current(i_sig), &
-                                                       NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
-                                                       ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,0,it,NSTEP)
-          endif
+          call compute_seismograms_cuda(Mesh_pointer,i_sig,sisux(:,:,i_sig),sisuz(:,:,i_sig), &
+                                        seismo_current,nlength_seismogram, &
+                                        ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,USE_TRICK_FOR_BETTER_PRESSURE,it,NSTEP)
           ! note: curl not implemented yet
         endif ! GPU_MODE
       endif ! nrecloc
@@ -168,16 +163,18 @@
     ! timing
     write_time_begin = wtime()
 
-    do i_sig = 1,NSIGTYPE ! Loop on signal types
+    ! Loop on signal types
+    do i_sig = 1,NSIGTYPE
       seismotype_l = seismotypeVec(i_sig)
 
-      call write_seismograms_to_file(sisux(:,:,i_sig),sisuz(:,:,i_sig),siscurl(:,:,i_sig),seismotype_l,seismo_current(i_sig), &
-                                     seismo_offset(i_sig))
+      call write_seismograms_to_file(sisux(:,:,i_sig),sisuz(:,:,i_sig),siscurl(:,:,i_sig),seismotype_l,seismo_current, &
+                                     seismo_offset)
 
-      ! updates current seismogram offsets
-      seismo_offset(i_sig) = seismo_offset(i_sig) + seismo_current(i_sig)
-      seismo_current(i_sig) = 0
     enddo ! loop on signal types (seismotype)
+
+    ! updates current seismogram offsets
+    seismo_offset = seismo_offset + seismo_current
+    seismo_current = 0
 
     ! user output
     if (myrank == 0) then
@@ -185,7 +182,7 @@
       write_time = wtime() - write_time_begin
       ! output
       write(IMAIN,*)
-      write(IMAIN,*) 'Total number of time steps written: ', it-it_begin+1
+      write(IMAIN,*) 'Total number of time steps done: ', it-it_begin+1
       if (WRITE_SEISMOGRAMS_BY_MAIN) then
         write(IMAIN,*) 'Writing the seismograms by main proc alone took ',sngl(write_time),' seconds'
       else
@@ -204,15 +201,15 @@
 
   use constants, only: NDIM,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME,OUTPUT_FILES, RegInt_K
 
-  use specfem_par, only: station_name,network_name,NSTEP,islice_selected_rec,nrec,myrank,deltat,t0, &
-                         NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos,nrecloc, &
+  use specfem_par, only: station_name,network_name,NSTEP,islice_selected_rec,nrec,myrank,DT,t0, &
+                         subsamp_seismos,nrecloc,nlength_seismogram, &
                          P_SV,SU_FORMAT,save_ASCII_seismograms, &
                          save_binary_seismograms_single,save_binary_seismograms_double,x_source,z_source, &
                          WRITE_SEISMOGRAMS_BY_MAIN
 
   implicit none
 
-  double precision,dimension(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc),intent(in) :: sisux_l,sisuz_l,siscurl_l
+  double precision,dimension(nlength_seismogram,nrecloc),intent(in) :: sisux_l,sisuz_l,siscurl_l
   integer,intent(in) :: seismotype_l,seismo_current_l,seismo_offset_l
 
   ! local parameters
@@ -467,7 +464,7 @@
             do isample = 1,seismo_current_l
 
               ! forward time
-              time_t = dble(seismo_offset_l + isample - 1) * deltat * subsamp_seismos - t0
+              time_t = dble(seismo_offset_l + isample - 1) * DT * subsamp_seismos - t0
 
               write(11,*) time_t,' ',buffer_binary(isample,irec,iorientation)
             enddo
