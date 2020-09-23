@@ -169,7 +169,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* SAVE_FORWARD,
                                         realw* h_xir_store, realw* h_gammar_store,
                                         int* h_NSIGTYPE, int* h_seismotypeVec,
-                                        int* NSTEP_seismo) {
+                                        int* nlength_seismogram) {
 
   TRACE("prepare_constants_device");
 
@@ -334,9 +334,11 @@ void FC_FUNC_(prepare_constants_device,
     for(int i_sig = 0; i_sig < mp->h_NSIGTYPE; i_sig++) {
       if (mp->h_seismotypeVec[i_sig] != 0){
         // buffer array on GPU
-        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms[i_sig],2*(*NSTEP_seismo)*(mp->nrec_local)*sizeof(realw)),1303);
+        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms[i_sig],
+                                           2*(*nlength_seismogram)*(mp->nrec_local)*sizeof(realw)),1303);
         // pinned memory on CPU (for async memory copies which are not used yet, but just in case..)
-        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms[i_sig]),2*(*NSTEP_seismo)*(mp->nrec_local)*sizeof(realw)),8004);
+        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms[i_sig]),
+                                               2*(*nlength_seismogram)*(mp->nrec_local)*sizeof(realw)),8004);
       }else{
         mp->h_seismograms[i_sig] = NULL;
         mp->d_seismograms[i_sig] = NULL;

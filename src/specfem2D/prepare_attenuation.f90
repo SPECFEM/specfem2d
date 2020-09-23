@@ -394,7 +394,7 @@
             ! bulk attenuation (Qkappa)
             phinu(:)    = phi_nu1(i,j,ispec,:)
             tauinvnu(:) = inv_tau_sigma_nu1(i,j,ispec,:)
-            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
+            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * DT)
             coef(:)     = (1.d0 - temp(:)) / tauinvnu(:)
             A_newmark_e1_sf(:,i,j,ispec) = temp(:)
             B_newmark_e1_sf(:,i,j,ispec) = phinu(:) * coef(:)
@@ -405,7 +405,7 @@
             ! bulk attenuation (Qkappa)
             phinu(:)    = phi_nu1(i,j,ispec,:)
             tauinvnu(:) = inv_tau_sigma_nu1(i,j,ispec,:)
-            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
+            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * DT)
             coef(:)     = (1.d0 - temp(:)) / tauinvnu(:)
             A_newmark_nu1(:,i,j,ispec) = temp(:)
             B_newmark_nu1(:,i,j,ispec) = phinu(:) * coef(:)
@@ -413,7 +413,7 @@
             ! shear attenuation (Qmu)
             phinu(:)    = phi_nu2(i,j,ispec,:)
             tauinvnu(:) = inv_tau_sigma_nu2(i,j,ispec,:)
-            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
+            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * DT)
             coef(:)     = (1.d0 - temp(:)) / tauinvnu(:)
             A_newmark_nu2(:,i,j,ispec) = temp(:)
             B_newmark_nu2(:,i,j,ispec) = phinu(:) * coef(:)
@@ -568,10 +568,10 @@
     theta_s = (sqrt(Q0_poroelastic**2+1.d0) -1.d0)/(2.d0*pi*freq0_poroelastic*Q0_poroelastic)
 
     thetainv = - 1.d0 / theta_s
-    alphaval = 1.d0 + deltat*thetainv + deltat**2*thetainv**2 / 2.d0 &
-                    + deltat**3*thetainv**3 / 6.d0 + deltat**4*thetainv**4 / 24.d0
-    betaval = deltat / 2.d0 + deltat**2*thetainv / 3.d0 + deltat**3*thetainv**2 / 8.d0 + deltat**4*thetainv**3 / 24.d0
-    gammaval = deltat / 2.d0 + deltat**2*thetainv / 6.d0 + deltat**3*thetainv**2 / 24.d0
+    alphaval = 1.d0 + DT * thetainv + DT**2 * thetainv**2 / 2.d0 &
+                    + DT**3 * thetainv**3 / 6.d0 + DT**4 * thetainv**4 / 24.d0
+    betaval = DT / 2.d0 + DT**2 * thetainv / 3.d0 + DT**3 * thetainv**2 / 8.d0 + DT**4 * thetainv**3 / 24.d0
+    gammaval = DT / 2.d0 + DT**2 * thetainv / 6.d0 + DT**3 * thetainv**2 / 24.d0
   endif
 
   ! synchronizes all processes

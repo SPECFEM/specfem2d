@@ -223,7 +223,7 @@
 
         it = it + 1
         ! compute current time
-        current_timeval = (it-1) * deltat
+        current_timeval = (it-1) * DT
 
         ! display time step and max of norm of displacement
         if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) call check_stability()
@@ -458,7 +458,7 @@
         endif ! mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0
 
         ! compute current time
-        current_timeval = (it-1) * deltat
+        current_timeval = (it-1) * DT
 
         ! display time step and max of norm of displacement
         if ((.not. GPU_MODE) .and. mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then

@@ -140,17 +140,17 @@
   call fourier_transform(N,CY,1.0d0)
 
   if (label == 1 .or. label == 3 .or. (label == 2 .and. NSTEP == 1)) then
-! coefficients to take time steps needed (t=0: first time step)
-     mult = 1
-     delay = 0
+    ! coefficients to take time steps needed (t=0: first time step)
+    mult = 1
+    delay = 0
   else if (label == 2 .and. NSTEP > 1) then
-! coefficients to take time steps needed (t=i*deltat+1/2: one step on two starting at 1/2)
-     mult = 2
-     delay = 0
+    ! coefficients to take time steps needed (t=i*DT+1/2: one step on two starting at 1/2)
+    mult = 2
+    delay = 0
   else if (label == 4) then
-! coefficients to take time steps needed (t=i*deltat+1: one step on two starting at 1)
-     mult = 2
-     delay = 1
+    ! coefficients to take time steps needed (t=i*DT+1: one step on two starting at 1)
+    mult = 2
+    delay = 1
   endif
 
   do J = 1,NSTEP

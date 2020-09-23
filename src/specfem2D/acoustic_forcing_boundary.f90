@@ -85,9 +85,9 @@
     !else
       ! infrasounds / seismic
       !displ_x = 0 !* Apo
-      !displ_z = A * (exp(-(alpha*(deltat*it-40-t0)/tho)**2) &
-      !             - exp(-(alpha*(deltat*it-70-t0)/tho)**2)) !* Apo
-      t_used = deltat*(it-1) - 0.0007d0
+      !displ_z = A * (exp(-(alpha*(DT*it-40-t0)/tho)**2) &
+      !             - exp(-(alpha*(DT*it-70-t0)/tho)**2)) !* Apo
+      t_used = DT*(it-1) - 0.0007d0
       !sin(2.0d0*pigrec*f0*t_used)
       if ((z < -1.5d0) .and. (z > -3.5d0)) then
         displ_x =  real(2.0d0 * f0*f0 * (2.0d0 * f0*f0 * t_used**2 - 1.0d0) * &
@@ -102,15 +102,15 @@
   !! Second test function : moving forcing
   if (forcing_type == 2) then
     displ_x = 0._CUSTOM_REAL !* Apo
-    displ_z = real(dble(A) * (exp(-(alpha*(deltat*it-40-t0-(x-delayed)/c)/tho)**2) &
-                 - exp(-(alpha*(deltat*it-70-t0-(x-delayed)/c)/tho)**2)),kind=CUSTOM_REAL) !* Apo
+    displ_z = real(dble(A) * (exp(-(alpha*(DT*it-40-t0-(x-delayed)/c)/tho)**2) &
+                 - exp(-(alpha*(DT*it-70-t0-(x-delayed)/c)/tho)**2)),kind=CUSTOM_REAL) !* Apo
   endif
 
   !! forcing external
   if (forcing_type == 3) then
     ngoce_time_step = 255
     n_models = 28
-    t =it*deltat
+    t = it*DT
 
     allocate(goce_time(ngoce_time_step))
     allocate(distance(n_models))

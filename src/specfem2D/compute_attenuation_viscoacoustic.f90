@@ -443,8 +443,8 @@
 ! For cases in which a value of tau_sigma is small, then its inverse is large,
 ! which may result in a in stiff ordinary differential equation to solve;
 ! in such a case, resorting to the convolution formulation is better.
-!! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
-      !temp = exp(- 0.5d0 * tauinvnu1 * deltat)
+!! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu1,DT,coef0,coef1,coef2)
+      !temp = exp(- 0.5d0 * tauinvnu1 * DT)
       !coef1 = (1.d0 - temp) / tauinvnu1
 
       e1_acous(:,i_sls) = (A_newmark_e1(:,i_sls)**2) * e1_acous(:,i_sls) &

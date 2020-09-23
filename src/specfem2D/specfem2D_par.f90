@@ -304,10 +304,10 @@ module specfem_par
   integer :: i_stage,stage_time_scheme
 
   ! coefficients of the explicit Newmark time scheme
-  double precision :: deltat,deltatover2,deltatsquareover2
+  real(kind=CUSTOM_REAL) :: deltat,deltatover2,deltatsquareover2
 
   ! for backward simulation in adjoint inversion
-  double precision :: b_deltatover2,b_deltatsquareover2,b_deltat ! coefficients of the explicit Newmark time scheme
+  real(kind=CUSTOM_REAL) :: b_deltatover2,b_deltatsquareover2,b_deltat ! coefficients of the explicit Newmark time scheme
 
   ! current time
   double precision :: current_timeval
@@ -717,10 +717,11 @@ module specfem_par
   ! for seismograms
   !---------------------------------------------------------------------
   integer, dimension(:), allocatable :: seismotypeVec
-  integer, dimension(:), allocatable :: seismo_current, seismo_offset
+  integer :: seismo_current,seismo_offset
 
   ! for seismograms
   double precision, dimension(:,:,:), allocatable :: sisux,sisuz,siscurl
+  integer :: nlength_seismogram
 
 end module specfem_par
 
@@ -778,10 +779,6 @@ module specfem_par_gpu
 
   ! wavefield transfers
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D
-
-  ! time steps
-  real(kind=CUSTOM_REAL) :: deltatf,deltatover2f,deltatsquareover2f
-  real(kind=CUSTOM_REAL) :: b_deltatf,b_deltatover2f,b_deltatsquareover2f
 
   ! mesh dimension
   integer :: NGLOB_AB, NSPEC_AB

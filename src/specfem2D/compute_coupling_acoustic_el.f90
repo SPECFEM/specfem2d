@@ -43,7 +43,7 @@
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                          fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
-                         rmemory_fsb_displ_elastic,deltat, &
+                         rmemory_fsb_displ_elastic,DT,deltat, &
                          rmemory_fsb_displ_elastic_LDDRK,i_stage,time_stepping_scheme, &
                          nglob_acoustic,nglob_elastic,iglob_is_forced, &
                          ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_att
@@ -108,11 +108,11 @@
 
           if (CPML_region_local == CPML_X_ONLY) then
             !ZN needed to be change in case of viscoelastic medium
-            call lik_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+            call lik_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                            CPML_region_local,13,A8,A9,A10,bb_xz_1,bb_xz_2, &
                                            coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
           else if (CPML_region_local == CPML_Z_ONLY) then
-            call lik_parameter_computation(deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
+            call lik_parameter_computation(DT,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
                                            CPML_region_local,31,A8,A9,A10,bb_xz_1,bb_xz_2, &
                                            coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
 

@@ -38,11 +38,12 @@
     nelem_acoustic_surface,num_fluid_solid_edges,UNDO_ATTENUATION_AND_OR_PML, &
     STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS, &
     any_elastic,any_poroelastic, &
-    SIMULATION_TYPE,ATTENUATION_VISCOACOUSTIC
+    SIMULATION_TYPE,ATTENUATION_VISCOACOUSTIC, &
+    deltatover2,b_deltatover2
 
   use specfem_par, only: nspec_outer_acoustic, nspec_inner_acoustic,NO_BACKWARD_RECONSTRUCTION
 
-  use specfem_par_gpu, only: Mesh_pointer,deltatover2f,b_deltatover2f, &
+  use specfem_par_gpu, only: Mesh_pointer, &
     buffer_send_scalar_gpu,buffer_recv_scalar_gpu, &
     b_buffer_send_scalar_gpu,b_buffer_recv_scalar_gpu, &
     request_send_recv_scalar_gpu,b_request_send_recv_scalar_gpu
@@ -194,7 +195,7 @@
   ! divides pressure with mass matrix
   ! corrector:
   ! updates the chi_dot term which requires chi_dot_dot(t+delta)
-  call kernel_3_acoustic_cuda(Mesh_pointer,deltatover2f,b_deltatover2f,compute_wavefield_1,compute_wavefield_2)
+  call kernel_3_acoustic_cuda(Mesh_pointer,deltatover2,b_deltatover2,compute_wavefield_1,compute_wavefield_2)
 
   ! enforces free surface (zeroes potentials at free surface)
   call acoustic_enforce_free_surf_cuda(Mesh_pointer,compute_wavefield_1,compute_wavefield_2)

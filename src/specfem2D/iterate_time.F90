@@ -98,8 +98,8 @@ subroutine iterate_time()
   it_end = NSTEP
 
   ! initialize variables for writing seismograms
-  seismo_offset(:) = 0
-  seismo_current(:) = 0
+  seismo_offset = it_begin - 1
+  seismo_current = 0
 
   if (TIME_THE_COST_TO_COMPUTE_WEIGHTS_FOR_THE_DOMAIN_DECOMPOSER) then
     if (NPROC /= 1) call exit_MPI(myrank,'timing for element weights should be done in serial mode')
@@ -135,7 +135,7 @@ subroutine iterate_time()
 
   do it = it_begin,it_end
     ! compute current time
-    current_timeval = (it-1) * deltat
+    current_timeval = (it-1) * DT
 
     ! display time step and max of norm of displacement
     if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then

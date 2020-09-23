@@ -49,7 +49,7 @@
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top, &
                          ib_left,ib_right,ib_bottom,ib_top, &
-                         STACEY_ABSORBING_CONDITIONS,deltat, &
+                         STACEY_ABSORBING_CONDITIONS, &
                          NO_BACKWARD_RECONSTRUCTION
 
   ! initialfield
@@ -61,7 +61,7 @@
                         anglesource,anglesource_refl,A_plane,B_plane,C_plane,c_inc,c_refl,time_offset
 
   ! for Bielak
-  use specfem_par, only: x_source,z_source,f0_source,coord
+  use specfem_par, only: x_source,z_source,f0_source
 
   implicit none
 
@@ -131,9 +131,10 @@
         ! left or right edge, horizontal normal vector
         if (add_Bielak_conditions_left .and. initialfield) then
           if (.not. over_critical_angle) then
-            call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                        x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
-                        c_inc, c_refl, time_offset,f0_source(1))
+            call compute_Bielak_conditions(iglob,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                                           x_source(1), z_source(1), A_plane, B_plane, C_plane, &
+                                           anglesource(1), anglesource_refl, &
+                                           c_inc, c_refl, time_offset,f0_source(1))
 
             traction_x_t0 = lambdaplus2mu_unrelaxed_elastic * dxUx + lambdal_unrelaxed_elastic * dzUz
             traction_z_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
@@ -278,9 +279,10 @@
         ! left or right edge, horizontal normal vector
         if (add_Bielak_conditions_right .and. initialfield) then
           if (.not. over_critical_angle) then
-            call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                        x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
-                        c_inc, c_refl, time_offset,f0_source(1))
+            call compute_Bielak_conditions(iglob,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                                           x_source(1), z_source(1), A_plane, B_plane, C_plane, &
+                                           anglesource(1), anglesource_refl, &
+                                           c_inc, c_refl, time_offset,f0_source(1))
 
             traction_x_t0 = lambdaplus2mu_unrelaxed_elastic * dxUx + lambdal_unrelaxed_elastic * dzUz
             traction_z_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
@@ -362,9 +364,10 @@
         ! top or bottom edge, vertical normal vector
         if (add_Bielak_conditions_bottom .and. initialfield) then
           if (.not. over_critical_angle) then
-            call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                        x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
-                        c_inc, c_refl, time_offset,f0_source(1))
+            call compute_Bielak_conditions(iglob,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                                           x_source(1), z_source(1), A_plane, B_plane, C_plane, &
+                                           anglesource(1), anglesource_refl, &
+                                           c_inc, c_refl, time_offset,f0_source(1))
 
             traction_x_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
             traction_z_t0 = lambdal_unrelaxed_elastic * dxUx + lambdaplus2mu_unrelaxed_elastic * dzUz
@@ -455,9 +458,10 @@
         if (add_Bielak_conditions_top .and. initialfield) then
         ! at the top there is no test for whether we are above the critical angle
         ! because a critical angle can only exist when the top edge is a free surface, not in an infinite medium
-          call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                      x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
-                      c_inc, c_refl, time_offset,f0_source(1))
+          call compute_Bielak_conditions(iglob,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                                         x_source(1), z_source(1), A_plane, B_plane, C_plane, &
+                                         anglesource(1), anglesource_refl, &
+                                         c_inc, c_refl, time_offset,f0_source(1))
 
           traction_x_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
           traction_z_t0 = lambdal_unrelaxed_elastic * dxUx + lambdaplus2mu_unrelaxed_elastic * dzUz

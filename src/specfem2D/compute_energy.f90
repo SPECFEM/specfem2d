@@ -35,7 +35,7 @@
 
   use constants, only: IOUT_ENERGY,CUSTOM_REAL
 
-  use specfem_par, only: myrank,it,deltat,kinetic_energy,potential_energy,t0,NTSTEP_BETWEEN_OUTPUT_ENERGY
+  use specfem_par, only: myrank,it,DT,kinetic_energy,potential_energy,t0,NTSTEP_BETWEEN_OUTPUT_ENERGY
 
   implicit none
 
@@ -54,7 +54,7 @@
 
   ! saves kinetic, potential and total energy for this time step in external file
   if (myrank == 0) then
-    write(IOUT_ENERGY,*) real(dble(it-1)*deltat - t0,4),real(kinetic_energy_total,4), &
+    write(IOUT_ENERGY,*) real(dble(it-1)*DT - t0,4),real(kinetic_energy_total,4), &
                          real(potential_energy_total,4),real(kinetic_energy_total + potential_energy_total,4)
   endif
 
@@ -748,11 +748,12 @@
       ! compute total integrated energy
       ! We record just one point per element (i=2, j=2)
       integrated_kinetic_energy_field(ispec) = integrated_kinetic_energy_field(ispec)  &
-          +  rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * deltat / TWO
+          +  rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * deltat * 0.5_CUSTOM_REAL
 
-      if (max_kinetic_energy_field(ispec) < rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) / &
-          TWO) then
-        max_kinetic_energy_field(ispec) = rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) / TWO
+      if (max_kinetic_energy_field(ispec) < &
+            rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * 0.5_CUSTOM_REAL) then
+        max_kinetic_energy_field(ispec) = &
+            rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * 0.5_CUSTOM_REAL
       endif
 
       if (max_kinetic_energy_field(ispec) > ZERO) then
@@ -763,7 +764,7 @@
               + (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
               + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
               + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
-              + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) * deltat / TWO
+              + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) * deltat * 0.5_CUSTOM_REAL
       if (max_potential_energy_field(ispec) < (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
             + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
             + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
@@ -825,10 +826,12 @@
 
       ! compute total integrated energy ! = int_0^t v^2 dt
       integrated_kinetic_energy_field(ispec) = integrated_kinetic_energy_field(ispec)  &
-           +  rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) * deltat / TWO
+           +  rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) * deltat * 0.5_CUSTOM_REAL
 
-      if (max_kinetic_energy_field(ispec) < rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) / TWO) then
-        max_kinetic_energy_field(ispec) = rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) / TWO
+      if (max_kinetic_energy_field(ispec) < &
+            rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) * 0.5_CUSTOM_REAL) then
+        max_kinetic_energy_field(ispec) = &
+            rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) * 0.5_CUSTOM_REAL
       endif
 
       if (max_kinetic_energy_field(ispec) > ZERO) then

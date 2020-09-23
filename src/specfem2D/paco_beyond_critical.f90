@@ -55,7 +55,7 @@
   use constants, only: PI,IMAIN
 
   use specfem_par, only: myrank, &
-    coord,nglob,deltat,NSTEP,ATTENUATION_VISCOELASTIC, &
+    coord,nglob,DT,NSTEP,ATTENUATION_VISCOELASTIC, &
     displ_elastic,veloc_elastic,accel_elastic, &
     v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot, &
     t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot
@@ -77,7 +77,7 @@
   integer, dimension(:),allocatable :: local_pt
 
   double precision, dimension(:), allocatable :: temp_field
-  double precision :: dt,TP,delta_in_period
+  double precision :: dt_paco,TP,delta_in_period
 
   integer :: J, indice, NSTEP_local, FLAG, N, NFREC, NFREC1
   double precision :: ANU,BEALF,ALFBE,RLM,VNX,VNZ,A1,B1,TOTO,FJ,AKA,AQA,GAMR
@@ -124,26 +124,26 @@
      delta_in_period = 2.d0 * delta_in_period
   enddo
 
-! test Deltat compatibility
-  DT = 256.d0
-  do while(DT > deltat)
-     DT = DT/2.d0
+! test DT compatibility
+  dt_paco = 256.d0
+  do while(dt_paco > DT)
+     dt_paco = dt_paco/2.d0
   enddo
-  if (abs(DT-deltat) > 1.0d-13) then
-    print *, 'Error: Initial plane wave setting has invalid time step size deltat = ',deltat
-    print *, 'You must take a deltat that is a power of two (power can be negative)'
-    print *, 'For example, you can take ', DT
-    call stop_the_code('Error in paco_beyond_critical routine cannot go further, restart with new deltat')
+  if (abs(dt_paco-DT) > 1.0d-13) then
+    print *, 'Error: Initial plane wave setting has invalid time step size DT = ',DT
+    print *, '       You must take a DT that is a power of two (power can be negative)'
+    print *, 'For example, you can take ', dt_paco
+    call stop_the_code('Error in paco_beyond_critical routine cannot go further, restart with new DT')
   endif
 
-  DT = deltat/2.d0
+  dt_paco = DT/2.d0
 
   N = 2
   do while(N < 2*NSTEP+1)
      N = 2*N
   enddo
 
-  do while(DT < (delta_in_period/N))
+  do while(dt_paco < (delta_in_period/N))
      N = 2*N
   enddo
 
@@ -154,7 +154,7 @@
     write(IMAIN,*) 'number of discrete frequencies               = ',N/2
     write(IMAIN,*) 'delta in period (seconds)                    = ',delta_in_period
     write(IMAIN,*) 'delta in frequency (Hz)                      = ',1.d0/delta_in_period
-    write(IMAIN,*) 'dt (here we need deltat/2)                   = ', DT
+    write(IMAIN,*) 'dt (paco, here we need DT/2)                 = ',dt_paco
   endif
 
   if (mod(N,2) /= 0) call stop_the_code('N must be a multiple of 2')
@@ -343,66 +343,66 @@
 ! global model case for initial field
       select case (FLAG)
       case (0)
-        call paco_convolve_fft(Field_Ux,1,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Ux,1,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         displ_elastic(1,indice) = temp_field(1)
 
-        call paco_convolve_fft(Field_Uz,1,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Uz,1,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         displ_elastic(2,indice) = temp_field(1)
 
-        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         veloc_elastic(1,indice) = temp_field(1)
 
-        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         veloc_elastic(2,indice) = temp_field(1)
 
-        call paco_convolve_fft(Field_Ux,3,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Ux,3,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         accel_elastic(1,indice) = temp_field(1)
 
-        call paco_convolve_fft(Field_Uz,3,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Uz,3,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         accel_elastic(2,indice) = temp_field(1)
 
 ! absorbing boundaries
 
 ! left case
       case (1)
-        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         v0x_left(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         v0z_left(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Tx,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Tx,4,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         t0x_left(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         t0z_left(indice,:) = temp_field(:)
 
 ! right case
       case (2)
-        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         v0x_right(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         v0z_right(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Tx,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Tx,4,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         t0x_right(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         t0z_right(indice,:) = temp_field(:)
 
 ! bottom case
       case (3)
-        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         v0x_bot(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         v0z_bot(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Tx,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Tx,4,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         t0x_bot(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         t0z_bot(indice,:) = temp_field(:)
 
       case default

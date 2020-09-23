@@ -172,7 +172,7 @@ module moving_sources_par
         write(IMAIN,*) 'Source #',i_source
         write(IMAIN,*) ' !! BEWARE !! Parameters tshift and/or t0 are used with moving source !'
         write(IMAIN,*) ' The time step for the moving source is: '
-        write(IMAIN,*) '    t_used = (it_l-1)*deltat-t0-tshift_src(i_source)'
+        write(IMAIN,*) '    t_used = (it_l-1)*DT-t0-tshift_src(i_source)'
         write(IMAIN,*) ' And the source position is calculated like:'
         write(IMAIN,*) '  xsrc = x_source + vx_source*t_used'
         write(IMAIN,*)
@@ -261,7 +261,7 @@ module moving_sources_par
         ! current time
         if (time_stepping_scheme == 1) then
           ! Newmark
-          time_val = (it_l-1)*deltat
+          time_val = (it_l-1)*DT
         else
           call exit_MPI(myrank,'Only Newmark time scheme is implemented for moving sources (1)')
         endif
@@ -970,7 +970,7 @@ subroutine write_moving_databases(pathToMovingDatabase)
 
   use constants, only: MAX_STRING_LEN, IMAIN
 
-  use specfem_par, only: myrank, NSOURCES, NSTEP, deltat, nglob, nglob_elastic, nglob_acoustic, &
+  use specfem_par, only: myrank, NSOURCES, NSTEP, DT, nglob, nglob_elastic, nglob_acoustic, &
                          x_source, z_source, vx_source, vz_source
 
   implicit none
@@ -990,7 +990,7 @@ subroutine write_moving_databases(pathToMovingDatabase)
   if (ier /= 0) call stop_the_code('  Error writing moving source data file to disk !')
 
   write(IMOV) NSTEP
-  write(IMOV) deltat
+  write(IMOV) DT
   write(IMOV) nglob
   write(IMOV) nglob_elastic
   write(IMOV) nglob_acoustic
@@ -1028,7 +1028,7 @@ subroutine read_moving_databases(pathToMovingDatabase)
 
   use constants, only: MAX_STRING_LEN, IMAIN
 
-  use specfem_par, only: myrank, NSOURCES, NSTEP, deltat, nglob, nglob_elastic, nglob_acoustic, &
+  use specfem_par, only: myrank, NSOURCES, NSTEP, DT, nglob, nglob_elastic, nglob_acoustic, &
                          x_source, z_source, vx_source, vz_source
 
   implicit none
@@ -1038,7 +1038,7 @@ subroutine read_moving_databases(pathToMovingDatabase)
   ! Local variables
   integer :: ier, i_source
   integer :: NSTEP_read, nglob_read, nglob_elastic_read, nglob_acoustic_read, NSOURCES_read
-  double precision :: deltat_read
+  double precision :: DT_read
   double precision, dimension(:), allocatable :: x_source_read, z_source_read
   double precision, dimension(:), allocatable :: vx_source_read, vz_source_read
   character(len=MAX_STRING_LEN) :: str
@@ -1049,7 +1049,7 @@ subroutine read_moving_databases(pathToMovingDatabase)
     if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_data.bin')
 
   read(IMOV) NSTEP_read
-  read(IMOV) deltat_read
+  read(IMOV) DT_read
   read(IMOV) nglob_read
   read(IMOV) nglob_elastic_read
   read(IMOV) nglob_acoustic_read
@@ -1060,9 +1060,9 @@ subroutine read_moving_databases(pathToMovingDatabase)
                  NSTEP,'instead of',NSTEP_read,')'
     call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  - > Terminating' // NEW_LINE(''))
   endif
-  if (abs(deltat_read - deltat) > TINYVAL) then
-    write(str,*) 'Error: Database read does not match the Par_file (different deltat:', &
-                  deltat,'instead of',deltat_read,')'
+  if (abs(DT_read - DT) > TINYVAL) then
+    write(str,*) 'Error: Database read does not match the Par_file (different DT:', &
+                  DT,'instead of',DT_read,')'
     call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  - > Terminating' // NEW_LINE(''))
   endif
   if (nglob_read /= nglob) then

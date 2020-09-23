@@ -346,7 +346,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* SAVE_FORWARD,
                                         realw* h_xir_store, realw* h_gammar_store,
                                         int* h_NSIGTYPE, int* h_seismotypeVec,
-                                        int* NSTEP_seismo) {}
+                                        int* nlength_seismogram) {}
 
 void FC_FUNC_(prepare_fields_acoustic_device,
               PREPARE_FIELDS_ACOUSTIC_DEVICE)(long* Mesh_pointer,
@@ -653,10 +653,10 @@ void FC_FUNC_(compute_seismograms_cuda,
                                         int* i_sigf,
                                         double* sisux, double* sisuz,
                                         int* seismo_currentf,
-                                        int* NSTEP_seismof,
+                                        int* nlength_seismogramf,
                                         int* ELASTIC_SIMULATION,
                                         int* ACOUSTIC_SIMULATION,
                                         int* USE_TRICK_FOR_BETTER_PRESSURE,
-                                        int* it,
-                                        int* it_end) {}
+                                        int* itf,
+                                        int* it_endf) {}
 

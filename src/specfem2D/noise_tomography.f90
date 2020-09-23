@@ -270,7 +270,7 @@
 
   use shared_parameters, only: noise_source_time_function_type
 
-  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,P_SV,NSTEP,deltat, &
+  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,P_SV,NSTEP,DT, &
                          xigll,zigll,myrank
 
   use specfem_par_noise
@@ -292,7 +292,7 @@
 
   ! noise simulations use cross-correlation wavefields, with duration between [-T,T]
   ! mid-time becomes zero time t0
-  t0 = ((NSTEP-1)/2.0_CUSTOM_REAL) * deltat
+  t0 = ((NSTEP-1)/2.0_CUSTOM_REAL) * DT
 
   if (myrank == 0) then
     write(IMAIN,*) '  noise source array:'
@@ -368,7 +368,7 @@
       write(IMAIN,*) '  Ricker (second derivative) noise source'
     endif
     do it = 1,NSTEP
-      t = it*deltat
+      t = it * DT
       noise_src(it) = - factor_noise * 2.0 * a_val * (1.0 - 2.0 * a_val * (t-t0)**2) * exp(-a_val * (t-t0)**2)
     enddo
 
@@ -379,7 +379,7 @@
       write(IMAIN,*) '  Ricker (first derivative) noise source'
     endif
     do it = 1,NSTEP
-      t = it * deltat
+      t = it * DT
       noise_src(it) = - factor_noise * (2.0 * a_val * (t-t0)) * exp(-a_val * (t-t0)**2)
     enddo
 
@@ -390,7 +390,7 @@
       write(IMAIN,*) '  Gaussian noise source'
     endif
     do it = 1,NSTEP
-      t = it*deltat
+      t = it * DT
       noise_src(it) = factor_noise * exp(-a_val * (t-t0)**2)
     enddo
 
@@ -401,7 +401,7 @@
       write(IMAIN,*) '  Figure 2a noise source'
     endif
     do it = 1,NSTEP
-      t = it*deltat
+      t = it * DT
       noise_src(it) = factor_noise * 4.0 * a_val**2 * (3.0 - 12.0 * a_val * (t-t0)**2 + 4.0 * a_val**2 * (t-t0)**4) * &
                       exp(-a_val * (t-t0)**2)
     enddo
@@ -414,7 +414,7 @@
   open(IOUT,file=trim(OUTPUT_FILES)//'plot_source_time_function_noise.txt',status='unknown',iostat=ier)
   if (ier /= 0) call stop_the_code('Error opening noise source time function text-file')
   do it = 1,NSTEP
-    t = it * deltat
+    t = it * DT
     write(IOUT,*) (t-t0),noise_src(it)
   enddo
   close(IOUT)

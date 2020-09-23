@@ -108,7 +108,7 @@
                          islice_selected_source,ispec_selected_source,sourcearrays, &
                          ibool,coord,nspec,nglob,xigll,zigll,NPROC, &
                          xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source, &
-                         vx_source,vz_source,deltat,t0,myrank, &
+                         vx_source,vz_source,DT,t0,myrank, &
                          time_stepping_scheme,hxis_store,hgammas_store,tshift_src,source_type,ispec_is_acoustic, &
                          hxis,hpxis,hgammas,hpgammas,anglesource,ispec_is_poroelastic,Mxx,Mxz,Mzz,gammax,gammaz,xix,xiz, &
                          AXISYM,xiglj,is_on_the_axis,initialfield,SOURCE_IS_MOVING
@@ -133,7 +133,7 @@
 
   if (time_stepping_scheme == 1) then
     ! Newmark
-    timeval = (it-1)*deltat
+    timeval = (it-1)*DT
   else
     call exit_MPI(myrank,'Only Newmark time scheme is implemented for moving sources (3)')
   endif
@@ -157,7 +157,7 @@
         write(IMAIN,*) 'Source #',i_source
         write(IMAIN,*) ' !! BEWARE !! Parameters tshift and/or t0 are used with moving source !'
         write(IMAIN,*) ' The time step for the moving source is: '
-        write(IMAIN,*) '    t_used = (it_l-1)*deltat-t0-tshift_src(i_source)'
+        write(IMAIN,*) '    t_used = (it_l-1)*DT-t0-tshift_src(i_source)'
         write(IMAIN,*) ' And the source position is calculated like:'
         write(IMAIN,*) '  xsrc = x_source + vx_source*t_used'
         write(IMAIN,*)

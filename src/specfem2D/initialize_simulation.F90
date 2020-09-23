@@ -215,32 +215,6 @@
     assign_external_model = .true.
   endif
 
-  ! make sure NSTEP is a multiple of subsamp_seismos
-  ! if not, increase it a little bit, to the next multiple
-  if (mod(NSTEP,subsamp_seismos) /= 0) then
-    NSTEP = (NSTEP/subsamp_seismos + 1)*subsamp_seismos
-
-    ! user output
-    if (myrank == 0) then
-      write(IMAIN,*)
-      write(IMAIN,*) 'NSTEP is not a multiple of subsamp_seismos'
-      write(IMAIN,*) 'thus increasing it automatically to the next multiple, which is ',NSTEP
-      write(IMAIN,*)
-    endif
-  endif
-
-  ! output seismograms at least once at the end of the simulation
-  NSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP,NSTEP_BETWEEN_OUTPUT_SEISMOS)
-
-  ! make sure NSTEP_BETWEEN_OUTPUT_SEISMOS is a multiple of subsamp_seismos
-  if (mod(NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos) /= 0) then
-    if (myrank == 0) then
-      write(IMAIN,*) 'Invalid number of NSTEP_BETWEEN_OUTPUT_SEISMOS = ',NSTEP_BETWEEN_OUTPUT_SEISMOS
-      write(IMAIN,*) 'Must be a multiple of subsamp_seismos = ',subsamp_seismos
-    endif
-    call stop_the_code('Error: NSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of subsamp_seismos')
-  endif
-
   end subroutine initialize_simulation
 
 

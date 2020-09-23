@@ -102,7 +102,6 @@
   endif
 
   ! frees arrays (not complete, but at least a few...)
-  deallocate(seismo_current)
   deallocate(sisux,sisuz,siscurl)
 
   ! wavefields

@@ -44,7 +44,7 @@
     ORIG_X,ORIG_Z,PI,RPERCENTX,RPERCENTZ,STABILITY_THRESHOLD, &
     DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT,OUTPUT_FILES
 
-  use specfem_par, only: coord,x_source,z_source,st_xval,st_zval,it,deltat,coorg,density, &
+  use specfem_par, only: coord,x_source,z_source,st_xval,st_zval,it,DT,coorg,density, &
                          AXISYM,is_on_the_axis,flagrange_GLJ, &
                          poroelastcoef,knods,kmato,ibool, &
                          num_abs_boundary_faces,abs_boundary_ispec,codeabs,abs_boundary_type,anyabs, &
@@ -311,7 +311,7 @@
     write(24,*) '%'
 
     write(24,*) '24. CM 1.95 CM MV'
-    timeval = it*deltat
+    timeval = it*DT
     if (timeval >= 1.d-3 .and. timeval < 1000.d0) then
       write(24,600) usoffset,timeval
     else

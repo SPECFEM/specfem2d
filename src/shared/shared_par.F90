@@ -392,11 +392,6 @@ module shared_parameters
   ! for interpolated snapshot
   logical :: plot_lowerleft_corner_only
 
-  ! material file for changing the model parameter for inner mesh or updating the
-  ! the material for an existed mesh
-  ! (obsolete in Par_file now...)
-  !logical :: assign_external_model, READ_EXTERNAL_SEP_FILE
-
   ! to store density and velocity model
   integer, dimension(:),allocatable :: num_material
   integer, dimension(:),allocatable :: icodemat

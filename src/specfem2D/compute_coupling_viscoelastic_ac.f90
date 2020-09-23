@@ -45,7 +45,7 @@
                          fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
                          potential_acoustic_adj_coupling, &
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
-                         rmemory_sfb_potential_ddot_acoustic,deltat, &
+                         rmemory_sfb_potential_ddot_acoustic,DT,deltat, &
                          rmemory_sfb_potential_ddot_acoustic_LDDRK,i_stage,time_stepping_scheme
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,nspec_PML,ispec_is_PML,spec_to_PML,region_CPML, &
@@ -105,7 +105,7 @@
           beta_x = alpha_x + d_x / kappa_x
           beta_z = alpha_z + d_z / kappa_z
 
-          call l_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+          call l_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                        CPML_region_local,A0,A1,A2,A3,A4, &
                                        bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 

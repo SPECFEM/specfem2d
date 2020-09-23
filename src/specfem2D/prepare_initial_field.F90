@@ -45,7 +45,7 @@
                          potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic
 
   use constants, only: OUTPUT_FILES
-  use specfem_par, only: deltat,NSTEP,t0, &
+  use specfem_par, only: DT,NSTEP,t0, &
     x_final_receiver,z_final_receiver,station_name,network_name
 
   implicit none
@@ -383,13 +383,13 @@
       write(11,*) "# receiver: ",trim(network_name(1)),".",trim(station_name(1))
       write(11,*) "#           position x/z = ",x_final_receiver(1),z_final_receiver(1)
       write(11,*) "#"
-      write(11,*) "# dt          = ",deltat
+      write(11,*) "# dt          = ",DT
       write(11,*) "# time offset = ",time_offset
       write(11,*) "#"
       write(11,*) "# format: #time  #displacement"
       do it = 1,NSTEP
         ! wavefield output will have advanced by one step
-        timeval = t + dble(it) * deltat
+        timeval = t + dble(it) * DT
         ! displacement
         mode_y = mode_A * sin( mode_n * PI * x ) * sin( mode_m * PI * z ) * cos( mode_omega * timeval)
 
@@ -399,9 +399,9 @@
         mode_y = - mode_y
         mode_y = 2.4e-06 * mode_y
 
-        ! seismogram outputs time corresponding to: (it-1)*deltat - t0
+        ! seismogram outputs time corresponding to: (it-1)*DT - t0
         ! format: #time #displacement
-        write(11,*) t + dble(it-1) * deltat,mode_y
+        write(11,*) t + dble(it-1) * DT, mode_y
       enddo
       close(11)
       write(IMAIN,*) 'file written: ',trim(filename)

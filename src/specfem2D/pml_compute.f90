@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine compute_coef_convolution(bb,deltat,coef0,coef1,coef2)
+  subroutine compute_coef_convolution(bb,DT,coef0,coef1,coef2)
 
   ! compute coefficient used in second-order convolution scheme, from
   ! second-order accurate convolution term calculation from equation (21) of
@@ -42,9 +42,9 @@
   implicit none
 
   double precision :: bb,coef0,coef1,coef2,temp
-  double precision :: deltat
+  double precision :: DT
 
-  temp = exp(- 0.5d0 * bb * deltat)
+  temp = exp(- 0.5d0 * bb * DT)
 
   coef0 = temp*temp
 
@@ -52,7 +52,7 @@
     coef1 = (1.d0 - temp) / bb
     coef2 = coef1 * temp
   else
-    coef1 = 0.5d0 * deltat
+    coef1 = 0.5d0 * DT
     coef2 = coef1
   endif
 
@@ -60,7 +60,7 @@
 
 !========================================================================
 
-  subroutine lik_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+  subroutine lik_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                        CPML_region_local,index_ik,A_0,A_1,A_2,bb_1,bb_2, &
                                        coef0_1,coef1_1,coef2_1,coef0_2,coef1_2,coef2_2)
 
@@ -68,7 +68,7 @@
 
   implicit none
 
-  double precision, intent(in) :: deltat
+  double precision, intent(in) :: DT
   double precision, intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local,index_ik
 
@@ -132,10 +132,10 @@
   endif
 
   bb_1 = alpha_x
-  call compute_coef_convolution(bb_1,deltat,coef0_1,coef1_1,coef2_1)
+  call compute_coef_convolution(bb_1,DT,coef0_1,coef1_1,coef2_1)
 
   bb_2 = beta_z
-  call compute_coef_convolution(bb_2,deltat,coef0_2,coef1_2,coef2_2)
+  call compute_coef_convolution(bb_2,DT,coef0_2,coef1_2,coef2_2)
 
  end subroutine lik_parameter_computation
 
@@ -252,7 +252,7 @@
 
 !========================================================================
 
-  subroutine l_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+  subroutine l_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                      CPML_region_local,A_0,A_1,A_2,A_3,A_4, &
                                      bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
@@ -260,7 +260,7 @@
 
   implicit none
 
-  double precision, intent(in) :: deltat
+  double precision, intent(in) :: DT
   double precision, intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local
 
@@ -322,10 +322,10 @@
   endif
 
   bb_1 = alpha_x
-  call compute_coef_convolution(bb_1,deltat,coef0_1,coef1_1,coef2_1)
+  call compute_coef_convolution(bb_1,DT,coef0_1,coef1_1,coef2_1)
 
   bb_2 = alpha_z
-  call compute_coef_convolution(bb_2,deltat,coef0_2,coef1_2,coef2_2)
+  call compute_coef_convolution(bb_2,DT,coef0_2,coef1_2,coef2_2)
 
   end subroutine l_parameter_computation
 

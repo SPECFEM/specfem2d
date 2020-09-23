@@ -48,7 +48,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK, &
     NGLJ,TWO_THIRDS
 
-  use specfem_par, only: time_stepping_scheme,i_stage,it,deltat, &
+  use specfem_par, only: time_stepping_scheme,i_stage,it,DT,deltat, &
                          assign_external_model,rhostore,kappastore,density,poroelastcoef,kmato, &
                          ibool,jacobian, &
                          wxgll,wzgll, &
@@ -91,11 +91,11 @@
   select case (time_stepping_scheme)
   case (1)
     ! Newmark
-    time_n = (it-1) * deltat
-    time_nsub1 = (it-2) * deltat
+    time_n = (it-1) * DT
+    time_nsub1 = (it-2) * DT
   case (2)
     ! LDDRK
-    time_n = (it-1) * deltat + C_LDDRK(i_stage) * deltat
+    time_n = (it-1) * DT + C_LDDRK(i_stage) * DT
   case default
     call stop_the_code('Sorry, time stepping scheme for PML accel contribution not implemented yet')
   end select
@@ -120,7 +120,7 @@
       beta_z = alpha_z + d_z / kappa_z
 
       ! the subroutine of l_parameter_computation is located at the end of compute_forces_viscoelastic.F90
-      call l_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+      call l_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                    CPML_region_local,A0,A1,A2,A3,A4, &
                                    bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
@@ -207,7 +207,7 @@
   use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,NGLJ,TWO_THIRDS, &
                        CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
-  use specfem_par, only: time_stepping_scheme,i_stage,deltat, &
+  use specfem_par, only: time_stepping_scheme,i_stage,DT,deltat, &
                          assign_external_model,rhostore,density,kmato, &
                          ibool,jacobian,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,coord,wxglj, &
@@ -267,7 +267,7 @@
       beta_x = alpha_x + d_x / kappa_x
       beta_z = alpha_z + d_z / kappa_z
 
-      call l_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+      call l_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                    CPML_region_local,A0,A1,A2,A3,A4, &
                                    bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 

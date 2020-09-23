@@ -127,7 +127,7 @@
                                 xir_store_loc, &
                                 gammar_store_loc, &
                                 NSIGTYPE, seismotypeVec, &
-                                NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos)
+                                nlength_seismogram)
 
   ! Input parameters :
 
@@ -219,7 +219,7 @@
                             abs_normalized, &
                             sngl(ALPHA_MAX_PML), &
                             d0_max, &
-                            sngl(deltat), &
+                            deltat, &
                             alphax_store_GPU,alphaz_store_GPU, &
                             betax_store_GPU,betaz_store_GPU, &
                             PML_nglob_abs_acoustic,PML_abs_points_acoustic)
@@ -388,15 +388,6 @@
     write(IMAIN,*) '  initializing arrays for GPU:'
     call flush_IMAIN()
   endif
-
-  ! converts to CUSTOM_REAL
-  deltatf = sngl(deltat)
-  deltatover2f = sngl(deltatover2)
-  deltatsquareover2f = sngl(deltatsquareover2)
-
-  b_deltatf = sngl(b_deltat)
-  b_deltatover2f = sngl(b_deltatover2)
-  b_deltatsquareover2f = sngl(b_deltatsquareover2)
 
   NSPEC_AB = nspec
   NGLOB_AB = nglob

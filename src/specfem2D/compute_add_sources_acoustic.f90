@@ -99,7 +99,7 @@
   use specfem_par, only: ispec_is_acoustic,nglob_acoustic, &
                          NSOURCES,source_type,source_time_function, &
                          islice_selected_source,ispec_selected_source, &
-                         hxis_store,hgammas_store,ibool,kappastore,myrank,deltat,t0,tshift_src, &
+                         hxis_store,hgammas_store,ibool,kappastore,myrank,DT,t0,tshift_src, &
                          coord,nspec,nglob,xigll,zigll,NPROC,xi_source, &
                          gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source, &
                          vx_source,vz_source, time_stepping_scheme, &
@@ -124,7 +124,7 @@
 
   if (time_stepping_scheme == 1) then
     ! Newmark
-    timeval = (it-1)*deltat
+    timeval = (it-1)*DT
   else
     call exit_MPI(myrank,'Only Newmark time scheme is implemented for moving sources (2)')
   endif
@@ -149,7 +149,7 @@
         write(IMAIN,*) 'Source #',i_source
         write(IMAIN,*) ' !! BEWARE !! Parameters tshift and/or t0 are used with moving source !'
         write(IMAIN,*) ' The time step for the moving source is: '
-        write(IMAIN,*) '    t_used = (it_l-1)*deltat-t0-tshift_src(i_source)'
+        write(IMAIN,*) '    t_used = (it_l-1)*DT-t0-tshift_src(i_source)'
         write(IMAIN,*) ' And the source position is calculated like:'
         write(IMAIN,*) '  xsrc = x_source + vx_source*t_used'
         write(IMAIN,*)

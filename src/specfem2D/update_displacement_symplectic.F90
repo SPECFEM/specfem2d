@@ -305,7 +305,7 @@
 
   implicit none
 
-  double precision,intent(in) :: deltat
+  real(kind=CUSTOM_REAL),intent(in) :: deltat
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_acoustic,potential_dot_acoustic, &
                                                                      potential_dot_dot_acoustic
 
@@ -328,7 +328,7 @@
 
   implicit none
 
-  double precision,intent(in) :: deltat
+  real(kind=CUSTOM_REAL),intent(in) :: deltat
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic),intent(inout) :: accel_elastic,veloc_elastic,displ_elastic
 
   ! symplectic
@@ -354,7 +354,7 @@
 
   implicit none
 
-  double precision,intent(in) :: deltat
+  real(kind=CUSTOM_REAL),intent(in) :: deltat
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic),intent(inout) :: &
     accels_poroelastic,velocs_poroelastic,displs_poroelastic, &
     accelw_poroelastic,velocw_poroelastic,displw_poroelastic

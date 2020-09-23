@@ -50,7 +50,7 @@
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                          inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,N_SLS, &
-                         deltat,coord, &
+                         DT,deltat,coord, &
                          time_stepping_scheme,i_stage,ispec_is_acoustic
 
   ! overlapping communication
@@ -158,12 +158,12 @@
             select case(time_stepping_scheme)
             case (1)
               ! Newmark
-              call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
+              call compute_coef_convolution(tauinvnu1,DT,coef0,coef1,coef2)
 
               e1(i,j,ispec,i_sls) = coef0 * e1(i,j,ispec,i_sls) + &
                                     phinu1 * (coef1 * theta_n_u + coef2 * theta_nsub1_u)
 
-              call compute_coef_convolution(tauinvnu2,deltat,coef0,coef1,coef2)
+              call compute_coef_convolution(tauinvnu2,DT,coef0,coef1,coef2)
 
               e11(i,j,ispec,i_sls) = coef0 * e11(i,j,ispec,i_sls) + &
                                      phinu2 * (coef1 * (dux_dxl_n(i,j,ispec)-theta_n_u/TWO) + &

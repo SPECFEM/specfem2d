@@ -40,12 +40,13 @@
   use specfem_par, only: myrank,NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
     my_neighbors,ninterface_elastic,inum_interfaces_elastic,ibool_interfaces_ext_mesh, &
     num_fluid_solid_edges,nspec_bottom,nspec_left,nspec_right,nspec_top, &
-    STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS,any_poroelastic,any_acoustic,SIMULATION_TYPE,ATTENUATION_VISCOELASTIC
+    STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS,any_poroelastic,any_acoustic, &
+    SIMULATION_TYPE,ATTENUATION_VISCOELASTIC, &
+    deltat,deltatover2,b_deltatover2
 
   use specfem_par, only: nspec_outer_elastic,nspec_inner_elastic,any_anisotropy
 
   use specfem_par_gpu, only: Mesh_pointer, &
-    deltatf,deltatover2f,b_deltatover2f, &
     buffer_send_vector_gpu,buffer_recv_vector_gpu, &
     b_buffer_send_vector_gpu,b_buffer_recv_vector_gpu, &
     request_send_recv_vector_gpu,b_request_send_recv_vector_gpu
@@ -68,7 +69,7 @@
 
     ! elastic term
     ! contains both forward SIM_TYPE==1 and backward SIM_TYPE==3 simulations
-    call compute_forces_viscoelastic_cuda(Mesh_pointer, iphase, deltatf, &
+    call compute_forces_viscoelastic_cuda(Mesh_pointer, iphase, deltat, &
                                           nspec_outer_elastic, &
                                           nspec_inner_elastic, &
                                           any_anisotropy,ATTENUATION_VISCOELASTIC)
@@ -171,7 +172,7 @@
   enddo
 
   ! multiplies with inverse of mass matrix (note: rmass has been inverted already)
-  call kernel_3_a_cuda(Mesh_pointer,deltatover2f,b_deltatover2f)
+  call kernel_3_a_cuda(Mesh_pointer,deltatover2,b_deltatover2)
 
   end subroutine compute_forces_viscoelastic_GPU
 

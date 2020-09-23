@@ -142,11 +142,11 @@
                 ! Newmark
                 bb = tauinvnu2; coef0 = exp(-bb * deltat)
                 if (abs(bb) > 1e-5_CUSTOM_REAL) then
-                   coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
-                   coef2 = (1._CUSTOM_REAL - exp(-bb* deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL)/ bb
+                   coef1 = (1._CUSTOM_REAL - exp(-bb * deltat * 0.5_CUSTOM_REAL)) / bb
+                   coef2 = (1._CUSTOM_REAL - exp(-bb * deltat * 0.5_CUSTOM_REAL)) * exp(-bb * deltat * 0.5_CUSTOM_REAL)/ bb
                 else
-                   coef1 = deltat / 2._CUSTOM_REAL
-                   coef2 = deltat / 2._CUSTOM_REAL
+                   coef1 = deltat * 0.5_CUSTOM_REAL
+                   coef2 = deltat * 0.5_CUSTOM_REAL
                 endif
 
                 e11(i_sls,i,j,ispec) = coef0 * e11(i_sls,i,j,ispec) + &

@@ -48,7 +48,8 @@
     assign_external_model, &
     density,poroelastcoef,porosity,tortuosity, &
     rhostore,rho_vpstore,rho_vsstore,mustore,kappastore, &
-    num_abs_boundary_faces,abs_boundary_ispec,deltat, &
+    num_abs_boundary_faces,abs_boundary_ispec, &
+    deltatover2, &
     codeabs,codeabs_corner, &
     ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
     ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
@@ -70,7 +71,7 @@
   real(kind=CUSTOM_REAL) :: cpl,csl
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz, &
                             weight,xxi,zxi,xgamma,zgamma,jacobian1D
-  real(kind=CUSTOM_REAL) :: deltatover2,phinu1
+  real(kind=CUSTOM_REAL) :: phinu1
 
   double precision :: rhol,mul,kappal_relaxed,mu_relaxed,lambda_relaxed
   double precision :: rho_s,rho_f,rho_bar,phi,tort
@@ -99,9 +100,6 @@
     rmass_inverse_acoustic(:) = 0._CUSTOM_REAL
     if (ATTENUATION_VISCOACOUSTIC) rmass_inverse_e1(:,:) = 0._CUSTOM_REAL
   endif
-
-  ! common factor
-  deltatover2 = real(0.5d0*deltat,kind=CUSTOM_REAL)
 
   ! computes mass matrix for each element (poroelastic/elastic/acoustic)
   do ispec = 1,nspec
