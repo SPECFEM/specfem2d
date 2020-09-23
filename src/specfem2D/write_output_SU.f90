@@ -33,7 +33,7 @@
 
   subroutine write_output_SU(x_source,z_source,irec,buffer_binary,number_of_components,seismo_offset,seismo_current,seismotype_l)
 
-  use specfem_par, only: NSTEP,nrec,deltat,st_xval, &
+  use specfem_par, only: NSTEP,nrec,DT,st_xval, &
                          P_SV,st_zval,subsamp_seismos
 
   implicit none
@@ -45,19 +45,12 @@
   double precision, dimension(seismo_current,nrec,number_of_components),intent(in) :: buffer_binary
 
   ! local parameters
-  integer :: deltat_int2
+  double precision :: sampling_deltat
   integer :: isample,ioffset
   integer, dimension(28) :: header1
   real(kind=4), dimension(30) :: header4
   integer(kind=2) :: header2(2),header3(2)
   real(kind=4), dimension(seismo_current) :: single_precision_seismo
-
-  ! time step (in microseconds)
-  if (deltat*1.0d6 > 2**15) then
-    deltat_int2 = 0
-  else
-    deltat_int2 = NINT(deltat*1.0d6, kind=2) ! deltat (unit: 10^{-6} second)
-  endif
 
   ! header
   header1(:) = 0
@@ -75,6 +68,7 @@
 
   if (nrec > 1) header4(18) = SNGL(st_xval(2)-st_xval(1)) ! receiver interval
 
+  ! time steps
   header2(1) = 0  ! dummy
   if (NSTEP/subsamp_seismos < 32768) then
     header2(2) = int(NSTEP/subsamp_seismos, kind=2)
@@ -82,7 +76,19 @@
     print *,"!!! BEWARE !!! Two many samples for SU format ! The .su file created won't be usable"
     header2(2)=-9999
   endif
-  header3(1) = deltat_int2
+
+  ! time increment
+  sampling_deltat = DT*subsamp_seismos
+
+  ! INTEGER(kind=2) values range from -32,768 to 32,767
+  ! adapts time step info
+  if (NINT(sampling_deltat*1.0d6) < 32768) then
+    header3(1) = NINT(sampling_deltat*1.0d6, kind=2)  ! deltat (unit: 10^{-6} second)
+  else if (NINT(sampling_deltat*1.0d3) < 32768) then
+    header3(1) = NINT(sampling_deltat*1.0d3, kind=2)  ! deltat (unit: 10^{-3} second)
+  else
+    header3(1) = NINT(sampling_deltat, kind=2)  ! deltat (unit: 10^{0} second)
+  endif
   header3(2) = 0  ! dummy
 
   ! first component trace
