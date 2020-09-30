@@ -272,10 +272,9 @@ void FC_FUNC_(update_displacement_ac_cuda,
     printf("  performance: %f GFlop/s\n", flops/time * 1.e-9);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //printf("checking updatedispl_kernel launch...with %dx%d blocks\n",num_blocks_x,num_blocks_y);
-  exit_on_cuda_error("update_displacement_ac_cuda");
-#endif
+
+  GPU_ERROR_CHECKING ("update_displacement_ac_cuda");
 }
 
 
@@ -389,10 +388,9 @@ void FC_FUNC_(kernel_3_a_cuda,
                                                                   mp->d_rmassx,mp->d_rmassz);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //printf("checking updatedispl_kernel launch...with %dx%d blocks\n",num_blocks_x,num_blocks_y);
-  exit_on_cuda_error("after kernel 3 a");
-#endif
+
+  GPU_ERROR_CHECKING ("kernel_3_a_cuda");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -431,10 +429,9 @@ void FC_FUNC_(kernel_3_b_cuda,
                                                                         size,b_deltatover2);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //printf("checking updatedispl_kernel launch...with %dx%d blocks\n",num_blocks_x,num_blocks_y);
-  exit_on_cuda_error("after kernel 3 b");
-#endif
+
+  GPU_ERROR_CHECKING ("kernel_3_b_cuda");
 }
 
 
@@ -522,11 +519,9 @@ void FC_FUNC_(kernel_3_acoustic_cuda,
                                                                          *b_deltatover2,
                                                                           mp->d_rmass_acoustic);
 
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //printf("checking updatedispl_kernel launch...with %dx%d blocks\n",num_blocks_x,num_blocks_y);
-  exit_on_cuda_error("after kernel 3");
-#endif
+
+ GPU_ERROR_CHECKING ("kernel_3_acoustic_cuda");
 }
 
 

@@ -252,9 +252,7 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
                                        2*mp->d_nspec_bottom*sizeof(realw)*NGLLX,cudaMemcpyHostToDevice),7700);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("between cudamemcpy and compute_stacey_elastic_kernel");
-#endif
+  GPU_ERROR_CHECKING ("between cudamemcpy and compute_stacey_elastic_kernel");
 
   compute_stacey_elastic_kernel<<<grid,threads,0,mp->compute_stream>>>( mp->d_veloc,
                                                                         mp->d_accel,
@@ -299,9 +297,7 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
                                                                               mp->d_edge_abs);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("compute_stacey_elastic_kernel");
-#endif
+  GPU_ERROR_CHECKING ("compute_stacey_elastic_kernel");
 
   if (mp->simulation_type == 1 && mp->save_forward) {
     // explicitly wait until compute stream is done
@@ -319,8 +315,6 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
                                        2*mp->d_nspec_bottom*sizeof(realw)*NGLLX,cudaMemcpyDeviceToHost),7804);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("after compute_stacey_elastic after cudamemcpy");
-#endif
+  GPU_ERROR_CHECKING ("after compute_stacey_elastic after cudamemcpy");
 }
 

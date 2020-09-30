@@ -148,9 +148,7 @@ TRACE("\ttransfer_boun_accel_from_device");
     //stop_timing_cuda(&start,&stop,"prepare_boundary_accel_on_device");
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("transfer_boun_accel_from_device");
-#endif
+  GPU_ERROR_CHECKING ("transfer_boun_accel_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -387,11 +385,10 @@ TRACE("\ttransfer_asmbl_accel_to_device");
     // printf("Boundary Assemble Kernel Execution Time: %f ms\n",time);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
   //printf("Elapsed time: %e\n",end_time-start_time);
-  exit_on_cuda_error("transfer_asmbl_accel_to_device");
-#endif
+
+  GPU_ERROR_CHECKING ("transfer_asmbl_accel_to_device");
 }
 
 

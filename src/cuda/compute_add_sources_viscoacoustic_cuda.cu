@@ -159,10 +159,7 @@ void FC_FUNC_(compute_add_sources_ac_cuda,
 
   // print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),37);
 
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("compute_add_sources_ac_cuda");
-#endif
+  GPU_ERROR_CHECKING ("compute_add_sources_ac_cuda");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -208,9 +205,7 @@ void FC_FUNC_(compute_add_sources_ac_s3_cuda,
 
     //  print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),38);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("compute_add_sources_ac_s3_cuda");
-#endif
+  GPU_ERROR_CHECKING ("compute_add_sources_ac_s3_cuda");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -273,10 +268,7 @@ void FC_FUNC_(compute_add_moving_sources_ac_cuda,
                                                                                     NSTEP);
   // cudaMemoryTest(334); // Useful to check memory
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("compute_add_moving_sources_ac_cuda");
-#endif
-
+  GPU_ERROR_CHECKING ("compute_add_moving_sources_ac_cuda");
 }
 
 
@@ -376,7 +368,6 @@ void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
                                                                                 *NSTEP);
 
 //  print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),38);
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("add_sources_acoustic_SIM_TYPE_2_OR_3_kernel");
-#endif
+
+  GPU_ERROR_CHECKING ("add_sources_acoustic_SIM_TYPE_2_OR_3_kernel");
 }

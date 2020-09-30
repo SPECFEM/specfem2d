@@ -360,9 +360,7 @@ void FC_FUNC_(prepare_constants_device,
 
   // JC JC here we will need to add GPU support for the new C-PML routines
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("prepare_constants_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_constants_device");
 }
 
 
@@ -492,10 +490,7 @@ void FC_FUNC_(prepare_fields_acoustic_device,
     cudaEventCreate(&mp->transfer_is_complete2);
   }
 
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("prepare_fields_acoustic_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_fields_acoustic_device");
 }
 
 
@@ -574,9 +569,7 @@ void FC_FUNC_(prepare_fields_acoustic_adj_dev,
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_send_potential_dot_dot_buffer),mp->size_mpi_buffer_potential*sizeof(realw)),3014);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("prepare_fields_acoustic_adj_dev");
-#endif
+  GPU_ERROR_CHECKING ("prepare_fields_acoustic_adj_dev");
 }
 
 
@@ -766,9 +759,7 @@ void FC_FUNC_(prepare_fields_elastic_device,
   //printf("prepare_fields_elastic_device: rank %d - done\n",mp->myrank);
   //synchronize_mpi();
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("prepare_fields_elastic_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_fields_elastic_device");
 }
 
 
@@ -860,9 +851,7 @@ void FC_FUNC_(prepare_fields_elastic_adj_dev,
   //printf("prepare_fields_elastic_adj_dev: rank %d - done\n",mp->myrank);
   //synchronize_mpi();
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("prepare_fields_elastic_adj_dev");
-#endif
+  GPU_ERROR_CHECKING ("prepare_fields_elastic_adj_dev");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -890,9 +879,7 @@ void FC_FUNC_(prepare_sim2_or_3_const_device,
     copy_todevice_realw((void**)&mp->d_source_adjointe,h_source_adjointe,(*NSTEP)*(*nadj_rec_local)*NDIM);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("prepare_sim2_or_3_const_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_sim2_or_3_const_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -975,9 +962,7 @@ void FC_FUNC_(prepare_pml_device,
     copy_todevice_int((void**)&mp->d_pml_abs_points_acoustic,h_PML_abs_points_acoustic,mp->pml_nglob_abs_acoustic);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("prepare_PML_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_PML_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1073,9 +1058,7 @@ void FC_FUNC_(prepare_stacey_device,
     } // ACOUSTIC_SIMULATION
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("prepare_Stacey_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_Stacey_device");
 }
 
 
@@ -1151,9 +1134,7 @@ void FC_FUNC_(prepare_moving_sources_cuda,
   // If the source is not moving only the slice containing the source knows the source_time_function
   copy_todevice_realw((void**)&mp->d_source_time_function_moving,h_source_time_function_moving,nsources*NSTEP_int);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("prepare_moving_sources_cuda");
-#endif
+  GPU_ERROR_CHECKING ("prepare_moving_sources_cuda");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1183,9 +1164,7 @@ void FC_FUNC_(prepare_moving_sources_cuda,
 //    copy_todevice_int((void**)&mp->d_ispec_selected_source,h_ispec_selected_source,mp->nsources_local);
 //  }
 //
-//#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-//  exit_on_cuda_error("recompute_source_position_cuda");
-//#endif
+//  GPU_ERROR_CHECKING ("recompute_source_position_cuda");
 //}
 
 

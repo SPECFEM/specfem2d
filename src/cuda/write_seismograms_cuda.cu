@@ -342,6 +342,9 @@ void FC_FUNC_(compute_seismograms_cuda,
   //         seismo_current == nlength_seismogram - 1
   //       and copy it back whenever.
 
+  int it = *itf;
+  int it_end = *it_endf;
+
   // copies array to CPU host
   if (seismo_current == nlength_seismogram - 1 || it == it_end){
     // seismogram buffers are 1D and components appended; size for one single component record
@@ -359,7 +362,5 @@ void FC_FUNC_(compute_seismograms_cuda,
     }
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("after compute_seismograms_cuda");
-#endif
+ GPU_ERROR_CHECKING ("compute_seismograms_cuda");
 }

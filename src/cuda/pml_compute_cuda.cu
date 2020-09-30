@@ -105,8 +105,6 @@ void FC_FUNC_(pml_boundary_acoustic_cuda,
                                                                              mp->d_pml_abs_points_acoustic);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("pml_boundary_acoustic_cuda");
-#endif
+  GPU_ERROR_CHECKING ("pml_boundary_acoustic_cuda");
 }
 

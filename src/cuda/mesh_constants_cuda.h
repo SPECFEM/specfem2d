@@ -97,10 +97,17 @@
 
 // error checking after cuda function calls
 // (note: this synchronizes many calls, thus e.g. no asynchronuous memcpy possible)
-//#define ENABLE_VERY_SLOW_ERROR_CHECKING
+#define ENABLE_VERY_SLOW_ERROR_CHECKING 0
+#if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
+#define GPU_ERROR_CHECKING(x) exit_on_cuda_error(x);
+#else
+#define GPU_ERROR_CHECKING(x)
+#endif
 
 // maximum function
 #define MAX(x,y)                    (((x) < (y)) ? (y) : (x))
+// minimum function
+#define MIN(a,b)     (((a) > (b)) ? (b) : (a))
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -181,9 +188,20 @@
 //       this slows down the kernel by ~ 4%
 #define LAUNCH_MIN_BLOCKS_ACOUSTIC 16
 #endif
-//
-// Pascal architecture
+
+// add more card specific values
+#ifdef GPU_DEVICE_Maxwell
+// specifics see: https://docs.nvidia.com/cuda/maxwell-tuning-guide/index.html
+// register file size 64k 32-bit registers per SM
+// shared memory 64KB for GM107 and 96KB for GM204
+#undef USE_LAUNCH_BOUNDS
+#endif
+
 #ifdef GPU_DEVICE_Pascal
+// specifics see: https://docs.nvidia.com/cuda/pascal-tuning-guide/index.html
+// register file size 64k 32-bit registers per SM
+// shared memory 64KB for GP100 and 96KB for GP104
+//
 // Pascal P100: Pascal: total of 65536 register size
 //              careful, as using launch bounds to increase the number of blocks might lead to register spilling.
 #undef USE_LAUNCH_BOUNDS
@@ -191,6 +209,13 @@
 #define LAUNCH_MIN_BLOCKS_ACOUSTIC 16
 #endif
 
+#ifdef GPU_DEVICE_Volta
+// specifics see: https://docs.nvidia.com/cuda/volta-tuning-guide/index.html
+// register file size 64k 32-bit registers per SM
+// shared memory size 96KB per SM (maximum shared memory per thread block)
+// maximum registers 255 per thread
+#undef USE_LAUNCH_BOUNDS
+#endif
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -272,23 +297,28 @@ __device__ __forceinline__ realw get_global_cr(realw_const_p ptr) { return (*ptr
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// utility functions: defined in check_fields_cuda.cu
+// utility functions
 
 /* ----------------------------------------------------------------------------------------------- */
 
+// defined in check_fields_cuda.cu
 double get_time();
 void get_free_memory(double* free_db, double* used_db, double* total_db);
 void print_CUDA_error_if_any(cudaError_t err, int num);
 void pause_for_debugger(int pause);
+
 void cudaMemoryTest(int posId);
+
 void exit_on_cuda_error(const char* kernel_name);
 void exit_on_error(const char* info);
+
 void synchronize_cuda();
 void synchronize_mpi();
+
 void start_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop);
 void stop_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop,const char* info_str);
 void stop_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop,const char* info_str,realw* t);
-void get_blocks_xy(int num_blocks,int* num_blocks_x,int* num_blocks_y);
+
 realw get_device_array_maximum_value(realw* array,int size);
 
 
@@ -577,4 +607,50 @@ typedef struct mesh_ {
 } Mesh;
 
 
+/* ----------------------------------------------------------------------------------------------- */
+
+// kernel setup functions
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// moved here into header to inline function calls if possible
+
+static inline void get_blocks_xy(int num_blocks, int* num_blocks_x, int* num_blocks_y) {
+
+// Initially sets the blocks_x to be the num_blocks, and adds rows as needed (block size limit of 65535).
+// If an additional row is added, the row length is cut in
+// half. If the block count is odd, there will be 1 too many blocks,
+// which must be managed at runtime with an if statement.
+
+  *num_blocks_x = num_blocks;
+  *num_blocks_y = 1;
+
+  while(*num_blocks_x > MAXIMUM_GRID_DIM) {
+    *num_blocks_x = (int) ceil(*num_blocks_x * 0.5f);
+    *num_blocks_y = *num_blocks_y * 2;
+  }
+
+#if DEBUG == 1
+  printf("work group - total %d has group size x = %d / y = %d\n",
+         num_blocks,*num_blocks_x,*num_blocks_y);
 #endif
+
+  // tries to balance x- and y-group
+#ifdef BALANCE_WORK_GROUP
+  if (*num_blocks_x > BALANCE_WORK_GROUP_UNITS && *num_blocks_y < BALANCE_WORK_GROUP_UNITS){
+    while (*num_blocks_x > BALANCE_WORK_GROUP_UNITS && *num_blocks_y < BALANCE_WORK_GROUP_UNITS) {
+      *num_blocks_x = (int) ceil (*num_blocks_x * 0.5f);
+      *num_blocks_y = *num_blocks_y * 2;
+    }
+  }
+
+#if DEBUG == 1
+  printf("balancing work group with limit size %d - total %d has group size x = %d / y = %d\n",
+         BALANCE_WORK_GROUP_UNITS,num_blocks,*num_blocks_x,*num_blocks_y);
+#endif
+
+#endif
+}
+
+
+#endif  // MESH_CONSTANTS_CUDA_H

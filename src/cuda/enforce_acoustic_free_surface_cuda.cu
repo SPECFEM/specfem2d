@@ -125,8 +125,6 @@ void FC_FUNC_(acoustic_enforce_free_surf_cuda,
                                                                             mp->d_ispec_is_acoustic);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("enforce_free_surface_cuda");
-#endif
+  GPU_ERROR_CHECKING ("enforce_free_surface_cuda");
 }
 

@@ -154,11 +154,10 @@ void FC_FUNC_(compute_coupling_ac_el_cuda,
   }
 
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
   //printf("Elapsed time: %e\n",end_time-start_time);
-  exit_on_cuda_error("compute_coupling_acoustic_el_kernel");
-#endif
+
+  GPU_ERROR_CHECKING ("compute_coupling_acoustic_el_kernel");
 }
 
 
@@ -277,9 +276,8 @@ void FC_FUNC_(compute_coupling_el_ac_cuda,
                                                          mp->d_ibool);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
   //printf("Elapsed time: %e\n",end_time-start_time);
-  exit_on_cuda_error("compute_coupling_el_ac_cuda");
-#endif
+
+  GPU_ERROR_CHECKING ("compute_coupling_el_ac_cuda");
 }

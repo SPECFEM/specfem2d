@@ -114,9 +114,7 @@ void FC_FUNC_(compute_add_sources_el_cuda,
                                                                     it,mp->nsources_local);
 
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("compute_add_sources_el_cuda");
-#endif
+  GPU_ERROR_CHECKING ("compute_add_sources_el_cuda");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -154,9 +152,7 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
                                                                     mp->d_ispec_is_elastic,
                                                                     it,mp->nsources_local);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("compute_add_sources_el_s3_cuda");
-#endif
+  GPU_ERROR_CHECKING ("compute_add_sources_el_s3_cuda");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -250,8 +246,6 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
                                                                                mp->nadj_rec_local,
                                                                                *NSTEP);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("add_sources_SIM_TYPE_2_OR_3_kernel");
-#endif
+  GPU_ERROR_CHECKING ("add_sources_SIM_TYPE_2_OR_3_kernel");
 }
 

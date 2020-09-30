@@ -777,9 +777,7 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                        int compute_wavefield_1,
                        int compute_wavefield_2) {
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("before acoustic kernel Kernel 2");
-#endif
+TRACE("Kernel_2_acoustic");
 
   // if the grid can handle the number of blocks, we let it be 1D
   int blocksize = NGLL2;
@@ -796,13 +794,16 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
     start_timing_cuda(&start,&stop);
   }
 
+  // forward and/or backward fields
   if (compute_wavefield_1 && compute_wavefield_2){
-    nb_field=2;
+    nb_field = 2;  // both fields
   }else{
-    nb_field=1;
+    nb_field = 1;  // single field only (either forward wavefield1 or backward wavefield2)
   }
+
   if ( ! ATTENUATION_VISCOACOUSTIC){
-    if (nb_field==2){
+    // no attenuation
+    if (nb_field == 2){
       // forward wavefields -> FORWARD_OR_ADJOINT == 1
       Kernel_2_acoustic_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                                        d_ibool,
@@ -822,7 +823,8 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                        d_rhostore,
                                                                        mp->pml_boundary_conditions,
                                                                        mp->d_spec_to_pml);
-    }else{ // nb_field==1
+    }else{
+      // nb_field == 1
       if (compute_wavefield_1){
         // forward wavefields -> FORWARD_OR_ADJOINT == 1
         Kernel_2_acoustic_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
@@ -905,7 +907,9 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                          mp->d_spec_to_pml);
       } //compute_wavefield_1
     } //nb_field
-  }else{ // ATTENUATION_VISCOACOUSTIC== .true. below
+  }else{
+    // attenuation
+    // ATTENUATION_VISCOACOUSTIC == .true. below
     if (compute_wavefield_1) {
       Kernel_2_viscoacoustic_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                                             d_ibool,
@@ -946,8 +950,6 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
     }
   } // ATTENUATION_VISCOACOUSTIC
 
-
-
   // Cuda timing
   if (CUDA_TIMING) {
     realw flops,time;
@@ -958,9 +960,7 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
     printf("  performance: %f GFlop/s\n", flops/time * 1.e-9);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("kernel Kernel_2");
-#endif
+  GPU_ERROR_CHECKING ("Kernel_2_acoustic");
 }
 
 /* ----------------------------------------------------------------------------------------------- */

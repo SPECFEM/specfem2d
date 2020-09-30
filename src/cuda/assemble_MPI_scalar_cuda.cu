@@ -138,11 +138,6 @@ TRACE("transfer_boun_pot_from_device");
     }
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("after prepare_boundary_potential_on_device");
-#endif
-
-
   // finish timing of kernel+memcpy
   // cudaEventRecord( stop, 0 );
   // cudaEventSynchronize( stop );
@@ -150,9 +145,8 @@ TRACE("transfer_boun_pot_from_device");
   // cudaEventDestroy( start );
   // cudaEventDestroy( stop );
   // printf("boundary xfer d->h Time: %f ms\n",time);
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("transfer_boun_pot_from_device");
-#endif
+
+  GPU_ERROR_CHECKING ("transfer_boun_pot_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -269,8 +263,6 @@ TRACE("transfer_asmbl_pot_to_device");
   // Cuda timing
   //stop_timing_cuda(&start,&stop,"assemble_boundary_potential_on_device");
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("transfer_asmbl_pot_to_device");
-#endif
+  GPU_ERROR_CHECKING ("transfer_asmbl_pot_to_device");
 }
 

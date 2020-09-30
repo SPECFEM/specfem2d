@@ -270,30 +270,6 @@ void stop_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop,const char* info_str,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// CUDA kernel setup functions
-
-/* ----------------------------------------------------------------------------------------------- */
-
-void get_blocks_xy(int num_blocks,int* num_blocks_x,int* num_blocks_y) {
-
-// Initially sets the blocks_x to be the num_blocks, and adds rows as needed (block size limit of 65535).
-// If an additional row is added, the row length is cut in
-// half. If the block count is odd, there will be 1 too many blocks,
-// which must be managed at runtime with an if statement.
-
-  *num_blocks_x = num_blocks;
-  *num_blocks_y = 1;
-
-  while(*num_blocks_x > MAXIMUM_GRID_DIM) {
-    *num_blocks_x = (int) ceil(*num_blocks_x * 0.5f);
-    *num_blocks_y = *num_blocks_y * 2;
-  }
-
-  return;
-}
-
-/* ----------------------------------------------------------------------------------------------- */
-
 // GPU device memory functions
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -555,9 +531,7 @@ void FC_FUNC_(get_norm_acoustic_from_device,
     //get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_dot_dot_acoustic,size,d_ma3);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("kernel get_maximum_kernel");
-#endif
+  GPU_ERROR_CHECKING ("get_maximum_kernel");
 
   // synchronizes
   //synchronize_cuda();
@@ -605,11 +579,10 @@ void FC_FUNC_(get_norm_acoustic_from_device,
   // only potential_acoustic for now:
   *norm = max1;
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
   //printf("Elapsed time: %e\n",end_time-start_time);
-  exit_on_cuda_error("get_norm_acoustic_from_device");
-#endif
+
+  GPU_ERROR_CHECKING ("get_norm_acoustic_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -709,11 +682,10 @@ void FC_FUNC_(get_norm_elastic_from_device,
     //get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel,size,d_max3);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
   //printf("Elapsed time: %e\n",end_time-start_time);
-  exit_on_cuda_error("kernel get_norm_elastic_from_device");
-#endif
+
+  GPU_ERROR_CHECKING ("get_norm_elastic_from_device");
 
   // synchronizes
   //synchronize_cuda();
@@ -767,11 +739,10 @@ void FC_FUNC_(get_norm_elastic_from_device,
   //cudaFree(d_max3);
   //free(h_max3);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
   //printf("Elapsed time: %e\n",end_time-start_time);
-  exit_on_cuda_error("get_norm_elastic_from_device");
-#endif
+
+  GPU_ERROR_CHECKING ("get_norm_elastic_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -870,10 +841,7 @@ TRACE("get_max_accel");
  free(h_debug);
  fflush(stdout);
 
- #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
- exit_on_cuda_error("check_phase_ispec");
- #endif
-
+ GPU_ERROR_CHECKING ("check_phase_ispec");
  }
 */
 
@@ -935,9 +903,7 @@ TRACE("get_max_accel");
  free(h_debug);
  fflush(stdout);
 
- #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
- exit_on_cuda_error("check_ispec_is");
- #endif
+ GPU_ERROR_CHECKING ("check_ispec_is");
  }
 */
 /* ----------------------------------------------------------------------------------------------- */
@@ -994,10 +960,7 @@ TRACE("get_max_accel");
  free(h_debug);
  fflush(stdout);
 
- #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
- exit_on_cuda_error("check_array_ispec");
- #endif
-
+ GPU_ERROR_CHECKING ("check_array_ispec");
  }
 */
 

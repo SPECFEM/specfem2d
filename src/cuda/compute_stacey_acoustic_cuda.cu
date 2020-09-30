@@ -238,8 +238,6 @@ TRACE("compute_stacey_acoustic_cuda");
                                        mp->d_nspec_bottom*sizeof(realw)*NGLLX,cudaMemcpyDeviceToHost),7704);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("compute_stacey_acoustic_kernel");
-#endif
+  GPU_ERROR_CHECKING ("compute_stacey_acoustic_kernel");
 }
 

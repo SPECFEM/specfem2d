@@ -208,9 +208,8 @@ void FC_FUNC_(transfer_kernels_el_to_host,
                                      cudaMemcpyDeviceToHost),40102);
   print_CUDA_error_if_any(cudaMemcpy(h_kappa_kl,mp->d_kappa_kl,*NSPEC_AB*NGLL2*sizeof(realw),
                                      cudaMemcpyDeviceToHost),40103);
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
- exit_on_cuda_error("after transfer_kernels_el_to_host");
-#endif
+
+  GPU_ERROR_CHECKING ("transfer_kernels_el_to_host");
 }
 
 
@@ -240,9 +239,7 @@ void FC_FUNC_(transfer_fields_ac_to_device,
   print_CUDA_error_if_any(cudaMemcpy(mp->d_potential_dot_dot_acoustic,potential_dot_dot_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyHostToDevice),50130);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("after transfer_fields_ac_to_device");
-#endif
+  GPU_ERROR_CHECKING ("transfer_fields_ac_to_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -267,9 +264,7 @@ void FC_FUNC_(transfer_b_fields_ac_to_device,
   print_CUDA_error_if_any(cudaMemcpy(mp->d_b_potential_dot_dot_acoustic,b_potential_dot_dot_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyHostToDevice),51130);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("after transfer_b_fields_ac_to_device");
-#endif
+  GPU_ERROR_CHECKING ("transfer_b_fields_ac_to_device");
 }
 
 
@@ -296,13 +291,7 @@ void FC_FUNC_(transfer_fields_ac_from_device,
   print_CUDA_error_if_any(cudaMemcpy(potential_dot_dot_acoustic,mp->d_potential_dot_dot_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyDeviceToHost),52131);
 
-
-
-
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("after transfer_fields_ac_from_device");
-#endif
+  GPU_ERROR_CHECKING ("transfer_fields_ac_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -326,9 +315,7 @@ void FC_FUNC_(transfer_b_fields_ac_from_device,
   print_CUDA_error_if_any(cudaMemcpy(b_potential_dot_dot_acoustic,mp->d_b_potential_dot_dot_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyDeviceToHost),53131);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("after transfer_b_fields_ac_from_device");
-#endif
+  GPU_ERROR_CHECKING ("transfer_b_fields_ac_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -344,9 +331,8 @@ void FC_FUNC_(transfer_b_potential_ac_from_device,
   Mesh* mp = (Mesh*)(*Mesh_pointer);
   print_CUDA_error_if_any(cudaMemcpy(b_potential_acoustic,mp->d_b_potential_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyDeviceToHost),53132);
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("after transfer_b_potential_ac_from_device");
-#endif
+
+  GPU_ERROR_CHECKING ("transfer_b_potential_ac_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -362,9 +348,8 @@ void FC_FUNC_(transfer_b_potential_ac_to_device,
   Mesh* mp = (Mesh*)(*Mesh_pointer);
   print_CUDA_error_if_any(cudaMemcpy(mp->d_b_potential_acoustic,b_potential_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyHostToDevice),53133);
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("after transfer_b_potential_ac_to_device");
-#endif
+
+  GPU_ERROR_CHECKING ("transfer_b_potential_ac_to_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -613,9 +598,7 @@ TRACE("transfer_compute_kernel_fields_from_device");
   cudaMemcpy(b_epsilon_trace_over_3,mp->d_b_epsilon_trace_over_3,*size_epsilon_trace_over_3*sizeof(realw),
        cudaMemcpyDeviceToHost);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("after transfer_compute_kernel_fields_from_device");
-#endif
+  GPU_ERROR_CHECKING ("transfer_compute_kernel_fields_from_device");
 }
 */
 
