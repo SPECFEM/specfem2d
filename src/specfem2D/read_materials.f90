@@ -83,7 +83,29 @@
 
   ! skips material sets header
   do imat = 1,numat
+    ! initializes
+    cp = ZERO
+    cs = ZERO
+    c11 = ZERO
+    c13 = ZERO
+    c15 = ZERO
+    c33 = ZERO
+    c35 = ZERO
+    c55 = ZERO
+    c12 = ZERO
+    c23 = ZERO
+    c25 = ZERO
+    c22 = ZERO
+    Qkappa = 9999.
+    Qmu = 9999.
 
+    ! supported model formats:
+    !  acoustic                - model_number  1 rho    Vp   0   0   0 QKappa Qmu   0   0   0    0      0   0
+    !  elastic                 - model_number  1 rho    Vp  Vs   0   0 QKappa Qmu   0   0   0    0      0   0
+    !  anisotropic             - model_number  2 rho   c11 c13 c15 c33    c35 c55 c12 c23 c25    0 QKappa Qmu
+    !  anisotropic (in AXISYM) - model_number  2 rho   c11 c13 c15 c33    c35 c55 c12 c23 c25  c22 QKappa Qmu
+    !  poroelastic             - model_number  3 rhos rhof phi   c kxx    kxz kzz  Ks  Kf Kfr etaf   mufr Qmu
+    !  tomo                    - model_number -1 0       0   A   0   0      0   0   0   0   0    0      0   0
     read(IIN) n,indic,val0,val1,val2,val3,val4,val5,val6,val7,val8,val9,val10,val11,val12
 
     if (n < 1 .or. n > numat) call exit_MPI(myrank,'Wrong material set number')
@@ -92,27 +114,30 @@
     !---- elastic (cs /= 0) and acoustic (cs = 0)
     if (indic == 1) then
       ! isotropic elastic/acoustic material
+      ! line format:
+      ! #model_number  #1 #(val0)rho #(val1)Vp #(val2)Vs #(val3)0 #(val4)0 #(val5)QKappa #(val6)Qmu  0 0 0 0 0 0
       density_mat(1) = val0
 
       ! P and S velocity
       cp = val1
       cs = val2
       compaction_grad = val3
+
       ! QKappa and Qmu values
       QKappa = val5
       Qmu = val6
-      if (QKappa <= 0.0000001 .or. Qmu <= 0.0000001) &
+      if (QKappa <= 0.0000001 .or. Qmu <= 0.0000001) then
         call stop_the_code( &
 'negative or null values of Q attenuation factor not allowed; set them equal to 9999 to indicate no attenuation')
+      endif
 
       ! Lame parameters
-      lambdaplus2mu = density_mat(1)*cp*cp
-      mu = density_mat(1)*cs*cs
+      lambdaplus2mu = density_mat(1) * cp*cp
+      mu = density_mat(1) * cs*cs
       two_mu = 2.d0*mu
       lambda = lambdaplus2mu - two_mu
 
       ! bulk modulus Kappa
-
       if (AXISYM) then ! CHECK kappa
         kappa = lambda + TWO_THIRDS * mu
       else
@@ -131,6 +156,9 @@
     !---- anisotropic material, c11, c13, c33 and c44 given in Pascal
     else if (indic == 2) then
       ! anisotropic elastic material
+      ! line format:
+      ! #model_number  #2 #(val0)rho #(val1)c11 #(val2)c13 #(val3)c15 #(val4)c33 #(val5)c35 #(val6)c55 #(val7)c12  ..
+      !       ..          #(val8)c23 #(val9)c25 #(val10)c22 #(val11)QKappa #(val12)Qmu
       density_mat(1) = val0
 
       ! Anisotropy parameters
@@ -139,43 +167,62 @@
       c15 = val3
       c33 = val4
       c35 = val5
-      c55 = val6
+      c55 = val6  ! c55 == mu
       c12 = val7
       c23 = val8
       c25 = val9
       c22 = val10  ! This value is used for AXISYM only
+
+      ! note for isotropy:
+      !   c11 == c33
+      !   c55 == (c11 - c13)/2
+      !   c15 == c35 == c12 == c23 == c25 == 0
+
+      ! QKappa and Qmu values
+      ! old format uses 0 0 at the line end, without specifying Qkappa and Qmu. just use Q values when a positive value given.
+      if (val11 > 0.1) QKappa = val11
+      if (val12 > 0.1) Qmu = val12
 
       ! P and S velocity
       cp = sqrt(c33/density_mat(1))
       cs = sqrt(c55/density_mat(1))
 
       ! Lame parameters
-      lambdaplus2mu = density_mat(1)*cp*cp
-      mu = density_mat(1)*cs*cs
+      lambdaplus2mu = density_mat(1) * cp*cp
+      mu = density_mat(1) * cs*cs
       two_mu = 2.d0*mu
       lambda = lambdaplus2mu - two_mu
 
-      ! bulk modulus Kappa
+      ! checks if anisotropic material has shear
+      if (mu < 0.1) then
+        ! zero shear, not elastic
+        call exit_MPI(myrank,'Error anisotropic material has an invalid zero shear modulus')
+      endif
 
+      ! bulk modulus Kappa
       if (AXISYM) then ! CHECK kappa
         kappa = lambda + TWO_THIRDS * mu
       else
         kappa = lambda + mu
       endif
 
+      ! Young, Poisson not used any further - just in case:
       ! Young modulus
       young = 9.d0*kappa*mu/(3.d0*kappa + mu)
-
       ! Poisson's ratio
       poisson = HALF * (3.d0*kappa-two_mu)/(3.d0*kappa+mu)
+      !poisson = 0.5d0*(cp*cp-2.d0*cs*cs) / (cp*cp-cs*cs)   ! using Vp,Vs
+
+      ! debug
+      !print *,'debug: anisotropic lambda/mu',lambda,mu,'kappa/young/poisson',kappa,young,poisson
 
     !---- isotropic material, moduli are given, allows for declaration of poroelastic material
     !---- poroelastic (0 < phi < 1)
     else if (indic == 3) then
       ! poroelastic material
-      ! Qmu values
-      Qmu = val12
-
+      ! line format:
+      ! #model_number  #3 #(val0)rhos #(val1)rhof #(val2)phi #(val3)c #(val4)kxx #(val5)kxz #(val6)kzz #(val7)Ks ..
+      !                .. #(val8)Kf #(val9)Kfr #(val10)etaf #(val11)mufr #(val12)Qmu
       density_mat(1) = val0
       density_mat(2) = val1
 
@@ -199,6 +246,11 @@
       ! Frame properties
       kappa_fr = val9
       mu_fr = val11
+
+      ! Qmu values
+      ! old format uses 0 at the line end, without specifying Qmu. just use Q values when a positive value given.
+      if (val12 > 0.1) Qmu = val12
+      ! no bulk attenuation Qkappa supported yet..
 
       ! Lame parameters for the solid phase and the frame
       !if (AXISYM) then ! ABAB !! Warning !! This is false for plane strain (look for: bulk modulus plane strain) Check Kappa
@@ -243,6 +295,8 @@
 
     else if (indic <= 0) then
       ! external, tomo material (material properties will be assigned later)
+      ! line format:
+      !  #model_number #-1 #(val0)0 #(val1)0 #(val2)A  0 0 0 0 0 0 0 0 0 0
       assign_external_model = .true.
       tomo_material = n
       mu = val2 ! for acoustic medium vs must be 0 anyway
@@ -258,12 +312,15 @@
     if (indic == 1) then
       ! isotropic elastic/acoustic material
       density(1,n) = density_mat(1)
+
       poroelastcoef(1,1,n) = lambda
       poroelastcoef(2,1,n) = mu
       poroelastcoef(3,1,n) = lambdaplus2mu
       poroelastcoef(4,1,n) = compaction_grad
+
       QKappa_attenuationcoef(n) = QKappa
       Qmu_attenuationcoef(n) = Qmu
+
       if (mu > TINYVAL) then
         porosity(n) = 0.d0
       else
@@ -273,11 +330,13 @@
     else if (indic == 2) then
       ! anisotropic elastic material
       density(1,n) = density_mat(1)
+
       ! dummy poroelastcoef values, trick to avoid floating invalid
       poroelastcoef(1,1,n) = lambda
       poroelastcoef(2,1,n) = mu
       poroelastcoef(3,1,n) = lambdaplus2mu
-      poroelastcoef(4,1,n) = ZERO
+      poroelastcoef(4,1,n) = ZERO  ! no compaction gradient info
+
       anisotropycoef(1,n) = c11
       anisotropycoef(2,n) = c13
       anisotropycoef(3,n) = c15
@@ -288,12 +347,17 @@
       anisotropycoef(8,n) = c23
       anisotropycoef(9,n) = c25
       anisotropycoef(10,n) = c22 ! This value is used for AXISYM only
+
+      QKappa_attenuationcoef(n) = QKappa
+      Qmu_attenuationcoef(n) = Qmu
+
       porosity(n) = 0.d0
 
     else if (indic == 3) then
       ! poroelastic material
       density(1,n) = density_mat(1)
       density(2,n) = density_mat(2)
+
       poroelastcoef(1,1,n) = lambda_s
       poroelastcoef(2,1,n) = mu_s    ! = mu_fr
       poroelastcoef(3,1,n) = lambdaplus2mu_s
@@ -309,16 +373,21 @@
       poroelastcoef(3,3,n) = lambdaplus2mu_fr
       poroelastcoef(4,3,n) = ZERO
 
+      Qmu_attenuationcoef(n) = Qmu
+
     else if (indic <= 0) then
       ! external, tomo material
       ! assign dummy values for now (for acoustic medium vs must be 0 anyway), these values will be read in read_external_model
       density(1,n) = -1.0d0
+
       poroelastcoef(1,1,n) = -1.0d0
       poroelastcoef(2,1,n) = mu
       poroelastcoef(3,1,n) = -1.0d0
       poroelastcoef(4,1,n) = ZERO
+
       QKappa_attenuationcoef(n) = 9999.
       Qmu_attenuationcoef(n) = 9999.
+
       if (mu > TINYVAL) then
         porosity(n) = 0.d0
       else
@@ -336,6 +405,7 @@
     if (myrank == 0) then
       ! user output
       if (indic == 1) then
+        ! elastic/acoustic
         ! material can be acoustic (fluid) or elastic (solid)
         if (poroelastcoef(2,1,n) > TINYVAL) then
           ! elastic
@@ -356,9 +426,9 @@
       else if (indic == 2) then
         ! elastic (anisotropic)
         if (AXISYM) then
-          write(IMAIN,450) n,density_mat(1),c11,c13,c15,c33,c35,c55,c12,c23,c25,c22
+          write(IMAIN,450) n,density_mat(1),c11,c13,c15,c33,c35,c55,c12,c23,c25,c22,Qkappa,Qmu
         else
-          write(IMAIN,400) n,density_mat(1),c11,c13,c15,c33,c35,c55,c12,c23,c25
+          write(IMAIN,400) n,density_mat(1),c11,c13,c15,c33,c35,c55,c12,c23,c25,Qkappa,Qmu
         endif
 
       else if (indic == 3) then
@@ -431,7 +501,9 @@
        'c55 coefficient (Pascal). . . . . . (c55) =',1pe15.8,/5x, &
        'c12 coefficient (Pascal). . . . . . (c12) =',1pe15.8,/5x, &
        'c23 coefficient (Pascal). . . . . . (c23) =',1pe15.8,/5x, &
-       'c25 coefficient (Pascal). . . . . . (c25) =',1pe15.8,/5x)
+       'c25 coefficient (Pascal). . . . . . (c25) =',1pe15.8,/5x, &
+       'QKappa_attenuation. . . . . . . .(QKappa) =',1pe15.8,/5x, &
+       'Qmu_attenuation. . . . . . . . . . .(Qmu) =',1pe15.8)
 
 450 format(//5x,'-------------------------------------',/5x, &
        '-- Axisymetrical anisotropic material --',/5x, &
@@ -447,7 +519,9 @@
        'c12 coefficient (Pascal). . . . . . (c12) =',1pe15.8,/5x, &
        'c23 coefficient (Pascal). . . . . . (c23) =',1pe15.8,/5x, &
        'c25 coefficient (Pascal). . . . . . (c25) =',1pe15.8,/5x, &
-       'c22 coefficient (Pascal). . . . . . (c22) =',1pe15.8,/5x)
+       'c22 coefficient (Pascal). . . . . . (c22) =',1pe15.8,/5x, &
+       'QKappa_attenuation. . . . . . . .(QKappa) =',1pe15.8,/5x, &
+       'Qmu_attenuation. . . . . . . . . . .(Qmu) =',1pe15.8)
 
 500 format(//5x,'----------------------------------------',/5x, &
        '-- Poroelastic isotropic material --',/5x, &

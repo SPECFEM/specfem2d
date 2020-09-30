@@ -106,18 +106,22 @@
              A_newmark_e1_sf(1,1,1,1), &
              B_newmark_e1_sf(1,1,1,1),stat=ier)
     if (time_stepping_scheme == 1) then
+      ! Newmark scheme
       allocate(dot_e1_old(nglob_acoustic,N_SLS), &
                A_newmark_e1(nglob_acoustic,N_SLS), &
                B_newmark_e1(nglob_acoustic,N_SLS),stat=ier)
     else
+      ! dummy arrays
       allocate(dot_e1_old(1,N_SLS), &
                A_newmark_e1(1,N_SLS), &
                B_newmark_e1(1,N_SLS),stat=ier)
     endif
 
     if (time_stepping_scheme == 2) then
+      ! LDDRK scheme
       allocate(e1_acous_temp(nglob_acoustic,N_SLS),stat=ier)
     else
+      ! dummy array
       allocate(e1_acous_temp(1,N_SLS),stat=ier)
     endif
 
@@ -132,8 +136,9 @@
     allocate(A_newmark_e1_sf(N_SLS,NGLLX,NGLLZ,nspec), &
              B_newmark_e1_sf(N_SLS,NGLLX,NGLLZ,nspec),stat=ier)
 
-  else ! no ATTENUATION_VISCOACOUSTIC
-
+  else
+    ! no ATTENUATION_VISCOACOUSTIC
+    ! dummy arrays
     allocate(e1_acous(1,N_SLS), &
              e1_acous_temp(1,N_SLS), &
              dot_e1(1,N_SLS), &
@@ -187,6 +192,7 @@
   endif
 
   if (time_stepping_scheme == 2) then
+    ! LDDRK
     ! elastic domains
     if (ATTENUATION_VISCOELASTIC) then
       allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
@@ -204,10 +210,10 @@
         allocate(e1_LDDRK_acous(1,1))
     endif
   else
+    ! dummy arrays
     allocate(e1_LDDRK(1,1,1,1))
     allocate(e11_LDDRK(1,1,1,1))
     allocate(e13_LDDRK(1,1,1,1))
-
     allocate(e1_LDDRK_acous(1,1))
   endif
   e1_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
@@ -217,6 +223,7 @@
   e1_LDDRK_acous(:,:) = 0._CUSTOM_REAL
 
   if (time_stepping_scheme == 3) then
+    ! RK scheme
     ! elastic domains
     allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
     allocate(e11_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
@@ -233,6 +240,7 @@
       allocate(e1_force_rk_acous(1,1,1))
     endif
   else
+    ! dummy arrays
     allocate(e1_initial_rk(1,1,1,1))
     allocate(e11_initial_rk(1,1,1,1))
     allocate(e13_initial_rk(1,1,1,1))

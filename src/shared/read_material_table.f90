@@ -137,6 +137,13 @@
 
   ! reads in material definitions
   do imaterial = 1,nbmodels
+    ! supported model formats:
+    !  acoustic                - model_number  1 rho    Vp   0   0   0 QKappa Qmu   0   0   0    0      0   0
+    !  elastic                 - model_number  1 rho    Vp  Vs   0   0 QKappa Qmu   0   0   0    0      0   0
+    !  anisotropic             - model_number  2 rho   c11 c13 c15 c33    c35 c55 c12 c23 c25    0 QKappa Qmu
+    !  anisotropic (in AXISYM) - model_number  2 rho   c11 c13 c15 c33    c35 c55 c12 c23 c25  c22 QKappa Qmu
+    !  poroelastic             - model_number  3 rhos rhof phi   c kxx    kxz kzz  Ks  Kf Kfr etaf   mufr Qmu
+    !  tomo                    - model_number -1 0       0   A   0   0      0   0   0   0   0    0      0   0
 
     call read_material_parameters_p(i,icodematread, &
                                     val0read,val1read,val2read,val3read, &
@@ -188,6 +195,9 @@
       aniso11(i) = val9read
       aniso12(i) = val10read ! This value will be used only in AXISYM
 
+      if (val11read > 0.1) QKappa(i) = val11read
+      if (val12read > 0.1) Qmu(i) = val12read
+
     else if (icodemat(i) == POROELASTIC_MATERIAL) then
       ! poroelastic materials
       rho_s_read(i) = val0read
@@ -202,7 +212,8 @@
       kappa_fr_read(i) = val9read
       eta_f_read(i) = val10read
       mu_fr_read(i) = val11read
-      Qmu(i) = val12read
+
+      if (val12read > 0.1) Qmu(i) = val12read
 
       if (rho_s_read(i) <= 0.d0 .or. rho_f_read(i) <= 0.d0) &
         call stop_the_code('non-positive value of density')
@@ -250,6 +261,7 @@
   do i = 1,nbmodels
     if (i == 1) write(IMAIN,*) '--------'
     if (icodemat(i) == ISOTROPIC_MATERIAL) then
+      ! isotropic elastic/acoustic
       write(IMAIN,*) 'Material #',i,' isotropic'
       write(IMAIN,*) 'rho,cp,cs   = ',rho_s_read(i),cp(i),cs(i)
       write(IMAIN,*) 'Qkappa, Qmu = ',QKappa(i),Qmu(i)
@@ -259,6 +271,7 @@
          write(IMAIN,*) 'Material is solid'
       endif
     else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
+      ! anisotropic
       write(IMAIN,*) 'Material #',i,' anisotropic'
       write(IMAIN,*) 'rho,cp,cs    = ',rho_s_read(i),cp(i),cs(i)
       if (AXISYM) then
@@ -272,6 +285,7 @@
         write(IMAIN,*) 'QKappa,Qmu = ',QKappa(i),Qmu(i)
       endif
     else if (icodemat(i) == POROELASTIC_MATERIAL) then
+      ! poroelastic
       write(IMAIN,*) 'Material #',i,' isotropic'
       write(IMAIN,*) 'rho_s, kappa_s         = ',rho_s_read(i),kappa_s_read(i)
       write(IMAIN,*) 'rho_f, kappa_f, eta_f  = ',rho_f_read(i),kappa_f_read(i),eta_f_read(i)

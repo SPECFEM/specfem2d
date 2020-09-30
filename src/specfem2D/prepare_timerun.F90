@@ -184,7 +184,7 @@
   ! defines coefficients of the Newmark time scheme
   !
   ! note: whenever possible, we will use deltat,.. values with CUSTOM_REAL precision to avoid implicit conversions
-  !       when multiplying with custom_real wavefields etc.
+  !       when multiplying with CUSTOM_REAL wavefields etc.
   !
   !       DT will be kept in double precision and used when higher accuracy is needed or for non-critical computation
   !       (e.g., determining time for seismogram trace outputs)

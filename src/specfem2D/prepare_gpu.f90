@@ -67,14 +67,14 @@
     call stop_the_code('GPU simulations require USE_A_STRONG_FORMULATION_FOR_E1 set to true')
 
   if (ATTENUATION_VISCOELASTIC .and. SIMULATION_TYPE == 3) &
-    call stop_the_code('GPU mode do not support yet adjoint simulations with attenuation viscoelastic')
+    call stop_the_code('GPU_MODE not supported yet adjoint simulations with attenuation viscoelastic')
   if ((ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_VISCOELASTIC) .and. any_elastic .and. any_acoustic) &
-    call stop_the_code('GPU mode do not support yet coupled fluid-solid simulations with attenuation')
+    call stop_the_code('GPU_MODE not supported yet coupled fluid-solid simulations with attenuation')
 
   if (PML_BOUNDARY_CONDITIONS .and. any_elastic) &
-    call stop_the_code('PML on GPU do not support elastic case yet')
+    call stop_the_code('PML on GPU not supported yet for elastic cases')
   if (PML_BOUNDARY_CONDITIONS .and. ATTENUATION_VISCOACOUSTIC) &
-    call stop_the_code('PML on GPU do not support viscoacoustic case yet')
+    call stop_the_code('PML on GPU not supported yet for viscoacoustic cases')
   if (PML_BOUNDARY_CONDITIONS .and. SIMULATION_TYPE == 3 .and. (.not. NO_BACKWARD_RECONSTRUCTION) ) &
     call stop_the_code('PML on GPU in adjoint mode only work using NO_BACKWARD_RECONSTRUCTION flag')
 

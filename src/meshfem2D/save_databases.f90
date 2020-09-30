@@ -448,16 +448,16 @@
   integer :: i,indic
 
   ! material set header
-  ! 'Material sets (num 1 rho vp vs 0 0 QKappa Qmu 0 0 0 0 0 0) or '
-  ! '(num 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0) or '
-  ! '(num 3 rhos rhof phi c k_xx k_xz k_zz Ks Kf Kfr etaf mufr Qmu)'
+  ! Material sets (num 1 rho vp vs 0 0 QKappa Qmu 0 0 0 0 0 0)                   acoustic/elastic
+  !               (num 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 c22 Qkappa Qmu) anisotropic
+  !               (num 3 rhos rhof phi c k_xx k_xz k_zz Ks Kf Kfr etaf mufr Qmu) poroelastic
 
   do i = 1,nbmodels
     ! material type
     indic = icodemat(i)
 
     if (indic == ISOTROPIC_MATERIAL) then
-      ! isotropic
+      ! isotropic elastic/acoustic
       val0 = rho_s_read(i)
       val1 = cp(i)
       val2 = cs(i)
@@ -487,8 +487,8 @@
       val8 = aniso10(i)
       val9 = aniso11(i)
       val10 = aniso12(i)
-      val11 = 0.d0
-      val12 = 0.d0
+      val11 = QKappa(i)
+      val12 = Qmu(i)
       ! old
       !write(IOUT) i,icodemat(i),rho_s_read(i), &
       !            aniso3(i),aniso4(i),aniso5(i),aniso6(i), &

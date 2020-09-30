@@ -750,7 +750,7 @@
       integrated_kinetic_energy_field(ispec) = integrated_kinetic_energy_field(ispec)  &
           +  rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * deltat * 0.5_CUSTOM_REAL
 
-      if (max_kinetic_energy_field(ispec) < &
+      if (max_kinetic_energy_field(ispec) <&
             rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * 0.5_CUSTOM_REAL) then
         max_kinetic_energy_field(ispec) = &
             rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * 0.5_CUSTOM_REAL
@@ -828,7 +828,7 @@
       integrated_kinetic_energy_field(ispec) = integrated_kinetic_energy_field(ispec)  &
            +  rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) * deltat * 0.5_CUSTOM_REAL
 
-      if (max_kinetic_energy_field(ispec) < &
+      if (max_kinetic_energy_field(ispec) <&
             rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) * 0.5_CUSTOM_REAL) then
         max_kinetic_energy_field(ispec) = &
             rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) * 0.5_CUSTOM_REAL
