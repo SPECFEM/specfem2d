@@ -170,7 +170,7 @@ else
 
   # coverage run
   if [ "$TESTCOV" == "1" ]; then
-    sed -i "s:^NSTEP .*:NSTEP    = 400:" DATA/Par_file
+    sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   fi
 
   # default
