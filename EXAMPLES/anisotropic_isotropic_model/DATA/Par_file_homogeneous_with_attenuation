@@ -246,7 +246,7 @@ nbmodels                        = 3
 #3 1 2700.d0 3000.d0 1732.05d0 0 0 20. 10. 0 0 0 0 0 0
 ## anisotropic layer (defines the same homogeneous isotropic material)
 1 1 2700.d0 3000.d0 1732.05d0 0 0 20. 10. 0 0 0 0 0 0
-2 2 2700.d0 24.3d9  8.1000151d9 0 24.3d9 0 8.09999245d9 0 0 0 0 20. 10. 
+2 2 2700.d0 24.3d9  8.1000151d9 0 24.3d9 0 8.09999245d9 0 0 0 0 20. 10.
 3 1 2700.d0 3000.d0 1732.05d0 0 0 20. 10. 0 0 0 0 0 0
 
 # external tomography file
