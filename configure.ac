@@ -12,7 +12,7 @@ AC_PREREQ(2.61)
 AC_INIT([Specfem 2D], [7.0.0], [see the wiki], [Specfem2D])
 AC_CONFIG_SRCDIR([README.md])
 
-AC_CONFIG_HEADER([setup/config.h])
+AC_CONFIG_HEADERS([setup/config.h])
 
 AC_CONFIG_MACRO_DIR([m4])
 m4_include(m4/cit_backports.m4)
@@ -82,13 +82,18 @@ AM_CONDITIONAL([COND_CUDA6], [test x"$want_cuda" = xcuda6])
 AM_CONDITIONAL([COND_CUDA7], [test x"$want_cuda" = xcuda7])
 AM_CONDITIONAL([COND_CUDA8], [test x"$want_cuda" = xcuda8])
 AM_CONDITIONAL([COND_CUDA9], [test x"$want_cuda" = xcuda9])
+AM_CONDITIONAL([COND_CUDA10], [test x"$want_cuda" = xcuda10])
+AM_CONDITIONAL([COND_CUDA11], [test x"$want_cuda" = xcuda11])
+
 # cuda linking for cuda 5x and 6x and 7x and 8x and ..
 AM_CONDITIONAL([COND_CUDA_PLUS],
   [test "$want_cuda" = cuda5 \
      -o "$want_cuda" = cuda6 \
      -o "$want_cuda" = cuda7 \
      -o "$want_cuda" = cuda8 \
-     -o "$want_cuda" = cuda9 \]
+     -o "$want_cuda" = cuda9 \
+     -o "$want_cuda" = cuda10 \
+     -o "$want_cuda" = cuda11 \]
 )
 
 ############################################################
@@ -321,7 +326,7 @@ AS_IF([test "$want_mpi" = yes], [
 ])
 
 ###
-### CUDA
+### GPU
 ###
 
 AS_IF([test x"$want_cuda" != xno], [
