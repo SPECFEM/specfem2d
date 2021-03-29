@@ -36,28 +36,6 @@
 #include "mesh_constants_cuda.h"
 #include "smooth_cuda.h"
 
-/*
-#include "config.h"
-#include <stdio.h>
-*/
-
-/* ----------------------------------------------------------------------------------------------- */
-
-/*
-// copies integer array from CPU host to GPU device
-void copy_todevice_int(void** d_array_addr_ptr,int* h_array,int size){
-   cudaMalloc((void**)d_array_addr_ptr,size*sizeof(int));
-   cudaMemcpy((int*) *d_array_addr_ptr,h_array,size*sizeof(int),cudaMemcpyHostToDevice);
-}
-
-void copy_todevice_realw(void** d_array_addr_ptr,realw* h_array,int size){
-   cudaMalloc((void**)d_array_addr_ptr,size*sizeof(realw));
-   cudaMemcpy((realw*) *d_array_addr_ptr,h_array,size*sizeof(realw),cudaMemcpyHostToDevice);
-}
-*/
-
-/* ----------------------------------------------------------------------------------------------- */
-
 
 extern "C"
 void FC_FUNC_(prepare_arrays_gpu,

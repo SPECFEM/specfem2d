@@ -43,7 +43,6 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
-
 extern "C"
 void FC_FUNC_(compute_coupling_ac_el_cuda,
               COMPUTE_COUPLING_AC_EL_CUDA)(long* Mesh_pointer,

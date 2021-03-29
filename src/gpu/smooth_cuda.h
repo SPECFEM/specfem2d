@@ -38,21 +38,6 @@
 
 #include "mesh_constants_cuda.h"
 
-// Gauss-Lobatto-Legendre
-/*
-#define NGLL 5
-#define NGLLX 5
-#define NGLL2 25
-
-typedef float realw;
-typedef const realw* __restrict__ realw_const_p;
-typedef realw* __restrict__ realw_p;
-
-
-void print_CUDA_error_if_any(cudaError_t err, int num);
-void synchronize_cuda();
-*/
-
 // smoothing data structure
 typedef struct Smooth_data_ {
   realw * x_me;

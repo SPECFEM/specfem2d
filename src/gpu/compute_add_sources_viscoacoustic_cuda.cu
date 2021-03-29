@@ -42,7 +42,6 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
-
 extern "C"
 void FC_FUNC_(compute_add_sources_ac_cuda,
               COMPUTE_ADD_SOURCES_AC_CUDA)(long* Mesh_pointer,

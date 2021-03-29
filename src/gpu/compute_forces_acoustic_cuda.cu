@@ -42,7 +42,6 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
-
 void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                        int* d_ibool,
                        realw* d_xix,realw* d_xiz,

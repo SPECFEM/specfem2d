@@ -42,7 +42,6 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
-
 void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
               int ANISOTROPY,int ATTENUATION_VISCOELASTIC) {
 

@@ -36,7 +36,7 @@
 #include "mesh_constants_cuda.h"
 
 // CUDA version
-// gpu runtime flags
+// gpu runtime flags (for future usage)
 int run_cuda = 0;
 
 
@@ -252,11 +252,11 @@ void FC_FUNC_(initialize_cuda_device,
 
 
 
-/***********************************************************************************************************************************/
+/* ----------------------------------------------------------------------------------------------- */
 
-/*                                  Init for CUDA aware MPI ( done before MPI Init )                                               */
+// Init for CUDA aware MPI ( done before MPI Init )
 
-/***********************************************************************************************************************************/
+/* ----------------------------------------------------------------------------------------------- */
 
 // routine not used yet... keeping it here for future possibilities
 

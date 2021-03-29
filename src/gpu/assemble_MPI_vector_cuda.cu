@@ -42,9 +42,9 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
-
 // prepares and transfers the inter-element edge-nodes to the host to be MPI'd
 // (elements on boundary)
+
 extern "C"
 void FC_FUNC_(transfer_boun_accel_from_device,
               TRANSFER_BOUN_ACCEL_FROM_DEVICE)(long* Mesh_pointer,
