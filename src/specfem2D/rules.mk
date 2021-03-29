@@ -259,46 +259,15 @@ specfem2D_OBJECTS += $(JPEGLIB_OBJECTS)
 
 
 ###
-### CUDA
+### GPU
 ###
-
-cuda_specfem2D_OBJECTS = \
-	$O/assemble_MPI_scalar_cuda.cuda.o \
-	$O/assemble_MPI_vector_cuda.cuda.o \
-	$O/check_fields_cuda.cuda.o \
-	$O/compute_add_sources_viscoacoustic_cuda.cuda.o \
-	$O/compute_add_sources_viscoelastic_cuda.cuda.o \
-	$O/compute_coupling_cuda.cuda.o \
-	$O/compute_forces_acoustic_cuda.cuda.o \
-	$O/compute_forces_viscoelastic_cuda.cuda.o \
-	$O/compute_kernels_cuda.cuda.o \
-	$O/compute_stacey_acoustic_cuda.cuda.o \
-	$O/compute_stacey_viscoelastic_cuda.cuda.o \
-	$O/enforce_acoustic_free_surface_cuda.cuda.o \
-	$O/initialize_cuda.cuda.o \
-	$O/pml_compute_cuda.cuda.o \
-	$O/prepare_mesh_constants_cuda.cuda.o \
-	$O/transfer_fields_cuda.cuda.o \
-	$O/update_displacement_cuda.cuda.o \
-	$O/write_seismograms_cuda.cuda.o \
-	$(EMPTY_MACRO)
-
-
-cuda_specfem2D_STUBS = \
-	$O/specfem2D_gpu_cuda_method_stubs.cudacc.o \
-	$(EMPTY_MACRO)
-
-cuda_specfem2D_DEVICE_OBJ = \
-	$O/cuda_device_obj.o \
-	$(EMPTY_MACRO)
-
 ifeq ($(CUDA),yes)
-specfem2D_OBJECTS += $(cuda_specfem2D_OBJECTS)
+specfem2D_OBJECTS += $(gpu_OBJECTS)
 ifeq ($(CUDA_PLUS),yes)
-specfem2D_OBJECTS += $(cuda_specfem2D_DEVICE_OBJ)
+specfem2D_OBJECTS += $(gpu_DEVICE_OBJ)
 endif
 else
-specfem2D_OBJECTS += $(cuda_specfem2D_STUBS)
+specfem2D_OBJECTS += $(gpu_STUBS)
 endif
 
 #######################################
@@ -318,7 +287,7 @@ ifeq ($(CUDA),yes)
 ## cuda version
 ifeq ($(CUDA_PLUS),yes)
 ## cuda 5x & 6x version
-INFO_CUDA="building xspecfem2D with CUDA support"
+INFO_CUDA="building xspecfem3D $(BUILD_VERSION_TXT)"
 else
 ## cuda 4 version
 INFO_CUDA="building xspecfem2D with CUDA 4 support"
@@ -383,13 +352,6 @@ $O/%.spec.o: $S/%.F90 ${SETUP}/constants.h $O/specfem2D_par.spec_module.o
 
 $O/%.cc.o: $S/%.c ${SETUP}/config.h
 	${CC} ${CFLAGS} -I${S_LIBJPEG} -c -o $@ $<
-
-###
-### CUDA 5 only
-###
-
-$(cuda_specfem2D_DEVICE_OBJ): $(cuda_OBJECTS)
-	${NVCCLINK} -o $(cuda_specfem2D_DEVICE_OBJ) $(cuda_OBJECTS)
 
 
 ##
