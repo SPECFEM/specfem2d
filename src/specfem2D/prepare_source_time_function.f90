@@ -48,7 +48,7 @@
   implicit none
 
   ! local parameters
-  double precision :: stf_used, timeval, DecT, Tc, omegat, omega_coa,time,coeff, t_used, Nc
+  double precision :: stf_used, timeval, DecT, Tc, omegat, omega_coa,dummy_t,coeff, t_used, Nc
   double precision :: hdur,hdur_gauss
 
   integer :: it,i_source,ier,num_file
@@ -367,16 +367,23 @@
               ! reads in from external source time function file
               open(unit=num_file,file=trim(name_of_source_file(i_source)),status='old',action='read',iostat=ier)
               if (ier /= 0) then
+                print *,'Error opening source time function file: ',trim(name_of_source_file(i_source))
                 error_msg = trim(error_msg1)//trim(name_of_source_file(i_source))
                 call exit_MPI(myrank,error_msg)
               endif
             endif
 
+            ! reads in 2-column file values (time value in first column will be ignored)
             ! format: #time #stf-value
-            read(num_file,*) time, source_time_function(i_source,it,i_stage)
+            read(num_file,*,iostat=ier) dummy_t, source_time_function(i_source,it,i_stage)
+            if (ier /= 0) then
+              print *,'Error reading source time function file: ',trim(name_of_source_file(i_source)),' at line ',it
+              print *,'Please make sure the file contains the same number of lines as the number of timesteps NSTEP ',NSTEP
+              call exit_MPI(myrank,'Error reading source time function file')
+            endif
 
             ! closes external file
-            if (it == NSTEP ) close(num_file)
+            if (it == NSTEP) close(num_file)
 
             ! amplifies STF by factor
             ! note: the amplification factor will amplify the external source time function.
