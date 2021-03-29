@@ -299,7 +299,7 @@
         write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
       case (8)
         write(IMAIN,*) '  External source time function file:'
-        write(IMAIN,*) '  Source read from file:',trim(name_of_source_file(i_source))
+        write(IMAIN,*) '  Source read from file: ',trim(name_of_source_file(i_source))
       case (9)
         write(IMAIN,*) '  Burst wavelet:'
         write(IMAIN,*) '  Burst band width: ',burst_band_width(i_source)

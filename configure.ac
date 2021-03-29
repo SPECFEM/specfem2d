@@ -76,7 +76,13 @@ AC_ARG_WITH([cuda],
         [build CUDA GPU enabled version @<:@default=no@:>@])],
     [want_cuda="$withval"],
     [want_cuda=no])
+
+# sets default: --with-cuda
+if test x"$want_cuda" = xyes; then
+    want_cuda=cuda4
+fi
 AM_CONDITIONAL([COND_CUDA], [test x"$want_cuda" != xno])
+AM_CONDITIONAL([COND_CUDA4], [test x"$want_cuda" = xcuda4])
 AM_CONDITIONAL([COND_CUDA5], [test x"$want_cuda" = xcuda5])
 AM_CONDITIONAL([COND_CUDA6], [test x"$want_cuda" = xcuda6])
 AM_CONDITIONAL([COND_CUDA7], [test x"$want_cuda" = xcuda7])
@@ -87,7 +93,8 @@ AM_CONDITIONAL([COND_CUDA11], [test x"$want_cuda" = xcuda11])
 
 # cuda linking for cuda 5x and 6x and 7x and 8x and ..
 AM_CONDITIONAL([COND_CUDA_PLUS],
-  [test "$want_cuda" = cuda5 \
+  [test "$want_cuda" = cuda4 \
+     -o "$want_cuda" = cuda5 \
      -o "$want_cuda" = cuda6 \
      -o "$want_cuda" = cuda7 \
      -o "$want_cuda" = cuda8 \

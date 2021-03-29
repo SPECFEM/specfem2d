@@ -98,6 +98,9 @@ ifeq ($(CUDA),yes)
   BUILD_VERSION_TXT += Cuda
   SELECTOR_CFLAG += $(FC_DEFINE)USE_CUDA
 
+  ifeq ($(CUDA4),yes)
+    BUILD_VERSION_TXT += (v4)
+  endif
   ifeq ($(CUDA5),yes)
     BUILD_VERSION_TXT += (v5)
   endif
