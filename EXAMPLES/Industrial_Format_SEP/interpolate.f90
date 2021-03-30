@@ -58,6 +58,8 @@
       if (ier == 0) then
         ! left trim
         line = adjustl(line)
+        ! skip comment lines
+        if (line(1:1) == '#') cycle
         ! suppress trailing comment
         if (index(line,'#') > 0) line = line(1:index(line,'#')-1)
         ! checks parameter name
@@ -181,12 +183,14 @@
   call system(trim(system_command))
 
   ! nbregions
-  call system('sed -i "$ d" ./DATA/Par_file')
+  !call system('sed -i "$ d" ./DATA/Par_file')
   write(tmpstring,*) '1',(NX-1)/INTERPOLATION_POINTS,'1',(NZ-1)/INTERPOLATION_POINTS,'1'
   tmpstring = adjustl(tmpstring)
   !write (*,*) trim(tmpstring)
-  write(system_command,*) 'sed -i "/nbregions   /a',trim(tmpstring),'" ./DATA/Par_file'
-     !write(system_command,*) 'echo ${tmpstring}'
+  !write(system_command,*) 'echo ${tmpstring}'
+  !write(system_command,*) 'sed -i "/nbregions   /a',trim(tmpstring),'" ./DATA/Par_file'
+  ! original Par_file line for regions to replace is: 1 20 1 20 1
+  write(system_command,*) 'sed -i "s/^1 20 .*/',trim(tmpstring),'/" ./DATA/Par_file'
   write (*,*) trim(system_command)
   call system(trim(system_command))
 
