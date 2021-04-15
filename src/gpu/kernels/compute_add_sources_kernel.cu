@@ -50,21 +50,21 @@ __global__ void compute_add_sources_kernel(realw* accel,
   int ispec,iglob;
   realw stf,accel_x,accel_z;
 
-  if (isource < nsources_local) { // when NSOURCES > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.
+  // when NSOURCES > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.
 
-      ispec = ispec_selected_source[isource]-1;
+  if (isource < nsources_local) {
+    ispec = ispec_selected_source[isource] - 1;
 
-      if (ispec_is_elastic[ispec]) {
-        iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
+    if (ispec_is_elastic[ispec]) {
+      iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
-        stf = d_source_time_function[INDEX2(nsources_local,isource,it)];
-        accel_x = sourcearrays[INDEX4(NDIM,NGLLX,NGLLX, 0,i,j,isource)] * stf;
-        accel_z = sourcearrays[INDEX4(NDIM,NGLLX,NGLLX, 1,i,j,isource)] * stf;
+      stf = d_source_time_function[INDEX2(nsources_local,isource,it)];
+      accel_x = sourcearrays[INDEX4(NDIM,NGLLX,NGLLX, 0,i,j,isource)] * stf;
+      accel_z = sourcearrays[INDEX4(NDIM,NGLLX,NGLLX, 1,i,j,isource)] * stf;
 
-        atomicAdd(&accel[iglob*2],accel_x);
-        atomicAdd(&accel[iglob*2+1],accel_z);
+      atomicAdd(&accel[iglob*2],accel_x);
+      atomicAdd(&accel[iglob*2+1],accel_z);
     }
   }
-
 }
 

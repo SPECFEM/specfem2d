@@ -74,9 +74,7 @@ __global__ void compute_coupling_elastic_ac_kernel(realw* potential_dot_dot_acou
     // gets associated, weighted jacobian
     jacobianw = coupling_ac_el_jacobian1Dw[INDEX2(NGLLX,igll,iface)];
 
-
-      pressure = - potential_dot_dot_acoustic[iglob];
-
+    pressure = - potential_dot_dot_acoustic[iglob];
 
     // continuity of displacement and pressure on global point
     //

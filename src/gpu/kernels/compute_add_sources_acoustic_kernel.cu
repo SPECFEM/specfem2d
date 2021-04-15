@@ -54,17 +54,17 @@ __global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_aco
   realw stf,kappal,accel;
 
   if (isource < nsources_local) {
+    ispec = ispec_selected_source[isource] - 1;
 
-      ispec = ispec_selected_source[isource] - 1;
+    if (ispec_is_acoustic[ispec]) {
+      iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
-      if (ispec_is_acoustic[ispec]) {
-        iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
+      kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
+      stf = source_time_function[INDEX2(nsources_local,isource,it)]/kappal;
 
-        kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
-        stf = source_time_function[INDEX2(nsources_local,isource,it)]/kappal;
-        accel = sourcearrays[INDEX4(NDIM,NGLLX,NGLLX, 0,i,j,isource)] * stf;
+      accel = sourcearrays[INDEX4(NDIM,NGLLX,NGLLX, 0,i,j,isource)] * stf;
 
-        atomicAdd(&potential_dot_dot_acoustic[iglob], accel);
+      atomicAdd(&potential_dot_dot_acoustic[iglob], accel);
     }
   }
 }

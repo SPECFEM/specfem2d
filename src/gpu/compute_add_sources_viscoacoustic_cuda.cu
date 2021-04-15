@@ -60,6 +60,8 @@ void FC_FUNC_(compute_add_sources_ac_cuda,
   // only adds this contribution for first pass
   if (iphase != 1) return;
 
+  int it = *itf - 1;
+
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nsources_local,&num_blocks_x,&num_blocks_y);
 
@@ -67,8 +69,6 @@ void FC_FUNC_(compute_add_sources_ac_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   // One thread per GLL
   dim3 threads(NGLLX,NGLLX,1);
-
-  int it = *itf - 1;
 
   compute_add_sources_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,
                                                                               mp->d_ibool,
@@ -107,13 +107,13 @@ void FC_FUNC_(compute_add_sources_ac_s3_cuda,
   // only adds this contribution for first pass
   if (iphase != 1) return;
 
+  int it = *itf - 1;
+
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nsources_local,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(NGLLX,NGLLX,1);
-
-  int it = *itf - 1;
 
   compute_add_sources_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_dot_dot_acoustic,
                                                                               mp->d_ibool,
@@ -138,7 +138,7 @@ void FC_FUNC_(compute_add_moving_sources_ac_cuda,
               COMPUTE_ADD_MOVING_SOURCES_AC_CUDA)(long* Mesh_pointer,
                                                   int* iphase_f,
                                                   int* nsources_local_moving,
-                                                  int* it_f,
+                                                  int* itf,
                                                   int* NSTEP_f,
                                                   int* nsources_f) {
 
@@ -154,29 +154,31 @@ void FC_FUNC_(compute_add_moving_sources_ac_cuda,
   // check if anything to do
   if (nsources_local == 0) return;
 
-  int nsources = *nsources_f;
-  int NSTEP = *NSTEP_f;
-
-  int it = *it_f - 1;
   int iphase = *iphase_f;
 
   // only adds this contribution for first pass
   if (iphase != 1) return;
 
-  int num_blocks_x, num_blocks_y;
-
-  // note: we will launch kernels only for local sources since sourcearrays_moving(..) and ispec_selected_souce_movie(..)
-  //       are sorted along local sources only.
-  //       this avoids the need to have an array like islice_selected_source(NSOURCES,NSTEP) on the GPU.
+  int it = *itf - 1;
+  int NSTEP = *NSTEP_f;
+  int nsources = *nsources_f;
 
   // Look up for the best way to distribute the sources in a grid (one block per source)
+  int num_blocks_x, num_blocks_y;
   get_blocks_xy(nsources_local, &num_blocks_x, &num_blocks_y);
+
    // create the grid (one block per source)
   dim3 grid(num_blocks_x,num_blocks_y);
   // create the threads in the block (one thread per GLL), it has NGLLX,NGLLX,1 structure
   dim3 threads(NGLLX,NGLLX,1);
 
-  // cudaMemoryTest(3); // Useful to check memory
+  // note: we will launch kernels only for local sources since sourcearrays_moving(..) and ispec_selected_souce_movie(..)
+  //       are sorted along local sources only.
+  //       this avoids the need to have an array like islice_selected_source(NSOURCES,NSTEP) on the GPU.
+
+  // Useful to check memory
+  // cudaMemoryTest(3);
+
   compute_add_moving_sources_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,
                                                                                     mp->d_ibool,
                                                                                     mp->d_sourcearrays_moving,
@@ -206,7 +208,7 @@ extern "C"
 void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
               ADD_SOURCES_AC_SIM_2_OR_3_CUDA)(long* Mesh_pointer,
                                                int* iphasef,
-                                               int* it,
+                                               int* itf,
                                                int* nadj_rec_local,
                                                int* NSTEP) {
 
@@ -222,13 +224,13 @@ void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
   // checks
   if (*nadj_rec_local != mp->nadj_rec_local) exit_on_cuda_error("add_sources_ac_sim_type_2_or_3: nadj_rec_local not equal\n");
 
+  int it = *itf - 1;
+
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nadj_rec_local,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y,1);
   dim3 threads(NGLLX,NGLLX,1);
-
-  int it_index = (*it) - 1;
 
   // launches cuda kernel for acoustic adjoint sources
   add_sources_ac_SIM_TYPE_2_OR_3_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,
@@ -238,7 +240,7 @@ void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
                                                                                 mp->d_ibool,
                                                                                 mp->d_ispec_is_acoustic,
                                                                                 mp->d_ispec_selected_rec_loc,
-                                                                                it_index,
+                                                                                it,
                                                                                 mp->nadj_rec_local,
                                                                                 mp->d_kappastore,
                                                                                 *NSTEP);

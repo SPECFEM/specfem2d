@@ -158,6 +158,9 @@ after_success:
       gcov --version
       echo `pwd`
       ls -al obj/
+      echo
+      env
+      echo
     fi
 
   # produces coverage reports (done manually because of different naming for source & object files)

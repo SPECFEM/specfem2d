@@ -52,7 +52,7 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
   // checks if anything to do
   if (mp->d_num_abs_boundary_faces == 0) return;
 
-  int iphase    = *iphasef;
+  int iphase = *iphasef;
 
   // only add this contribution for first pass
   if (iphase != 1) return;

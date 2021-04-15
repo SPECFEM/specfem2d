@@ -122,6 +122,7 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
                                       atomicAdd(&b_potential_dot_dot_acoustic[iglob],
                                                 -b_absorb_potential_left[INDEX2(NGLLX,igll,num_local)]);}
     }
+
     if (write_abs) {
       // saves boundary values
       if (edge_abs[iface] == 1)      { num_local = ib_bottom[iface] - 1;

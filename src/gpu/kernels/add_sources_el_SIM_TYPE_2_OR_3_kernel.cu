@@ -47,30 +47,28 @@ __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
 
   int irec_local = blockIdx.x + gridDim.x*blockIdx.y;
 
-  if (irec_local < nadj_rec_local) { // when nrec > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.
+  // when nrec > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.
 
-    int ispec = ispec_selected_rec_loc[irec_local]-1;
+  if (irec_local < nadj_rec_local) {
+
+    int ispec = ispec_selected_rec_loc[irec_local] - 1;
 
     if (ispec_is_elastic[ispec]) {
       int i = threadIdx.x;
       int j = threadIdx.y;
-      int iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
+      int iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
       realw  xir = xir_store[INDEX2(nadj_rec_local,irec_local,i)];
-
       realw  gammar = gammar_store[INDEX2(nadj_rec_local,irec_local,j)];
 
       realw  source_adjx = source_adjointe[INDEX3(nadj_rec_local,NSTEP,irec_local,it,0)];
-
       realw  source_adjz = source_adjointe[INDEX3(nadj_rec_local,NSTEP,irec_local,it,1)];
-
 
       // atomic operations are absolutely necessary for correctness!
       atomicAdd(&accel[2*iglob],source_adjx * gammar * xir);
-      atomicAdd(&accel[1+2*iglob], source_adjz * gammar * xir);
+      atomicAdd(&accel[2*iglob+1], source_adjz * gammar * xir);
     } // ispec_is_elastic
   }
-
 }
 
 

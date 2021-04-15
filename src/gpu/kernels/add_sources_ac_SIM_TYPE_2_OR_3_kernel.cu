@@ -64,7 +64,6 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
       realw  gammar = gammar_store[INDEX2(nadj_rec_local,irec_local,j)];
       realw  source_adj = source_adjointe[INDEX3(nadj_rec_local,NSTEP,irec_local,it,0)];
 
-
       // beware, for acoustic medium, a pressure source would be taking the negative
       // and divide by Kappa of the fluid;
       // this would have to be done when constructing the adjoint source.

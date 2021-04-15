@@ -67,6 +67,7 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
   realw rho_vp_temp,rho_vs_temp;
   realw tx,tz;
   realw jacobianw;
+  realw absorblx,absorblz;
 
   // don't compute points outside NGLLSQUARE==NGLL2==25
   // way 2: no further check needed since blocksize = 25
@@ -75,12 +76,12 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
   //if (igll < NGLL2 && iface < num_abs_boundary_faces) {
 
     // "-1" from index values to convert from Fortran-> C indexing
-    ispec = abs_boundary_ispec[iface]-1;
+    ispec = abs_boundary_ispec[iface] - 1;
 
     if (ispec_is_elastic[ispec]) {
 
-      i = abs_boundary_ij[INDEX3(NDIM,NGLLX,0,igll,iface)]-1;
-      j = abs_boundary_ij[INDEX3(NDIM,NGLLX,1,igll,iface)]-1;
+      i = abs_boundary_ij[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1;
+      j = abs_boundary_ij[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
 
       //daniel todo: check if we can simplify.
       //       in fortran routine, we set i == NGLLX+1 or j == NGLLX+1
@@ -89,7 +90,7 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
       //check if the point must be computed
       if (i==NGLLX || j==NGLLX) return;
 
-      iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
+      iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
       // gets associated velocity
       vx = veloc[iglob*2];
@@ -117,31 +118,33 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
 
       jacobianw = abs_boundary_jacobian1Dw[INDEX2(NGLLX,igll,iface)];
 
-      atomicAdd(&accel[iglob*2],-tx*jacobianw);
-      atomicAdd(&accel[iglob*2+1],-tz*jacobianw);
+      absorblx = tx * jacobianw;
+      absorblz = tz * jacobianw;
+
+      atomicAdd(&accel[iglob*2],-absorblx);
+      atomicAdd(&accel[iglob*2+1],-absorblz);
 
       if (SAVE_FORWARD && simulation_type == 1) {
         if (edge_abs[iface] == 1) {
           num_local = ib_bottom[iface]-1;
-          b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
-          b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;
+          b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,0,igll,num_local)] = absorblx;
+          b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,1,igll,num_local)] = absorblz;
         }else if (edge_abs[iface] == 2) {
           num_local = ib_right[iface]-1;
-          b_absorb_elastic_right[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
-          b_absorb_elastic_right[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;
+          b_absorb_elastic_right[INDEX3(NDIM,NGLLX,0,igll,num_local)] = absorblx;
+          b_absorb_elastic_right[INDEX3(NDIM,NGLLX,1,igll,num_local)] = absorblz;
         }else if (edge_abs[iface] == 3) {
           num_local = ib_top[iface]-1;
-          b_absorb_elastic_top[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
-          b_absorb_elastic_top[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;
+          b_absorb_elastic_top[INDEX3(NDIM,NGLLX,0,igll,num_local)] = absorblx;
+          b_absorb_elastic_top[INDEX3(NDIM,NGLLX,1,igll,num_local)] = absorblz;
         }else if (edge_abs[iface] == 4) {
           num_local = ib_left[iface]-1;
-          b_absorb_elastic_left[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
-          b_absorb_elastic_left[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;
+          b_absorb_elastic_left[INDEX3(NDIM,NGLLX,0,igll,num_local)] = absorblx;
+          b_absorb_elastic_left[INDEX3(NDIM,NGLLX,1,igll,num_local)] = absorblz;
         }
       }
     }
   } // num_abs_boundary_faces
-
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -170,14 +173,21 @@ __global__ void compute_stacey_elastic_sim3_kernel(int* abs_boundary_ispec,
   if (iface < num_abs_boundary_faces){
 
     // "-1" from index values to convert from Fortran-> C indexing
-    ispec = abs_boundary_ispec[iface]-1;
+    ispec = abs_boundary_ispec[iface] - 1;
 
     if (ispec_is_elastic[ispec]) {
 
-      i = abs_boundary_ijk[INDEX3(NDIM,NGLLX,0,igll,iface)]-1;
-      j = abs_boundary_ijk[INDEX3(NDIM,NGLLX,1,igll,iface)]-1;
+      i = abs_boundary_ijk[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1;
+      j = abs_boundary_ijk[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
 
-      iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
+      //daniel todo: check if we can simplify.
+      //       in fortran routine, we set i == NGLLX+1 or j == NGLLX+1
+      //       to indicate points which duplicate contributions and can be left out
+      //
+      //check if the point must be computed
+      if (i==NGLLX || j==NGLLX) return;
+
+      iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
       if (d_edge_abs[iface] == 1){
         num_local= ib_bottom[iface]-1;
@@ -201,6 +211,5 @@ __global__ void compute_stacey_elastic_sim3_kernel(int* abs_boundary_ispec,
       }
     }
   } // num_abs_boundary_faces
-
 }
 

@@ -101,11 +101,13 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
   // only adds this contribution for first pass
   if (iphase != 1) return;
 
+  int it = *itf - 1;
+
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nsources_local,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(NGLLX,NGLLX,1);
-  int it = *itf -1;
 
   compute_add_sources_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel,mp->d_ibool,
                                                                     mp->d_sourcearrays,
@@ -129,7 +131,7 @@ extern "C"
 void FC_FUNC_(add_sources_el_sim_type_2_or_3,
               ADD_SOURCES_EL_SIM_TYPE_2_OR_3)(long* Mesh_pointer,
                                                int* iphasef,
-                                               int* it,
+                                               int* itf,
                                                int* nadj_rec_local,
                                                int* NSTEP) {
 
@@ -145,14 +147,13 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
   // only add this contribution for first pass
   if (iphase != 1) return;
 
+  int it = *itf - 1;
+
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nadj_rec_local,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y,1);
   dim3 threads(NGLLX,NGLLX,1);
-
-  int it_index = (*it) - 1;
-
 
   // the irec_local variable needs to be precomputed (as
   // h_pre_comp..), because normally it is in the loop updating accel,
@@ -165,7 +166,7 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
                                                                                mp->d_ibool,
                                                                                mp->d_ispec_is_elastic,
                                                                                mp->d_ispec_selected_rec_loc,
-                                                                               it_index,
+                                                                               it,
                                                                                mp->nadj_rec_local,
                                                                                *NSTEP);
 
