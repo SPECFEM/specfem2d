@@ -175,7 +175,7 @@ echo
 
 
 # plots kernel image
-./plot_kernel.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat 
+./plot_kernel.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat
 
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
