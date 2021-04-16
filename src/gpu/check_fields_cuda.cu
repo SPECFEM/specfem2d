@@ -238,7 +238,7 @@ realw get_device_array_maximum_value(realw* array, int size){
 
 extern "C"
 void FC_FUNC_(get_norm_acoustic_from_device,
-              GET_NORM_ACOUSTIC_FROM_DEVICE)(realw* norm,long* Mesh_pointer,int* sim_type) {
+              GET_NORM_ACOUSTIC_FROM_DEVICE)(realw* norm,long* Mesh_pointer,const int* FORWARD_OR_ADJOINT) {
 
   TRACE("get_norm_acoustic_from_device");
   //double start_time = get_time();
@@ -283,11 +283,11 @@ void FC_FUNC_(get_norm_acoustic_from_device,
   //print_CUDA_error_if_any(cudaMalloc((void**)&d_max3,num_blocks_x*num_blocks_y*sizeof(realw)),78001);
   //print_CUDA_error_if_any(cudaMemset(d_max3,0,num_blocks_x*num_blocks_y*sizeof(realw)),77002);
 
-  if (*sim_type == 1) {
+  if (*FORWARD_OR_ADJOINT == 1) {
     get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_acoustic,size,d_max1);
     //get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_acoustic,size,d_max2);
     //get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,size,d_max3);
-  }else if (*sim_type == 3) {
+  }else if (*FORWARD_OR_ADJOINT == 3) {
     get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_acoustic,size,d_max1);
     //get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_dot_acoustic,size,d_max2);
     //get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_dot_dot_acoustic,size,d_ma3);
@@ -356,9 +356,7 @@ void FC_FUNC_(get_norm_acoustic_from_device,
 
 extern "C"
 void FC_FUNC_(get_norm_elastic_from_device,
-              GET_NORM_ELASTIC_FROM_DEVICE)(realw* norm,
-                                            long* Mesh_pointer,
-                                            int* type,int *it) {
+              GET_NORM_ELASTIC_FROM_DEVICE)(realw* norm,long* Mesh_pointer,const int* FORWARD_OR_ADJOINT) {
 
   TRACE("\tget_norm_elastic_from_device");
   //double start_time = get_time();
@@ -401,11 +399,11 @@ void FC_FUNC_(get_norm_elastic_from_device,
   //print_CUDA_error_if_any(cudaMalloc((void**)&d_max3,num_blocks_x*num_blocks_y*sizeof(realw)),77001);
   //print_CUDA_error_if_any(cudaMemset(d_max3,0,num_blocks_x*num_blocks_y*sizeof(realw)),77002);
 
-  if (*type == 1) {
+  if (*FORWARD_OR_ADJOINT == 1) {
     get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ,size,d_max1);
     //get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_veloc,size,d_max2);
     //get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel,size,d_max3);
-  }else if (*type == 3) {
+  }else if (*FORWARD_OR_ADJOINT == 3) {
     get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ,size,d_max1);
     //get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_veloc,size,d_max2);
     //get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel,size,d_max3);
@@ -451,9 +449,10 @@ void FC_FUNC_(get_norm_elastic_from_device,
   //res2 = sqrt(max2);
   //res3 = sqrt(max3);
   // debug
-  //printf("iteration %d  Valeur max de displ : %.12f  processus %d \n",*it,res1,mp->myrank);
-  //printf("iteration %d  Valeur max de veloc : %.12f  processus %d \n",*it,res2,mp->myrank);
-  //printf("iteration %d  Valeur max de accel : %.12f  processus %d \n",*it,res3,mp->myrank);
+  // int it = 0; // not available.
+  //printf("iteration %d  Valeur max de displ : %.12f  processus %d \n",it,res1,mp->myrank);
+  //printf("iteration %d  Valeur max de veloc : %.12f  processus %d \n",it,res2,mp->myrank);
+  //printf("iteration %d  Valeur max de accel : %.12f  processus %d \n",it,res3,mp->myrank);
 
   // return result
   *norm = res1;

@@ -37,7 +37,7 @@
 __global__ void compute_stacey_elastic_kernel(realw* veloc,
                                               realw* accel,
                                               const int* abs_boundary_ispec,
-                                              const int* abs_boundary_ij,
+                                              const int* abs_boundary_ijk,
                                               const realw* abs_boundary_normal,
                                               const realw* abs_boundary_jacobian1Dw,
                                               const int* d_ibool,
@@ -80,8 +80,8 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
 
     if (ispec_is_elastic[ispec]) {
 
-      i = abs_boundary_ij[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1;
-      j = abs_boundary_ij[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
+      i = abs_boundary_ijk[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1;
+      j = abs_boundary_ijk[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
 
       //daniel todo: check if we can simplify.
       //       in fortran routine, we set i == NGLLX+1 or j == NGLLX+1
@@ -126,19 +126,22 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
 
       if (SAVE_FORWARD && simulation_type == 1) {
         if (edge_abs[iface] == 1) {
-          num_local = ib_bottom[iface]-1;
+          num_local = ib_bottom[iface] - 1;
           b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,0,igll,num_local)] = absorblx;
           b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,1,igll,num_local)] = absorblz;
+
         }else if (edge_abs[iface] == 2) {
-          num_local = ib_right[iface]-1;
+          num_local = ib_right[iface] - 1;
           b_absorb_elastic_right[INDEX3(NDIM,NGLLX,0,igll,num_local)] = absorblx;
           b_absorb_elastic_right[INDEX3(NDIM,NGLLX,1,igll,num_local)] = absorblz;
+
         }else if (edge_abs[iface] == 3) {
-          num_local = ib_top[iface]-1;
+          num_local = ib_top[iface] - 1;
           b_absorb_elastic_top[INDEX3(NDIM,NGLLX,0,igll,num_local)] = absorblx;
           b_absorb_elastic_top[INDEX3(NDIM,NGLLX,1,igll,num_local)] = absorblz;
+
         }else if (edge_abs[iface] == 4) {
-          num_local = ib_left[iface]-1;
+          num_local = ib_left[iface] - 1;
           b_absorb_elastic_left[INDEX3(NDIM,NGLLX,0,igll,num_local)] = absorblx;
           b_absorb_elastic_left[INDEX3(NDIM,NGLLX,1,igll,num_local)] = absorblz;
         }

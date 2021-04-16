@@ -107,9 +107,8 @@
       cpIIl = sqrt(cpIIsquare)
       csl = sqrt(cssquare)
 
-!--- left absorbing boundary
+      !--- left absorbing boundary
       if (codeabs(IEDGE4,ispecabs)) then
-
         i = 1
 
         jbegin = ibegin_edge4_poro(ispecabs)
@@ -156,9 +155,8 @@
 
       endif  !  end of left absorbing boundary
 
-!--- right absorbing boundary
+      !--- right absorbing boundary
       if (codeabs(IEDGE2,ispecabs)) then
-
         i = NGLLX
 
         jbegin = ibegin_edge2_poro(ispecabs)
@@ -205,9 +203,8 @@
 
       endif  !  end of right absorbing boundary
 
-!--- bottom absorbing boundary
+      !--- bottom absorbing boundary
       if (codeabs(IEDGE1,ispecabs)) then
-
         j = 1
 
         ibegin = ibegin_edge1_poro(ispecabs)
@@ -258,9 +255,8 @@
 
       endif  !  end of bottom absorbing boundary
 
-!--- top absorbing boundary
+      !--- top absorbing boundary
       if (codeabs(IEDGE3,ispecabs)) then
-
         j = NGLLZ
 
         ibegin = ibegin_edge3_poro(ispecabs)

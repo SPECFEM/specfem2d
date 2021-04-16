@@ -38,7 +38,7 @@ __global__ void compute_coupling_acoustic_el_kernel(realw* displ,
                                                     realw* potential_dot_dot_acoustic,
                                                     int num_coupling_ac_el_faces,
                                                     int* coupling_ac_el_ispec,
-                                                    int* coupling_ac_el_ij,
+                                                    int* coupling_ac_el_ijk,
                                                     realw* coupling_ac_el_normal,
                                                     realw* coupling_ac_el_jacobian1Dw,
                                                     int* d_ibool) {
@@ -60,8 +60,8 @@ __global__ void compute_coupling_acoustic_el_kernel(realw* displ,
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = coupling_ac_el_ispec[iface] - 1;
 
-    i = coupling_ac_el_ij[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1;
-    j = coupling_ac_el_ij[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
+    i = coupling_ac_el_ijk[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1;
+    j = coupling_ac_el_ijk[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
 
     iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 

@@ -1412,8 +1412,9 @@
 
   implicit none
 
-  integer :: i,j,ispec,ispecabs,ier
+  integer :: i,j,ispec,ispecabs,ier,iedge
   real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D
+  logical :: has_abs_edge
 
   ! sets up arrays for stacey boundary routines
   if (STACEY_ABSORBING_CONDITIONS) then
@@ -1422,13 +1423,37 @@
              abs_boundary_jacobian1Dw(NGLLX,num_abs_boundary_faces), &
              abs_boundary_normal(NDIM,NGLLX,num_abs_boundary_faces),stat=ier)
     if (ier /= 0) stop 'error allocating array abs_boundary_ij etc.'
+    abs_boundary_ij(:,:,:) = 0; abs_boundary_jacobian1Dw(:,:) = 0.0_CUSTOM_REAL
+    abs_boundary_normal(:,:,:) = 0.0_CUSTOM_REAL
 
     ! needed for gpu boundary array storage
     allocate(edge_abs(num_abs_boundary_faces),stat=ier)
     if (ier /= 0) stop 'error allocating array edge_abs etc.'
+    edge_abs(:) = 0
 
     do ispecabs = 1,num_abs_boundary_faces
       ispec = abs_boundary_ispec(ispecabs)
+
+      ! checks if edge has correct absorbing flags
+      has_abs_edge = .false.
+      do iedge = 1,4
+        if (codeabs(iedge,ispecabs)) then
+          if (has_abs_edge) then
+            ! boundary face has already been set, should not occur
+            print *,'Error: absorbing boundary element ',ispec,'has edge ',ispecabs, &
+                    ' with multiple flags l/r/bottom/top:',codeabs(:,ispecabs)
+            stop 'Invalid absorbing edge found'
+          else
+            has_abs_edge = .true.
+          endif
+        endif
+      enddo
+      ! must have at least one absorbing flag set
+      if (.not. has_abs_edge) then
+        print *,'Error: absorbing boundary element ',ispec,'has edge ',ispecabs, &
+                ' with multiple flags l/r/bottom/top:',codeabs(:,ispecabs)
+        stop 'Invalid absorbing edge with no flags found'
+      endif
 
       !--- left absorbing boundary
       if (codeabs(IEDGE4,ispecabs)) then
@@ -1448,11 +1473,25 @@
 
           edge_abs(ispecabs) = 4
         enddo
-        if (ibegin_edge4(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = NGLLZ+1
-        if (iend_edge4(ispecabs) == NGLLZ-1) abs_boundary_ij(2,NGLLZ,ispecabs) = NGLLZ+1
+        ! note: for elastic elements, edges are looped over the full range, i.e. from 1 to NGLLX/NGLLY/NGLLZ.
+        !       for acoustic & poroelastic elements however, common points on coupling interfaces are removed
+        !       by looping only over ibegin_edge* to iend_edge* ranges.
+        !       here, we assign a value of NGLL* + 1 to indicate such duplicate points on edges.
+        !       this will avoid the need to check if the edge is in an acoustic/elastic/poroelastic element.
+        !
+        ! uses NGLLZ+1 to indicate points which duplicate contributions and can be left out
+        if (ispec_is_acoustic(ispec)) then
+          if (ibegin_edge4(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = NGLLZ+1
+          if (iend_edge4(ispecabs) == NGLLZ-1) abs_boundary_ij(2,NGLLZ,ispecabs) = NGLLZ+1
+        endif
+        if (ispec_is_poroelastic(ispec)) then
+          if (ibegin_edge4_poro(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = NGLLZ+1
+          if (iend_edge4_poro(ispecabs) == NGLLZ-1) abs_boundary_ij(2,NGLLZ,ispecabs) = NGLLZ+1
+        endif
+      endif
 
       !--- right absorbing boundary
-      else if (codeabs(IEDGE2,ispecabs)) then
+      if (codeabs(IEDGE2,ispecabs)) then
         i = NGLLX
         do j = 1,NGLLZ
           abs_boundary_ij(1,j,ispecabs) = i
@@ -1469,11 +1508,19 @@
 
           edge_abs(ispecabs) = 2
         enddo
-        if (ibegin_edge2(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = NGLLZ+1
-        if (iend_edge2(ispecabs) == NGLLZ-1) abs_boundary_ij(2,NGLLZ,ispecabs) = NGLLZ+1
+        ! uses NGLLZ+1 to indicate points which duplicate contributions and can be left out
+        if (ispec_is_acoustic(ispec)) then
+          if (ibegin_edge2(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = NGLLZ+1
+          if (iend_edge2(ispecabs) == NGLLZ-1) abs_boundary_ij(2,NGLLZ,ispecabs) = NGLLZ+1
+        endif
+        if (ispec_is_poroelastic(ispec)) then
+          if (ibegin_edge2_poro(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = NGLLZ+1
+          if (iend_edge2_poro(ispecabs) == NGLLZ-1) abs_boundary_ij(2,NGLLZ,ispecabs) = NGLLZ+1
+        endif
+      endif
 
       !--- bottom absorbing boundary
-      else if (codeabs(IEDGE1,ispecabs)) then
+      if (codeabs(IEDGE1,ispecabs)) then
         j = 1
         do i = 1,NGLLX
           abs_boundary_ij(1,i,ispecabs) = i
@@ -1489,13 +1536,23 @@
           abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
 
           edge_abs(ispecabs) = 1
-
         enddo
-        if (ibegin_edge1(ispecabs) == 2 .or. codeabs_corner(1,ispecabs)) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
-        if (iend_edge1(ispecabs) == NGLLX-1 .or. codeabs_corner(2,ispecabs)) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
+        ! uses NGLLX+1 to indicate points which duplicate contributions and can be left out
+        if (ispec_is_acoustic(ispec)) then
+          if (ibegin_edge1(ispecabs) == 2) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
+          if (iend_edge1(ispecabs) == NGLLX-1) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
+        endif
+        if (ispec_is_poroelastic(ispec)) then
+          if (ibegin_edge1_poro(ispecabs) == 2) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
+          if (iend_edge1_poro(ispecabs) == NGLLX-1) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
+        endif
+        ! exclude duplicate points on corners (elements with left/right and bottom/top edge on boundary)
+        if (codeabs_corner(1,ispecabs)) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
+        if (codeabs_corner(2,ispecabs)) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
+      endif
 
       !--- top absorbing boundary
-      else if (codeabs(IEDGE3,ispecabs)) then
+      if (codeabs(IEDGE3,ispecabs)) then
         j = NGLLZ
         do i = 1,NGLLX
           abs_boundary_ij(1,i,ispecabs) = i
@@ -1512,9 +1569,18 @@
 
           edge_abs(ispecabs) = 3
         enddo
-        if (ibegin_edge3(ispecabs) == 2 .or. codeabs_corner(3,ispecabs)) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
-        if (iend_edge3(ispecabs) == NGLLX-1 .or. codeabs_corner(4,ispecabs)) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
-
+        ! uses NGLLX+1 to indicate points which duplicate contributions and can be left out
+        if (ispec_is_acoustic(ispec)) then
+          if (ibegin_edge3(ispecabs) == 2) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
+          if (iend_edge3(ispecabs) == NGLLX-1) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
+        endif
+        if (ispec_is_poroelastic(ispec)) then
+          if (ibegin_edge3_poro(ispecabs) == 2) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
+          if (iend_edge3_poro(ispecabs) == NGLLX-1) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
+        endif
+        ! exclude duplicate points on corners (elements with left/right and bottom/top edge on boundary)
+        if (codeabs_corner(3,ispecabs)) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
+        if (codeabs_corner(4,ispecabs)) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
       endif
     enddo
   else
@@ -1535,6 +1601,8 @@
       allocate(b_absorb_elastic_right(NDIM,NGLLZ,nspec_right,NSTEP))
       allocate(b_absorb_elastic_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
       allocate(b_absorb_elastic_top(NDIM,NGLLX,nspec_top,NSTEP))
+      b_absorb_elastic_left(:,:,:,:) = 0.0_CUSTOM_REAL; b_absorb_elastic_right(:,:,:,:) = 0.0_CUSTOM_REAL
+      b_absorb_elastic_bottom(:,:,:,:) = 0.0_CUSTOM_REAL; b_absorb_elastic_top(:,:,:,:) = 0.0_CUSTOM_REAL
     endif
     ! poroelastic domains
     if (any_poroelastic) then
@@ -1546,6 +1614,10 @@
       allocate(b_absorb_poro_w_right(NDIM,NGLLZ,nspec_right,NSTEP))
       allocate(b_absorb_poro_w_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
       allocate(b_absorb_poro_w_top(NDIM,NGLLX,nspec_top,NSTEP))
+      b_absorb_poro_s_left(:,:,:,:) = 0.0_CUSTOM_REAL; b_absorb_poro_s_right(:,:,:,:) = 0.0_CUSTOM_REAL
+      b_absorb_poro_s_bottom(:,:,:,:) = 0.0_CUSTOM_REAL; b_absorb_poro_s_top(:,:,:,:) = 0.0_CUSTOM_REAL
+      b_absorb_poro_w_left(:,:,:,:) = 0.0_CUSTOM_REAL; b_absorb_poro_w_right(:,:,:,:) = 0.0_CUSTOM_REAL
+      b_absorb_poro_w_bottom(:,:,:,:) = 0.0_CUSTOM_REAL; b_absorb_poro_w_top(:,:,:,:) = 0.0_CUSTOM_REAL
     endif
     ! acoustic domains
     if (any_acoustic) then
@@ -1553,6 +1625,8 @@
       allocate(b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP))
       allocate(b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP))
       allocate(b_absorb_acoustic_top(NGLLX,nspec_top,NSTEP))
+      b_absorb_acoustic_left(:,:,:) = 0.0_CUSTOM_REAL; b_absorb_acoustic_right(:,:,:) = 0.0_CUSTOM_REAL
+      b_absorb_acoustic_bottom(:,:,:) = 0.0_CUSTOM_REAL; b_absorb_acoustic_top(:,:,:) = 0.0_CUSTOM_REAL
     endif
   else
     ! dummy arrays

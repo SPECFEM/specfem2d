@@ -129,11 +129,11 @@
                                              1) ! -- 1 == fwd accel
 
           call assemble_MPI_scalar_send_cuda(NPROC, &
-                            buffer_send_scalar_gpu,buffer_recv_scalar_gpu, &
-                            ninterface,max_nibool_interfaces_ext_mesh, &
-                            nibool_interfaces_ext_mesh, &
-                            my_neighbors, &
-                            request_send_recv_scalar_gpu,ninterface_acoustic,inum_interfaces_acoustic)
+                                             buffer_send_scalar_gpu,buffer_recv_scalar_gpu, &
+                                             ninterface,max_nibool_interfaces_ext_mesh, &
+                                             nibool_interfaces_ext_mesh, &
+                                             my_neighbors, &
+                                             request_send_recv_scalar_gpu,ninterface_acoustic,inum_interfaces_acoustic)
         endif
         ! adjoint simulations
         if (compute_wavefield_2) then
@@ -142,35 +142,35 @@
                                              3) ! -- 3 == adjoint b_accel
 
           call assemble_MPI_scalar_send_cuda(NPROC, &
-                            b_buffer_send_scalar_gpu,b_buffer_recv_scalar_gpu, &
-                            ninterface,max_nibool_interfaces_ext_mesh, &
-                            nibool_interfaces_ext_mesh, &
-                            my_neighbors, &
-                            b_request_send_recv_scalar_gpu,ninterface_acoustic,inum_interfaces_acoustic)
+                                             b_buffer_send_scalar_gpu,b_buffer_recv_scalar_gpu, &
+                                             ninterface,max_nibool_interfaces_ext_mesh, &
+                                             nibool_interfaces_ext_mesh, &
+                                             my_neighbors, &
+                                             b_request_send_recv_scalar_gpu,ninterface_acoustic,inum_interfaces_acoustic)
         endif
 
       else
         if ( compute_wavefield_1) &
           ! waits for send/receive requests to be completed and assembles values
           call assemble_MPI_scalar_write_cuda(NPROC, &
-                          Mesh_pointer, &
-                          buffer_recv_scalar_gpu, &
-                          ninterface, &
-                          max_nibool_interfaces_ext_mesh, &
-                          request_send_recv_scalar_gpu, &
-                          1,ninterface_acoustic,inum_interfaces_acoustic)
+                                              Mesh_pointer, &
+                                              buffer_recv_scalar_gpu, &
+                                              ninterface, &
+                                              max_nibool_interfaces_ext_mesh, &
+                                              request_send_recv_scalar_gpu, &
+                                              1,ninterface_acoustic,inum_interfaces_acoustic)
 
 
 
         ! adjoint simulations
         if (compute_wavefield_2) then
           call assemble_MPI_scalar_write_cuda(NPROC, &
-                          Mesh_pointer, &
-                          b_buffer_recv_scalar_gpu, &
-                          ninterface, &
-                          max_nibool_interfaces_ext_mesh, &
-                          b_request_send_recv_scalar_gpu, &
-                          3,ninterface_acoustic,inum_interfaces_acoustic)
+                                              Mesh_pointer, &
+                                              b_buffer_recv_scalar_gpu, &
+                                              ninterface, &
+                                              max_nibool_interfaces_ext_mesh, &
+                                              b_request_send_recv_scalar_gpu, &
+                                              3,ninterface_acoustic,inum_interfaces_acoustic)
         endif
       endif !iphase
 
@@ -212,8 +212,10 @@
 
   use constants, only: CUSTOM_REAL,NGLLX
 
-  use specfem_par, only: nspec_bottom,nspec_left,nspec_top,nspec_right,b_absorb_acoustic_left,b_absorb_acoustic_right, &
-                         b_absorb_acoustic_bottom, b_absorb_acoustic_top,it,NSTEP,SIMULATION_TYPE,SAVE_FORWARD, &
+  use specfem_par, only: nspec_bottom,nspec_left,nspec_top,nspec_right, &
+                         b_absorb_acoustic_left,b_absorb_acoustic_right, &
+                         b_absorb_acoustic_bottom, b_absorb_acoustic_top, &
+                         it,NSTEP,SIMULATION_TYPE,SAVE_FORWARD, &
                          num_abs_boundary_faces,UNDO_ATTENUATION_AND_OR_PML,NO_BACKWARD_RECONSTRUCTION
 
   use specfem_par_gpu, only: Mesh_pointer
@@ -243,7 +245,8 @@
   endif
 
   ! absorbs absorbing-boundary surface using Sommerfeld condition (vanishing field in the outer-space)
-  call compute_stacey_acoustic_cuda(Mesh_pointer,iphase,b_absorb_potential_left_slice,b_absorb_potential_right_slice, &
+  call compute_stacey_acoustic_cuda(Mesh_pointer,iphase, &
+                                    b_absorb_potential_left_slice,b_absorb_potential_right_slice, &
                                     b_absorb_potential_top_slice,b_absorb_potential_bottom_slice, &
                                     compute_wavefield_1,compute_wavefield_2,UNDO_ATTENUATION_AND_OR_PML)
 

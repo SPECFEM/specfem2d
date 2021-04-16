@@ -39,7 +39,7 @@
 
   use specfem_par, only: myrank,NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
     my_neighbors,ninterface_elastic,inum_interfaces_elastic,ibool_interfaces_ext_mesh, &
-    num_fluid_solid_edges,nspec_bottom,nspec_left,nspec_right,nspec_top, &
+    num_fluid_solid_edges, &
     STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS,any_poroelastic,any_acoustic, &
     SIMULATION_TYPE,ATTENUATION_VISCOELASTIC, &
     deltat,deltatover2,b_deltatover2
@@ -55,10 +55,6 @@
 
   ! local parameters
   integer:: iphase
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_bottom) :: b_absorb_elastic_bottom_slice
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_left) :: b_absorb_elastic_left_slice
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_right) :: b_absorb_elastic_right_slice
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_top) :: b_absorb_elastic_top_slice
 
   ! check
   if (PML_BOUNDARY_CONDITIONS ) &
@@ -102,8 +98,7 @@
     if (iphase == 1) then
       ! adds elastic absorbing boundary term to acceleration (Stacey conditions)
       if (STACEY_ABSORBING_CONDITIONS) then
-        call compute_stacey_viscoelastic_GPU(iphase,b_absorb_elastic_bottom_slice,b_absorb_elastic_left_slice, &
-                                             b_absorb_elastic_right_slice,b_absorb_elastic_top_slice)
+        call compute_stacey_viscoelastic_GPU(iphase)
       endif
 
       ! acoustic coupling
@@ -182,22 +177,24 @@
 
 ! absorbing boundary term for elastic media (Stacey conditions)
 
-  subroutine compute_stacey_viscoelastic_GPU(iphase,b_absorb_elastic_bottom_slice,b_absorb_elastic_left_slice, &
-                                             b_absorb_elastic_right_slice, b_absorb_elastic_top_slice)
+  subroutine compute_stacey_viscoelastic_GPU(iphase)
 
   use constants, only: CUSTOM_REAL,NGLLX,NDIM
 
-  use specfem_par, only: nspec_bottom,nspec_left,nspec_top,nspec_right,b_absorb_elastic_left,b_absorb_elastic_right, &
-                          b_absorb_elastic_bottom, b_absorb_elastic_top,SIMULATION_TYPE,SAVE_FORWARD,NSTEP,it, &
-                          num_abs_boundary_faces,NO_BACKWARD_RECONSTRUCTION
+  use specfem_par, only: nspec_bottom,nspec_left,nspec_top,nspec_right, &
+                         b_absorb_elastic_left,b_absorb_elastic_right, &
+                         b_absorb_elastic_bottom, b_absorb_elastic_top, &
+                         SIMULATION_TYPE,SAVE_FORWARD,NSTEP,it, &
+                         num_abs_boundary_faces,NO_BACKWARD_RECONSTRUCTION
 
   use specfem_par_gpu, only: Mesh_pointer
 
   implicit none
 
   ! communication overlap
-  integer :: iphase
+  integer,intent(in) :: iphase
 
+  ! local parameters
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_bottom) :: b_absorb_elastic_bottom_slice
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_left) :: b_absorb_elastic_left_slice
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_right) :: b_absorb_elastic_right_slice
@@ -209,32 +206,23 @@
 
   if (SIMULATION_TYPE == 3) then
     ! gets absorbing contribution buffers
-    b_absorb_elastic_bottom_slice(1,:,:) = b_absorb_elastic_bottom(1,:,:,NSTEP-it+1)
-    b_absorb_elastic_left_slice(1,:,:) = b_absorb_elastic_left(1,:,:,NSTEP-it+1)
-    b_absorb_elastic_right_slice(1,:,:) = b_absorb_elastic_right(1,:,:,NSTEP-it+1)
-    b_absorb_elastic_top_slice(1,:,:) = b_absorb_elastic_top(1,:,:,NSTEP-it+1)
-
-    b_absorb_elastic_bottom_slice(2,:,:) = b_absorb_elastic_bottom(2,:,:,NSTEP-it+1)
-    b_absorb_elastic_left_slice(2,:,:) = b_absorb_elastic_left(2,:,:,NSTEP-it+1)
-    b_absorb_elastic_right_slice(2,:,:) = b_absorb_elastic_right(2,:,:,NSTEP-it+1)
-    b_absorb_elastic_top_slice(2,:,:) = b_absorb_elastic_top(2,:,:,NSTEP-it+1)
+    b_absorb_elastic_bottom_slice(:,:,:) = b_absorb_elastic_bottom(:,:,:,NSTEP-it+1)
+    b_absorb_elastic_left_slice(:,:,:) = b_absorb_elastic_left(:,:,:,NSTEP-it+1)
+    b_absorb_elastic_right_slice(:,:,:) = b_absorb_elastic_right(:,:,:,NSTEP-it+1)
+    b_absorb_elastic_top_slice(:,:,:) = b_absorb_elastic_top(:,:,:,NSTEP-it+1)
   endif
 
-  call compute_stacey_viscoelastic_cuda(Mesh_pointer,iphase,b_absorb_elastic_left_slice, &
-                   b_absorb_elastic_right_slice,b_absorb_elastic_top_slice,b_absorb_elastic_bottom_slice)
+  call compute_stacey_viscoelastic_cuda(Mesh_pointer,iphase, &
+                                        b_absorb_elastic_left_slice,b_absorb_elastic_right_slice, &
+                                        b_absorb_elastic_top_slice,b_absorb_elastic_bottom_slice)
 
   ! adjoint simulations: stores absorbed wavefield part
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
     ! writes out absorbing boundary value only when second phase is running
-    b_absorb_elastic_bottom(1,:,:,it) = b_absorb_elastic_bottom_slice(1,:,:)
-    b_absorb_elastic_right(1,:,:,it) = b_absorb_elastic_right_slice(1,:,:)
-    b_absorb_elastic_top(1,:,:,it) = b_absorb_elastic_top_slice(1,:,:)
-    b_absorb_elastic_left(1,:,:,it) = b_absorb_elastic_left_slice(1,:,:)
-
-    b_absorb_elastic_bottom(2,:,:,it) = b_absorb_elastic_bottom_slice(2,:,:)
-    b_absorb_elastic_right(2,:,:,it) = b_absorb_elastic_right_slice(2,:,:)
-    b_absorb_elastic_top(2,:,:,it) = b_absorb_elastic_top_slice(2,:,:)
-    b_absorb_elastic_left(2,:,:,it) = b_absorb_elastic_left_slice(2,:,:)
+    b_absorb_elastic_bottom(:,:,:,it) = b_absorb_elastic_bottom_slice(:,:,:)
+    b_absorb_elastic_right(:,:,:,it) = b_absorb_elastic_right_slice(:,:,:)
+    b_absorb_elastic_top(:,:,:,it) = b_absorb_elastic_top_slice(:,:,:)
+    b_absorb_elastic_left(:,:,:,it) = b_absorb_elastic_left_slice(:,:,:)
   endif
 
   end subroutine compute_stacey_viscoelastic_GPU

@@ -42,7 +42,7 @@
                          ELASTIC_SIMULATION,any_elastic,displ_elastic,b_displ_elastic, &
                          POROELASTIC_SIMULATION,any_poroelastic, &
                          displs_poroelastic,displw_poroelastic, &
-                         ACOUSTIC_SIMULATION,any_acoustic,potential_acoustic, &
+                         ACOUSTIC_SIMULATION,any_acoustic,potential_acoustic,b_potential_acoustic, &
                          timestamp_seconds_start, &
                          NOISE_TOMOGRAPHY
 
@@ -114,10 +114,11 @@
     call max_all_cr(displnorm_all, displnorm_all_glob)
     if (myrank == 0) &
       write(IMAIN,*) 'Max norm of vector field in solid (elastic) = ', displnorm_all_glob
+
     if (SIMULATION_TYPE == 3) then
       call max_all_cr(b_displnorm_all, b_displnorm_all_glob)
       if (myrank == 0) &
-      write(IMAIN,*) 'Max norm of backward vector field in solid (elastic) = ', b_displnorm_all_glob
+        write(IMAIN,*) 'Max norm of backward vector field in solid (elastic) = ', b_displnorm_all_glob
     endif
 
     ! check stability of the code in solid, exit if unstable
@@ -183,6 +184,14 @@
       else
         displnorm_all = maxval(abs(potential_acoustic(:)))
       endif
+      ! adjoint simulations
+      if (SIMULATION_TYPE == 3) then
+        if (GPU_MODE) then
+          call get_norm_acoustic_from_device(b_displnorm_all,Mesh_pointer,3)
+        else
+          b_displnorm_all = maxval(abs(b_potential_acoustic(:)))
+        endif
+      endif
     else
       displnorm_all = 0._CUSTOM_REAL
     endif
@@ -191,6 +200,12 @@
     call max_all_cr(displnorm_all, displnorm_all_glob)
     if (myrank == 0) &
       write(IMAIN,*) 'Max absolute value of scalar field in fluid (acoustic) = ',displnorm_all_glob
+
+    if (SIMULATION_TYPE == 3) then
+      call max_all_cr(b_displnorm_all, b_displnorm_all_glob)
+      if (myrank == 0) &
+        write(IMAIN,*) 'Max absolute value of backward scalar field in fluid (acoustic) = ', b_displnorm_all_glob
+    endif
 
     ! check stability of the code in fluid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater

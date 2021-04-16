@@ -104,12 +104,10 @@ void FC_FUNC_(get_free_device_memory,
               get_FREE_DEVICE_MEMORY)(realw* free, realw* used, realw* total) {}
 
 void FC_FUNC_(get_norm_acoustic_from_device,
-              GET_NORM_ACOUSTIC_FROM_DEVICE)(realw* norm,long* Mesh_pointer,int* sim_type) {}
+              GET_NORM_ACOUSTIC_FROM_DEVICE)(realw* norm,long* Mesh_pointer,const int* FORWARD_OR_ADJOINT) {}
 
 void FC_FUNC_(get_norm_elastic_from_device,
-              GET_NORM_ELASTIC_FROM_DEVICE)(realw* norm,
-                                            long* Mesh_pointer,
-                                            int* type,int *it) {}
+              GET_NORM_ELASTIC_FROM_DEVICE)(realw* norm,long* Mesh_pointer,const int* FORWARD_OR_ADJOINT) {}
 
 void FC_FUNC_(get_max_accel,
               GET_MAX_ACCEL)(int* itf,int* sizef,long* Mesh_pointer) {}
@@ -160,14 +158,14 @@ void FC_FUNC_(compute_add_moving_sources_ac_cuda,
               COMPUTE_ADD_MOVING_SOURCES_AC_CUDA)(long* Mesh_pointer,
                                                   int* iphase_f,
                                                   int* nsources_local_moving,
-                                                  int* it_f,
+                                                  int* itf,
                                                   int* NSTEP_f,
                                                   int* nsources_f) {}
 
 void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
               ADD_SOURCES_AC_SIM_2_OR_3_CUDA)(long* Mesh_pointer,
                                                int* iphasef,
-                                               int* it,
+                                               int* itf,
                                                int* nadj_rec_local,
                                                int* NSTEP) {}
 
@@ -189,7 +187,7 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
 void FC_FUNC_(add_sources_el_sim_type_2_or_3,
               ADD_SOURCES_EL_SIM_TYPE_2_OR_3)(long* Mesh_pointer,
                                                int* iphasef,
-                                               int* it,
+                                               int* itf,
                                                int* nadj_rec_local,
                                                int* NSTEP) {}
 

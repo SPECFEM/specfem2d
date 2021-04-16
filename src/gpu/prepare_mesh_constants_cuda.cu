@@ -978,10 +978,15 @@ void FC_FUNC_(prepare_stacey_device,
 
       // absorb_field array used for file i/o
       if (mp->simulation_type == 3 || ( mp->simulation_type == 1 && mp->save_forward )){
-        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_left,2*mp->d_nspec_left*sizeof(realw)*NGLLX),2201);
-        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_right,2*mp->d_nspec_right*sizeof(realw)*NGLLX),2202);
-        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_top,2*mp->d_nspec_top*sizeof(realw)*NGLLX),2203);
-        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_bottom,2*mp->d_nspec_bottom*sizeof(realw)*NGLLX),2204);
+        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_left,NDIM*mp->d_nspec_left*sizeof(realw)*NGLLX),2201);
+        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_right,NDIM*mp->d_nspec_right*sizeof(realw)*NGLLX),2202);
+        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_top,NDIM*mp->d_nspec_top*sizeof(realw)*NGLLX),2203);
+        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_bottom,NDIM*mp->d_nspec_bottom*sizeof(realw)*NGLLX),2204);
+        // initializes values to zero
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_absorb_elastic_left,0,NDIM*mp->d_nspec_left*sizeof(realw)*NGLLX),2221);
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_absorb_elastic_right,0,NDIM*mp->d_nspec_right*sizeof(realw)*NGLLX),2222);
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_absorb_elastic_top,0,NDIM*mp->d_nspec_top*sizeof(realw)*NGLLX),2223);
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_absorb_elastic_bottom,0,NDIM*mp->d_nspec_bottom*sizeof(realw)*NGLLX),2224);
       }
     } // ELASTIC_SIMULATION
 
@@ -993,6 +998,11 @@ void FC_FUNC_(prepare_stacey_device,
         print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_right,mp->d_nspec_right*sizeof(realw)*NGLLX),2212);
         print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_top,mp->d_nspec_top*sizeof(realw)*NGLLX),2213);
         print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_bottom,mp->d_nspec_bottom*sizeof(realw)*NGLLX),2214);
+        // initializes values to zero
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_absorb_potential_left,0,mp->d_nspec_left*sizeof(realw)*NGLLX),2221);
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_absorb_potential_right,0,mp->d_nspec_right*sizeof(realw)*NGLLX),2222);
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_absorb_potential_top,0,mp->d_nspec_top*sizeof(realw)*NGLLX),2223);
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_absorb_potential_bottom,0,mp->d_nspec_bottom*sizeof(realw)*NGLLX),2224);
       }
     } // ACOUSTIC_SIMULATION
   }

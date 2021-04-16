@@ -827,6 +827,7 @@
   ! allocate arrays for absorbing boundary conditions
   allocate(codeabs(4,num_abs_boundary_faces),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating absorbing array')
+  codeabs(:,:) = .false.
 
   !---codeabs_corner(1,num_abs_boundary_faces) denotes whether element is on bottom-left corner of absorbing boundary or not
   !---codeabs_corner(2,num_abs_boundary_faces) denotes whether element is on bottom-right corner of absorbing boundary or not
@@ -834,6 +835,7 @@
   !---codeabs_corner(4,num_abs_boundary_faces) denotes whether element is on top-right corner of absorbing boundary or not
   allocate(codeabs_corner(4,num_abs_boundary_faces),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating absorbing codeabs_corner array')
+  codeabs_corner(:,:) = .false.
 
   allocate(abs_boundary_type(num_abs_boundary_faces))
 
@@ -869,8 +871,6 @@
   if (ier /= 0) call stop_the_code('Error allocating absorbing boundary arrays')
 
   ! initializes
-  codeabs(:,:) = .false.
-  codeabs_corner(:,:) = .false.
   abs_boundary_type(:) = 0
 
   ibegin_edge1(:) = 0
@@ -1338,6 +1338,9 @@
            fluid_solid_elastic_ispec(num_fluid_solid_edges), &
            fluid_solid_elastic_iedge(num_fluid_solid_edges),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating fluid-solid arrays')
+  ! initializes
+  fluid_solid_acoustic_ispec(:) = 0; fluid_solid_acoustic_iedge(:) = 0
+  fluid_solid_elastic_ispec(:) = 0; fluid_solid_elastic_iedge(:) = 0
 
   ! sets flags for poroelastic-acoustic coupled domains
   if (num_fluid_poro_edges > 0) then
@@ -1351,6 +1354,9 @@
   allocate(fluid_poro_acoustic_iedge(num_fluid_poro_edges))
   allocate(fluid_poro_poroelastic_ispec(num_fluid_poro_edges))
   allocate(fluid_poro_poroelastic_iedge(num_fluid_poro_edges))
+  ! initializes
+  fluid_poro_acoustic_ispec(:) = 0; fluid_poro_acoustic_iedge(:) = 0
+  fluid_poro_poroelastic_ispec(:) = 0; fluid_poro_poroelastic_iedge(:) = 0
 
   ! sets flags for poroelastic-solid coupled domains
   if (num_solid_poro_edges > 0) then
@@ -1364,15 +1370,9 @@
   allocate(solid_poro_elastic_iedge(num_solid_poro_edges))
   allocate(solid_poro_poroelastic_ispec(num_solid_poro_edges))
   allocate(solid_poro_poroelastic_iedge(num_solid_poro_edges))
-
   ! initializes
-  fluid_solid_acoustic_ispec(:) = 0
-  fluid_solid_elastic_ispec(:) = 0
-
-  fluid_poro_acoustic_ispec(:) = 0
-  fluid_poro_poroelastic_ispec(:) = 0
-  solid_poro_elastic_ispec(:) = 0
-  solid_poro_poroelastic_ispec(:) = 0
+  solid_poro_elastic_ispec(:) = 0; solid_poro_elastic_iedge(:) = 0
+  solid_poro_poroelastic_ispec(:) = 0; solid_poro_poroelastic_iedge(:) = 0
 
   ! reads acoustic elastic coupled edges
   if (any_fluid_solid_edges) then

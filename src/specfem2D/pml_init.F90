@@ -80,18 +80,22 @@
         ! mark any elements on the boundary as PML and list their corners
         do ispecabs = 1,num_abs_boundary_faces
           ispec = abs_boundary_ispec(ispecabs)
+
           !array to know which PML it is
-          which_PML_elem(ibound,ispec)=codeabs(ibound,ispecabs)
+          which_PML_elem(ibound,ispec) = codeabs(ibound,ispecabs)
+
           if (codeabs(ibound,ispecabs)) then ! we are on the good absorbing boundary
-            do j = 1,NGLLZ,NGLLZ-1; do i = 1,NGLLX,NGLLX-1
-              iglob=ibool(i,j,ispec)
-              k=1
-              do while(k <= ncorner .and. icorner_iglob(k) /= iglob)
-                k=k+1
+            do j = 1,NGLLZ,NGLLZ-1
+              do i = 1,NGLLX,NGLLX-1
+                iglob = ibool(i,j,ispec)
+                k = 1
+                do while(k <= ncorner .and. icorner_iglob(k) /= iglob)
+                  k = k+1
+                enddo
+                ncorner = ncorner+1
+                icorner_iglob(ncorner) = iglob
               enddo
-              ncorner=ncorner+1
-              icorner_iglob(ncorner) = iglob
-            enddo; enddo
+            enddo
           endif ! we are on the good absorbing boundary
         enddo
       endif
@@ -100,11 +104,11 @@
       !we take 4 elements for the PML thickness
       do i_coef = 2,NELEM_PML_THICKNESS
 
-        do ispec= 1,nspec
+        do ispec = 1,nspec
           if (.not. which_PML_elem(ibound,ispec)) then
             do j = 1,NGLLZ,NGLLZ-1
               do i = 1,NGLLX,NGLLX-1
-                iglob=ibool(i,j,ispec)
+                iglob = ibool(i,j,ispec)
                 do k = 1,ncorner
                   if (iglob == icorner_iglob(k)) which_PML_elem(ibound,ispec) = .true.
                 enddo
@@ -118,7 +122,7 @@
         icorner_iglob = 0
         nspec_PML = 0
 
-        do ispec= 1,nspec
+        do ispec = 1,nspec
           if (which_PML_elem(ibound,ispec)) then
             ispec_is_PML(ispec) = .true.
             do j = 1,NGLLZ,NGLLZ-1
@@ -140,8 +144,8 @@
 
       if (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) then
 
-        do i_coef=NELEM_PML_THICKNESS,NELEM_PML_THICKNESS+1
-          do ispec= 1,nspec
+        do i_coef = NELEM_PML_THICKNESS,NELEM_PML_THICKNESS+1
+          do ispec = 1,nspec
             if (.not. which_PML_elem(ibound,ispec)) then
               do j = 1,NGLLZ,NGLLZ-1
                 do i = 1,NGLLX,NGLLX-1

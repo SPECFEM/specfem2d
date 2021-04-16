@@ -39,7 +39,7 @@ __global__ void enforce_free_surface_cuda_kernel(realw_p potential_acoustic,
                                                  realw_p potential_dot_dot_acoustic,
                                                  const int num_free_surface_faces,
                                                  const int* free_surface_ispec,
-                                                 const int* free_surface_ij,
+                                                 const int* free_surface_ijk,
                                                  const int* d_ibool,
                                                  const int* ispec_is_acoustic) {
   // gets spectral element face id
@@ -56,8 +56,8 @@ __global__ void enforce_free_surface_cuda_kernel(realw_p potential_acoustic,
       // gets global point index
       int igll = threadIdx.x + threadIdx.y*blockDim.x;
 
-      int i = free_surface_ij[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1; // (1,igll,iface)
-      int j = free_surface_ij[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
+      int i = free_surface_ijk[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1; // (1,igll,iface)
+      int j = free_surface_ijk[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
 
       int iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 

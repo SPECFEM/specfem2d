@@ -92,35 +92,39 @@ TRACE("compute_stacey_acoustic_cuda");
                                        mp->d_nspec_bottom*sizeof(realw)*NGLLX,cudaMemcpyHostToDevice),7700);
   }
 
-  compute_stacey_acoustic_kernel<<<grid,threads>>>(mp->d_potential_dot_acoustic,
-                                                   mp->d_potential_dot_dot_acoustic,
-                                                   mp->d_abs_boundary_ispec,
-                                                   mp->d_abs_boundary_ijk,
-                                                   mp->d_abs_boundary_jacobian2Dw,
-                                                   mp->d_ibool,
-                                                   mp->d_rhostore,
-                                                   mp->d_kappastore,
-                                                   mp->d_ispec_is_acoustic,
-                                                   read_abs,
-                                                   write_abs,
-                                                   *UNDO_ATTENUATION_AND_OR_PML,
-                                                   *compute_wavefield_1,
-                                                   *compute_wavefield_2,
-                                                   mp->d_num_abs_boundary_faces,
-                                                   mp->d_b_potential_dot_acoustic,
-                                                   mp->d_b_potential_dot_dot_acoustic,
-                                                   mp->d_b_absorb_potential_left,
-                                                   mp->d_b_absorb_potential_right,
-                                                   mp->d_b_absorb_potential_top,
-                                                   mp->d_b_absorb_potential_bottom,
-                                                   mp->d_ib_left,
-                                                   mp->d_ib_right,
-                                                   mp->d_ib_top,
-                                                   mp->d_ib_bottom,
-                                                   mp->d_edge_abs);
+  compute_stacey_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_acoustic,
+                                                                        mp->d_potential_dot_dot_acoustic,
+                                                                        mp->d_abs_boundary_ispec,
+                                                                        mp->d_abs_boundary_ijk,
+                                                                        mp->d_abs_boundary_jacobian2Dw,
+                                                                        mp->d_ibool,
+                                                                        mp->d_rhostore,
+                                                                        mp->d_kappastore,
+                                                                        mp->d_ispec_is_acoustic,
+                                                                        read_abs,
+                                                                        write_abs,
+                                                                        *UNDO_ATTENUATION_AND_OR_PML,
+                                                                        *compute_wavefield_1,
+                                                                        *compute_wavefield_2,
+                                                                        mp->d_num_abs_boundary_faces,
+                                                                        mp->d_b_potential_dot_acoustic,
+                                                                        mp->d_b_potential_dot_dot_acoustic,
+                                                                        mp->d_b_absorb_potential_left,
+                                                                        mp->d_b_absorb_potential_right,
+                                                                        mp->d_b_absorb_potential_top,
+                                                                        mp->d_b_absorb_potential_bottom,
+                                                                        mp->d_ib_left,
+                                                                        mp->d_ib_right,
+                                                                        mp->d_ib_top,
+                                                                        mp->d_ib_bottom,
+                                                                        mp->d_edge_abs);
 
   //  adjoint simulations: stores absorbed wavefield part
   if (write_abs) {
+    // explicitly wait until compute stream is done
+    // (cudaMemcpy implicitly synchronizes all other cuda operations)
+    cudaStreamSynchronize(mp->compute_stream);
+
     // (cudaMemcpy implicitly synchronizes all other cuda operations)
     // copies array to CPU
     print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_potential_left,mp->d_b_absorb_potential_left,

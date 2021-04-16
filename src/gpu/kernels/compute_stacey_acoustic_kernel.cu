@@ -36,30 +36,30 @@
 
 __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
                                                realw* potential_dot_dot_acoustic,
-                                               int* abs_boundary_ispec,
-                                               int* abs_boundary_ij,
-                                               realw* abs_boundary_jacobian1Dw,
-                                               int* d_ibool,
-                                               realw* rhostore,
-                                               realw* kappastore,
-                                               int* ispec_is_acoustic,
-                                               int read_abs,
-                                               int write_abs,
-                                               int UNDO_ATTENUATION_AND_OR_PML,
-                                               int compute_wavefield1,
-                                               int compute_wavefield2,
-                                               int num_abs_boundary_faces,
+                                               const int* abs_boundary_ispec,
+                                               const int* abs_boundary_ijk,
+                                               const realw* abs_boundary_jacobian1Dw,
+                                               const int* d_ibool,
+                                               const realw* rhostore,
+                                               const realw* kappastore,
+                                               const int* ispec_is_acoustic,
+                                               const int read_abs,
+                                               const int write_abs,
+                                               const int UNDO_ATTENUATION_AND_OR_PML,
+                                               const int compute_wavefield1,
+                                               const int compute_wavefield2,
+                                               const int num_abs_boundary_faces,
                                                realw* b_potential_dot_acoustic,
                                                realw* b_potential_dot_dot_acoustic,
                                                realw* b_absorb_potential_left,
                                                realw* b_absorb_potential_right,
                                                realw* b_absorb_potential_top,
                                                realw* b_absorb_potential_bottom,
-                                               int* ib_left,
-                                               int* ib_right,
-                                               int* ib_top,
-                                               int* ib_bottom,
-                                               int* edge_abs) {
+                                               const int* ib_left,
+                                               const int* ib_right,
+                                               const int* ib_top,
+                                               const int* ib_bottom,
+                                               const int* edge_abs) {
 
   int igll = threadIdx.x;
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
@@ -69,71 +69,93 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
   realw jacobianw;
   realw vel;
 
-  if (iface >= num_abs_boundary_faces) return;
+  if (iface < num_abs_boundary_faces){
 
-  // "-1" from index values to convert from Fortran-> C indexing
-  ispec = abs_boundary_ispec[iface]-1;
-  if ( ! ispec_is_acoustic[ispec]) return;
+    // "-1" from index values to convert from Fortran-> C indexing
+    ispec = abs_boundary_ispec[iface] - 1;
 
-  i = abs_boundary_ij[INDEX3(NDIM,NGLLX,0,igll,iface)]-1;
-  j = abs_boundary_ij[INDEX3(NDIM,NGLLX,1,igll,iface)]-1;
+    // only for acoustic elements
+    if (ispec_is_acoustic[ispec]){
 
-  //daniel todo: check if we can simplify.
-  //       in fortran routine, we set i == NGLLX+1 or j == NGLLX+1
-  //       to indicate points which duplicate contributions and can be left out
-  //
-  //check if the point must be computed
-  if (i==NGLLX || j==NGLLX) return;
+      i = abs_boundary_ijk[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1;
+      j = abs_boundary_ijk[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
 
-  iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
+      //daniel todo: check if we can simplify.
+      //       in fortran routine, we set i == NGLLX+1 or j == NGLLX+1
+      //       to indicate points which duplicate contributions and can be left out
+      //
+      //check if the point must be computed
+      if (i==NGLLX || j==NGLLX) return;
 
-  // determines bulk sound speed
-  rhol = rhostore[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)];
-  kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
-  cpl = sqrt( kappal / rhol );
+      iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
-  // gets associated, weighted jacobian
-  jacobianw = abs_boundary_jacobian1Dw[INDEX2(NGLLX,igll,iface)];
+      // determines bulk sound speed
+      rhol = rhostore[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)];
+      kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
+      cpl = sqrt( kappal / rhol );
 
-  // uses a potential definition of: s = 1/rho grad(chi)
-  if (compute_wavefield1) {
-    vel = potential_dot_acoustic[iglob] / rhol;
-    // Sommerfeld condition
-    atomicAdd(&potential_dot_dot_acoustic[iglob],-vel*jacobianw/cpl);
-  }
+      // gets associated, weighted jacobian
+      jacobianw = abs_boundary_jacobian1Dw[INDEX2(NGLLX,igll,iface)];
 
-  // adjoint simulations
-  if (compute_wavefield2) {
-    // we distinguish between undo_attenuation or classical, because undo recomputes it meanwhile classical just reads it
-    if (UNDO_ATTENUATION_AND_OR_PML){
-      vel = b_potential_dot_acoustic[iglob] / rhol;
-      atomicAdd(&b_potential_dot_dot_acoustic[iglob],-vel*jacobianw/cpl);
-    }else{
-      if (edge_abs[iface] == 1)     { num_local = ib_bottom[iface] - 1;
-                                      atomicAdd(&b_potential_dot_dot_acoustic[iglob],
-                                                -b_absorb_potential_bottom[INDEX2(NGLLX,igll,num_local)]);}
-      else if (edge_abs[iface] == 2){ num_local = ib_right[iface] - 1;
-                                      atomicAdd(&b_potential_dot_dot_acoustic[iglob],
-                                                -b_absorb_potential_right[INDEX2(NGLLX,igll,num_local)]);}
-      else if (edge_abs[iface] == 3){ num_local = ib_top[iface] - 1;
-                                      atomicAdd(&b_potential_dot_dot_acoustic[iglob],
-                                                -b_absorb_potential_top[INDEX2(NGLLX,igll,num_local)]);}
-      else if (edge_abs[iface] == 4){ num_local = ib_left[iface] - 1;
-                                      atomicAdd(&b_potential_dot_dot_acoustic[iglob],
-                                                -b_absorb_potential_left[INDEX2(NGLLX,igll,num_local)]);}
-    }
+      vel = potential_dot_acoustic[iglob] / rhol;
 
-    if (write_abs) {
+      realw absorbl = vel * jacobianw / cpl;
+
+      // uses a potential definition of: s = 1/rho grad(chi)
+      if (compute_wavefield1) {
+        // Sommerfeld condition
+        atomicAdd(&potential_dot_dot_acoustic[iglob],-absorbl);
+      }
+
+      // adjoint simulations
+      if (compute_wavefield2) {
+        // we distinguish between undo_attenuation or classical, because undo recomputes it meanwhile classical just reads it
+        if (UNDO_ATTENUATION_AND_OR_PML){
+          // adds boundary contribution
+          vel = b_potential_dot_acoustic[iglob] / rhol;
+          atomicAdd(&b_potential_dot_dot_acoustic[iglob],-vel*jacobianw/cpl);
+        }else{
+          // uses stored boundary values
+          if (edge_abs[iface] == 1) {
+            num_local = ib_bottom[iface] - 1;
+            atomicAdd(&b_potential_dot_dot_acoustic[iglob], -b_absorb_potential_bottom[INDEX2(NGLLX,igll,num_local)]);
+
+          }else if (edge_abs[iface] == 2) {
+            num_local = ib_right[iface] - 1;
+            atomicAdd(&b_potential_dot_dot_acoustic[iglob], -b_absorb_potential_right[INDEX2(NGLLX,igll,num_local)]);
+
+          }else if (edge_abs[iface] == 3) {
+            num_local = ib_top[iface] - 1;
+            atomicAdd(&b_potential_dot_dot_acoustic[iglob], -b_absorb_potential_top[INDEX2(NGLLX,igll,num_local)]);
+
+          }else if (edge_abs[iface] == 4) {
+            num_local = ib_left[iface] - 1;
+            atomicAdd(&b_potential_dot_dot_acoustic[iglob], -b_absorb_potential_left[INDEX2(NGLLX,igll,num_local)]);
+          }
+        }
+      }
+
       // saves boundary values
-      if (edge_abs[iface] == 1)      { num_local = ib_bottom[iface] - 1;
-                                       b_absorb_potential_bottom[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
-      else if (edge_abs[iface] == 2) { num_local = ib_right[iface] - 1;
-                                       b_absorb_potential_right[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
-      else if (edge_abs[iface] == 3) { num_local = ib_top[iface] - 1;
-                                       b_absorb_potential_top[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
-      else if (edge_abs[iface] == 4) { num_local = ib_left[iface] - 1;
-                                       b_absorb_potential_left[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
-    }
-  } //if compute_wavefield2
+      if (write_abs) {
+        if (edge_abs[iface] == 1) {
+          num_local = ib_bottom[iface] - 1;
+          b_absorb_potential_bottom[INDEX2(NGLLX,igll,num_local)] = absorbl;
+
+        }else if (edge_abs[iface] == 2) {
+          num_local = ib_right[iface] - 1;
+          b_absorb_potential_right[INDEX2(NGLLX,igll,num_local)] = absorbl;
+
+        }else if (edge_abs[iface] == 3) {
+          num_local = ib_top[iface] - 1;
+          b_absorb_potential_top[INDEX2(NGLLX,igll,num_local)] = absorbl;
+
+        }else if (edge_abs[iface] == 4) {
+          num_local = ib_left[iface] - 1;
+          b_absorb_potential_left[INDEX2(NGLLX,igll,num_local)] = absorbl;
+        }
+      }
+
+    } // ispec_is_acoustic
+  } // num_abs_boundary_faces
 }
 
