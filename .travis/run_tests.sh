@@ -33,7 +33,6 @@ case "$TESTDIR" in
 *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
 esac
 
-
 # info
 echo $TRAVIS_BUILD_DIR
 echo $WORKDIR
@@ -204,6 +203,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
   ##
   ## testing noise example
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/noise_uniform/"
+  echo
   cd EXAMPLES/noise_uniform/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
@@ -218,6 +220,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
   ##
   ## testing Tape2007 example
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/Tape2007/"
+  echo
   cd EXAMPLES/Tape2007/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
@@ -232,6 +237,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
   ##
   ## testing infinite_homogeneous_moment_tensor_vertical_dip_slip example
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/infinite_homogeneous_moment_tensor_vertical_dip_slip/"
+  echo
   cd EXAMPLES/infinite_homogeneous_moment_tensor_vertical_dip_slip/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
@@ -247,6 +255,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing example with pml (longer testing only together with mpi and code coverage)
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/semi_infinite_homogeneous/"
+  echo
   cd EXAMPLES/semi_infinite_homogeneous/
   sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
   sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
@@ -262,6 +273,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing external mesher example with mpi and stacey
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/Gmsh_example_Stacey_MPI/"
+  echo
   cd EXAMPLES/Gmsh_example_Stacey_MPI/
   sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   ./run_this_example.sh
@@ -279,6 +293,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing kernel example
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/Tromp2005_kernel/"
+  echo
   cd EXAMPLES/Tromp2005_kernel/
   sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   ./run_this_example_kernel.sh
@@ -294,6 +311,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing poroelastic example
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/poroelastic_acoustic/"
+  echo
   cd EXAMPLES/poroelastic_acoustic/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
@@ -308,6 +328,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing axisymmetric example
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/axisymmetric_case_AXISYM_option/"
+  echo
   cd EXAMPLES/axisymmetric_case_AXISYM_option/
   sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
@@ -323,6 +346,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing PML & MPI example
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/"
+  echo
   cd EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
@@ -337,6 +363,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing MPI, SEP example
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/Industrial_Format_SEP/"
+  echo
   cd EXAMPLES/Industrial_Format_SEP/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
@@ -351,6 +380,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing plane wave example
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/Rayleigh_wave_no_crack/"
+  echo
   cd EXAMPLES/Rayleigh_wave_no_crack/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   # coarser resolution
@@ -369,6 +401,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing fluid solid w/ external mesh
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/fluid_solid/fluid_solid_external_mesh/"
+  echo
   cd EXAMPLES/fluid_solid/fluid_solid_external_mesh/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
@@ -383,6 +418,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing fluid solid w/ external mesh
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/initial_mode_LDDRK"
+  echo
   cd EXAMPLES/initial_mode_LDDRK
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
@@ -397,6 +435,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## elastic kernel example Tromp2005_kernel/ w/ NO_BACKWARD_RECONSTRUCTION
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/Tromp2005_kernel/"
+  echo
   cd EXAMPLES/Tromp2005_kernel/
   sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   sed -i "s:^NO_BACKWARD_RECONSTRUCTION .*:NO_BACKWARD_RECONSTRUCTION = .true.:" DATA/Par_file
@@ -414,6 +455,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## moving sources
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/moving_sources_acoustic/"
+  echo
   cd EXAMPLES/moving_sources_acoustic/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
@@ -428,6 +472,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## moving sources
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/anisotropic_isotropic_model/"
+  echo
   cd EXAMPLES/anisotropic_isotropic_model/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
