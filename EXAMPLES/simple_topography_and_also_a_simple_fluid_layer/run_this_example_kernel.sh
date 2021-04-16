@@ -27,7 +27,7 @@ ln -s ../../../bin/xspecfem2D
 cd ../
 
 # helper scripts
-ln -s ../../change_simulation_type.pl
+ln -s ../../utils/change_simulation_type.pl
 ln -s ../../utils/Visualization/plot_kernel.py
 
 # backup
