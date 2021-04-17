@@ -68,15 +68,21 @@ __device__ double my_atomicAdd(double* address, double val) {
 
 __global__ void compute_elastic_seismogram_kernel(int nrec_local,
                                                   realw* field,
+                                                  realw* field_acoustic,
                                                   int* d_ibool,
                                                   realw* hxir, realw* hgammar,
                                                   realw* seismograms,
                                                   realw* cosrot,
                                                   realw* sinrot,
                                                   int* ispec_selected_rec_loc,
+                                                  int* ispec_is_elastic,
+                                                  int* ispec_is_acoustic,
+                                                  realw* rhostore,
+                                                  realw* d_hprime_xx,
+                                                  realw* d_xix,realw* d_xiz,
+                                                  realw* d_gammax,realw* d_gammaz,
                                                   int it,
-                                                  int NSTEP)
-{
+                                                  int NSTEP){
 
 
   int irec_local = blockIdx.x + blockIdx.y*gridDim.x;
@@ -87,35 +93,84 @@ __global__ void compute_elastic_seismogram_kernel(int nrec_local,
 
   __shared__ realw sh_dxd[NGLL2_PADDED];
   __shared__ realw sh_dzd[NGLL2_PADDED];
-
+  __shared__ realw scalar_field[NGLL2];
 
   if (irec_local < nrec_local) {
+    // initializes
+    sh_dxd[tx] = 0.0f;
+    sh_dzd[tx] = 0.0f;
 
+    // receiver element
     int ispec = ispec_selected_rec_loc[irec_local] - 1;
 
-    sh_dxd[tx] = 0;
-    sh_dzd[tx] = 0;
+    // elastic domains
+    if (ispec_is_elastic[ispec]) {
+      if (tx < NGLL2) {
+        realw hlagrange = hxir[irec_local + nrec_local*I] * hgammar[irec_local + nrec_local*J];
+        int iglob = d_ibool[tx+NGLL2_PADDED*ispec] - 1;
 
-    if (tx < NGLL2) {
-      realw hlagrange = hxir[irec_local + nrec_local*I] * hgammar[irec_local + nrec_local*J];
-      int iglob = d_ibool[tx+NGLL2_PADDED*ispec] - 1;
+        sh_dxd[tx] = hlagrange * field[2*iglob];
+        sh_dzd[tx] = hlagrange * field[2*iglob+1];
 
-      sh_dxd[tx] = hlagrange * field[0 + 2*iglob];
-      sh_dzd[tx] = hlagrange * field[1 + 2*iglob];
-
-      //debug
-      //if (tx == 0) printf("thread %d %d %d - %f %f %f\n",ispec,iglob,irec_local,hlagrange,field[0 + 2*iglob],field[1 + 2*iglob]);
+        //debug
+        //if (tx == 0) printf("thread %d %d %d - %f %f %f\n",ispec,iglob,irec_local,hlagrange,field[0 + 2*iglob],field[1 + 2*iglob]);
+      }
     }
+
+    // acoustic domains
+    if (ispec_is_acoustic[ispec]) {
+      // loads scalar into shared memory
+      if (tx < NGLL2) {
+        int iglob = d_ibool[tx+NGLL2_PADDED*ispec] - 1;
+        scalar_field[tx] = field_acoustic[iglob];
+      }
+      // synchronizes threads
+      __syncthreads();
+
+      if (tx < NGLL2) {
+        // compute gradient of potential to calculate vector if acoustic element
+        // we then need to divide by density because the potential is a potential of (density * displacement)
+
+        // gets material parameter
+        int ij_ispec_padded = tx + NGLL2_PADDED*ispec;
+        realw rhol = rhostore[ij_ispec_padded];
+
+        // vector from scalar field
+        realw vec_elem[2];
+
+        compute_gradient_kernel(tx,ispec,scalar_field,vec_elem,
+                                d_hprime_xx,
+                                d_xix,d_xiz,d_gammax,d_gammaz,
+                                rhol);
+
+        realw hlagrange = hxir[irec_local + nrec_local*I] * hgammar[irec_local + nrec_local*J];
+
+        sh_dxd[tx] = hlagrange * vec_elem[0];
+        sh_dzd[tx] = hlagrange * vec_elem[1];
+
+        //debug
+        //if (tx == 0) printf("thread %d %d %d - %f %f %f\n",ispec,iglob,irec_local,hlagrange,field[0 + 2*iglob],field[1 + 2*iglob]);
+      }
+    }
+
+    // synchronizes threads
     __syncthreads();
 
     // reduction
     for (unsigned int s=1; s<NGLL2_PADDED ; s *= 2) {
-      if (tx % (2*s) == 0){ sh_dxd[tx] += sh_dxd[tx + s];sh_dzd[tx] += sh_dzd[tx + s];}
+      if (tx % (2*s) == 0){
+        sh_dxd[tx] += sh_dxd[tx + s];
+        sh_dzd[tx] += sh_dzd[tx + s];
+      }
       __syncthreads();
     }
 
-    if (tx == 0) {seismograms[irec_local*NSTEP + it]                    = cosrot[irec_local]*sh_dxd[0]  + sinrot[irec_local]*sh_dzd[0];}
-    if (tx == 1) {seismograms[irec_local*NSTEP + it + nrec_local*NSTEP] = cosrot[irec_local]*sh_dzd[0]  - sinrot[irec_local]*sh_dxd[0];}
+    if (tx == 0) {
+      seismograms[irec_local*NSTEP + it] = cosrot[irec_local]*sh_dxd[0]  + sinrot[irec_local]*sh_dzd[0];
+    }
+    if (tx == 1) {
+      seismograms[irec_local*NSTEP + it + nrec_local*NSTEP] = cosrot[irec_local]*sh_dzd[0] - sinrot[irec_local]*sh_dxd[0];
+    }
 
     /*
     // simple, single-thread reduction

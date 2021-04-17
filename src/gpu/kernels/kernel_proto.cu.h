@@ -315,11 +315,23 @@ __global__ void assemble_boundary_potential_on_device(realw* d_potential_dot_dot
 //
 
 __global__ void compute_acoustic_seismogram_kernel(int nrec_local,
+                                                   realw* displ,
                                                    realw* pressure,
                                                    int* d_ibool,
                                                    realw* hxir, realw* hgammar,
                                                    realw* seismograms,
                                                    int* ispec_selected_rec_loc,
+                                                   int* ispec_is_elastic,
+                                                   int* ispec_is_acoustic,
+                                                   realw* d_kappav,
+                                                   realw* d_muv,
+                                                   realw* d_hprime_xx,
+                                                   realw* d_xix,realw* d_xiz,
+                                                   realw* d_gammax,realw* d_gammaz,
+                                                   int* ispec_is_anisotropic,
+                                                   realw* d_c11store,realw* d_c12store,realw* d_c13store,
+                                                   realw* d_c15store,realw* d_c23store,realw* d_c25store,
+                                                   realw* d_c33store,realw* d_c35store,
                                                    int it,
                                                    int NSTEP);
 
@@ -406,12 +418,19 @@ __global__ void compute_coupling_elastic_ac_kernel(realw* potential_dot_dot_acou
 
 __global__ void compute_elastic_seismogram_kernel(int nrec_local,
                                                   realw* field,
+                                                  realw* field_acoustic,
                                                   int* d_ibool,
                                                   realw* hxir, realw* hgammar,
                                                   realw* seismograms,
                                                   realw* cosrot,
                                                   realw* sinrot,
                                                   int* ispec_selected_rec_loc,
+                                                  int* ispec_is_elastic,
+                                                  int* ispec_is_acoustic,
+                                                  realw* rhostore,
+                                                  realw* d_hprime_xx,
+                                                  realw* d_xix,realw* d_xiz,
+                                                  realw* d_gammax,realw* d_gammaz,
                                                   int it,
                                                   int NSTEP);
 

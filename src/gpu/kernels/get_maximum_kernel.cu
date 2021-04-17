@@ -58,7 +58,7 @@ __global__ void get_maximum_kernel(realw* array, int size, realw* d_max){
   unsigned int i = tid + bx*blockDim.x;
 
   // loads absolute values into shared memory
-  sdata[tid] = (i < size) ? fabs(array[i]) : 0.0 ;
+  sdata[tid] = (i < size) ? fabs(array[i]) : 0.0f ;
 
   __syncthreads();
 

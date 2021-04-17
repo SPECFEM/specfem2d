@@ -88,7 +88,7 @@
   use specfem_par, only: N_SLS,nglob,ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
     ispec_is_anisotropic,kmato,poroelastcoef,assign_external_model,rho_vpstore,mustore,rhostore, &
     ATTENUATION_VISCOELASTIC,AXISYM,is_on_the_axis, &
-    anisotropycoef,c11ext,c12ext,c13ext,c15ext,c23ext,c25ext,c33ext,c35ext,c55ext, &
+    anisotropycoef,c11ext,c12ext,c13ext,c15ext,c23ext,c25ext,c33ext,c35ext, &
     hprimebar_xx,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,jacobian,ibool,coord,e1,e11,USE_TRICK_FOR_BETTER_PRESSURE
 
   implicit none
@@ -111,7 +111,7 @@
   real(kind=CUSTOM_REAL) :: mu_G,lambdal_G,lambdalplus2mul_G
 
   ! for anisotropy
-  double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25
+  double precision ::  c11,c15,c13,c33,c35,c12,c23,c25
   ! Jacobian matrix and determinant
   double precision :: xixl,xizl,gammaxl,gammazl
   ! to evaluate cpI, cpII, and cs, and rI (poroelastic medium)
@@ -221,7 +221,8 @@
         dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
         duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-        if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! d_uz/dr=0 on the axis
+        if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then
+          ! d_uz/dr=0 on the axis
           duz_dxl = 0.d0
         endif
 
@@ -252,7 +253,8 @@
 
           if (AXISYM) then
             if (is_on_the_axis(ispec)) then
-              if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
+              if (is_on_the_axis(ispec) .and. i == 1) then
+                ! First GLJ point
                 sigma_xx = 0._CUSTOM_REAL
                 sigma_zz = 0._CUSTOM_REAL
                 sigma_thetatheta = 0._CUSTOM_REAL
@@ -268,7 +270,8 @@
                            + lambdal_unrelaxed_elastic*sigma_zz/xxi
                 sigma_thetatheta = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
                                    + lambdaplus2mu_unrelaxed_elastic*sigma_thetatheta/xxi
-              else ! Not first GLJ point
+              else
+                ! Not first GLJ point
                 sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
                            + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
                 sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
@@ -277,7 +280,8 @@
                                         + lambdaplus2mu_unrelaxed_elastic &
                                         * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
               endif
-            else ! Not on the axis
+            else
+              ! Not on the axis
               sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
                          + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
               sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
@@ -287,7 +291,8 @@
                                       * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
             endif
             sigma_yy = sigma_thetatheta
-          else ! Not axisym
+          else
+            ! Not axisym
             ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
             sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
             ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
@@ -318,7 +323,8 @@
 
           if (AXISYM) then
             if (is_on_the_axis(ispec)) then
-              if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
+              if (is_on_the_axis(ispec) .and. i == 1) then
+                ! First GLJ point
                 sigma_xx = 0._CUSTOM_REAL
                 sigma_zz = 0._CUSTOM_REAL
                 sigma_thetatheta = 0._CUSTOM_REAL
@@ -334,7 +340,8 @@
                            + lambdal_unrelaxed_elastic*sigma_zz/xxi
                 sigma_thetatheta = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
                                    + lambdaplus2mu_unrelaxed_elastic*sigma_thetatheta/xxi
-              else ! Not first GLJ point
+              else
+                ! Not first GLJ point
                 sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
                            + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
                 sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
@@ -343,7 +350,8 @@
                                         + lambdaplus2mu_unrelaxed_elastic &
                                         * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
               endif
-            else ! Not on the axis
+            else
+              ! Not on the axis
               sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
                          + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
               sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
@@ -353,7 +361,8 @@
                                       * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
             endif
             sigma_yy = sigma_thetatheta
-          else ! Not axisym
+          else
+            ! Not axisym
             sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
             ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
             sigma_yy = lambdal_unrelaxed_elastic*(dux_dxl + duz_dzl)
@@ -370,7 +379,7 @@
             c13 = c13ext(i,j,ispec)
             c33 = c33ext(i,j,ispec)
             c35 = c35ext(i,j,ispec)
-            c55 = c55ext(i,j,ispec)
+            ! c55 = c55ext(i,j,ispec) ! not needed
             c12 = c12ext(i,j,ispec)
             c23 = c23ext(i,j,ispec)
             c25 = c25ext(i,j,ispec)
@@ -380,7 +389,7 @@
             c15 = anisotropycoef(3,kmato(ispec))
             c33 = anisotropycoef(4,kmato(ispec))
             c35 = anisotropycoef(5,kmato(ispec))
-            c55 = anisotropycoef(6,kmato(ispec))
+            ! c55 = anisotropycoef(6,kmato(ispec)) ! not needed
             c12 = anisotropycoef(7,kmato(ispec))
             c23 = anisotropycoef(8,kmato(ispec))
             c25 = anisotropycoef(9,kmato(ispec))

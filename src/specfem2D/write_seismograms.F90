@@ -150,7 +150,9 @@
           ! Simulating seismograms
           call compute_seismograms_cuda(Mesh_pointer,i_sig,sisux(:,:,i_sig),sisuz(:,:,i_sig), &
                                         seismo_current,nlength_seismogram, &
-                                        ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,USE_TRICK_FOR_BETTER_PRESSURE,it,NSTEP)
+                                        ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,USE_TRICK_FOR_BETTER_PRESSURE, &
+                                        ATTENUATION_VISCOELASTIC, &
+                                        it,NSTEP)
           ! note: curl not implemented yet
         endif ! GPU_MODE
       endif ! nrecloc
@@ -279,7 +281,7 @@
   buffer_binary(:,:,:) = 0.d0
 
   ! see if we need to save any seismogram in binary format
-  save_binary_seismograms = save_binary_seismograms_single .or. save_binary_seismograms_double
+  save_binary_seismograms = ( save_binary_seismograms_single .or. save_binary_seismograms_double )
 
   ! binary file output
   if ( (save_binary_seismograms .or. SU_FORMAT) .and. myrank == 0) then

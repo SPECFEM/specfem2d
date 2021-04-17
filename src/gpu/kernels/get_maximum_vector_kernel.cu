@@ -45,7 +45,7 @@ __global__ void get_maximum_vector_kernel(realw* array, int size, realw* d_max){
   unsigned int i = tid + bx*blockDim.x;
 
   // loads values into shared memory: assume array is a vector array
-  sdata[tid] = (i < size) ? (array[i*2]*array[i*2] + array[i*2+1]*array[i*2+1]) : 0.0 ;
+  sdata[tid] = (i < size) ? (array[i*2]*array[i*2] + array[i*2+1]*array[i*2+1]) : 0.0f ;
 
   __syncthreads();
 

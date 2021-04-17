@@ -47,10 +47,11 @@ void FC_FUNC_(compute_seismograms_cuda,
                                         int* ELASTIC_SIMULATION,
                                         int* ACOUSTIC_SIMULATION,
                                         int* USE_TRICK_FOR_BETTER_PRESSURE,
+                                        int* ATTENUATION_VISCOELASTIC,
                                         int* itf,
                                         int* it_endf) {
 
-// compute_seismograms
+  // compute_seismograms
   TRACE("compute_seismograms_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
@@ -73,8 +74,9 @@ void FC_FUNC_(compute_seismograms_cuda,
 
   int seismotype = mp->h_seismotypeVec[i_sig];
 
-  // warnings
-  if (seismo_current == 0){
+  // warnings (deprecated)
+  //if (seismo_current == 0){
+  if (1 == 0){
     switch (seismotype){
     case 1 :
       //Deplacement
@@ -107,81 +109,93 @@ void FC_FUNC_(compute_seismograms_cuda,
       break;
     }
   }
+  // warnings
+  if (seismotype == 4 && seismo_current == 0){
+    if (*ELASTIC_SIMULATION && ! mp->p_sv)
+      printf("\nWarning: Pressure seismograms in elastic domain for GPU simulation only valid for P_SV cases\n\n");
+    if (*ELASTIC_SIMULATION && *ATTENUATION_VISCOELASTIC)
+      printf("\nWarning: Pressure seismograms in elastic domain for GPU simulation only valid for non-attenuation P_SV cases\n\n");
+  }
 
   // setup for copy
   realw* h_seismo = mp->h_seismograms[i_sig];
   realw* d_seismo = mp->d_seismograms[i_sig];
 
-  // todo: for coupled simulations, one should check in which domain the receiver lies to output displacement
-  //       similar to what routine compute_vector_one_element(..) is doing
+  // selects field
+  realw *displ;
+  realw *potential;
+
+  if (seismotype == 1){
+    // deplacement
+    displ = mp->d_displ;
+    potential = mp->d_potential_acoustic;
+
+  }else if (seismotype == 2){
+    // vitesse
+    displ = mp->d_veloc;
+    potential = mp->d_potential_dot_acoustic;
+
+  }else if (seismotype == 3){
+    // acceleration
+    displ = mp->d_accel;
+    potential = mp->d_potential_dot_dot_acoustic;
+
+  }else if (seismotype == 4){
+    // pression
+    displ = mp->d_displ;
+    if (*USE_TRICK_FOR_BETTER_PRESSURE){
+      potential = mp->d_potential_acoustic;
+    }else{
+      potential = mp->d_potential_dot_dot_acoustic;
+    }
+  }
 
   // computes current seismograms value
   switch (seismotype){
     case 1 :
-      //Deplacement
-      compute_elastic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
-                                                                               mp->d_displ,
-                                                                               mp->d_ibool,
-                                                                               mp->d_xir_store_loc, mp->d_gammar_store_loc,
-                                                                               d_seismo,
-                                                                               mp->d_cosrot,
-                                                                               mp->d_sinrot,
-                                                                               mp->d_ispec_selected_rec_loc,
-                                                                               seismo_current,
-                                                                               nlength_seismogram);
-      break;
-
     case 2 :
-      //Vitesse
-      compute_elastic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
-                                                                               mp->d_veloc,
-                                                                               mp->d_ibool,
-                                                                               mp->d_xir_store_loc, mp->d_gammar_store_loc,
-                                                                               d_seismo,
-                                                                               mp->d_cosrot,
-                                                                               mp->d_sinrot,
-                                                                               mp->d_ispec_selected_rec_loc,
-                                                                               seismo_current,
-                                                                               nlength_seismogram);
-      break;
-
     case 3 :
-      //Acceleration
+      //Displ/Veloc/Accel
       compute_elastic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
-                                                                               mp->d_accel,
+                                                                               displ,
+                                                                               potential,
                                                                                mp->d_ibool,
                                                                                mp->d_xir_store_loc, mp->d_gammar_store_loc,
                                                                                d_seismo,
                                                                                mp->d_cosrot,
                                                                                mp->d_sinrot,
                                                                                mp->d_ispec_selected_rec_loc,
+                                                                               mp->d_ispec_is_elastic,
+                                                                               mp->d_ispec_is_acoustic,
+                                                                               mp->d_rhostore,
+                                                                               mp->d_hprime_xx,
+                                                                               mp->d_xix,mp->d_xiz,
+                                                                               mp->d_gammax,mp->d_gammaz,
                                                                                seismo_current,
                                                                                nlength_seismogram);
       break;
 
     case 4 :
       //Pression
-      if (*USE_TRICK_FOR_BETTER_PRESSURE){
-        compute_acoustic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
-                                                                                  mp->d_potential_acoustic,
-                                                                                  mp->d_ibool,
-                                                                                  mp->d_xir_store_loc, mp->d_gammar_store_loc,
-                                                                                  d_seismo,
-                                                                                  mp->d_ispec_selected_rec_loc,
-                                                                                  seismo_current,
-                                                                                  nlength_seismogram);
-
-      }else{
-        compute_acoustic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
-                                                                                  mp->d_potential_dot_dot_acoustic,
-                                                                                  mp->d_ibool,
-                                                                                  mp->d_xir_store_loc, mp->d_gammar_store_loc,
-                                                                                  d_seismo,
-                                                                                  mp->d_ispec_selected_rec_loc,
-                                                                                  seismo_current,
-                                                                                  nlength_seismogram);
-
-      }
+      compute_acoustic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
+                                                                                displ,
+                                                                                potential,
+                                                                                mp->d_ibool,
+                                                                                mp->d_xir_store_loc, mp->d_gammar_store_loc,
+                                                                                d_seismo,
+                                                                                mp->d_ispec_selected_rec_loc,
+                                                                                mp->d_ispec_is_elastic,
+                                                                                mp->d_ispec_is_acoustic,
+                                                                                mp->d_kappav,mp->d_muv,
+                                                                                mp->d_hprime_xx,
+                                                                                mp->d_xix,mp->d_xiz,
+                                                                                mp->d_gammax,mp->d_gammaz,
+                                                                                mp->d_ispec_is_anisotropic,
+                                                                                mp->d_c11store,mp->d_c12store,mp->d_c13store,
+                                                                                mp->d_c15store,mp->d_c23store,mp->d_c25store,
+                                                                                mp->d_c33store,mp->d_c35store,
+                                                                                seismo_current,
+                                                                                nlength_seismogram);
       break;
   }//switch
 
@@ -198,6 +212,9 @@ void FC_FUNC_(compute_seismograms_cuda,
 
   // copies array to CPU host
   if (seismo_current == nlength_seismogram - 1 || it == it_end){
+    // waits until previous compute stream finishes
+    cudaStreamSynchronize(mp->compute_stream);
+
     // seismogram buffers are 1D and components appended; size for one single component record
     int size = mp->nrec_local * nlength_seismogram;
 

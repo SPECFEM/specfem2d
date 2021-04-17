@@ -50,12 +50,12 @@ typedef float realw;
 
 void FC_FUNC_(transfer_boun_pot_from_device,
               TRANSFER_BOUN_POT_FROM_DEVICE)(long* Mesh_pointer,
-                                             realw* send_potential_dot_dot_buffer,
+                                             realw* h_send_potential_dot_dot_buffer,
                                              const int* FORWARD_OR_ADJOINT){}
 
 void FC_FUNC_(transfer_asmbl_pot_to_device,
               TRANSFER_ASMBL_POT_TO_DEVICE)(long* Mesh_pointer,
-                                            realw* buffer_recv_scalar_gpu,
+                                            realw* h_buffer_recv_scalar_gpu,
                                             const int* FORWARD_OR_ADJOINT) {}
 
 
@@ -65,7 +65,7 @@ void FC_FUNC_(transfer_asmbl_pot_to_device,
 
 void FC_FUNC_(transfer_boun_accel_from_device,
               TRANSFER_BOUN_ACCEL_FROM_DEVICE)(long* Mesh_pointer,
-                                               realw* send_accel_buffer,
+                                               realw* h_send_accel_buffer,
                                                const int* FORWARD_OR_ADJOINT){}
 
 void FC_FUNC_(transfer_boundary_from_device_a,
@@ -688,6 +688,7 @@ void FC_FUNC_(compute_seismograms_cuda,
                                         int* ELASTIC_SIMULATION,
                                         int* ACOUSTIC_SIMULATION,
                                         int* USE_TRICK_FOR_BETTER_PRESSURE,
+                                        int* ATTENUATION_VISCOELASTIC,
                                         int* itf,
                                         int* it_endf) {}
 
