@@ -64,8 +64,10 @@
     seismo_current = seismo_current + 1
 
     ! check for edge effects
-    if (seismo_current < 1 .or. seismo_current > nlength_seismogram) &
+    if (seismo_current < 1 .or. seismo_current > nlength_seismogram) then
+      print *,'Error: seismo_current ',seismo_current,' should be between 1 and ',nlength_seismogram
       call stop_the_code('Error: seismo_current out of bounds in recording of seismograms')
+    endif
 
     do i_sig = 1,NSIGTYPE
       seismotype_l = seismotypeVec(i_sig)

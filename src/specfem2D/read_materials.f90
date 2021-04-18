@@ -451,6 +451,8 @@
       else if (indic <= 0) then
         write(IMAIN,1000) n
       endif
+
+      write(IMAIN,*)
       call flush_IMAIN()
     endif
 

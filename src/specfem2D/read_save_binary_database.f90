@@ -44,66 +44,88 @@
 
   ! saves data in a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_data.bin'
-        open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) call stop_the_code('Error writing data file to disk')
 
-  write(2040) nglob,ELASTIC_SIMULATION,POROELASTIC_SIMULATION, &
+  ! user output
+  if (myrank == 0) write(IMAIN,*) 'saving binary database       : ',trim(OUTPUT_FILES)//trim(outputname)
+
+  open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown',action='write',form='unformatted', iostat=ier)
+  if (ier /= 0) call stop_the_code('Error writing data file to disk')
+
+  write(IOUT) nglob,ELASTIC_SIMULATION,POROELASTIC_SIMULATION, &
               ACOUSTIC_SIMULATION,coupled_acoustic_elastic, &
               any_acoustic,any_elastic,any_poroelastic
 
-  write(2040) coord,jacobian,xix,xiz,gammax,gammaz, &
-              this_ibool_is_a_periodic_edge,ibool,ispec_is_inner
+  ! needed to setup PML/Stacey
+  write(IOUT) ibool
+  write(IOUT) coord
+  write(IOUT) abs_boundary_ispec
+  write(IOUT) jacobian,xix,xiz,gammax,gammaz
 
-  write (2040) abs_boundary_ij,abs_boundary_normal,abs_boundary_jacobian1Dw
+  ! for reading database in part2
+  write(IOUT) this_ibool_is_a_periodic_edge,ispec_is_inner
 
-  if (GPU_MODE) then
-    write (2040) free_ac_ispec,edge_abs,free_surface_ij,any_anisotropy
-  endif
+  ! from stacey, in principle not necessary as it is prepared also when binary database save/read is used
+  !write(IOUT) abs_boundary_ij,abs_boundary_normal,abs_boundary_jacobian1Dw
+
+  ! arrays only used by GPU simulations
+  ! note: free_ac_ispec not allocated yet, since GPU setup routine is called after this routine.
+  !if (GPU_MODE) then
+  !  write(IOUT) free_ac_ispec,edge_abs,free_surface_ij,any_anisotropy
+  !endif
 
   if (any_acoustic) then
-    write(2040) rmass_inverse_acoustic,num_phase_ispec_acoustic
-    write(2040) phase_ispec_inner_acoustic,nspec_inner_acoustic,nspec_outer_acoustic,ispec_is_acoustic
-    if (ATTENUATION_VISCOACOUSTIC) write(2040) rmass_inverse_e1
+    write(IOUT) rmass_inverse_acoustic,num_phase_ispec_acoustic
+    write(IOUT) phase_ispec_inner_acoustic,nspec_inner_acoustic,nspec_outer_acoustic,ispec_is_acoustic
+    if (ATTENUATION_VISCOACOUSTIC) write(IOUT) rmass_inverse_e1
   endif
 
   if (any_elastic) then
-    write(2040) rmass_inverse_elastic,num_phase_ispec_elastic
-    write(2040) phase_ispec_inner_elastic,nspec_inner_elastic,nspec_outer_elastic,ispec_is_elastic
+    write(IOUT) rmass_inverse_elastic,num_phase_ispec_elastic
+    write(IOUT) phase_ispec_inner_elastic,nspec_inner_elastic,nspec_outer_elastic,ispec_is_elastic
   endif
 
   if (coupled_acoustic_elastic) then
-    write(2040) fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
+    write(IOUT) fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
                 ivalue_inverse,jvalue_inverse,ivalue,jvalue
-    if (GPU_MODE) write(2040) coupling_ac_el_ispec,coupling_ac_el_ij,coupling_ac_el_normal,coupling_ac_el_jacobian1Dw
+    ! GPU_MODE: array are allocated and prepared after this routine.
+    !if (GPU_MODE) write(IOUT) coupling_ac_el_ispec,coupling_ac_el_ij,coupling_ac_el_normal,coupling_ac_el_jacobian1Dw
   endif
 
   if (NPROC > 1) then
-    write(2040) ninterface_acoustic,ninterface_elastic,inum_interfaces_acoustic,inum_interfaces_elastic, &
+    write(IOUT) ninterface_acoustic,ninterface_elastic,inum_interfaces_acoustic,inum_interfaces_elastic, &
                 nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_ext_mesh, &
                 ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_ext_mesh
   endif
 
-  close(2040)
+  close(IOUT)
 
   ! saves all data regarding sources in a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_sources_info.bin'
-      open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) call stop_the_code('Error writing sources info file to disk')
 
-  write(2040) source_time_function,nsources_local,sourcearrays,islice_selected_source,ispec_selected_source
+  ! user output
+  if (myrank == 0) write(IMAIN,*) 'saving binary sources info   : ',trim(OUTPUT_FILES)//trim(outputname)
 
-  close(2040)
+  open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown',action='write',form='unformatted', iostat=ier)
+  if (ier /= 0) call stop_the_code('Error writing sources info file to disk')
+
+  write(IOUT) source_time_function,nsources_local,sourcearrays,islice_selected_source,ispec_selected_source,iglob_source
+  close(IOUT)
 
   ! saves all data regarding receivers in a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_receivers_info.bin'
-      open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) call stop_the_code('Error writing receivers info data file to disk')
 
-  write(2040) nrecloc,nrec
-  write(2040) recloc,ispec_selected_rec_loc,cosrot_irec,sinrot_irec,xir_store_loc,gammar_store_loc,st_xval,st_zval, &
+  ! user output
+  if (myrank == 0) write(IMAIN,*) 'saving binary receivers info : ',trim(OUTPUT_FILES)//trim(outputname)
+
+  open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+  if (ier /= 0) call stop_the_code('Error writing receivers info data file to disk')
+
+  write(IOUT) nrecloc,nrec
+  write(IOUT) recloc,ispec_selected_rec_loc,cosrot_irec,sinrot_irec,xir_store_loc,gammar_store_loc,st_xval,st_zval, &
               station_name,network_name,islice_selected_rec
+  write(IOUT) nlength_seismogram
 
-  close(2040)
+  close(IOUT)
 
   end subroutine save_binary_database
 
@@ -120,28 +142,38 @@
 
   implicit none
 
-  integer ier
+  integer :: ier
   character(len=MAX_STRING_LEN) :: outputname
 
   ! read setup data from a binary file that need to be known in advance (for allocations purpose)
   write(outputname,'(a,i6.6,a)') trim(OUTPUT_FILES)//'proc',myrank,'_data.bin'
-      open(unit=2040,file=outputname,status='old',form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_data.bin')
 
-  read(2040) nglob,ELASTIC_SIMULATION,POROELASTIC_SIMULATION, &
-             ACOUSTIC_SIMULATION,coupled_acoustic_elastic, &
-             any_acoustic,any_elastic,any_poroelastic
+  ! user output
+  if (myrank == 0) write(IMAIN,*) 'reading binary databases (part1) : ',trim(outputname)
 
+  open(unit=IIN,file=trim(outputname),status='old',form='unformatted',iostat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_data.bin')
+
+  read(IIN) nglob,ELASTIC_SIMULATION,POROELASTIC_SIMULATION, &
+            ACOUSTIC_SIMULATION,coupled_acoustic_elastic, &
+            any_acoustic,any_elastic,any_poroelastic
+
+  allocate(coord(NDIM,nglob),stat=ier)
+  if (ier /= 0) stop 'Error allocating coord array'
+
+  ! needed to setup PML/Stacey
+  read(IIN) ibool
+  read(IIN) coord
+  read(IIN) abs_boundary_ispec
+  read(IIN) jacobian,xix,xiz,gammax,gammaz
+
+  ! safety checks
   if (any_poroelastic) &
       call exit_MPI(myrank,'currently cannot have database mode if poroelastic simulation')
-  if (PML_BOUNDARY_CONDITIONS) &
-      call exit_MPI(myrank,'currently cannot have database mode with PML')
   if (AXISYM) &
       call exit_MPI(myrank,'currently cannot have database mode with AXISYM')
-  if (output_postscript_snapshot) &
-      call exit_MPI(myrank,'currently cannot have database mode with postscript')
-  if (GPU_MODE) &
-      call exit_MPI(myrank,'currently cannot have database mode with GPU_MODE')
+  if (initialfield) &
+      call exit_MPI(myrank,'currently cannot have database mode with initialfield')
 
   end subroutine read_binary_database_part1
 !
@@ -159,26 +191,31 @@
 
   integer :: ier,n_sls_loc
 
+  ! user output
+  if (myrank == 0) write(IMAIN,*) 'reading binary databases (part2)'
+
   ! reads setup data from a binary file
-  allocate(ispec_is_inner(nspec))
-  allocate(this_ibool_is_a_periodic_edge(nglob),coord(NDIM,nglob),stat=ier)
+  allocate(ispec_is_inner(nspec), &
+           this_ibool_is_a_periodic_edge(nglob),stat=ier)
+  if (ier /= 0) stop 'Error allocating this_ibool_* array'
 
-  read(2040) coord,jacobian,xix,xiz,gammax,gammaz, &
-             this_ibool_is_a_periodic_edge,ibool,ispec_is_inner
+  read(IIN) this_ibool_is_a_periodic_edge,ispec_is_inner
 
-  read (2040) abs_boundary_ij,abs_boundary_normal,abs_boundary_jacobian1Dw
+  ! from stacey, in principle not necessary as it is prepared also when binary database save/read is used
+  !read(IIN) abs_boundary_ij,abs_boundary_normal,abs_boundary_jacobian1Dw
 
-  if (GPU_MODE) then
-    read (2040) free_ac_ispec,edge_abs,free_surface_ij,any_anisotropy
-  endif
+  ! GPU_MODE: arrays are only allocated and prepared after this read binary database part
+  !if (GPU_MODE) then
+  !  read(IIN) free_ac_ispec,edge_abs,free_surface_ij,any_anisotropy
+  !endif
 
   if (any_acoustic) then
-    read(2040) rmass_inverse_acoustic,num_phase_ispec_acoustic
+    read(IIN) rmass_inverse_acoustic,num_phase_ispec_acoustic
 
     allocate( phase_ispec_inner_acoustic(num_phase_ispec_acoustic,2),stat=ier)
     if (ier /= 0 ) call stop_the_code('Error allocating array phase_ispec_inner_acoustic')
 
-    read(2040) phase_ispec_inner_acoustic,nspec_inner_acoustic,nspec_outer_acoustic,ispec_is_acoustic
+    read(IIN) phase_ispec_inner_acoustic,nspec_inner_acoustic,nspec_outer_acoustic,ispec_is_acoustic
   else
     ! allocates dummy array
     num_phase_ispec_acoustic = 0
@@ -187,12 +224,12 @@
   endif
 
   if (any_elastic) then
-    read(2040) rmass_inverse_elastic,num_phase_ispec_elastic
+    read(IIN) rmass_inverse_elastic,num_phase_ispec_elastic
 
     allocate( phase_ispec_inner_elastic(num_phase_ispec_elastic,2),stat=ier)
     if (ier /= 0 ) call stop_the_code('Error allocating array phase_ispec_inner_elastic')
 
-    read(2040) phase_ispec_inner_elastic,nspec_inner_elastic,nspec_outer_elastic,ispec_is_elastic
+    read(IIN) phase_ispec_inner_elastic,nspec_inner_elastic,nspec_outer_elastic,ispec_is_elastic
   else
     ! allocates dummy array
     num_phase_ispec_elastic = 0
@@ -201,13 +238,14 @@
   endif
 
   if (coupled_acoustic_elastic) then
-    read(2040) fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
+    read(IIN) fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
                ivalue_inverse,jvalue_inverse,ivalue,jvalue
-    if (GPU_MODE) read(2040) coupling_ac_el_ispec,coupling_ac_el_ij,coupling_ac_el_normal,coupling_ac_el_jacobian1Dw
+    ! GPU_MODE: arrays are only allocated and prepared after this read binary database part
+    !if (GPU_MODE) read(IIN) coupling_ac_el_ispec,coupling_ac_el_ij,coupling_ac_el_normal,coupling_ac_el_jacobian1Dw
   endif
 
   if (NPROC > 1) then
-    read(2040) ninterface_acoustic,ninterface_elastic,inum_interfaces_acoustic,inum_interfaces_elastic, &
+    read(IIN) ninterface_acoustic,ninterface_elastic,inum_interfaces_acoustic,inum_interfaces_elastic, &
                nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_ext_mesh, &
                ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_ext_mesh
 
@@ -238,10 +276,7 @@
 
   endif
 
-  close(2040)
-
-  allocate(vector_field_display(NDIM,nglob))
-  vector_field_display(:,:) = 0.d0
+  close(IIN)
 
   end subroutine read_binary_database_part2
 
@@ -263,9 +298,12 @@
 
   ! reads all data regarding sources from a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_sources_info.bin'
-      open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='old',action='read',form='unformatted', iostat=ier)
-      if (ier /= 0) call stop_the_code('Error reading sources info from disk')
 
+  ! user output
+  if (myrank == 0) write(IMAIN,*) 'reading binary sources info      : ',trim(OUTPUT_FILES)//trim(outputname)
+
+  open(unit=IIN,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted', iostat=ier)
+  if (ier /= 0) call stop_the_code('Error reading sources info from disk')
 
   if (initialfield) then
     allocate(source_time_function(1,1,1))
@@ -277,17 +315,29 @@
   allocate(hxis_store(NSOURCES,NGLLX), &
            hgammas_store(NSOURCES,NGLLZ),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating source h**_store arrays')
+  hxis_store(:,:) = ZERO; hgammas_store(:,:) = ZERO
 
-  read(2040) source_time_function,nsources_local,sourcearrays,islice_selected_source,ispec_selected_source
+  ! source elements
+  allocate(ispec_selected_source(NSOURCES), &
+           iglob_source(NSOURCES), &
+           islice_selected_source(NSOURCES), &
+           sourcearrays(NDIM,NGLLX,NGLLZ,NSOURCES),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating ispec source arrays')
 
-  close(2040)
+  read(IIN) source_time_function,nsources_local,sourcearrays,islice_selected_source,ispec_selected_source,iglob_source
+
+  close(IIN)
 
   ! reads all data from receivers a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_receivers_info.bin'
-      open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='old',action='read',form='unformatted', iostat=ier)
-      if (ier /= 0) call stop_the_code('Error reading receivers info from disk')
 
-  read(2040) nrecloc,nrec
+  ! user output
+  if (myrank == 0) write(IMAIN,*) 'reading binary receivers info    : ',trim(OUTPUT_FILES)//trim(outputname)
+
+  open(unit=IIN,file = trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted', iostat=ier)
+  if (ier /= 0) call stop_the_code('Error reading receivers info from disk')
+
+  read(IIN) nrecloc,nrec
 
   allocate(st_xval(nrec), &
            st_zval(nrec), &
@@ -297,6 +347,7 @@
            islice_selected_rec(nrec), &
            x_final_receiver(nrec), &
            z_final_receiver(nrec),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating receiver arrays')
 
   allocate(ispec_selected_rec_loc(nrecloc))
 
@@ -310,9 +361,25 @@
            sinrot_irec(nrecloc),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating tangential arrays')
 
-  read(2040) recloc,ispec_selected_rec_loc,cosrot_irec,sinrot_irec,xir_store_loc,gammar_store_loc,st_xval,st_zval, &
-             station_name,network_name,islice_selected_rec
+  read(IIN) recloc,ispec_selected_rec_loc,cosrot_irec,sinrot_irec,xir_store_loc,gammar_store_loc,st_xval,st_zval, &
+            station_name,network_name,islice_selected_rec
+  read(IIN) nlength_seismogram
 
-  close(2040)
+  close(IIN)
+
+  ! allocate seismogram arrays
+  if (nrecloc > 0) then
+    allocate(sisux(nlength_seismogram,nrecloc,NSIGTYPE), &
+             sisuz(nlength_seismogram,nrecloc,NSIGTYPE), &
+             siscurl(nlength_seismogram,nrecloc,NSIGTYPE),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating seismogram arrays')
+  else
+    ! dummy arrays
+    allocate(sisux(1,1,1),sisuz(1,1,1),siscurl(1,1,1),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating seismogram arrays')
+  endif
+  sisux(:,:,:) = ZERO ! double precision zero
+  sisuz(:,:,:) = ZERO
+  siscurl(:,:,:) = ZERO
 
   end subroutine read_sources_receivers

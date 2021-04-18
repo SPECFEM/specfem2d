@@ -43,7 +43,7 @@
   call synchronize_all()
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) "preparing timerun..."
+    write(IMAIN,*) "Preparing timerun:"
     write(IMAIN,*)
     call flush_IMAIN()
   endif
@@ -76,24 +76,21 @@
   ! Stacey preparation
   call prepare_timerun_Stacey()
 
+  ! attenuation
+  !! DK DK moved preparation of attenuation to before preparation of mass matrix
+  !! DK DK because now that we have support for viscoacoustic fluids, we need to use
+  !! DK DK the unrelaxed Kappa modulus in the fluid mass matrix when ATTENUATION_VISCOACOUSTIC is on
+  !! DK DK and thus we need to prepare attenuation before preparing the mass matrix
+  call prepare_attenuation()
+
   ! default preparation
   if (setup_with_binary_database /= 2) then
-
-    ! attenuation
-    !! DK DK moved preparation of attenuation to before preparation of mass matrix
-    !! DK DK because now that we have support for viscoacoustic fluids, we need to use
-    !! DK DK the unrelaxed Kappa modulus in the fluid mass matrix when ATTENUATION_VISCOACOUSTIC is on
-    !! DK DK and thus we need to prepare attenuation before preparing the mass matrix
-    call prepare_attenuation()
 
     ! prepares mass matrices
     call prepare_timerun_mass_matrix()
 
     ! check which GLL will be forced or not
     if (USE_ENFORCE_FIELDS) call build_forced()
-
-    ! postscript images for grids and snapshots
-    call prepare_timerun_postscripts()
 
     ! for adjoint kernel runs
     call prepare_timerun_adjoint()
@@ -121,6 +118,9 @@
     ! reads binary setup database
     call read_binary_database_part2()
   endif
+
+  ! postscript images for grids and snapshots
+  call prepare_timerun_postscripts()
 
   ! jpeg images
   call prepare_timerun_image_coloring()
@@ -176,10 +176,17 @@
 
   subroutine prepare_timerun_constants()
 
-  use constants, only: HALF,CUSTOM_REAL
+  use constants, only: IMAIN,HALF,CUSTOM_REAL
   use specfem_par
 
   implicit none
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Preparing timerun constants'
+    call flush_IMAIN()
+  endif
 
   ! defines coefficients of the Newmark time scheme
   !
@@ -281,7 +288,8 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) 'Preparing image coloring'
+    write(IMAIN,*)
+    write(IMAIN,*) 'Preparing image coloring: postscripts'
     call flush_IMAIN()
   endif
 
@@ -394,7 +402,7 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'Preparing image coloring'
+    write(IMAIN,*) 'Preparing image coloring: jpeg'
     call flush_IMAIN()
   endif
 
@@ -1407,28 +1415,53 @@
 
   subroutine prepare_timerun_Stacey()
 
-  use constants, only: IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants, only: IEDGE1,IEDGE2,IEDGE3,IEDGE4,IMAIN
   use specfem_par
 
   implicit none
 
-  integer :: i,j,ispec,ispecabs,ier,iedge
+  integer :: i,j,ispec,ispecabs,ier,iedge,num_all
   real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D
   logical :: has_abs_edge
 
   ! sets up arrays for stacey boundary routines
   if (STACEY_ABSORBING_CONDITIONS) then
+    ! gets total number of boundary faces/edges
+    call sum_all_i(num_abs_boundary_faces,num_all)
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'Preparing Stacey boundaries'
+      write(IMAIN,*) '  total number of absorbing boundary faces/edges: ',num_all
+      call flush_IMAIN()
+    endif
+
     ! stacey boundaries
-    allocate(abs_boundary_ij(2,NGLLX,num_abs_boundary_faces), &
-             abs_boundary_jacobian1Dw(NGLLX,num_abs_boundary_faces), &
-             abs_boundary_normal(NDIM,NGLLX,num_abs_boundary_faces),stat=ier)
-    if (ier /= 0) stop 'error allocating array abs_boundary_ij etc.'
+    if (num_abs_boundary_faces > 0) then
+      allocate(abs_boundary_ij(2,NGLLX,num_abs_boundary_faces), &
+               abs_boundary_jacobian1Dw(NGLLX,num_abs_boundary_faces), &
+               abs_boundary_normal(NDIM,NGLLX,num_abs_boundary_faces),stat=ier)
+      if (ier /= 0) stop 'error allocating array abs_boundary_ij etc.'
+    else
+      ! dummy
+      allocate(abs_boundary_ij(1,1,1), &
+               abs_boundary_jacobian1Dw(1,1), &
+               abs_boundary_normal(1,1,1),stat=ier)
+      if (ier /= 0) stop 'error allocating array abs_boundary_ij etc.'
+    endif
     abs_boundary_ij(:,:,:) = 0; abs_boundary_jacobian1Dw(:,:) = 0.0_CUSTOM_REAL
     abs_boundary_normal(:,:,:) = 0.0_CUSTOM_REAL
 
     ! needed for gpu boundary array storage
-    allocate(edge_abs(num_abs_boundary_faces),stat=ier)
-    if (ier /= 0) stop 'error allocating array edge_abs etc.'
+    if (num_abs_boundary_faces > 0) then
+      allocate(edge_abs(num_abs_boundary_faces),stat=ier)
+      if (ier /= 0) stop 'error allocating array edge_abs etc.'
+    else
+      ! dummy
+      allocate(edge_abs(1),stat=ier)
+      if (ier /= 0) stop 'error allocating array edge_abs etc.'
+    endif
     edge_abs(:) = 0
 
     do ispecabs = 1,num_abs_boundary_faces

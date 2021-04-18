@@ -254,7 +254,7 @@
     ispec_is_PML(:) = .false.
     which_PML_elem(:,:) = .false.
     nspec_PML = 0
-    spec_to_PML=0
+    spec_to_PML = 0
     mask_ibool_PML(:) = .false.
 
     do ispec = 1,nspec
