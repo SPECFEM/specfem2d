@@ -1404,15 +1404,22 @@
     any_fluid_solid_edges = .true.
   else
     any_fluid_solid_edges = .false.
-    ! dummy value for allocation
-    num_fluid_solid_edges = 1
   endif
+  ! user output
+  if (myrank == 0) write(IMAIN,*) '  fluid-solid edges: ',num_fluid_solid_edges
 
-  allocate(fluid_solid_acoustic_ispec(num_fluid_solid_edges), &
-           fluid_solid_acoustic_iedge(num_fluid_solid_edges), &
-           fluid_solid_elastic_ispec(num_fluid_solid_edges), &
-           fluid_solid_elastic_iedge(num_fluid_solid_edges),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating fluid-solid arrays')
+  if (num_fluid_solid_edges > 0) then
+    allocate(fluid_solid_acoustic_ispec(num_fluid_solid_edges), &
+             fluid_solid_acoustic_iedge(num_fluid_solid_edges), &
+             fluid_solid_elastic_ispec(num_fluid_solid_edges), &
+             fluid_solid_elastic_iedge(num_fluid_solid_edges),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating fluid-solid arrays')
+  else
+    ! dummy allocation
+    allocate(fluid_solid_acoustic_ispec(1),fluid_solid_acoustic_iedge(1), &
+             fluid_solid_elastic_ispec(1),fluid_solid_elastic_iedge(1),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating fluid-solid arrays')
+  endif
   ! initializes
   fluid_solid_acoustic_ispec(:) = 0; fluid_solid_acoustic_iedge(:) = 0
   fluid_solid_elastic_ispec(:) = 0; fluid_solid_elastic_iedge(:) = 0
@@ -1422,13 +1429,22 @@
     any_fluid_poro_edges = .true.
   else
     any_fluid_poro_edges = .false.
-    num_fluid_poro_edges = 1
   endif
+  ! user output
+  if (myrank == 0) write(IMAIN,*) '  fluid-poro edges: ',num_fluid_poro_edges
 
-  allocate(fluid_poro_acoustic_ispec(num_fluid_poro_edges))
-  allocate(fluid_poro_acoustic_iedge(num_fluid_poro_edges))
-  allocate(fluid_poro_poroelastic_ispec(num_fluid_poro_edges))
-  allocate(fluid_poro_poroelastic_iedge(num_fluid_poro_edges))
+  if (num_fluid_poro_edges > 0) then
+    allocate(fluid_poro_acoustic_ispec(num_fluid_poro_edges), &
+             fluid_poro_acoustic_iedge(num_fluid_poro_edges), &
+             fluid_poro_poroelastic_ispec(num_fluid_poro_edges), &
+             fluid_poro_poroelastic_iedge(num_fluid_poro_edges),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating fluid-poro arrays')
+  else
+    ! dummy
+    allocate(fluid_poro_acoustic_ispec(1),fluid_poro_acoustic_iedge(1), &
+             fluid_poro_poroelastic_ispec(1),fluid_poro_poroelastic_iedge(1),stat=ier)
+   if (ier /= 0) call stop_the_code('Error allocating fluid-poro arrays')
+  endif
   ! initializes
   fluid_poro_acoustic_ispec(:) = 0; fluid_poro_acoustic_iedge(:) = 0
   fluid_poro_poroelastic_ispec(:) = 0; fluid_poro_poroelastic_iedge(:) = 0
@@ -1438,13 +1454,22 @@
     any_solid_poro_edges = .true.
   else
     any_solid_poro_edges = .false.
-    num_solid_poro_edges = 1
   endif
+  ! user output
+  if (myrank == 0) write(IMAIN,*) '  solid-poro edges: ',num_solid_poro_edges
 
-  allocate(solid_poro_elastic_ispec(num_solid_poro_edges))
-  allocate(solid_poro_elastic_iedge(num_solid_poro_edges))
-  allocate(solid_poro_poroelastic_ispec(num_solid_poro_edges))
-  allocate(solid_poro_poroelastic_iedge(num_solid_poro_edges))
+  if (num_solid_poro_edges > 0) then
+    allocate(solid_poro_elastic_ispec(num_solid_poro_edges), &
+             solid_poro_elastic_iedge(num_solid_poro_edges), &
+             solid_poro_poroelastic_ispec(num_solid_poro_edges), &
+             solid_poro_poroelastic_iedge(num_solid_poro_edges),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating solid-poro arrays')
+  else
+    ! dummy
+    allocate(solid_poro_elastic_ispec(1),solid_poro_elastic_iedge(1), &
+             solid_poro_poroelastic_ispec(1),solid_poro_poroelastic_iedge(1),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating solid-poro arrays')
+  endif
   ! initializes
   solid_poro_elastic_ispec(:) = 0; solid_poro_elastic_iedge(:) = 0
   solid_poro_poroelastic_ispec(:) = 0; solid_poro_poroelastic_iedge(:) = 0
@@ -1478,11 +1503,6 @@
       solid_poro_poroelastic_ispec(inum) = solid_poro_poro_ispec_read
     enddo
   endif
-
-  ! resets counters
-  if (any_fluid_solid_edges .eqv. .false. ) num_fluid_solid_edges = 0
-  if (any_fluid_poro_edges .eqv. .false. ) num_fluid_poro_edges = 0
-  if (any_solid_poro_edges .eqv. .false. ) num_solid_poro_edges = 0
 
   end subroutine read_mesh_databases_coupled
 
