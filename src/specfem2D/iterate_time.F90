@@ -31,7 +31,8 @@
 !
 !========================================================================
 
-subroutine iterate_time()
+
+  subroutine iterate_time()
 
   use constants, only: IMAIN,NOISE_SAVE_EVERYWHERE
   use specfem_par
@@ -310,17 +311,16 @@ subroutine iterate_time()
   ! Transfer fields from GPU card to host for further analysis
   if (GPU_MODE) call it_transfer_from_GPU()
 
-
   !----  formats
   400 format(/1x,41('=')/,' =  T i m e  e v o l u t i o n  l o o p  ='/1x,41('=')/)
 
-end subroutine iterate_time
+  end subroutine iterate_time
 
 !
 !----------------------------------------------------------------------------------------
 !
 
-subroutine it_transfer_from_GPU()
+  subroutine it_transfer_from_GPU()
 
 ! transfers fields on GPU back onto CPU
 
@@ -368,17 +368,16 @@ subroutine it_transfer_from_GPU()
       !       in save_adjoint_kernels.f90
       call transfer_kernels_el_to_host(Mesh_pointer,rho_kl,mu_kl,kappa_kl,NSPEC_AB)
     endif
-
   endif
 
-end subroutine it_transfer_from_GPU
+  end subroutine it_transfer_from_GPU
 
 
 !
 !----------------------------------------------------------------------------------------
 !
 
-subroutine manage_no_backward_reconstruction_io()
+  subroutine manage_no_backward_reconstruction_io()
 
   use constants
   use specfem_par
@@ -422,4 +421,4 @@ subroutine manage_no_backward_reconstruction_io()
 
   endif ! SIMULATION == 3
 
-end subroutine  manage_no_backward_reconstruction_io
+  end subroutine  manage_no_backward_reconstruction_io
