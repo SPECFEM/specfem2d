@@ -483,7 +483,6 @@
                                          lambdaSmin_histo,lambdaSmax_histo,f0max)
   endif
 
-
   ! creates a PostScript file with stability condition
   if (output_postscript_snapshot) then
     call check_grid_create_postscript(courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaSmin,lambdaSmax)

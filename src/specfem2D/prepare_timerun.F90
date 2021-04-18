@@ -133,6 +133,9 @@
 
   !-------------------------------------------------------------
 
+  ! check the mesh, stability and number of points per wavelength
+  call check_grid()
+
   ! creates a Gnuplot script to display the energy curve in log scale
   if (OUTPUT_ENERGY .and. myrank == 0) then
     close(IOUT_ENERGY)
@@ -345,9 +348,6 @@
   ! thus we need to set this array to zero otherwise some of its locations may contain random values
   ! if the memory is not cleaned
   vector_field_display(:,:) = 0.d0
-
-  ! check the mesh, stability and number of points per wavelength
-  call check_grid()
 
   ! synchronizes all processes
   call synchronize_all()
