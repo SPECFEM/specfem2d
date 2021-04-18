@@ -43,12 +43,12 @@
     displ_elastic,veloc_elastic,accel_elastic, &
     b_displ_elastic,b_veloc_elastic,b_accel_elastic, &
     any_acoustic,any_elastic, &
-    GPU_MODE,P_SV,UNDO_ATTENUATION_AND_OR_PML,SIMULATION_TYPE,NO_BACKWARD_RECONSTRUCTION
+    GPU_MODE,UNDO_ATTENUATION_AND_OR_PML,SIMULATION_TYPE,NO_BACKWARD_RECONSTRUCTION
 
   use shared_parameters, only: output_postscript_snapshot,output_color_image,output_wavefield_dumps, &
     NSTEP_BETWEEN_OUTPUT_IMAGES
 
-  use specfem_par_gpu, only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
+  use specfem_par_gpu, only: Mesh_pointer,NGLOB_AB
 
   implicit none
 
@@ -86,38 +86,10 @@
     endif
     ! elastic domains
     if (any_elastic) then
-      call transfer_fields_el_from_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
-      if (P_SV) then
-        ! P-SV waves
-        displ_elastic(1,:) = tmp_displ_2D(1,:)
-        displ_elastic(2,:) = tmp_displ_2D(2,:)
-        veloc_elastic(1,:) = tmp_veloc_2D(1,:)
-        veloc_elastic(2,:) = tmp_veloc_2D(2,:)
-        accel_elastic(1,:) = tmp_accel_2D(1,:)
-        accel_elastic(2,:) = tmp_accel_2D(2,:)
-      else
-        ! SH waves
-        displ_elastic(1,:) = tmp_displ_2D(1,:)
-        veloc_elastic(1,:) = tmp_veloc_2D(1,:)
-        accel_elastic(1,:) = tmp_accel_2D(1,:)
-      endif
+      call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_elastic,veloc_elastic,accel_elastic,Mesh_pointer)
       ! backward/reconstructed wavefield
       if (SIMULATION_TYPE == 3) then
-        call transfer_b_fields_from_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
-        if (P_SV) then
-          ! P-SV waves
-          b_displ_elastic(1,:) = tmp_displ_2D(1,:)
-          b_displ_elastic(2,:) = tmp_displ_2D(2,:)
-          b_veloc_elastic(1,:) = tmp_veloc_2D(1,:)
-          b_veloc_elastic(2,:) = tmp_veloc_2D(2,:)
-          b_accel_elastic(1,:) = tmp_accel_2D(1,:)
-          b_accel_elastic(2,:) = tmp_accel_2D(2,:)
-        else
-          ! SH waves
-          b_displ_elastic(1,:) = tmp_displ_2D(1,:)
-          b_veloc_elastic(1,:) = tmp_veloc_2D(1,:)
-          b_accel_elastic(1,:) = tmp_accel_2D(1,:)
-        endif
+        call transfer_b_fields_from_device(NDIM*NGLOB_AB,b_displ_elastic,b_veloc_elastic,b_accel_elastic,Mesh_pointer)
       endif
     endif
   endif

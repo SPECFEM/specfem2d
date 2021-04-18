@@ -79,11 +79,11 @@
                          GPU_MODE,any_acoustic,any_elastic,any_poroelastic
 
   ! wavefields
-  use specfem_par, only: displ_elastic,veloc_elastic, &
+  use specfem_par, only: displ_elastic,veloc_elastic,accel_elastic, &
                          displs_poroelastic,displw_poroelastic,velocs_poroelastic,velocw_poroelastic, &
                          potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic
 
-  use specfem_par_gpu, only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
+  use specfem_par_gpu, only: Mesh_pointer,NGLOB_AB
 
   implicit none
 
@@ -121,23 +121,7 @@
     endif
     ! elastic domains
     if (any_elastic) then
-      call transfer_fields_el_from_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
-      if (P_SV) then
-        ! P-SV waves
-        displ_elastic(1,:) = tmp_displ_2D(1,:)
-        displ_elastic(2,:) = tmp_displ_2D(2,:)
-
-        veloc_elastic(1,:) = tmp_veloc_2D(1,:)
-        veloc_elastic(2,:) = tmp_veloc_2D(2,:)
-
-        !accel_elastic(1,:) = tmp_accel_2D(1,:) ! not needed
-        !accel_elastic(2,:) = tmp_accel_2D(2,:)
-      else
-        ! SH waves
-        displ_elastic(1,:) = tmp_displ_2D(1,:)
-        veloc_elastic(1,:) = tmp_veloc_2D(1,:)
-        !accel_elastic(1,:) = tmp_accel_2D(1,:) ! not needed
-      endif
+      call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_elastic,veloc_elastic,accel_elastic,Mesh_pointer)
     endif
     ! poroelastic domains
     if (any_poroelastic) then
@@ -609,14 +593,14 @@
                          poroelastcoef,mustore,rho_vpstore,rhostore, &
                          density,kmato,assign_external_model,jacobian, &
                          hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz, &
-                         GPU_MODE,any_acoustic,any_elastic,any_poroelastic,P_SV
+                         GPU_MODE,any_acoustic,any_elastic,any_poroelastic
 
   ! wavefields
-  use specfem_par, only: displ_elastic,veloc_elastic, &
+  use specfem_par, only: displ_elastic,veloc_elastic,accel_elastic, &
                          displs_poroelastic,displw_poroelastic,velocs_poroelastic, &
                          potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic
 
-  use specfem_par_gpu, only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
+  use specfem_par_gpu, only: Mesh_pointer,NGLOB_AB
 
   implicit none
 
@@ -648,23 +632,7 @@
     endif
     ! elastic domains
     if (any_elastic) then
-      call transfer_fields_el_from_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
-      if (P_SV) then
-        ! P-SV waves
-        displ_elastic(1,:) = tmp_displ_2D(1,:)
-        displ_elastic(2,:) = tmp_displ_2D(2,:)
-
-        veloc_elastic(1,:) = tmp_veloc_2D(1,:)
-        veloc_elastic(2,:) = tmp_veloc_2D(2,:)
-
-        !accel_elastic(1,:) = tmp_accel_2D(1,:) ! not needed
-        !accel_elastic(2,:) = tmp_accel_2D(2,:)
-      else
-        ! SH waves
-        displ_elastic(1,:) = tmp_displ_2D(1,:)
-        veloc_elastic(1,:) = tmp_veloc_2D(1,:)
-        !accel_elastic(1,:) = tmp_accel_2D(1,:) ! not needed
-      endif
+      call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_elastic,veloc_elastic,accel_elastic,Mesh_pointer)
     endif
     ! poroelastic domains
     if (any_poroelastic) then

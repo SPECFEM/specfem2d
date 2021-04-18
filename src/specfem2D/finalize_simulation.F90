@@ -62,9 +62,7 @@
 
   ! frees memory
   if (GPU_MODE) then
-    ! frees temporary arrays
-    if (any_elastic) deallocate(tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D)
-
+    ! frees arrays
     deallocate(request_send_recv_scalar_gpu,b_request_send_recv_scalar_gpu)
     deallocate(request_send_recv_vector_gpu,b_request_send_recv_vector_gpu)
     deallocate(buffer_send_scalar_gpu,b_buffer_send_scalar_gpu)

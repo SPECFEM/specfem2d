@@ -650,10 +650,12 @@
 
   use constants, only: CUSTOM_REAL,NDIM,IMAIN,OUTPUT_FILES
 
-  use specfem_par, only: myrank,it,NSTEP,nglob,P_SV,displ_elastic,nglob_elastic,NOISE_TOMOGRAPHY, &
+  use specfem_par, only: myrank,it,NSTEP,nglob,P_SV, &
+    displ_elastic,veloc_elastic,accel_elastic, &
+    nglob_elastic,NOISE_TOMOGRAPHY, &
     any_elastic,GPU_MODE
 
-  use specfem_par_gpu, only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
+  use specfem_par_gpu, only: Mesh_pointer,NGLOB_AB
 
   implicit none
 
@@ -672,9 +674,7 @@
   if (GPU_MODE) then
     ! elastic domains
     if (any_elastic) then
-      call transfer_fields_el_from_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
-      displ_elastic(1,:) = tmp_displ_2D(1,:)
-      displ_elastic(2,:) = tmp_displ_2D(2,:)
+      call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_elastic,veloc_elastic,accel_elastic,Mesh_pointer)
     endif
   endif
 

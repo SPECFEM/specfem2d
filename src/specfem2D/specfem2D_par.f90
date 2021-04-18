@@ -777,9 +777,6 @@ module specfem_par_gpu
   ! CUDA mesh pointer to integer wrapper
   integer(kind=8) :: Mesh_pointer
 
-  ! wavefield transfers
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D
-
   ! mesh dimension
   integer :: NGLOB_AB, NSPEC_AB
 

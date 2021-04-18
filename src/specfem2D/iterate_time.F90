@@ -339,24 +339,7 @@ subroutine it_transfer_from_GPU()
 
   ! elastic domains
   if (any_elastic) then
-    call transfer_fields_el_from_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
-
-    if (P_SV) then
-      ! P-SV waves
-      displ_elastic(1,:) = tmp_displ_2D(1,:)
-      displ_elastic(2,:) = tmp_displ_2D(2,:)
-
-      veloc_elastic(1,:) = tmp_veloc_2D(1,:)
-      veloc_elastic(2,:) = tmp_veloc_2D(2,:)
-
-      accel_elastic(1,:) = tmp_accel_2D(1,:)
-      accel_elastic(2,:) = tmp_accel_2D(2,:)
-    else
-      ! SH waves
-      displ_elastic(1,:) = tmp_displ_2D(1,:)
-      veloc_elastic(1,:) = tmp_veloc_2D(1,:)
-      accel_elastic(1,:) = tmp_accel_2D(1,:)
-    endif
+    call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_elastic,veloc_elastic,accel_elastic,Mesh_pointer)
   endif
 
   ! finishes kernel calculations

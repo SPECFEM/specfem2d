@@ -39,7 +39,7 @@
 !          and adjoint sources will become more complicated
 !          that is, index it for adjoint sources will match index NSTEP - 1 for backward/reconstructed wavefields
 
-  use constants, only: OUTPUT_FILES
+  use constants, only: OUTPUT_FILES,IIN
   use specfem_par
   use specfem_par_gpu
 
@@ -52,14 +52,14 @@
   ! acoustic medium
   if (any_acoustic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
-    open(unit=55,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
+    open(unit=IIN,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_acoustic**.bin')
     else
-      read(55) b_potential_acoustic
-      read(55) b_potential_dot_acoustic
-      read(55) b_potential_dot_dot_acoustic
-      close(55)
+      read(IIN) b_potential_acoustic
+      read(IIN) b_potential_dot_acoustic
+      read(IIN) b_potential_dot_dot_acoustic
+      close(IIN)
     endif
 
     if (GPU_MODE) then
@@ -77,14 +77,14 @@
   ! elastic medium
   if (any_elastic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
-    open(unit=55,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
+    open(unit=IIN,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_elastic**.bin')
     else
-      read(55) b_displ_elastic
-      read(55) b_veloc_elastic
-      read(55) b_accel_elastic
-      close(55)
+      read(IIN) b_displ_elastic
+      read(IIN) b_veloc_elastic
+      read(IIN) b_accel_elastic
+      close(IIN)
     endif
 
     !SH (membrane) waves
@@ -96,24 +96,8 @@
     endif
 
     if (GPU_MODE) then
-      ! prepares wavefields for transfering
-      if (P_SV) then
-        tmp_displ_2D(1,:) = b_displ_elastic(1,:)
-        tmp_displ_2D(2,:) = b_displ_elastic(2,:)
-        tmp_veloc_2D(1,:) = b_veloc_elastic(1,:)
-        tmp_veloc_2D(2,:) = b_veloc_elastic(2,:)
-        tmp_accel_2D(1,:) = b_accel_elastic(1,:)
-        tmp_accel_2D(2,:) = b_accel_elastic(2,:)
-      else
-        ! SH waves
-        tmp_displ_2D(1,:) = b_displ_elastic(1,:)
-        tmp_displ_2D(2,:) = 0._CUSTOM_REAL
-        tmp_veloc_2D(1,:) = b_veloc_elastic(1,:)
-        tmp_veloc_2D(2,:) = 0._CUSTOM_REAL
-        tmp_accel_2D(1,:) = b_accel_elastic(1,:)
-        tmp_accel_2D(2,:) = 0._CUSTOM_REAL
-      endif
-      call transfer_b_fields_to_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
+      ! transfers fields onto GPU
+      call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_elastic,b_veloc_elastic,b_accel_elastic,Mesh_pointer)
     endif
   endif
 
