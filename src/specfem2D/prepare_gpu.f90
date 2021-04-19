@@ -123,6 +123,7 @@
                                 cosrot_irecf,sinrot_irecf, &
                                 SIMULATION_TYPE,P_SV, &
                                 nspec_acoustic,nspec_elastic, &
+                                ispec_is_acoustic,ispec_is_elastic, &
                                 myrank,SAVE_FORWARD, &
                                 xir_store_loc, &
                                 gammar_store_loc, &
@@ -152,7 +153,6 @@
     call prepare_fields_acoustic_device(Mesh_pointer, &
                                         rmass_inverse_acoustic,rhostore,kappastore, &
                                         num_phase_ispec_acoustic,phase_ispec_inner_acoustic, &
-                                        ispec_is_acoustic, &
                                         nelem_acoustic_surface, &
                                         free_ac_ispec,free_surface_ij, &
                                         any_elastic, num_fluid_solid_edges, &
@@ -189,7 +189,7 @@
     call prepare_fields_elastic_device(Mesh_pointer, &
                                        rmassx,rmassz, &
                                        num_phase_ispec_elastic,phase_ispec_inner_elastic, &
-                                       ispec_is_elastic,ispec_is_anisotropic, &
+                                       ispec_is_anisotropic, &
                                        any_anisotropy, &
                                        c11store,c12store,c13store, &
                                        c15store,c23store, &
