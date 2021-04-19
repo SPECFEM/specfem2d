@@ -47,15 +47,11 @@
     ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
     assign_external_model, &
     density,poroelastcoef,porosity,tortuosity, &
-    rhostore,rho_vpstore,rho_vsstore,mustore,kappastore, &
-    num_abs_boundary_faces,abs_boundary_ispec, &
+    rhostore,mustore,kappastore, &
     deltatover2, &
-    codeabs,codeabs_corner, &
-    ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
-    ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
-    xix,xiz,gammaz,gammax, &
+    gammaz, &
     AXISYM,is_on_the_axis,coord,wxglj,xiglj, &
-    time_stepping_scheme,P_SV,STACEY_ABSORBING_CONDITIONS
+    time_stepping_scheme,STACEY_ABSORBING_CONDITIONS
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML,region_CPML,spec_to_PML, &
@@ -64,13 +60,10 @@
   implicit none
 
   ! local parameter
-  integer :: ispecabs,ibegin,iend,jbegin,jend,ispec,i,j,iglob
+  integer :: ispec,i,j,iglob
 
   ! material properties of the elastic medium
-  real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
-  real(kind=CUSTOM_REAL) :: cpl,csl
-  real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz, &
-                            weight,xxi,zxi,xgamma,zgamma,jacobian1D
+  real(kind=CUSTOM_REAL) :: xxi
   real(kind=CUSTOM_REAL) :: phinu1
 
   double precision :: rhol,mul,kappal_relaxed,mu_relaxed,lambda_relaxed
@@ -477,358 +470,411 @@
   ! Stacey contribution for elastic medium
   if (STACEY_ABSORBING_CONDITIONS .and. time_stepping_scheme == 1) then
     ! Newmark scheme contribution to mass matrix
-    ! elastic medium
-    if (any_elastic) then
-
-      do ispecabs = 1,num_abs_boundary_faces
-
-        ispec = abs_boundary_ispec(ispecabs)
-
-        if (ispec_is_elastic(ispec)) then
-
-          ! get elastic parameters of current spectral element
-          lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-          mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-
-          rhol  = density(1,kmato(ispec))
-
-          if (AXISYM) then ! CHECK kappa
-            kappal_relaxed  = lambdal_unrelaxed_elastic + TWO_THIRDS*mul_unrelaxed_elastic
-            cpl = sqrt((kappal_relaxed + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol)
-          else
-            kappal_relaxed  = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
-            cpl = sqrt((kappal_relaxed + mul_unrelaxed_elastic)/rhol)
-          endif
-
-          csl = sqrt(mul_unrelaxed_elastic/rhol)
-
-          !--- left absorbing boundary
-          if (codeabs(IEDGE4,ispecabs)) then
-            i = 1
-            do j = 1,NGLLZ
-              iglob = ibool(i,j,ispec)
-
-              ! external velocity model
-              if (assign_external_model) then
-                rho_vp = rho_vpstore(i,j,ispec)
-                rho_vs = rho_vsstore(i,j,ispec)
-              else
-                rho_vp = rhol*cpl
-                rho_vs = rhol*csl
-              endif
-
-              xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-              zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-              jacobian1D = sqrt(xgamma**2 + zgamma**2)
-              nx = - zgamma / jacobian1D
-              nz = + xgamma / jacobian1D
-
-              weight = jacobian1D * wzgll(j)
-
-              ! Clayton-Engquist condition if elastic
-              if (P_SV) then
-                ! P_SV-case
-                vx = deltatover2
-                vz = deltatover2
-
-                vn = nx * vx + nz * vz
-
-                tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
-                tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
-
-                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
-                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
-              else
-                ! SH-case
-                vy = deltatover2
-                ty = rho_vs * vy
-                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
-                ! ficticous for SH case, but to be save when inverting
-                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
-              endif
-            enddo
-          endif  !  end of left absorbing boundary
-
-          !--- right absorbing boundary
-          if (codeabs(IEDGE2,ispecabs)) then
-            i = NGLLX
-            do j = 1,NGLLZ
-              iglob = ibool(i,j,ispec)
-
-              ! for analytical initial plane wave for Bielak's conditions
-              ! left or right edge, horizontal normal vector
-
-              ! external velocity model
-              if (assign_external_model) then
-                rho_vp = rho_vpstore(i,j,ispec)
-                rho_vs = rho_vsstore(i,j,ispec)
-              else
-                rho_vp = rhol*cpl
-                rho_vs = rhol*csl
-              endif
-
-              xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-              zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-              jacobian1D = sqrt(xgamma**2 + zgamma**2)
-              nx = + zgamma / jacobian1D
-              nz = - xgamma / jacobian1D
-
-              weight = jacobian1D * wzgll(j)
-
-              ! Clayton-Engquist condition if elastic
-              if (P_SV) then
-                ! P_SV-case
-                vx = deltatover2
-                vz = deltatover2
-
-                vn = nx * vx + nz * vz
-
-                tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
-                tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
-                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
-                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
-              else
-                ! SH-case
-                vy = deltatover2
-                ty = rho_vs * vy
-                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
-                ! ficticous for SH case, but to be save when inverting
-                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
-              endif
-            enddo
-          endif  !  end of right absorbing boundary
-
-          !--- bottom absorbing boundary
-          if (codeabs(IEDGE1,ispecabs)) then
-            j = 1
-            do i = 1,NGLLX
-              ! exclude corners to make sure there is no contradiction on the normal
-              ! for Stacey absorbing conditions but not for incident plane waves;
-              ! thus subtract nothing i.e. zero in that case
-              if ((codeabs_corner(1,ispecabs) .and. i == 1) .or. (codeabs_corner(2,ispecabs) .and. i == NGLLX)) cycle
-
-              iglob = ibool(i,j,ispec)
-
-              ! external velocity model
-              if (assign_external_model) then
-                rho_vp = rho_vpstore(i,j,ispec)
-                rho_vs = rho_vsstore(i,j,ispec)
-              else
-                rho_vp = rhol*cpl
-                rho_vs = rhol*csl
-              endif
-
-              xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-              zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-              jacobian1D = sqrt(xxi**2 + zxi**2)
-              nx = + zxi / jacobian1D
-              nz = - xxi / jacobian1D
-
-              weight = jacobian1D * wxgll(i)
-
-              ! Clayton-Engquist condition if elastic
-              if (P_SV) then
-                ! P_SV-case
-                vx = deltatover2
-                vz = deltatover2
-
-                vn = nx * vx + nz * vz
-
-                tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
-                tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
-                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
-                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
-              else
-                ! SH-case
-                vy = deltatover2
-                ty = rho_vs * vy
-                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
-                ! ficticous for SH case, but to be save when inverting
-                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
-              endif
-            enddo
-          endif  !  end of bottom absorbing boundary
-
-          !--- top absorbing boundary
-          if (codeabs(IEDGE3,ispecabs)) then
-            j = NGLLZ
-            do i = 1,NGLLX
-              ! exclude corners to make sure there is no contradiction on the normal
-              ! for Stacey absorbing conditions but not for incident plane waves;
-              ! thus subtract nothing i.e. zero in that case
-              if ((codeabs_corner(3,ispecabs) .and. i == 1) .or. (codeabs_corner(4,ispecabs) .and. i == NGLLX)) cycle
-
-              iglob = ibool(i,j,ispec)
-
-              ! external velocity model
-              if (assign_external_model) then
-                rho_vp = rho_vpstore(i,j,ispec)
-                rho_vs = rho_vsstore(i,j,ispec)
-              else
-                rho_vp = rhol*cpl
-                rho_vs = rhol*csl
-              endif
-
-              xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-              zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-              jacobian1D = sqrt(xxi**2 + zxi**2)
-              nx = - zxi / jacobian1D
-              nz = + xxi / jacobian1D
-
-              weight = jacobian1D * wxgll(i)
-
-              ! Clayton-Engquist condition if elastic
-              if (P_SV) then
-                ! P_SV-case
-                vx = deltatover2
-                vz = deltatover2
-
-                vn = nx * vx + nz * vz
-
-                tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
-                tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
-                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
-                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
-              else
-                ! SH-case
-                vy = deltatover2
-                ty = rho_vs * vy
-                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
-                ! ficticous for SH case, but to be save when inverting
-                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
-              endif
-            enddo
-          endif  !  end of top absorbing boundary
-        endif ! ispec_is_elastic
-      enddo
-
-    endif ! any_elastic
-
-    ! acoustic elements
-    if (any_acoustic) then
-
-      do ispecabs = 1,num_abs_boundary_faces
-
-        ispec = abs_boundary_ispec(ispecabs)
-
-        ! Sommerfeld condition if acoustic
-        if (ispec_is_acoustic(ispec)) then
-
-          ! get elastic parameters of current spectral element
-          lambda_relaxed = poroelastcoef(1,1,kmato(ispec))
-          mu_relaxed = poroelastcoef(2,1,kmato(ispec))
-
-          if (AXISYM) then ! CHECK kappa
-            kappal_relaxed  = lambda_relaxed + TWO_THIRDS*mu_relaxed
-          else
-            kappal_relaxed  = lambda_relaxed + mu_relaxed
-          endif
-
-          rhol = density(1,kmato(ispec))
-          cpl = sqrt(kappal_relaxed/rhol)
-
-          !--- left absorbing boundary
-          if (codeabs(IEDGE4,ispecabs)) then
-            i = 1
-            jbegin = ibegin_edge4(ispecabs)
-            jend = iend_edge4(ispecabs)
-            do j = jbegin,jend
-              iglob = ibool(i,j,ispec)
-              ! external velocity model
-              if (assign_external_model) then
-                rho_vp = rho_vpstore(i,j,ispec)
-              else
-                rho_vp = rhol*cpl
-              endif
-
-              xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-              zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-              jacobian1D = sqrt(xgamma**2 + zgamma**2)
-              weight = jacobian1D * wzgll(j)
-
-              rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) + deltatover2*weight/rho_vp
-            enddo
-          endif  !  end of left absorbing boundary
-
-          !--- right absorbing boundary
-          if (codeabs(IEDGE2,ispecabs)) then
-            i = NGLLX
-            jbegin = ibegin_edge2(ispecabs)
-            jend = iend_edge2(ispecabs)
-            do j = jbegin,jend
-              iglob = ibool(i,j,ispec)
-              ! external velocity model
-              if (assign_external_model) then
-                rho_vp = rho_vpstore(i,j,ispec)
-              else
-                rho_vp = rhol*cpl
-              endif
-              xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-              zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-              jacobian1D = sqrt(xgamma**2 + zgamma**2)
-              weight = jacobian1D * wzgll(j)
-
-              rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) + deltatover2*weight/rho_vp
-            enddo
-          endif  !  end of right absorbing boundary
-
-          !--- bottom absorbing boundary
-          if (codeabs(IEDGE1,ispecabs)) then
-            j = 1
-            ibegin = ibegin_edge1(ispecabs)
-            iend = iend_edge1(ispecabs)
-            ! exclude corners to make sure there is no contradiction on the normal
-            if (codeabs_corner(1,ispecabs)) ibegin = 2
-            if (codeabs_corner(2,ispecabs)) iend = NGLLX-1
-            do i = ibegin,iend
-              iglob = ibool(i,j,ispec)
-              ! external velocity model
-              if (assign_external_model) then
-                rho_vp = rho_vpstore(i,j,ispec)
-              else
-                rho_vp = rhol*cpl
-              endif
-              xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-              zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-              jacobian1D = sqrt(xxi**2 + zxi**2)
-              weight = jacobian1D * wxgll(i)
-
-              rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) + deltatover2*weight/rho_vp
-            enddo
-          endif  !  end of bottom absorbing boundary
-
-          !--- top absorbing boundary
-          if (codeabs(IEDGE3,ispecabs)) then
-            j = NGLLZ
-            ibegin = ibegin_edge3(ispecabs)
-            iend = iend_edge3(ispecabs)
-            ! exclude corners to make sure there is no contradiction on the normal
-            if (codeabs_corner(3,ispecabs)) ibegin = 2
-            if (codeabs_corner(4,ispecabs)) iend = NGLLX-1
-            do i = ibegin,iend
-              iglob = ibool(i,j,ispec)
-              ! external velocity model
-              if (assign_external_model) then
-                rho_vp = rho_vpstore(i,j,ispec)
-              else
-                rho_vp = rhol*cpl
-              endif
-              xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-              zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-              jacobian1D = sqrt(xxi**2 + zxi**2)
-              weight = jacobian1D * wxgll(i)
-
-              rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) + deltatover2*weight/rho_vp
-            enddo
-          endif  !  end of top absorbing boundary
-        endif ! ispec_is_acoustic
-      enddo
-
-    endif ! any_acoustic
-
-  endif  ! end of absorbing boundaries
+    call invert_mass_matrix_init_Stacey()
+  endif
 
   end subroutine invert_mass_matrix_init
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine invert_mass_matrix_init_Stacey()
+
+  use constants, only: IMAIN,CUSTOM_REAL,NGLLX,NGLLZ,ONE,TWO,TWO_THIRDS,FOUR_THIRDS, &
+    IEDGE1,IEDGE2,IEDGE3,IEDGE4
+
+  use specfem_par, only: myrank,any_elastic,any_acoustic, &
+    rmass_inverse_elastic, &
+    rmass_inverse_acoustic, &
+    time_stepping_scheme, &
+    ibool,kmato,wxgll,wzgll,jacobian, &
+    ispec_is_elastic,ispec_is_acoustic, &
+    assign_external_model, &
+    density,poroelastcoef, &
+    rho_vpstore,rho_vsstore, &
+    num_abs_boundary_faces,abs_boundary_ispec, &
+    deltatover2, &
+    codeabs,codeabs_corner, &
+    ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
+    ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
+    xix,xiz,gammaz,gammax, &
+    AXISYM, &
+    time_stepping_scheme,P_SV,STACEY_ABSORBING_CONDITIONS
+
+  implicit none
+
+  ! local parameter
+  integer :: ispecabs,ibegin,iend,jbegin,jend,ispec,i,j,iglob
+
+  ! material properties of the elastic medium
+  real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
+  real(kind=CUSTOM_REAL) :: cpl,csl
+  real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz, &
+                            weight,xxi,zxi,xgamma,zgamma,jacobian1D
+
+  double precision :: rhol,kappal_relaxed,mu_relaxed,lambda_relaxed
+
+  ! check if anything to do
+  if (.not. STACEY_ABSORBING_CONDITIONS) return
+  if (time_stepping_scheme /= 1) return  ! only for Newmark time scheme
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "  adding Stacey contributions to mass matrix"
+    call flush_IMAIN()
+  endif
+
+  ! elastic medium
+  if (any_elastic) then
+
+    do ispecabs = 1,num_abs_boundary_faces
+
+      ispec = abs_boundary_ispec(ispecabs)
+
+      if (ispec_is_elastic(ispec)) then
+
+        ! get elastic parameters of current spectral element
+        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
+        mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
+
+        rhol  = density(1,kmato(ispec))
+
+        if (AXISYM) then ! CHECK kappa
+          kappal_relaxed  = lambdal_unrelaxed_elastic + TWO_THIRDS*mul_unrelaxed_elastic
+          cpl = sqrt((kappal_relaxed + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol)
+        else
+          kappal_relaxed  = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
+          cpl = sqrt((kappal_relaxed + mul_unrelaxed_elastic)/rhol)
+        endif
+
+        csl = sqrt(mul_unrelaxed_elastic/rhol)
+
+        !--- left absorbing boundary
+        if (codeabs(IEDGE4,ispecabs)) then
+          i = 1
+          do j = 1,NGLLZ
+            iglob = ibool(i,j,ispec)
+
+            ! external velocity model
+            if (assign_external_model) then
+              rho_vp = rho_vpstore(i,j,ispec)
+              rho_vs = rho_vsstore(i,j,ispec)
+            else
+              rho_vp = rhol*cpl
+              rho_vs = rhol*csl
+            endif
+
+            xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+            zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+            jacobian1D = sqrt(xgamma**2 + zgamma**2)
+            nx = - zgamma / jacobian1D
+            nz = + xgamma / jacobian1D
+
+            weight = jacobian1D * wzgll(j)
+
+            ! Clayton-Engquist condition if elastic
+            if (P_SV) then
+              ! P_SV-case
+              vx = deltatover2
+              vz = deltatover2
+
+              vn = nx * vx + nz * vz
+
+              tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
+              tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
+
+              rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
+              rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
+            else
+              ! SH-case
+              vy = deltatover2
+              ty = rho_vs * vy
+              rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
+              ! ficticous for SH case, but to be save when inverting
+              rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
+            endif
+          enddo
+        endif  !  end of left absorbing boundary
+
+        !--- right absorbing boundary
+        if (codeabs(IEDGE2,ispecabs)) then
+          i = NGLLX
+          do j = 1,NGLLZ
+            iglob = ibool(i,j,ispec)
+
+            ! for analytical initial plane wave for Bielak's conditions
+            ! left or right edge, horizontal normal vector
+
+            ! external velocity model
+            if (assign_external_model) then
+              rho_vp = rho_vpstore(i,j,ispec)
+              rho_vs = rho_vsstore(i,j,ispec)
+            else
+              rho_vp = rhol*cpl
+              rho_vs = rhol*csl
+            endif
+
+            xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+            zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+            jacobian1D = sqrt(xgamma**2 + zgamma**2)
+            nx = + zgamma / jacobian1D
+            nz = - xgamma / jacobian1D
+
+            weight = jacobian1D * wzgll(j)
+
+            ! Clayton-Engquist condition if elastic
+            if (P_SV) then
+              ! P_SV-case
+              vx = deltatover2
+              vz = deltatover2
+
+              vn = nx * vx + nz * vz
+
+              tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
+              tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
+              rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
+              rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
+            else
+              ! SH-case
+              vy = deltatover2
+              ty = rho_vs * vy
+              rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
+              ! ficticous for SH case, but to be save when inverting
+              rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
+            endif
+          enddo
+        endif  !  end of right absorbing boundary
+
+        !--- bottom absorbing boundary
+        if (codeabs(IEDGE1,ispecabs)) then
+          j = 1
+          do i = 1,NGLLX
+            ! exclude corners to make sure there is no contradiction on the normal
+            ! for Stacey absorbing conditions but not for incident plane waves;
+            ! thus subtract nothing i.e. zero in that case
+            if ((codeabs_corner(1,ispecabs) .and. i == 1) .or. (codeabs_corner(2,ispecabs) .and. i == NGLLX)) cycle
+
+            iglob = ibool(i,j,ispec)
+
+            ! external velocity model
+            if (assign_external_model) then
+              rho_vp = rho_vpstore(i,j,ispec)
+              rho_vs = rho_vsstore(i,j,ispec)
+            else
+              rho_vp = rhol*cpl
+              rho_vs = rhol*csl
+            endif
+
+            xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+            zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+            jacobian1D = sqrt(xxi**2 + zxi**2)
+            nx = + zxi / jacobian1D
+            nz = - xxi / jacobian1D
+
+            weight = jacobian1D * wxgll(i)
+
+            ! Clayton-Engquist condition if elastic
+            if (P_SV) then
+              ! P_SV-case
+              vx = deltatover2
+              vz = deltatover2
+
+              vn = nx * vx + nz * vz
+
+              tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
+              tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
+              rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
+              rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
+            else
+              ! SH-case
+              vy = deltatover2
+              ty = rho_vs * vy
+              rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
+              ! ficticous for SH case, but to be save when inverting
+              rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
+            endif
+          enddo
+        endif  !  end of bottom absorbing boundary
+
+        !--- top absorbing boundary
+        if (codeabs(IEDGE3,ispecabs)) then
+          j = NGLLZ
+          do i = 1,NGLLX
+            ! exclude corners to make sure there is no contradiction on the normal
+            ! for Stacey absorbing conditions but not for incident plane waves;
+            ! thus subtract nothing i.e. zero in that case
+            if ((codeabs_corner(3,ispecabs) .and. i == 1) .or. (codeabs_corner(4,ispecabs) .and. i == NGLLX)) cycle
+
+            iglob = ibool(i,j,ispec)
+
+            ! external velocity model
+            if (assign_external_model) then
+              rho_vp = rho_vpstore(i,j,ispec)
+              rho_vs = rho_vsstore(i,j,ispec)
+            else
+              rho_vp = rhol*cpl
+              rho_vs = rhol*csl
+            endif
+
+            xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+            zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+            jacobian1D = sqrt(xxi**2 + zxi**2)
+            nx = - zxi / jacobian1D
+            nz = + xxi / jacobian1D
+
+            weight = jacobian1D * wxgll(i)
+
+            ! Clayton-Engquist condition if elastic
+            if (P_SV) then
+              ! P_SV-case
+              vx = deltatover2
+              vz = deltatover2
+
+              vn = nx * vx + nz * vz
+
+              tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
+              tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
+              rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
+              rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
+            else
+              ! SH-case
+              vy = deltatover2
+              ty = rho_vs * vy
+              rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
+              ! ficticous for SH case, but to be save when inverting
+              rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
+            endif
+          enddo
+        endif  !  end of top absorbing boundary
+      endif ! ispec_is_elastic
+    enddo
+
+  endif ! any_elastic
+
+  ! acoustic elements
+  if (any_acoustic) then
+
+    do ispecabs = 1,num_abs_boundary_faces
+
+      ispec = abs_boundary_ispec(ispecabs)
+
+      ! Sommerfeld condition if acoustic
+      if (ispec_is_acoustic(ispec)) then
+
+        ! get elastic parameters of current spectral element
+        lambda_relaxed = poroelastcoef(1,1,kmato(ispec))
+        mu_relaxed = poroelastcoef(2,1,kmato(ispec))
+
+        if (AXISYM) then ! CHECK kappa
+          kappal_relaxed  = lambda_relaxed + TWO_THIRDS*mu_relaxed
+        else
+          kappal_relaxed  = lambda_relaxed + mu_relaxed
+        endif
+
+        rhol = density(1,kmato(ispec))
+        cpl = sqrt(kappal_relaxed/rhol)
+
+        !--- left absorbing boundary
+        if (codeabs(IEDGE4,ispecabs)) then
+          i = 1
+          jbegin = ibegin_edge4(ispecabs)
+          jend = iend_edge4(ispecabs)
+          do j = jbegin,jend
+            iglob = ibool(i,j,ispec)
+            ! external velocity model
+            if (assign_external_model) then
+              rho_vp = rho_vpstore(i,j,ispec)
+            else
+              rho_vp = rhol*cpl
+            endif
+
+            xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+            zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+            jacobian1D = sqrt(xgamma**2 + zgamma**2)
+            weight = jacobian1D * wzgll(j)
+
+            rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) + deltatover2*weight/rho_vp
+          enddo
+        endif  !  end of left absorbing boundary
+
+        !--- right absorbing boundary
+        if (codeabs(IEDGE2,ispecabs)) then
+          i = NGLLX
+          jbegin = ibegin_edge2(ispecabs)
+          jend = iend_edge2(ispecabs)
+          do j = jbegin,jend
+            iglob = ibool(i,j,ispec)
+            ! external velocity model
+            if (assign_external_model) then
+              rho_vp = rho_vpstore(i,j,ispec)
+            else
+              rho_vp = rhol*cpl
+            endif
+            xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+            zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+            jacobian1D = sqrt(xgamma**2 + zgamma**2)
+            weight = jacobian1D * wzgll(j)
+
+            rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) + deltatover2*weight/rho_vp
+          enddo
+        endif  !  end of right absorbing boundary
+
+        !--- bottom absorbing boundary
+        if (codeabs(IEDGE1,ispecabs)) then
+          j = 1
+          ibegin = ibegin_edge1(ispecabs)
+          iend = iend_edge1(ispecabs)
+          ! exclude corners to make sure there is no contradiction on the normal
+          if (codeabs_corner(1,ispecabs)) ibegin = 2
+          if (codeabs_corner(2,ispecabs)) iend = NGLLX-1
+          do i = ibegin,iend
+            iglob = ibool(i,j,ispec)
+            ! external velocity model
+            if (assign_external_model) then
+              rho_vp = rho_vpstore(i,j,ispec)
+            else
+              rho_vp = rhol*cpl
+            endif
+            xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+            zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+            jacobian1D = sqrt(xxi**2 + zxi**2)
+            weight = jacobian1D * wxgll(i)
+
+            rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) + deltatover2*weight/rho_vp
+          enddo
+        endif  !  end of bottom absorbing boundary
+
+        !--- top absorbing boundary
+        if (codeabs(IEDGE3,ispecabs)) then
+          j = NGLLZ
+          ibegin = ibegin_edge3(ispecabs)
+          iend = iend_edge3(ispecabs)
+          ! exclude corners to make sure there is no contradiction on the normal
+          if (codeabs_corner(3,ispecabs)) ibegin = 2
+          if (codeabs_corner(4,ispecabs)) iend = NGLLX-1
+          do i = ibegin,iend
+            iglob = ibool(i,j,ispec)
+            ! external velocity model
+            if (assign_external_model) then
+              rho_vp = rho_vpstore(i,j,ispec)
+            else
+              rho_vp = rhol*cpl
+            endif
+            xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+            zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+            jacobian1D = sqrt(xxi**2 + zxi**2)
+            weight = jacobian1D * wxgll(i)
+
+            rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) + deltatover2*weight/rho_vp
+          enddo
+        endif  !  end of top absorbing boundary
+      endif ! ispec_is_acoustic
+    enddo
+
+  endif ! any_acoustic
+
+  end subroutine invert_mass_matrix_init_Stacey
 
 !
 !-------------------------------------------------------------------------------------------------
