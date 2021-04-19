@@ -104,6 +104,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* SIMULATION_TYPE,
                                         int* P_SV,
                                         int* nspec_acoustic,int* nspec_elastic,
+                                        int* ispec_is_acoustic, int* ispec_is_elastic,
                                         int* h_myrank,
                                         int* SAVE_FORWARD,
                                         realw* h_xir_store, realw* h_gammar_store,
@@ -297,6 +298,10 @@ void FC_FUNC_(prepare_constants_device,
   mp->nspec_acoustic = *nspec_acoustic;
   mp->nspec_elastic  = *nspec_elastic;
 
+  // element domain flags (needed for seismogram outputs)
+  copy_todevice_int((void**)&mp->d_ispec_is_acoustic,ispec_is_acoustic,mp->NSPEC_AB);
+  copy_todevice_int((void**)&mp->d_ispec_is_elastic,ispec_is_elastic,mp->NSPEC_AB);
+
   // JC JC here we will need to add GPU support for the new C-PML routines
 
   GPU_ERROR_CHECKING ("prepare_constants_device");
@@ -315,7 +320,6 @@ void FC_FUNC_(prepare_fields_acoustic_device,
               PREPARE_FIELDS_ACOUSTIC_DEVICE)(long* Mesh_pointer,
                                               realw* rmass_acoustic, realw* rhostore, realw* kappastore,
                                               int* num_phase_ispec_acoustic, int* phase_ispec_inner_acoustic,
-                                              int* ispec_is_acoustic,
                                               int* num_free_surface_faces,
                                               int* free_surface_ispec,
                                               int* free_surface_ijk,
@@ -389,7 +393,6 @@ void FC_FUNC_(prepare_fields_acoustic_device,
   mp->num_phase_ispec_acoustic = *num_phase_ispec_acoustic;
   copy_todevice_int((void**)&mp->d_phase_ispec_inner_acoustic,phase_ispec_inner_acoustic,
                     2*mp->num_phase_ispec_acoustic);
-  copy_todevice_int((void**)&mp->d_ispec_is_acoustic,ispec_is_acoustic,mp->NSPEC_AB);
 
   // allocate surface arrays
   mp->num_free_surface_faces = *num_free_surface_faces;
@@ -524,7 +527,6 @@ void FC_FUNC_(prepare_fields_elastic_device,
                                              realw* rmassx, realw* rmassz,
                                              int* num_phase_ispec_elastic,
                                              int* phase_ispec_inner_elastic,
-                                             int* ispec_is_elastic,
                                              int* ispec_is_anisotropic,
                                              int* ANISOTROPY,
                                              realw *c11store,realw *c12store,realw *c13store,
@@ -610,8 +612,7 @@ void FC_FUNC_(prepare_fields_elastic_device,
   copy_todevice_realw((void**)&mp->d_rmassx,rmassx,mp->NGLOB_AB);
   copy_todevice_realw((void**)&mp->d_rmassz,rmassz,mp->NGLOB_AB);
 
-  // element indices
-  copy_todevice_int((void**)&mp->d_ispec_is_elastic,ispec_is_elastic,mp->NSPEC_AB);
+  // anisotropy flag
   copy_todevice_int((void**)&mp->d_ispec_is_anisotropic,ispec_is_anisotropic,mp->NSPEC_AB);
 
   // phase elements
@@ -1178,6 +1179,9 @@ TRACE("prepare_cleanup_device");
   cudaFree(mp->d_ispec_is_inner);
   cudaFree(mp->d_ibool);
 
+  cudaFree(mp->d_ispec_is_acoustic);
+  cudaFree(mp->d_ispec_is_elastic);
+
   // sources
   if (mp->nsources_local > 0){
     cudaFree(mp->d_sourcearrays);
@@ -1237,7 +1241,6 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_rhostore);
     cudaFree(mp->d_kappastore);
     cudaFree(mp->d_phase_ispec_inner_acoustic);
-    cudaFree(mp->d_ispec_is_acoustic);
     cudaFree(mp->d_inum_interfaces_acoustic);
 
     if (*NO_BACKWARD_RECONSTRUCTION){
@@ -1301,7 +1304,6 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_rmassz);
 
     cudaFree(mp->d_phase_ispec_inner_elastic);
-    cudaFree(mp->d_ispec_is_elastic);
     cudaFree(mp->d_ispec_is_anisotropic);
     cudaFree(mp->d_inum_interfaces_elastic);
 
