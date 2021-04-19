@@ -874,7 +874,7 @@
              iend_edge2_poro(num_abs_boundary_faces), &
              ibegin_edge3_poro(num_abs_boundary_faces), &
              iend_edge3_poro(num_abs_boundary_faces), &
-             ibegin_edge4_poro(num_abs_boundary_faces),&
+             ibegin_edge4_poro(num_abs_boundary_faces), &
              iend_edge4_poro(num_abs_boundary_faces),stat=ier)
     if (ier /= 0) call stop_the_code('Error allocating absorbing boundary poro arrays')
 

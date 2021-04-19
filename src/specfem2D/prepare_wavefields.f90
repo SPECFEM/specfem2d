@@ -299,7 +299,7 @@
   ! for APPROXIMATE_HESS_KL
   allocate(rhorho_el_Hessian_final2(NGLLX,NGLLZ,b_nspec_elastic), &
            rhorho_el_Hessian_final1(NGLLX,NGLLZ,b_nspec_elastic),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating elastic hessian kernel arrays')
+  if (ier /= 0) call stop_the_code('Error allocating elastic Hessian kernel arrays')
   rhorho_el_Hessian_final1(:,:,:) = 0.0_CUSTOM_REAL; rhorho_el_Hessian_final2(:,:,:) = 0.0_CUSTOM_REAL
 
   !
