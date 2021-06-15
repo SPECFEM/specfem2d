@@ -189,7 +189,6 @@ __global__ void compute_acoustic_seismogram_kernel(int nrec_local,
       __syncthreads();
     }
 
-
     if (tx == 0) {
       seismograms[irec_local*NSTEP + it ] = sh_dxd[0];
     }

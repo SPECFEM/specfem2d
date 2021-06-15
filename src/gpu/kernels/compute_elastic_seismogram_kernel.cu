@@ -165,6 +165,7 @@ __global__ void compute_elastic_seismogram_kernel(int nrec_local,
       __syncthreads();
     }
 
+    // component rotation
     if (tx == 0) {
       seismograms[irec_local*NSTEP + it] = cosrot[irec_local]*sh_dxd[0]  + sinrot[irec_local]*sh_dzd[0];
     }
