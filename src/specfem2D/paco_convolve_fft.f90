@@ -73,23 +73,31 @@
 ! NSTEP==1, FLAG==0 (flags: interior=0, left= 1, right= 2, bottom=3)
 !
 
-  do j = 1,N
-    select case (label)
-    case (1,4)
-      ! Ricker
+  select case (label)
+  case (1,4)
+    ! Ricker
+    do j = 1,N
       FUN = ric(j,tp,ts,dt)
-    case (2)
-      ! first derivative Ricker
-      FUN = deric(j,tp,ts,dt)
-    case (3)
-      ! second derivative Ricker
-      FUN = de2ric(j,tp,ts,dt)
-    case default
-      call stop_the_code('Invalid label in paco_convolve_fft')
-    end select
+      CR(j) = CMPLX(FUN,0.0d0)
+    enddo
 
-    CR(j) = CMPLX(FUN,0.0d0)
-  enddo
+  case (2)
+    ! first derivative Ricker
+    do j = 1,N
+      FUN = deric(j,tp,ts,dt)
+      CR(j) = CMPLX(FUN,0.0d0)
+    enddo
+
+  case (3)
+    ! second derivative Ricker
+    do j = 1,N
+      FUN = de2ric(j,tp,ts,dt)
+      CR(j) = CMPLX(FUN,0.0d0)
+    enddo
+
+  case default
+    call stop_the_code('Invalid label in paco_convolve_fft')
+  end select
 
   ! forward FFT
   call fourier_transform(N,CR,-1.0d0)

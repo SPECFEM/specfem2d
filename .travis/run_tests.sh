@@ -111,7 +111,7 @@ if [[ $? -ne 0 ]]; then exit 1; fi
 #sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
 
 # Rayleigh wave and manual crack
-if [ "$TESTID" == "17" ]; then
+if [ "$TESTDIR" == "11" ]; then
   sed -i "s:FAST_NUMBERING .*:FAST_NUMBERING = .false.:" setup/constants.h
   sed -i "s:ADD_A_SMALL_CRACK_IN_THE_MEDIUM .*:ADD_A_SMALL_CRACK_IN_THE_MEDIUM = .true.:" setup/constants.h
 fi
@@ -153,10 +153,10 @@ else
   fi
   # Rayleigh wave
   if [ "$TESTDIR" == "10" ]; then
-    sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
+    sed -i "s:^NPROC .*:NPROC    = 4:" DATA/Par_file
   fi
   if [ "$TESTDIR" == "11" ]; then
-    sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
+    sed -i "s:^NPROC .*:NPROC    = 4:" DATA/Par_file
   fi
   # fluid-solid
   if [ "$TESTDIR" == "16" ]; then
