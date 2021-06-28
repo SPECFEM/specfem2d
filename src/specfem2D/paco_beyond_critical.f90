@@ -111,20 +111,20 @@
 
   TS = 1.2d0/f0
 
-! dominant period of the Ricker
+  ! dominant period of the Ricker
   TP = 1.d0/f0
 
-! offset to move the initial location of the source in the horizontal direction of the mesh
+  ! offset to move the initial location of the source in the horizontal direction of the mesh
   offset = x_source
 
-! find optimal period
-! if period is too small, you should see several initial plane wave on your initial field
+  ! find optimal period
+  ! if period is too small, you should see several initial plane wave on your initial field
   delta_in_period = 2.d0
   do while(delta_in_period < 1.5*abs(xmax - xmin)/csloc)
      delta_in_period = 2.d0 * delta_in_period
   enddo
 
-! test DT compatibility
+  ! test DT compatibility
   dt_paco = 256.d0
   do while(dt_paco > DT)
      dt_paco = dt_paco/2.d0

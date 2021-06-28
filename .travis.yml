@@ -82,11 +82,11 @@ env:
     # example w/ MPI and SEP format
     - TESTID=15 TESTDIR=9 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
 
-    # example w/ initialfield Rayleigh wave
-    - TESTID=16 TESTDIR=10 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
+    # example w/ initialfield Rayleigh wave (disabled, takes too long)
+    #- TESTID=16 TESTDIR=10 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
 
-    # example w/ initialfield Rayleigh wave and manual crack
-    - TESTID=17 TESTDIR=11 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
+    # example w/ initialfield Rayleigh wave and manual crack (disabled, takes too long)
+    #- TESTID=17 TESTDIR=11 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
 
     # example w/ SH waves and checkerboard model
     - TESTID=18 TESTDIR=12 TESTCOV=0 TESTFLAGS="--without-mpi" CUDA=false
