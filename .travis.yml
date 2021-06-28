@@ -9,6 +9,10 @@ sudo: required
 
 os: linux
 compiler: gcc
+arch:
+  - ppc64le  # IBM Power
+#  - amd64    # travis default
+#  - arm64    # ARM
 
 env:
   global:
@@ -116,6 +120,16 @@ env:
 
     # infinite_homogeneous_moment_tensor_vertical_dip_slip example
     - TESTID=29 TESTDIR=21 TESTCOV=0 TESTFLAGS="" CUDA=false
+
+# ARM tests
+jobs:
+  include:
+  - arch: arm64
+    env: TESTID=2 TESTDIR=0 TESTCOV=0 TESTFLAGS="" CUDA=false
+  - arch: arm64
+    env: TESTID=5 TESTDIR=1 TESTCOV=0 TESTFLAGS="--enable-debug" CUDA=false
+
+
 
 before_install:
   # informations on git
