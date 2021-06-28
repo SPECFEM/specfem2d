@@ -149,22 +149,32 @@ else
   fi
   if [ "$TESTDIR" == "9" ]; then
     sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
-    sed -i "s:^NSTEP .*:NSTEP    = 3000:" DATA/Par_file
+    #sed -i "s:^NSTEP .*:NSTEP    = 3000:" DATA/Par_file
   fi
+  # Rayleigh wave
+  if [ "$TESTDIR" == "10" ]; then
+    sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
+  fi
+  if [ "$TESTDIR" == "11" ]; then
+    sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
+  fi
+  # fluid-solid
   if [ "$TESTDIR" == "16" ]; then
     sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
   fi
+  # porous
   if [ "$TESTDIR" == "17" ]; then
     sed -i "s:^NSTEP .*:NSTEP    = 2000:" DATA/Par_file
-  fi
-  # elastic kernel example Tromp2005_kernel/ w/ NO_BACKWARD_RECONSTRUCTION
-  if [ "$TESTID" == "26" ]; then
-    sed -i "s:^NO_BACKWARD_RECONSTRUCTION .*:NO_BACKWARD_RECONSTRUCTION = .true.:" DATA/Par_file
-    sed -i "s:^NSTEP_BETWEEN_COMPUTE_KERNELS .*:NSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
   fi
   # moving sources
   if [ "$TESTDIR" == "19" ]; then
     sed -i "s:^NSTEP .*:NSTEP    = 3000:" DATA/Par_file
+  fi
+
+  # elastic kernel example Tromp2005_kernel/ w/ NO_BACKWARD_RECONSTRUCTION
+  if [ "$TESTID" == "26" ]; then
+    sed -i "s:^NO_BACKWARD_RECONSTRUCTION .*:NO_BACKWARD_RECONSTRUCTION = .true.:" DATA/Par_file
+    sed -i "s:^NSTEP_BETWEEN_COMPUTE_KERNELS .*:NSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
   fi
 
   # coverage run
@@ -172,7 +182,7 @@ else
     sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   fi
 
-  # default
+  # default run script
   if [ "$TESTDIR" == "4" ] || [ "$TESTID" == "24" ]; then
     # kernel script
     ./run_this_example_kernel.sh
@@ -405,6 +415,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   echo "EXAMPLES/fluid_solid/fluid_solid_external_mesh/"
   echo
   cd EXAMPLES/fluid_solid/fluid_solid_external_mesh/
+  sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
   if [[ $? -ne 0 ]]; then exit 1; fi
