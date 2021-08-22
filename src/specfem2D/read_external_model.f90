@@ -193,8 +193,8 @@
       QKappa_attenuationext(:,:,:) = 9999.d0
       Qmu_attenuationext(:,:,:) = 9999.d0
     endif
-    
-    !ZZD This is important for FWI. 
+
+    !ZZD This is important for FWI.
     do ispec = 1,nspec
     do j = 1,NGLLZ
       do i = 1,NGLLX
