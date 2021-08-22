@@ -31,16 +31,12 @@
 !
 !========================================================================
 
-subroutine iterate_time()
 
-#ifdef USE_MPI
-  use mpi
-#endif
+  subroutine iterate_time()
 
   use constants, only: IMAIN,NOISE_SAVE_EVERYWHERE
   use specfem_par
   use specfem_par_gpu
-  use specfem_par_noise, only: NOISE_TOMOGRAPHY
 
   implicit none
 
@@ -58,7 +54,9 @@ subroutine iterate_time()
   integer, dimension(8) :: time_values
   integer :: year,mon,day,hr,minutes,timestamp
 
-  real :: start_time_of_time_loop,finish_time_of_time_loop,duration_of_time_loop_in_seconds
+  ! timing
+  double precision,external :: wtime
+  real :: start_time_of_time_loop,duration_of_time_loop_in_seconds
 
   if (myrank == 0) write(IMAIN,400) ! Write = T i m e  e v o l u t i o n  l o o p =
 !
@@ -96,8 +94,12 @@ subroutine iterate_time()
     call flush_IMAIN()
   endif
 
+  ! time loop increments begin/end
+  it_begin = 1
+  it_end = NSTEP
+
   ! initialize variables for writing seismograms
-  seismo_offset = 0
+  seismo_offset = it_begin - 1
   seismo_current = 0
 
   if (TIME_THE_COST_TO_COMPUTE_WEIGHTS_FOR_THE_DOMAIN_DECOMPOSER) then
@@ -125,15 +127,16 @@ subroutine iterate_time()
        call exit_MPI(myrank,'timing for element weights should be done with COMPUTE_INTEGRATED_ENERGY_FIELD turned off')
   endif
 
-  call cpu_time(start_time_of_time_loop)
+  ! timing
+  start_time_of_time_loop = wtime()
 
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
-  do it = 1,NSTEP
+  do it = it_begin,it_end
     ! compute current time
-    timeval = (it-1) * deltat
+    current_timeval = (it-1) * DT
 
     ! display time step and max of norm of displacement
     if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
@@ -142,11 +145,50 @@ subroutine iterate_time()
 
     do i_stage = 1, stage_time_scheme
 
-      ! updates wavefields using Newmark time scheme
-      ! forward wavefield (acoustic/elastic/poroelastic)
-      call update_displ_Newmark()
-      ! reconstructed/backward wavefields
-      if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) call update_displ_Newmark_backward()
+      ! updates wavefields
+      select case(time_stepping_scheme)
+      case (1)
+        ! Newmark time scheme
+        ! forward wavefield (acoustic/elastic/poroelastic)
+        call update_displ_Newmark()
+        ! reconstructed/backward wavefields
+        if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) call update_displ_Newmark_backward()
+
+      case (2,3)
+        ! LDDRK, RK4
+        if (any_acoustic) then
+          if (.not. GPU_MODE) then
+            potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+            if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) b_potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+          endif
+        endif
+        if (any_elastic) then
+          if (.not. GPU_MODE) then
+            accel_elastic(:,:) = 0._CUSTOM_REAL
+            if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) b_accel_elastic(:,:) = 0._CUSTOM_REAL
+          endif
+        endif
+        if (any_poroelastic) then
+          if (.not. GPU_MODE) then
+            accels_poroelastic(:,:) = 0._CUSTOM_REAL
+            accelw_poroelastic(:,:) = 0._CUSTOM_REAL
+            if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) then
+              b_accels_poroelastic(:,:) = 0._CUSTOM_REAL
+              b_accelw_poroelastic(:,:) = 0._CUSTOM_REAL
+            endif
+          endif
+        endif
+
+      case (4)
+        ! symplectic PEFRL
+        ! forward wavefield (acoustic/elastic/poroelastic)
+        call update_displ_symplectic()
+        ! reconstructed/backward wavefields
+        if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) call update_displ_symplectic_backward()
+
+      case default
+        call stop_the_code('Error time scheme not implemente yet in iterate_time()')
+      end select
 
       ! acoustic domains
       if (ACOUSTIC_SIMULATION) then
@@ -192,45 +234,48 @@ subroutine iterate_time()
       call manage_no_backward_reconstruction_io()
     endif
 
-    ! noise simulations
-    select case (NOISE_TOMOGRAPHY)
-    case (1)
-      ! stores generating wavefield
-      call save_surface_movie_noise()
-    case (2)
-      ! stores complete wavefield for reconstruction
-      if (NOISE_SAVE_EVERYWHERE) call save_surface_movie_noise()
-    case (3)
-      ! reconstructs forward wavefield based on complete wavefield storage
-      if (NOISE_SAVE_EVERYWHERE) call read_wavefield_noise()
-    end select
-
-    if (output_energy) then
+    if (OUTPUT_ENERGY) then
       call compute_and_output_energy()
     endif
 
     ! computes integrated_energy_field
     if (COMPUTE_INTEGRATED_ENERGY_FIELD) then
-      call it_compute_integrated_energy_field_and_output() ! compute the field int_0^t v^2 dt and write it on file if needed
+      ! compute the field int_0^t v^2 dt and write it on file if needed
+      call compute_integrated_energy_field_and_output()
     endif
 
     ! loop on all the receivers to compute and store the seismograms
     call write_seismograms()
 
     ! kernels calculation
-    if (SIMULATION_TYPE == 3 .and. mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0) then
+    if (SIMULATION_TYPE == 3) then
       call compute_kernels()
     endif
 
     ! display results at given time steps
     call write_movie_output(.true.)
 
+    ! first step of noise tomography, i.e., save a surface movie at every time step
+    if (NOISE_TOMOGRAPHY == 1) then
+      call noise_save_surface_movie()
+    endif
+
+    ! noise simulations
+    if (NOISE_SAVE_EVERYWHERE) then
+      select case (NOISE_TOMOGRAPHY)
+      case (2)
+        ! stores complete wavefield for reconstruction
+        call noise_save_surface_movie()
+      case (3)
+        ! reconstructs forward wavefield based on complete wavefield storage
+        call noise_read_wavefield()
+      end select
+    endif
+
   enddo ! end of the main time loop
 
-  call cpu_time(finish_time_of_time_loop)
-
   if (myrank == 0) then
-    duration_of_time_loop_in_seconds = finish_time_of_time_loop - start_time_of_time_loop
+    duration_of_time_loop_in_seconds = wtime() - start_time_of_time_loop
     write(IMAIN,*)
     write(IMAIN,*) 'Total duration of the time loop in seconds = ',duration_of_time_loop_in_seconds,' s'
     write(IMAIN,*) 'Total number of time steps = ',NSTEP
@@ -266,17 +311,16 @@ subroutine iterate_time()
   ! Transfer fields from GPU card to host for further analysis
   if (GPU_MODE) call it_transfer_from_GPU()
 
-
   !----  formats
   400 format(/1x,41('=')/,' =  T i m e  e v o l u t i o n  l o o p  ='/1x,41('=')/)
 
-end subroutine iterate_time
+  end subroutine iterate_time
 
 !
 !----------------------------------------------------------------------------------------
 !
 
-subroutine it_transfer_from_GPU()
+  subroutine it_transfer_from_GPU()
 
 ! transfers fields on GPU back onto CPU
 
@@ -285,10 +329,6 @@ subroutine it_transfer_from_GPU()
   use specfem_par_gpu
 
   implicit none
-
-  ! local parameters
-  integer :: i,j,ispec
-  real(kind=CUSTOM_REAL) :: rhol,mul,kappal
 
   ! Fields transfer for imaging
   ! acoustic domains
@@ -299,24 +339,7 @@ subroutine it_transfer_from_GPU()
 
   ! elastic domains
   if (any_elastic) then
-    call transfer_fields_el_from_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
-
-    if (P_SV) then
-      ! P-SV waves
-      displ_elastic(1,:) = tmp_displ_2D(1,:)
-      displ_elastic(2,:) = tmp_displ_2D(2,:)
-
-      veloc_elastic(1,:) = tmp_veloc_2D(1,:)
-      veloc_elastic(2,:) = tmp_veloc_2D(2,:)
-
-      accel_elastic(1,:) = tmp_accel_2D(1,:)
-      accel_elastic(2,:) = tmp_accel_2D(2,:)
-    else
-      ! SH waves
-      displ_elastic(1,:) = tmp_displ_2D(1,:)
-      veloc_elastic(1,:) = tmp_veloc_2D(1,:)
-      accel_elastic(1,:) = tmp_accel_2D(1,:)
-    endif
+    call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_elastic,veloc_elastic,accel_elastic,Mesh_pointer)
   endif
 
   ! finishes kernel calculations
@@ -325,10 +348,14 @@ subroutine it_transfer_from_GPU()
     ! acoustic domains
     if (any_acoustic) then
       call transfer_kernels_ac_to_host(Mesh_pointer,rho_ac_kl,kappa_ac_kl,NSPEC_AB)
+
+      ! note: acoustic kernels in CPU-version add (delta * NSTEP_BETWEEN_COMPUTE_KERNELS) factors at each computation.
+      !       for the GPU-kernels, the NSTEP_** is still missing... adding it here
       rho_ac_kl(:,:,:) = rho_ac_kl(:,:,:) * NSTEP_BETWEEN_COMPUTE_KERNELS
       kappa_ac_kl(:,:,:) = kappa_ac_kl(:,:,:) * NSTEP_BETWEEN_COMPUTE_KERNELS
       rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
       alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
+
       print *
       print *,'Maximum value of rho prime kernel : ',maxval(rhop_ac_kl)
       print *,'Maximum value of alpha kernel : ',maxval(alpha_ac_kl)
@@ -337,218 +364,20 @@ subroutine it_transfer_from_GPU()
 
     ! elastic domains
     if (any_elastic) then
+      ! note: kernel values in the elastic case will be multiplied with material properties
+      !       in save_adjoint_kernels.f90
       call transfer_kernels_el_to_host(Mesh_pointer,rho_kl,mu_kl,kappa_kl,NSPEC_AB)
-
-      ! Multiply each kernel point with the local coefficient
-      do ispec = 1, nspec
-        if (ispec_is_elastic(ispec)) then
-          do j = 1, NGLLZ
-            do i = 1, NGLLX
-              if (.not. assign_external_model) then
-                mul = poroelastcoef(2,1,kmato(ispec))
-                kappal = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS * mul
-                rhol = density(1,kmato(ispec))
-              else
-                rhol = rhoext(i,j,ispec)
-                mul = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
-                kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - FOUR_THIRDS * mul
-              endif
-
-              rho_kl(i,j,ispec) = - rhol * rho_kl(i,j,ispec)
-              mu_kl(i,j,ispec) =  - TWO * mul * mu_kl(i,j,ispec)
-              kappa_kl(i,j,ispec) = - kappal * kappa_kl(i,j,ispec)
-            enddo
-          enddo
-        endif
-      enddo
     endif
   endif
 
-end subroutine it_transfer_from_GPU
+  end subroutine it_transfer_from_GPU
+
 
 !
 !----------------------------------------------------------------------------------------
 !
 
-subroutine it_compute_integrated_energy_field_and_output()
-
-  ! compute int_0^t v^2 dt and write it on file if needed
-
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IIN,MAX_STRING_LEN,OUTPUT_FILES
-
-  use specfem_par, only: myrank,it,coord,nspec,ibool,integrated_kinetic_energy_field,max_kinetic_energy_field, &
-                         integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
-                         potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
-                         total_effective_duration_field,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
-
-  implicit none
-
-  ! local variables
-  integer :: ispec,iglob
-!!!! DK DK commenting this out for now because "call execute_command_line" is Fortran 2008
-!!!! DK DK and some older compilers do not support it yet. We can probably put it back in a few years.
-  !integer :: statMkdir
-  character(len=MAX_STRING_LEN)  :: filename
-
-  !! ABAB Uncomment to write the velocity profile in acoustic part
-  !real(kind=CUSTOM_REAL) :: cpl,kappal
-  !double precision :: rhol
-  !double precision :: lambdal_unrelaxed_elastic
-  !! ABAB
-
-  ! computes maximum energy and integrated energy fields
-  call compute_energy_fields()
-
-  ! Create directories
-  if (it == 1) then
-    if (myrank == 0) then
-!!!! DK DK commenting this out for now because "call execute_command_line" is Fortran 2008
-!!!! DK DK and some older compilers do not support it yet. We can probably put it back in a few years.
-     !call execute_command_line('mkdir -p '//trim(OUTPUT_FILES)//'energyFields',wait = .true.,cmdstat = statMkdir)
-     !if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create '//trim(OUTPUT_FILES)//'energyFields')
-
-     !call execute_command_line('mkdir -p '//trim(OUTPUT_FILES)//'energyFields/kinetic',wait = .true.,cmdstat = statMkdir)
-     !if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create '//trim(OUTPUT_FILES)//'energyFields/kinetic')
-
-     !call execute_command_line('mkdir -p '//trim(OUTPUT_FILES)//'energyFields/potential',wait = .true.,cmdstat = statMkdir)
-     !if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create '//trim(OUTPUT_FILES)//'energyFields/potential')
-
-     !call execute_command_line('mkdir -p '//trim(OUTPUT_FILES)//'energyFields/total',wait = .true.,cmdstat = statMkdir)
-     !if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create '//trim(OUTPUT_FILES)//'energyFields/total')
-    endif
-    !call synchronize_all() ! Wait for first proc to create directories
-  endif
-
-  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
-    ! write integrated kinetic energy field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/kinetic/integrated_kinetic_energy_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(integrated_kinetic_energy_field(ispec),4)
-    enddo
-    close(IIN)
-
-    ! write max kinetic energy field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/kinetic/max_kinetic_energy_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(max_kinetic_energy_field(ispec),4)
-    enddo
-    close(IIN)
-
-    ! write integrated potential energy field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/potential/integrated_potential_energy_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(integrated_potential_energy_field(ispec),4)
-    enddo
-    close(IIN)
-
-    ! write max potential energy field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/potential/max_potential_energy_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(max_potential_energy_field(ispec),4)
-    enddo
-    close(IIN)
-
-    ! write potential effective duration field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/potential/potential_effective_duration_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(potential_effective_duration_field(ispec),4)
-    enddo
-    close(IIN)
-
-   ! write kinetic effective duration field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/kinetic/kinetic_effective_duration_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(kinetic_effective_duration_field(ispec),4)
-    enddo
-    close(IIN)
-
-    ! write total integrated energy field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/total/total_integrated_energy_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(total_integrated_energy_field(ispec),4)
-    enddo
-    close(IIN)
-
-    ! write max total energy field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/total/max_total_energy_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(max_total_energy_field(ispec),4)
-    enddo
-    close(IIN)
-
-    ! write total effective duration field in external file
-    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/total/total_effective_duration_field',myrank
-    open(unit=IIN,file=trim(filename),status='unknown',action='write')
-    ! loop over spectral elements
-    do ispec = 1,nspec
-      iglob = ibool(2,2,ispec)
-      write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(total_effective_duration_field(ispec),4)
-    enddo
-    close(IIN)
-  endif
-
-  ! ABAB Uncomment to write the velocity profile in the acoustic part in file
-  !
-  !  write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'velocities',myrank
-  !  open(unit=IIN,file=trim(filename),status='unknown',action='write')
-  !
-  !  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
-  !    ! loop over spectral elements
-  !    do ispec = 1,nspec
-  !      if (ispec_is_acoustic(ispec)) then
-  !        ! get density of current spectral element
-  !        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-  !        rhol  = density(1,kmato(ispec))
-  !        kappal = lambdal_unrelaxed_elastic
-  !        cpl = sqrt(kappal/rhol)
-  !
-  !        !--- if external medium, get density of current grid point
-  !        if (assign_external_model) then
-  !          cpl = vpext(2,2,ispec)
-  !        endif
-  !        iglob = ibool(2,2,ispec)
-  !        write(IIN,*) real(coord(2,iglob),4),cpl
-  !      endif
-  !    enddo
-  !  endif
-  !  close(IIN)
-
-end subroutine it_compute_integrated_energy_field_and_output
-
-subroutine manage_no_backward_reconstruction_io()
+  subroutine manage_no_backward_reconstruction_io()
 
   use constants
   use specfem_par
@@ -581,14 +410,15 @@ subroutine manage_no_backward_reconstruction_io()
 
       ! For the first iteration we need to add a transfer, to initiate the
       ! transfer on the GPU
-      if (no_backward_iframe == 1) call read_forward_arrays_no_backward()
+      if (no_backward_iframe == 1) &
+        call read_forward_arrays_no_backward()
 
       ! If the wavefield is requested at it=1, then we enforce another transfer
       if (no_backward_iframe == 2 .and. NSTEP_BETWEEN_COMPUTE_KERNELS == 1) &
-                                   call read_forward_arrays_no_backward()
+        call read_forward_arrays_no_backward()
 
     endif
 
   endif ! SIMULATION == 3
 
-end subroutine  manage_no_backward_reconstruction_io
+  end subroutine  manage_no_backward_reconstruction_io

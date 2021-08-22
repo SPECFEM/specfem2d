@@ -40,7 +40,7 @@
                          potential_dot_acoustic,veloc_elastic,velocs_poroelastic, &
                          potential_dot_dot_acoustic,accel_elastic,accels_poroelastic
 
-  use specfem_par_movie, only: imagetype_postscript
+  use shared_parameters, only: imagetype_postscript
 
   implicit none
 

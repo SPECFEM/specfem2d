@@ -55,7 +55,7 @@
   use constants, only: PI,IMAIN
 
   use specfem_par, only: myrank, &
-    coord,nglob,deltat,NSTEP,ATTENUATION_VISCOELASTIC, &
+    coord,nglob,DT,NSTEP,ATTENUATION_VISCOELASTIC, &
     displ_elastic,veloc_elastic,accel_elastic, &
     v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot, &
     t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot
@@ -77,7 +77,7 @@
   integer, dimension(:),allocatable :: local_pt
 
   double precision, dimension(:), allocatable :: temp_field
-  double precision :: dt,TP,delta_in_period
+  double precision :: dt_paco,TP,delta_in_period
 
   integer :: J, indice, NSTEP_local, FLAG, N, NFREC, NFREC1
   double precision :: ANU,BEALF,ALFBE,RLM,VNX,VNZ,A1,B1,TOTO,FJ,AKA,AQA,GAMR
@@ -111,39 +111,39 @@
 
   TS = 1.2d0/f0
 
-! dominant period of the Ricker
+  ! dominant period of the Ricker
   TP = 1.d0/f0
 
-! offset to move the initial location of the source in the horizontal direction of the mesh
+  ! offset to move the initial location of the source in the horizontal direction of the mesh
   offset = x_source
 
-! find optimal period
-! if period is too small, you should see several initial plane wave on your initial field
+  ! find optimal period
+  ! if period is too small, you should see several initial plane wave on your initial field
   delta_in_period = 2.d0
   do while(delta_in_period < 1.5*abs(xmax - xmin)/csloc)
      delta_in_period = 2.d0 * delta_in_period
   enddo
 
-! test Deltat compatibility
-  DT = 256.d0
-  do while(DT > deltat)
-     DT = DT/2.d0
+  ! test DT compatibility
+  dt_paco = 256.d0
+  do while(dt_paco > DT)
+     dt_paco = dt_paco/2.d0
   enddo
-  if (abs(DT-deltat) > 1.0d-13) then
-    print *, 'Error: Initial plane wave setting has invalid time step size deltat = ',deltat
-    print *, 'You must take a deltat that is a power of two (power can be negative)'
-    print *, 'For example, you can take ', DT
-    call stop_the_code('Error in paco_beyond_critical routine cannot go further, restart with new deltat')
+  if (abs(dt_paco-DT) > 1.0d-13) then
+    print *, 'Error: Initial plane wave setting has invalid time step size DT = ',DT
+    print *, '       You must take a DT that is a power of two (power can be negative)'
+    print *, 'For example, you can take ', dt_paco
+    call stop_the_code('Error in paco_beyond_critical routine cannot go further, restart with new DT')
   endif
 
-  DT = deltat/2.d0
+  dt_paco = DT/2.d0
 
   N = 2
   do while(N < 2*NSTEP+1)
      N = 2*N
   enddo
 
-  do while(DT < (delta_in_period/N))
+  do while(dt_paco < (delta_in_period/N))
      N = 2*N
   enddo
 
@@ -154,7 +154,7 @@
     write(IMAIN,*) 'number of discrete frequencies               = ',N/2
     write(IMAIN,*) 'delta in period (seconds)                    = ',delta_in_period
     write(IMAIN,*) 'delta in frequency (Hz)                      = ',1.d0/delta_in_period
-    write(IMAIN,*) 'dt (here we need deltat/2)                   = ', DT
+    write(IMAIN,*) 'dt (paco, here we need DT/2)                 = ',dt_paco
   endif
 
   if (mod(N,2) /= 0) call stop_the_code('N must be a multiple of 2')
@@ -204,21 +204,21 @@
       if (myrank == 0) write(IMAIN,*) "calculation of every time step on the left absorbing boundary"
       npt = nleft
       allocate(local_pt(npt))
-      local_pt = left_bound
+      local_pt(:) = left_bound(:)
       NSTEP_local = NSTEP
     case (2)
       ! right boundary
       if (myrank == 0) write(IMAIN,*) "calculation of every time step on the right absorbing boundary"
       npt = nright
       allocate(local_pt(npt))
-      local_pt = right_bound
+      local_pt(:) = right_bound(:)
       NSTEP_local = NSTEP
     case (3)
       ! bottom
       if (myrank == 0) write(IMAIN,*) "calculation of every time step on the bottom absorbing boundary"
       npt = nbot
       allocate(local_pt(npt))
-      local_pt = bot_bound
+      local_pt(:) = bot_bound(:)
       NSTEP_local = NSTEP
     case default
       call stop_the_code('Invalid flag')
@@ -226,15 +226,20 @@
 
     ! to distinguish all model case and boundary case
     allocate(temp_field(NSTEP_local))
+    temp_field(:) = 0.d0
 
-    allocate(Field_Ux(NFREC1))
-    allocate(Field_Uz(NFREC1))
-    allocate(Field_Tx(NFREC1))
-    allocate(Field_Tz(NFREC1))
+    allocate(Field_Ux(NFREC1), &
+             Field_Uz(NFREC1), &
+             Field_Tx(NFREC1), &
+             Field_Tz(NFREC1))
+    Field_Ux(:) = ( 0.d0, 0.d0 )
+    Field_Uz(:) = ( 0.d0, 0.d0 )
+    Field_Tx(:) = ( 0.d0, 0.d0 )
+    Field_Tz(:) = ( 0.d0, 0.d0 )
 
-! normal vector to the edge at this grid point
-! therefore corners between two grid edges must be computed twice
-! because the normal will change
+    ! normal vector to the edge at this grid point
+    ! therefore corners between two grid edges must be computed twice
+    ! because the normal will change
     if (FLAG == 1) then
       VNZ = 0.d0
       VNX = 1.d0
@@ -254,18 +259,18 @@
       if (FLAG == 0) then
         inode = indice
         X = coord(1,indice) - offset
-! specfem coordinate axes are implemented from bottom to top whereas for this code
-! we need from top to bottom
+        ! specfem coordinate axes are implemented from bottom to top whereas for this code
+        ! we need from top to bottom
         Z = zmax - coord(2,indice)
       else
         inode = local_pt(indice)
         X = coord(1,inode) - offset
-! specfem coordinate axes are implemented from bottom to top whereas for this code
-! we need from top to bottom
+        ! specfem coordinate axes are implemented from bottom to top whereas for this code
+        ! we need from top to bottom
         Z = zmax - coord(2,inode)
       endif
 
-! user output
+      ! user output
       if (myrank == 0 .and. mod(indice,500) == 0) then
         write(IMAIN,*) indice,"points have been computed out of ",npt
       endif
@@ -274,15 +279,18 @@
 ! first handle the particular case of zero frequency
 !
       TOTO = 0.01d0
-      if (source_type == 1) call ONDAS_P(GAMR,0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
-      if (source_type == 2) call ONDAS_S(GAMR,TOTO,0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
-      if (source_type == 3) call ONDAS_R(0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
-
+      if (source_type == 1) then
+        call ONDAS_P(GAMR,0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+      else if (source_type == 2) then
+        call ONDAS_S(GAMR,TOTO,0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+      else if (source_type == 3) then
+        call ONDAS_R(0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+      endif
 
       TOTO = 0.0d0
       call DESFXY(TOTO,TOTO,source_type,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 
-! write the frequency seismograms
+      ! write the frequency seismograms
       TX = SX *VNX + SXZ*VNZ
       TZ = SXZ*VNX + SZ *VNZ
 
@@ -297,15 +305,15 @@
 ! then loop on all the other discrete frequencies
 !
       do J = 1,N/2
-! compute the value of the frequency (= index * delta in frequency = index * 1/delta in period)
+        ! compute the value of the frequency (= index * delta in frequency = index * 1/delta in period)
         FJ = dble(J) * 1.d0 / delta_in_period
 
-! pulsation (= 2 * PI * frequency)
+        ! pulsation (= 2 * PI * frequency)
         AKA = 2.0d0*PI*FJ
 
         AQA = AKA*BEALF
 
-! exclude attenuation completely if needed
+        ! exclude attenuation completely if needed
         if (ATTENUATION_VISCOELASTIC) then
           CAKA = CMPLX(AKA,-AKA/(2.0d0*QD))
           CAQA = CMPLX(AQA,-AQA/(2.0d0*QD))
@@ -324,7 +332,7 @@
 
         call DESFXY(X,Z,source_type,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 
-! write the frequency seismograms
+        ! write the frequency seismograms
         TX = SX *VNX + SXZ*VNZ
         TZ = SXZ*VNX + SZ *VNZ
 
@@ -340,69 +348,68 @@
 ! (number at the end are unit numbers for writing in the good file,
 ! in the case of the traction we fill only one file per call)
 
-! global model case for initial field
+      ! global model case for initial field
       select case (FLAG)
       case (0)
-        call paco_convolve_fft(Field_Ux,1,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Ux,1,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         displ_elastic(1,indice) = temp_field(1)
 
-        call paco_convolve_fft(Field_Uz,1,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Uz,1,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         displ_elastic(2,indice) = temp_field(1)
 
-        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         veloc_elastic(1,indice) = temp_field(1)
 
-        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         veloc_elastic(2,indice) = temp_field(1)
 
-        call paco_convolve_fft(Field_Ux,3,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Ux,3,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         accel_elastic(1,indice) = temp_field(1)
 
-        call paco_convolve_fft(Field_Uz,3,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Uz,3,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         accel_elastic(2,indice) = temp_field(1)
 
-! absorbing boundaries
-
-! left case
+      ! absorbing boundaries
+      ! left case
       case (1)
-        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         v0x_left(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         v0z_left(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Tx,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Tx,4,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         t0x_left(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         t0z_left(indice,:) = temp_field(:)
 
-! right case
+      ! right case
       case (2)
-        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         v0x_right(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         v0z_right(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Tx,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Tx,4,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         t0x_right(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         t0z_right(indice,:) = temp_field(:)
 
-! bottom case
+      ! bottom case
       case (3)
-        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         v0x_bot(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         v0z_bot(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Tx,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Tx,4,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         t0x_bot(indice,:) = temp_field(:)
 
-        call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
+        call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt_paco,NFREC,temp_field,TP,TS)
         t0z_bot(indice,:) = temp_field(:)
 
       case default
@@ -410,13 +417,9 @@
       end select
     enddo
 
-    deallocate(temp_field)
     deallocate(local_pt)
-
-    deallocate(Field_Ux)
-    deallocate(Field_Uz)
-    deallocate(Field_Tx)
-    deallocate(Field_Tz)
+    deallocate(temp_field)
+    deallocate(Field_Ux,Field_Uz,Field_Tx,Field_Tz)
 
   enddo
 

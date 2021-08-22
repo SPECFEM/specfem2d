@@ -17,16 +17,13 @@ mkdir -p DATA
 
 # sets up local DATA/ directory
 cd DATA/
-
+rm -f Par_file SOURCE
 # use this to test a source that is located at a corner point shared between four spectral elements
-cp ../Par_file_attenuation_2D_source_in_point_shared_by_four_elements Par_file
-cp ../SOURCE_attenuation_2D_source_in_point_shared_by_four_elements SOURCE
-
+ln -s ./Par_file_attenuation_2D_source_in_point_shared_by_four_elements Par_file
+ln -s ./SOURCE_attenuation_2D_source_in_point_shared_by_four_elements SOURCE
 # or use this to test a source that is located inside a given element, which does NOT coincide with a GLL point
-# cp ../Par_file_attenuation_2D_source_in_point_inside_an_element Par_file
-# cp ../SOURCE_attenuation_2D_source_in_point_inside_an_element SOURCE
-
-cp ../interfaces_attenuation_analytic.dat .
+# ln -s ./Par_file_attenuation_2D_source_in_point_inside_an_element Par_file
+# ln -s ./SOURCE_attenuation_2D_source_in_point_inside_an_element SOURCE
 cd ../
 
 # cleans output files
@@ -35,9 +32,12 @@ rm -rf OUTPUT_FILES/*
 cd $currentdir
 
 # links executables
+mkdir -p bin
+cd bin/
 rm -f xmeshfem2D xspecfem2D
-ln -s ../../../bin/xmeshfem2D
-ln -s ../../../bin/xspecfem2D
+ln -s ../../../../bin/xmeshfem2D
+ln -s ../../../../bin/xspecfem2D
+cd ../
 
 # stores setup
 cp DATA/Par_file OUTPUT_FILES/
@@ -47,13 +47,17 @@ cp DATA/SOURCE OUTPUT_FILES/
 echo
 echo "  running mesher..."
 echo
-./xmeshfem2D
+./bin/xmeshfem2D
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # runs simulation
 echo
 echo "  running solver..."
 echo
-./xspecfem2D
+./bin/xspecfem2D
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # stores output
 cp DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES

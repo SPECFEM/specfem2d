@@ -27,7 +27,7 @@
 ####      Point (0,0) is in the middle of the glue at the left
 ####
 ###########################################################################
-
+from __future__ import print_function
 import cubit
 import sys
 

@@ -1,5 +1,5 @@
 #!python
-
+from __future__ import print_function
 import cubit
 
 # pour creer un maillage 2D avec elements de 9 noeuds sans CPML dans Cubit

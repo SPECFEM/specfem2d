@@ -94,12 +94,15 @@ end module enforce_par
                          PML_BOUNDARY_CONDITIONS,ispec_is_PML,read_external_mesh,acoustic_iglob_is_forced, &
                          elastic_iglob_is_forced,ispec_is_acoustic,ispec_is_elastic
   use enforce_par
-  use constants, only: TINYVAL,IMAIN,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants, only: TINYVAL,IMAIN,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,USE_ENFORCE_FIELDS
 
   implicit none
 
   !local variables
   integer :: inum,ispec,i,j,iglob
+
+  ! safety check
+  if (.not. USE_ENFORCE_FIELDS) return
 
   if (read_external_mesh) then
 
@@ -178,9 +181,9 @@ end module enforce_par
           iglob = ibool(i,j,ispec)
           if (iglob_is_forced(iglob)) then
             if (ispec_is_acoustic(ispec)) then
-               acoustic_iglob_is_forced = .true.
+               acoustic_iglob_is_forced(iglob) = .true.
             else if (ispec_is_elastic(ispec)) then
-               elastic_iglob_is_forced = .true.
+               elastic_iglob_is_forced(iglob) = .true.
             else
               call stop_the_code("Problem forced! Element is not acoustic and not elastic... this is not possible so far")
             endif
@@ -219,7 +222,7 @@ end module enforce_par
 ! ----------------------------------------------------------------------------------------
 !
 
-  subroutine enforce_fields(iglob,it)
+  subroutine enforce_fields_Lamb(iglob,it)
 ! ----------------------------------------------------------------------------------------
 ! This subroutine impose the fields at given GLL points and at a given time steps
 ! ----------------------------------------------------------------------------------------
@@ -227,7 +230,7 @@ end module enforce_par
   use specfem_par, only: coord,displ_elastic,veloc_elastic,accel_elastic,deltat,deltatover2, &
                          deltatsquareover2,myrank
   use enforce_par
-  use constants, only: TINYVAL,CUSTOM_REAL,TWO,PI
+  use constants, only: TINYVAL,CUSTOM_REAL,TWO,PI,USE_ENFORCE_FIELDS
 
   implicit none
 
@@ -235,13 +238,8 @@ end module enforce_par
   integer, intent(in) :: iglob,it
 
   ! Local variables
-  real(kind=CUSTOM_REAL) :: f0 = 0.125d6 ! frequency ! (fd=200,f=50KHz) (fd=500,f=125KHz) (fd=800,f=200KHz)
-  real(kind=CUSTOM_REAL) :: d = 4.0d-3 ! half width of the plate
-  real(kind=CUSTOM_REAL) :: cp = 5960.0d0 ! Compressional waves velocity
-  real(kind=CUSTOM_REAL) :: cs = 3260.d0 ! Shear waves velocity
-  real(kind=CUSTOM_REAL) :: fdin ! = f0 * d
-
-  integer :: Nweight = 11 ! Number of point on which we perform the weighted sum. Must be odd
+  real(kind=CUSTOM_REAL) :: f0,d,cp,cs,fdin ! = f0 * d
+  integer :: Nweight ! Number of point on which we perform the weighted sum. Must be odd
   real(kind=CUSTOM_REAL), dimension(2) :: accelOld,velocOld
   real(kind=CUSTOM_REAL) :: factor,x,z,facx,facz,tval,tval_old
   real(kind=CUSTOM_REAL) :: omegaj
@@ -249,11 +247,23 @@ end module enforce_par
   complex(CUSTOM_REAL) :: sum_ux,sum_uz
 
   ! Choose the mode to generate
-  logical :: antisym = .false.
+  logical :: antisym
   ! String that must be equal to 0,1, and so on
-  character (len=1) :: order='0'
+  character (len=1) :: order
   ! Number of cycle of the burst
-  integer :: Nc = 10
+  integer :: Nc
+
+  ! safety check
+  if (.not. USE_ENFORCE_FIELDS) return
+
+  f0 = 0.125d6 ! frequency ! (fd=200,f=50KHz) (fd=500,f=125KHz) (fd=800,f=200KHz)
+  d = 4.0d-3 ! half width of the plate
+  cp = 5960.0d0 ! Compressional waves velocity
+  cs = 3260.d0 ! Shear waves velocity
+  Nweight = 11 ! Number of point on which we perform the weighted sum. Must be odd
+  antisym = .false. ! Choose the mode to generate
+  order='0'
+  Nc = 10 ! Number of cycle of the burst
 
   factor = 1.0d0
   omegaj = TWO*PI*f0
@@ -352,7 +362,7 @@ end module enforce_par
 !    accel_elastic(:,iglob) = 0.0d0
 !  endif
 
-  end subroutine enforce_fields
+  end subroutine enforce_fields_Lamb
 
 !
 ! ----------------------------------------------------------------------------------------
@@ -383,7 +393,7 @@ end module enforce_par
     complex(kind=CUSTOM_REAL), intent(out) :: sum_ux,sum_uz
 
     ! local variables
-    complex(kind=CUSTOM_REAL) :: ux=(0.0,0.0),uz=(0.0,0.0)
+    complex(kind=CUSTOM_REAL) :: ux,uz
 
     real(kind=CUSTOM_REAL) ::  fc!,fdmin,fdmax,stepfd
     real(kind=CUSTOM_REAL) ::  freq,omegaj!,fmax,fmin
@@ -391,6 +401,9 @@ end module enforce_par
     !real(kind=CUSTOM_REAL) ::  BW ! frequency band width
     real(kind=CUSTOM_REAL) ::  Weigth_Burst,sum_Weight ! frequency weight
     integer :: iweight ! iterator over weigths
+
+    ux=(0.0,0.0)
+    uz=(0.0,0.0)
 
     omegaj=TWO*PI*f0
 
@@ -476,11 +489,13 @@ end module enforce_par
 
     ! Local variables
     complex(kind=CUSTOM_REAL) :: s,s2,q,q2,k,k2,sqrkp,sqrks,C1,C2
-    complex(kind=CUSTOM_REAL) :: jj = (0.0,1.0)
+    complex(kind=CUSTOM_REAL) :: jj
 
     ! note: since cosh and sinh are intrinsic functions, the complex functions defined in this file are renamed to **_cmplx
     ! functions
     complex(kind=CUSTOM_REAL), external :: cosh_cmplx,sinh_cmplx
+
+    jj = (0.0,1.0)
 
     k2 = (omegaj/cphase)**2
     sqrkp=(omegaj/cp)**2
@@ -503,7 +518,7 @@ end module enforce_par
 
 !    print *
 !     print *,'***************************************************'
-!~     print *, 'dans la fonction calculate ux uz'
+!~     print *, 'In function calculate ux uz'
 !~     print *, 'fd= ' , omegaj/TWO/PI*d
  !   print *,'cphase = ',cphase,'m/s @fd = ',omegaj/TWO/PI*d
 !~     print *, 'C1= ', C1, 'C2= ', C2
@@ -530,15 +545,18 @@ end module enforce_par
     real(kind=CUSTOM_REAL), intent(in) :: fdin
 
     ! Local variables
-    integer :: i,error=0!,nfdout1,nfdout2
+    integer :: i,error !,nfdout1,nfdout2
     !real(kind=CUSTOM_REAL) :: fdMin_of_file,fdMax_of_file,stepfd_of_file
     !real(kind=CUSTOM_REAL) ::  fdtemp1,fdtemp2
     character(len=1) :: mode
     character(len=1024) :: directory
     character(len=1024) :: file2read
-    logical :: hasBeenFound = .false.
+    logical :: hasBeenFound
 
+    error = 0
+    hasBeenFound = .false.
     directory= '/home1/bottero/specfem2d/EXAMPLES/delamination/DispersionCurves/' ! WARNING DO NOT FORGET THE / AT THE END
+
     ! choose the file to read
     if (.not. antisym) then
     mode='S'
@@ -632,10 +650,9 @@ subroutine Calculate_Weigth_Burst(Weigth_Burst,f0,freq,Nc)
     real(kind=CUSTOM_REAL),intent(out) :: Weigth_Burst
 
     !   Local variables
-    real(kind=CUSTOM_REAL), parameter :: SMALLVAL=1e-1
+    real(kind=CUSTOM_REAL), parameter :: SMALLVAL = 1e-1
     real(kind=CUSTOM_REAL) :: cste,den,M,f04,f,fbw1,fbw2
     ! SMALLVAL not TINYVAL because it does not work if val in too tiny !
-
 
     fbw1=f0-f0/Nc
     fbw2=f0+f0/Nc
@@ -672,61 +689,69 @@ end subroutine Calculate_Weigth_Burst
 ! ----------------------------------------------------------------------------------------
 !
 
-! subroutine enforce_fields(iglob,it)
-!! ----------------------------------------------------------------------------------------
-!! This subroutine impose the fields at a given GLL point and at a given time step
-!! ----------------------------------------------------------------------------------------
+ subroutine enforce_fields(iglob,it)
+! ----------------------------------------------------------------------------------------
+! This subroutine impose the fields at a given GLL point and at a given time step
+! ----------------------------------------------------------------------------------------
 
-!  use specfem_par, only: coord,forced,displ_elastic,veloc_elastic,accel_elastic,deltat,deltatover2, &
-!                         deltatsquareover2
-!  use enforce_par
-!  use constants, only: TINYVAL,CUSTOM_REAL,TWO,PI
+  use specfem_par, only: coord,displ_elastic,veloc_elastic,accel_elastic,deltat,deltatover2, &
+                         deltatsquareover2
+  use enforce_par
+  use constants, only: CUSTOM_REAL,TWO,PI,USE_ENFORCE_FIELDS
 
-!  implicit none
-!
-!  ! Inputs
-!  integer, intent(in) :: iglob,it
+  implicit none
 
-!  ! Local variables
+  ! Inputs
+  integer, intent(in) :: iglob,it
 
-!  ! Local variables
-!  real(kind=CUSTOM_REAL), dimension(2) :: accelOld,velocOld
-!  real(kind=CUSTOM_REAL) :: factor,x,z
-!  real(kind=CUSTOM_REAL) :: f0 = 0.5d6
+  ! Local variables
 
-!  x = coord(1,iglob)
-!  z = coord(2,iglob)
-!
-!  factor = 1.0d0 ! * (z - 2.0d0)**2
-!
-!  !if (abs(z + 1.5d-3) < 1.5d-3) then
-!    if (it == 1) then ! We initialize the variables
-!      displ_elastic(1,iglob) = factor*(-1.0d0)
-!      displ_elastic(2,iglob) = factor*0.0d0
-!      veloc_elastic(1,iglob) = factor*0.0d0
-!      veloc_elastic(2,iglob) = factor*0.0d0
-!      accel_elastic(1,iglob) = factor*(TWO*PI*f0)**2
-!      accel_elastic(2,iglob) = factor*0.0d0
-!    else ! We set what we want
-!      accel_elastic(1,iglob) = factor*(TWO*PI*f0)**2*cos(TWO*PI*f0*(it-1)*deltat)
-!      accelOld(1) = factor*(TWO*PI*f0)**2*cos(TWO*PI*f0*(it-2)*deltat)
-!      accel_elastic(2,iglob) = 0.0d0
-!      accelOld(2) = 0.0d0
-!      ! Do not change anything below: we compute numerically the velocity and displacement
-!      velocOld(1) = veloc_elastic(1,iglob)
-!      veloc_elastic(1,iglob) = veloc_elastic(1,iglob) + deltatover2*(accelOld(1) + accel_elastic(1,iglob))
-!      displ_elastic(1,iglob) = displ_elastic(1,iglob) + deltat*velocOld(1) + deltatsquareover2*accelOld(1)
-!      velocOld(2) = veloc_elastic(2,iglob)
-!      veloc_elastic(2,iglob) = veloc_elastic(2,iglob) + deltatover2*(accelOld(2) + accel_elastic(2,iglob))
-!      displ_elastic(2,iglob) = displ_elastic(2,iglob) + deltat*velocOld(2) + deltatsquareover2*accelOld(2)
-!    endif
-!  !else
-!  !  displ_elastic(:,iglob) = 0.0d0
-!  !  veloc_elastic(:,iglob) = 0.0d0
-!  !  accel_elastic(:,iglob) = 0.0d0
-!  !endif
+  ! Local variables
+  real(kind=CUSTOM_REAL), dimension(2) :: accelOld,velocOld
+  real(kind=CUSTOM_REAL) :: factor,x,z
+  real(kind=CUSTOM_REAL) :: f0
 
-! end subroutine enforce_fields
+  ! safety check
+  if (.not. USE_ENFORCE_FIELDS) return
+
+  x = coord(1,iglob)
+  z = coord(2,iglob)
+
+  f0 = 1.5d6
+  factor = 1.0d0 ! * (z - 2.0d0)**2
+
+  !if (abs(z + 1.5d-3) < 1.5d-3) then
+  !if (abs(x) < 0.01) then
+    if (it == 1) then
+      ! We initialize the variables
+      displ_elastic(2,iglob) = 0.0d0
+      displ_elastic(1,iglob) = 0.0d0
+      veloc_elastic(2,iglob) = 0.0d0
+      veloc_elastic(1,iglob) = 0.0d0
+      accel_elastic(2,iglob) = 0.0d0
+      accel_elastic(1,iglob) = 0.0d0
+    else
+      ! We set what we want
+      accel_elastic(2,iglob) = factor * (TWO*PI*f0)**2 * sin(TWO*PI*f0*(it-1)*deltat)
+      accelOld(2) = factor * (TWO*PI*f0)**2 * sin(TWO*PI*f0*(it-2)*deltat)
+      accel_elastic(1,iglob) = 0.0d0
+      accelOld(1) = 0.0d0
+
+      ! Do not change anything below: we compute numerically the velocity and displacement
+      velocOld(1) = veloc_elastic(1,iglob)
+      veloc_elastic(1,iglob) = veloc_elastic(1,iglob) + deltatover2*(accelOld(1) + accel_elastic(1,iglob))
+      displ_elastic(1,iglob) = displ_elastic(1,iglob) + deltat*velocOld(1) + deltatsquareover2*accelOld(1)
+      velocOld(2) = veloc_elastic(2,iglob)
+      veloc_elastic(2,iglob) = veloc_elastic(2,iglob) + deltatover2*(accelOld(2) + accel_elastic(2,iglob))
+      displ_elastic(2,iglob) = displ_elastic(2,iglob) + deltat*velocOld(2) + deltatsquareover2*accelOld(2)
+    endif
+  !else
+  !  displ_elastic(:,iglob) = 0.0d0
+  !  veloc_elastic(:,iglob) = 0.0d0
+  !  accel_elastic(:,iglob) = 0.0d0
+  !endif
+
+ end subroutine enforce_fields
 
 ! subroutine enforce_fields_acoustic(iglob,it)
 !! ----------------------------------------------------------------------------------------
@@ -877,7 +902,7 @@ end subroutine Calculate_Weigth_Burst
                          deltatsquareover2,myrank,nLines,zmode,realMode,imagMode,modeAmplitude
   use enforce_par
   use interpolation
-  use constants, only: TINYVAL,CUSTOM_REAL,TWO,PI
+  use constants, only: TINYVAL,CUSTOM_REAL,TWO,PI,USE_ENFORCE_FIELDS
 
   implicit none
 
@@ -888,11 +913,16 @@ end subroutine Calculate_Weigth_Burst
   integer :: i,ier,idx
   real(kind=CUSTOM_REAL) :: potential_dot_dot_acoustic_old,potential_dot_acoustic_old
   real(kind=CUSTOM_REAL) :: factor,x,z,A,B,tval,tval_old
-  real(kind=CUSTOM_REAL) :: f0 = 2.0d0
+  real(kind=CUSTOM_REAL) :: f0
   real(kind=CUSTOM_REAL) :: omegaj
   real(kind=CUSTOM_REAL) :: time_dependence,time_dependence_old
-  integer :: Nc = 10
+  integer :: Nc
 
+  ! safety check
+  if (.not. USE_ENFORCE_FIELDS) return
+
+  f0 = 2.0d0
+  Nc = 10
   factor = 1.0d0
   omegaj = TWO*PI*f0
 
@@ -964,13 +994,14 @@ end subroutine Calculate_Weigth_Burst
   !if (abs(z + 0.0d-3) < 1.0d-3) then
     if (it == 1) then
       ! We initialize the variables
-      potential_acoustic(iglob) = factor*0.0d0
-      potential_dot_acoustic(iglob) = factor*0.0d0
-      potential_dot_dot_acoustic(iglob) = factor*0.0d0
+      potential_acoustic(iglob) = 0.0d0
+      potential_dot_acoustic(iglob) = 0.0d0
+      potential_dot_dot_acoustic(iglob) = 0.0d0
     else
       ! We set what we want
       potential_dot_dot_acoustic(iglob) = factor*time_dependence
       potential_dot_dot_acoustic_old = factor*time_dependence_old
+
       ! Do not change anything below: we compute numerically the velocity and displacement
       potential_dot_acoustic_old = potential_dot_acoustic(iglob)
       potential_dot_acoustic(iglob) = potential_dot_acoustic(iglob) + deltatover2*(potential_dot_dot_acoustic_old + &
@@ -985,5 +1016,3 @@ end subroutine Calculate_Weigth_Burst
   !endif
 
   end subroutine enforce_fields_acoustic
-
-

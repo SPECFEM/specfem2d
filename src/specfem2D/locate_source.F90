@@ -41,15 +41,11 @@
                            NPROC,myrank, &
                            xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source,is_force_source)
 
-  use constants, only: NDIM,NGLLX,NGLLZ,IMAIN,HUGEVAL,TINYVAL,NUM_ITER,USE_BEST_LOCATION_FOR_SOURCE,SOURCE_IS_MOVING, &
+  use constants, only: NDIM,NGLLX,NGLLZ,IMAIN,HUGEVAL,TINYVAL,NUM_ITER,USE_BEST_LOCATION_FOR_SOURCE, &
     IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC
 
   use specfem_par, only: AXISYM,is_on_the_axis,xiglj, &
-    ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic
-
-#ifdef USE_MPI
-  use mpi
-#endif
+    ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic,SOURCE_IS_MOVING
 
   implicit none
 
@@ -101,18 +97,14 @@
   ! user output
   if (myrank == 0) then
     if (is_force_source .and. (.not. SOURCE_IS_MOVING)) then ! TODO
-      write(IMAIN,*)
       write(IMAIN,*) '*******************************'
       write(IMAIN,*) ' locating force source'
       write(IMAIN,*) '*******************************'
-      write(IMAIN,*)
       call flush_IMAIN()
     else if (.not. SOURCE_IS_MOVING) then
-      write(IMAIN,*)
       write(IMAIN,*) '*******************************'
       write(IMAIN,*) ' locating moment-tensor source'
       write(IMAIN,*) '*******************************'
-      write(IMAIN,*)
       call flush_IMAIN()
     endif
   endif
@@ -150,50 +142,25 @@
           ispec_selected_source = ispec
           ix_initial_guess = i
           iz_initial_guess = j
-          ! determines domain for outputting element type
-          if (ispec_is_acoustic(ispec)) then
-            idomain = IDOMAIN_ACOUSTIC
-          else if (ispec_is_elastic(ispec)) then
-            idomain = IDOMAIN_ELASTIC
-          else if (ispec_is_poroelastic(ispec)) then
-            idomain = IDOMAIN_POROELASTIC
-          else
-            call stop_the_code('Invalid element type in locating source found!')
-          endif
         endif
       enddo
     enddo
   enddo
 
-  ! global minimum distance computed over all processes
-  call min_all_all_dp(distmin_squared, dist_glob_squared)
-
-  ! check if this process contains the source
-  if (abs(sqrt(dist_glob_squared) - sqrt(distmin_squared)) < TINYVAL ) is_proc_source = 1
-
-  ! master collects info
-  call gather_all_singlei(is_proc_source,allgather_is_proc_source,NPROC)
-  if (myrank == 0) then
-    ! select slice with maximum rank which contains source
-    locate_is_proc_source = maxloc(allgather_is_proc_source) - 1
-    islice_selected_source = locate_is_proc_source(1)
-  endif
-  ! selects slice which holds source
-  call bcast_all_singlei(islice_selected_source)
-
 !! DK DK dec 2017: also loop on all the elements in contact with the initial guess element to improve accuracy of estimate
   flag_topological(:) = .false.
 
-! mark the four corners of the initial guess element
+  ! mark the four corners of the initial guess element
   flag_topological(ibool(1,1,ispec_selected_source)) = .true.
   flag_topological(ibool(NGLLX,1,ispec_selected_source)) = .true.
   flag_topological(ibool(NGLLX,NGLLZ,ispec_selected_source)) = .true.
   flag_topological(ibool(1,NGLLZ,ispec_selected_source)) = .true.
 
-! loop on all the elements to count how many are shared with the initial guess
+  ! loop on all the elements to count how many are shared with the initial guess
   number_of_mesh_elements_for_the_initial_guess = 1
   do ispec = 1,nspec
-    if (ispec == ispec_selected_source) cycle
+    if (ispec == ispec_selected_source) cycle  ! skip the initial guess element
+
     ! loop on the four corners only, no need to loop on the rest since we just want to detect adjacency
     do j = 1,NGLLZ,NGLLZ-1
       do i = 1,NGLLX,NGLLX-1
@@ -201,23 +168,25 @@
           ! this element is in contact with the initial guess
           number_of_mesh_elements_for_the_initial_guess = number_of_mesh_elements_for_the_initial_guess + 1
           ! let us not count it more than once, it may have a full edge in contact with it and would then be counted twice
-          goto 700
+          goto 700  ! Exit the loop over the four corners: we know this element is adjacent
         endif
       enddo
     enddo
+
     700 continue
   enddo
 
-! now that we know the number of elements, we can allocate the list of elements and create it
+  ! now that we know the number of adjacent elements, we can allocate the list of elements and create it
   allocate(array_of_all_elements_of_ispec_selected_source(number_of_mesh_elements_for_the_initial_guess))
 
-! first store the initial guess itself
+  ! first store the initial guess itself
   number_of_mesh_elements_for_the_initial_guess = 1
   array_of_all_elements_of_ispec_selected_source(number_of_mesh_elements_for_the_initial_guess) = ispec_selected_source
 
-! then store all the others
+  ! then store all the others
   do ispec = 1,nspec
     if (ispec == ispec_selected_source) cycle
+
     ! loop on the four corners only, no need to loop on the rest since we just want to detect adjacency
     do j = 1,NGLLZ,NGLLZ-1
       do i = 1,NGLLX,NGLLX-1
@@ -230,6 +199,7 @@
         endif
       enddo
     enddo
+
     800 continue
   enddo
 
@@ -241,93 +211,122 @@
 !! DK DK dec 2017 set initial guess in the middle of the element, since we computed the true one only for the true initial guess
 !! DK DK dec 2017 the nonlinear process below will converge anyway
     if (i > 1) then
-      ix_initial_guess = NGLLX / 2
-      iz_initial_guess = NGLLZ / 2
+      ix_initial_guess = int(NGLLX / 2.0)
+      iz_initial_guess = int(NGLLZ / 2.0)
     endif
 
     ispec = array_of_all_elements_of_ispec_selected_source(i)
 
-! ****************************************
-! find the best (xi,gamma) for each source
-! ****************************************
+    ! ****************************************
+    ! find the best (xi,gamma) for each source
+    ! ****************************************
 
-! use initial guess in xi and gamma
-  if (AXISYM) then
-    if (is_on_the_axis(ispec)) then
-      xi = xiglj(ix_initial_guess)
+    ! use initial guess in xi and gamma
+    if (AXISYM) then
+      if (is_on_the_axis(ispec)) then
+        xi = xiglj(ix_initial_guess)
+      else
+        xi = xigll(ix_initial_guess)
+      endif
     else
       xi = xigll(ix_initial_guess)
     endif
-  else
-    xi = xigll(ix_initial_guess)
-  endif
-  gamma = zigll(iz_initial_guess)
+    gamma = zigll(iz_initial_guess)
 
-! iterate to solve the nonlinear system
-  if (USE_BEST_LOCATION_FOR_SOURCE) then
-    number_of_iterations = NUM_ITER
-  else
-    number_of_iterations = 0 ! this means that the loop below will not be executed, i.e. we will not iterate
-  endif
+    ! iterate to solve the nonlinear system
+    if (USE_BEST_LOCATION_FOR_SOURCE) then
+      number_of_iterations = NUM_ITER
+    else
+      number_of_iterations = 0 ! this means that the loop below will not be executed, i.e. we will not iterate
+    endif
 
-  do iter_loop = 1,number_of_iterations
+    do iter_loop = 1,number_of_iterations
 
-    ! recompute jacobian for the new point
-    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                  coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
+      ! recompute jacobian for the new point
+      call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
+                                                 coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
 
-    ! compute distance to target location
-    dx = - (x - x_source)
-    dz = - (z - z_source)
+      ! compute distance to target location
+      dx = - (x - x_source)
+      dz = - (z - z_source)
 
-    ! compute increments
-    dxi  = xix*dx + xiz*dz
-    dgamma = gammax*dx + gammaz*dz
+      ! compute increments
+      dxi  = xix*dx + xiz*dz
+      dgamma = gammax*dx + gammaz*dz
 
-    ! update values
-    xi = xi + dxi
-    gamma = gamma + dgamma
+      ! update values
+      xi = xi + dxi
+      gamma = gamma + dgamma
 
-    ! impose that we stay in that element
-    ! (useful if user gives a source outside the mesh for instance)
-    ! we can go slightly outside the [1,1] segment since with finite elements
-    ! the polynomial solution is defined everywhere
-    ! this can be useful for convergence of itertive scheme with distorted elements
-    if (xi > 1.01d0) xi = 1.01d0
-    if (xi < -1.01d0) xi = -1.01d0
-    if (gamma > 1.01d0) gamma = 1.01d0
-    if (gamma < -1.01d0) gamma = -1.01d0
+      ! impose that we stay in that element
+      ! (useful if user gives a source outside the mesh for instance)
+      ! we can go slightly outside the [1,1] segment since with finite elements
+      ! the polynomial solution is defined everywhere
+      ! this can be useful for convergence of itertive scheme with distorted elements
+      if (xi > 1.01d0) xi = 1.01d0
+      if (xi < -1.01d0) xi = -1.01d0
+      if (gamma > 1.01d0) gamma = 1.01d0
+      if (gamma < -1.01d0) gamma = -1.01d0
 
-! end of nonlinear iterations
-  enddo
+    ! end of nonlinear iterations
+    enddo
 
-! compute final coordinates of point found
-  call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                          coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
+    ! compute final coordinates of point found
+    call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
+                                               coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
 
-! compute final distance between asked and found
-  final_distance_this_element = sqrt((x_source-x)**2 + (z_source-z)**2)
+    ! compute final distance between asked and found
+    final_distance_this_element = sqrt((x_source-x)**2 + (z_source-z)**2)
 
-! if we have found an element that gives a shorter distance
-  if (final_distance_this_element < final_distance) then
-!   store element number found
-    ispec_selected_source = ispec
+    ! if we have found an element that gives a shorter distance
+    if (final_distance_this_element < final_distance) then
+      !   store element number found
+      ispec_selected_source = ispec
 
-!   store xi,gamma of point found
-    xi_source = xi
-    gamma_source = gamma
+      !   store xi,gamma of point found
+      xi_source = xi
+      gamma_source = gamma
 
-!   store final distance between asked and found
-    final_distance = final_distance_this_element
-  endif
+      !   store final distance between asked and found
+      final_distance = final_distance_this_element
+
+      ! determines domain for outputting element type
+      if (ispec_is_acoustic(ispec)) then
+        idomain = IDOMAIN_ACOUSTIC
+      else if (ispec_is_elastic(ispec)) then
+        idomain = IDOMAIN_ELASTIC
+      else if (ispec_is_poroelastic(ispec)) then
+        idomain = IDOMAIN_POROELASTIC
+      else
+        call stop_the_code('Invalid element type in locating source found!')
+      endif
+    endif
 
 !! DK DK dec 2017
   enddo
 
-#ifdef USE_MPI
+  ! global minimum distance computed over all processes
+  call min_all_all_dp(final_distance, dist_glob_squared)
+
+  ! check if this process contains the source
+  if (abs(sqrt(dist_glob_squared) - sqrt(final_distance)) < TINYVAL ) is_proc_source = 1
+
+  ! main collects info
+  call gather_all_singlei(is_proc_source,allgather_is_proc_source,NPROC)
+
+  if (myrank == 0) then
+    ! select slice with maximum rank which contains source
+    locate_is_proc_source = maxloc(allgather_is_proc_source) - 1
+    islice_selected_source = locate_is_proc_source(1)
+  endif
+
+  ! selects slice which holds source
+  call bcast_all_singlei(islice_selected_source)
+
+#ifdef WITH_MPI
   ! for MPI version, gather information from all the nodes
   if (islice_selected_source /= 0) then
-    ! source is in another slice than the master process
+    ! source is in another slice than the main process
     if (myrank == islice_selected_source) then
       ! send information from process holding source
       call send_singlei(ispec_selected_source,0,0)
@@ -336,7 +335,7 @@
       call send_singledp(gamma_source,0,3)
       call send_singledp(final_distance,0,4)
     else if (myrank == 0) then
-      ! master collects
+      ! main collects
       call recv_singlei(ispec_selected_source,islice_selected_source,0)
       call recv_singlei(idomain,islice_selected_source,1)
       call recv_singledp(xi_source,islice_selected_source,2)

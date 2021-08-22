@@ -37,20 +37,17 @@
 
   subroutine exit_MPI(myrank,error_msg)
 
-#ifdef USE_MPI
-  use mpi
-#endif
   use constants, only: MAX_STRING_LEN,IMAIN,ISTANDARD_OUTPUT,OUTPUT_FILES
 
   implicit none
 
+  integer,intent(in) :: myrank
+  character(len=*),intent(in) :: error_msg
+
+  ! local parameters
+  character(len=MAX_STRING_LEN) :: outputname
   ! identifier for error message file
   integer, parameter :: IERROR = 30
-
-  integer :: myrank
-  character(len=*) :: error_msg
-
-  character(len=MAX_STRING_LEN) :: outputname
 
   ! write error message to screen
   write(*,*) error_msg(1:len(error_msg))
@@ -66,7 +63,13 @@
 ! close output file
   if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
 
-  call abort_mpi()
+  ! stop all the MPI processes, and exit
+  if (error_msg /= 'Error, program ended in exit_MPI') call abort_mpi()
+
+  ! otherwise: there is no standard behaviour to exit with an error code in Fortran,
+  ! however most compilers do recognize this as an error code stop statement;
+  ! to check stop code in terminal: > echo $?
+  stop 30
 
   end subroutine exit_MPI
 
@@ -76,7 +79,7 @@
 
   subroutine stop_the_code(error_msg)
 
-  use shared_parameters, only: myrank
+  use constants, only: myrank
 
   implicit none
 
@@ -98,7 +101,7 @@
 
   implicit none
 
-  ! only master process writes out to main output file
+  ! only main process writes out to main output file
   ! file I/O in Fortran is buffered by default
   !
   ! note: Fortran2003 includes a FLUSH statement

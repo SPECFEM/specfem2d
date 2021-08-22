@@ -5,8 +5,8 @@
 #
 ##########################################
 
-# master station #id
-master_id=1
+# select main station #id
+#main_id=1
 
 ##########################################
 
@@ -23,23 +23,43 @@ mkdir -p NOISE_TOMOGRAPHY
 
 # sets up local DATA/ directory
 if [ "$1" == "" ]; then
-cp -v DATA/Par_file_noise_1 DATA/Par_file
+cp -v DATA/Par_file DATA/Par_file_noise_1
 else
 echo "using noise Par_file $1"
-cp -v DATA/Par_file_noise_$1 DATA/Par_file
+step=$1
+case $step in
+1) sed -i "s:^SIMULATION_TYPE .*:SIMULATION_TYPE = 1:" DATA/Par_file
+   sed -i "s:^NOISE_TOMOGRAPHY .*:NOISE_TOMOGRAPHY = 1:" DATA/Par_file
+   sed -i "s:^SAVE_FORWARD .*:SAVE_FORWARD = .false.:" DATA/Par_file
+   ;;
+2) sed -i "s:^SIMULATION_TYPE .*:SIMULATION_TYPE = 1:" DATA/Par_file
+   sed -i "s:^NOISE_TOMOGRAPHY .*:NOISE_TOMOGRAPHY = 2:" DATA/Par_file
+   sed -i "s:^SAVE_FORWARD .*:SAVE_FORWARD = .true.:" DATA/Par_file
+   ;;
+3) sed -i "s:^SIMULATION_TYPE .*:SIMULATION_TYPE = 3:" DATA/Par_file
+   sed -i "s:^NOISE_TOMOGRAPHY .*:NOISE_TOMOGRAPHY = 3:" DATA/Par_file
+   sed -i "s:^SAVE_FORWARD .*:SAVE_FORWARD = .false.:" DATA/Par_file
+   ;;
+*) echo "step not recognized: $step"; echo "please use as step number 1, 2 or 3"; exit 1 ;;
+esac
+cp -v DATA/Par_file DATA/Par_file_noise_${step}
+echo
 fi
 
-# sets a master station
-echo "master id: $master_id"
-echo $master_id > NOISE_TOMOGRAPHY/irec_master_noise
+# sets a main station (or takes the default one from the existing file in NOISE_TOMOGRAPHY/)
+#echo "main id: $main_id"
+#echo $main_id > NOISE_TOMOGRAPHY/irec_main_noise
 
 # cleans output files
 rm -rf OUTPUT_FILES/*
 
 # links executables
+mkdir -p bin
+cd bin/
 rm -f xmeshfem2D xspecfem2D
-ln -s ../../bin/xmeshfem2D
-ln -s ../../bin/xspecfem2D
+ln -s ../../../bin/xmeshfem2D
+ln -s ../../../bin/xspecfem2D
+cd ../
 
 # stores setup
 cp DATA/Par_file OUTPUT_FILES/
@@ -54,13 +74,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running mesher..."
   echo
-  ./xmeshfem2D
+  ./bin/xmeshfem2D
 else
   # This is a MPI simulation
   echo
   echo "running mesher on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./xmeshfem2D
+  mpirun -np $NPROC ./bin/xmeshfem2D
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
@@ -71,13 +91,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running solver..."
   echo
-  ./xspecfem2D
+  ./bin/xspecfem2D
 else
   # This is a MPI simulation
   echo
   echo "running solver on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./xspecfem2D
+  mpirun -np $NPROC ./bin/xspecfem2D
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi

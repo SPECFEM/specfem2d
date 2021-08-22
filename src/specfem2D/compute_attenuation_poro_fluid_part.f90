@@ -35,7 +35,7 @@
 
  subroutine compute_attenuation_poro_fluid_part()
 
-  use constants, only: ZERO,NGLLX,NGLLZ,ALPHA_LDDRK,BETA_LDDRK
+  use constants, only: ZERO,NGLLX,NGLLZ,ALPHA_LDDRK,BETA_LDDRK,ALPHA_RK4,BETA_RK4
 
   use specfem_par, only: nspec,ispec_is_poroelastic,poroelastcoef,kmato,permeability,ibool, &
                          velocw_poroelastic,time_stepping_scheme,deltat,i_stage,time_stepping_scheme, &
@@ -123,47 +123,47 @@
           case (3)
             ! Runge-Kutta
             ! x-component
+            ! initial field
+            if (i_stage == 1) rx_viscous_initial_rk(i,j,ispec) = rx_viscous(i,j,ispec)
+
+            ! intermediate fields
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
-            rx_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
+            rx_viscous_force_RK(i,j,ispec,i_stage) = Sn + thetainv * rx_viscous(i,j,ispec)
 
             if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
-              if (i_stage == 1) weight_rk = 0.5d0
-              if (i_stage == 2) weight_rk = 0.5d0
-              if (i_stage == 3) weight_rk = 1.0d0
-
-              if (i_stage == 1) then
-                rx_viscous_initial_rk(i,j,ispec) = rx_viscous(i,j,ispec)
-              endif
+              ! note: this prepare the fields for the next stage, i.e., used at istage+1
+              weight_rk = ALPHA_RK4(i_stage+1) * deltat
               rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + weight_rk * rx_viscous_force_RK(i,j,ispec,i_stage)
 
             else if (i_stage == 4) then
-                rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
-                                        1.0d0 / 6.0d0 * (rx_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        rx_viscous_force_RK(i,j,ispec,i_stage))
+              ! final update
+              rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + deltat * &
+                                      (BETA_RK4(1) * rx_viscous_force_RK(i,j,ispec,1) + &
+                                       BETA_RK4(2) * rx_viscous_force_RK(i,j,ispec,2) + &
+                                       BETA_RK4(3) * rx_viscous_force_RK(i,j,ispec,3) + &
+                                       BETA_RK4(4) * rx_viscous_force_RK(i,j,ispec,4))
             endif
 
             ! z-component
+            ! initial field
+            if (i_stage == 1) rz_viscous_initial_rk(i,j,ispec) = rz_viscous(i,j,ispec)
+
+            ! intermediate field
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
-            rz_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
+            rz_viscous_force_RK(i,j,ispec,i_stage) = Sn + thetainv * rz_viscous(i,j,ispec)
 
             if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
-              if (i_stage == 1) weight_rk = 0.5d0
-              if (i_stage == 2) weight_rk = 0.5d0
-              if (i_stage == 3) weight_rk = 1.0d0
-
-              if (i_stage == 1) then
-                rz_viscous_initial_rk(i,j,ispec) = rz_viscous(i,j,ispec)
-              endif
+              ! note: this prepare the fields for the next stage, i.e., used at istage+1
+              weight_rk = ALPHA_RK4(i_stage+1) * deltat
               rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + weight_rk * rz_viscous_force_RK(i,j,ispec,i_stage)
 
             else if (i_stage == 4) then
-              rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + &
-                                      1.0d0 / 6.0d0 * (rz_viscous_force_RK(i,j,ispec,i_stage) + &
-                                      2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
-                                      2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
-                                      rz_viscous_force_RK(i,j,ispec,i_stage))
+              ! final update
+              rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + deltat * &
+                                      (BETA_RK4(1) * rz_viscous_force_RK(i,j,ispec,1) + &
+                                       BETA_RK4(2) * rz_viscous_force_RK(i,j,ispec,2) + &
+                                       BETA_RK4(3) * rz_viscous_force_RK(i,j,ispec,3) + &
+                                       BETA_RK4(4) * rz_viscous_force_RK(i,j,ispec,4))
             endif
 
           case default

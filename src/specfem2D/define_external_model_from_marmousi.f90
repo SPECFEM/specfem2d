@@ -32,18 +32,16 @@
 !========================================================================
 
   subroutine define_external_model_from_marmousi(coord,ibool,rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
-                                                 c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+                                                 c11,c12,c13,c15,c23,c25,c33,c35,c55)
 
 ! reads in external model using a marmousi format which defines a compaction gradient
 
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
 
-  use specfem_par, only: poroelastcoef,density,kmato,myrank
+  use specfem_par, only: poroelastcoef,density,kmato,myrank,nspec,nglob
 
   implicit none
-
-  integer, intent(in) :: nspec,nglob
 
   double precision, dimension(NDIM,nglob), intent(in) :: coord
 

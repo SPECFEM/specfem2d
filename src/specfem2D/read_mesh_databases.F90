@@ -33,9 +33,11 @@
 
   subroutine read_mesh_for_init()
 
-  use constants, only: IMAIN,IIN,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT,OUTPUT_FILES
+  use constants, only: &
+    IMAIN,IIN,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT,OUTPUT_FILES, &
+    ADD_RANDOM_PERTURBATION_TO_THE_MESH,ADD_PERTURBATION_AROUND_SOURCE_ONLY
+
   use specfem_par
-  use specfem_par_noise, only: NOISE_TOMOGRAPHY
   use specfem_par_movie
 
   implicit none
@@ -45,18 +47,30 @@
   integer :: ier,int_dummy
   character(len=MAX_STRING_LEN) :: prname, dummy
 
+  logical :: do_rerun_mesher
+  integer :: local_i
+  integer (kind=RegInt_K) :: local_ireg
+  double precision :: local_dble
+  logical :: local_l,local_l1,local_l2,local_l3
+  character(len=MAX_STRING_LEN) :: local_str
+
   ! starts reading SIMULATION_TYPE and SAVE_FORWARD from Par_file
 
   call open_parameter_file()
+
   call read_value_string_p(dummy, 'solver.title')
   if (err_occurred() /= 0) call stop_the_code('error reading parameter title in Par_file')
+
   ! read type of simulation
   call read_value_integer_p(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
   if (err_occurred() /= 0) call stop_the_code('error reading parameter SIMULATION_TYPE in Par_file')
+
   call read_value_integer_p(int_dummy, 'solver.NOISE_TOMOGRAPHY')
   if (err_occurred() /= 0) call stop_the_code('error reading parameter NOISE_TOMOGRAPHY in Par_file')
+
   call read_value_logical_p(SAVE_FORWARD, 'solver.SAVE_FORWARD')
   if (err_occurred() /= 0) call stop_the_code('error reading parameter SAVE_FORWARD in Par_file')
+
   call close_parameter_file()
 
   ! starts reading in parameters from input Database file
@@ -73,141 +87,240 @@
     call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'Database***.bin')
   endif
 
+! note: we now read in the parameter file also in the initialization of the solver.
+!       the idea is to separate solver and mesher further and
+!       to be able to run only the solver if Par_file parameters were changed which don't affect the meshing stage.
+!       this should include parameters like simulation_type, sources, receivers, image outputs etc. and would be more
+!       similar of how to run simulations in the 3D version.
+!
+!       however, at the moment most of the Par_file changes are setup in the mesher and require re-running the mesher.
+!
+!       we will use local_** variables just to read in the settings stored in the database and then compare with
+!       the ones from the Par_file to decide if we need to re-run the mesher.
+  do_rerun_mesher = .false.
+
+  simulation_title = trim(title) ! from parameter file
+
   !-------- starts reading init section
 
   !---  read job title and skip remaining titles of the input file
-  read(IIN) simulation_title
+  read(IIN) local_str ! simulation_title
+  !print *,'debug: simulation_title',myrank,'***',local_str,'***'
 
   !---- read parameters from input file
-  read(IIN) NOISE_TOMOGRAPHY, UNDO_ATTENUATION_AND_OR_PML
+  read(IIN) local_i, local_l ! NOISE_TOMOGRAPHY, UNDO_ATTENUATION_AND_OR_PML
+  !print *,'debug: NOISE_TOMOGRAPHY,UNDO_ATTENUATION_AND_OR_PML ',myrank,local_i,local_l
 
   read(IIN) nspec
+  !print *,'debug: nspec ',myrank,nspec
 
   read(IIN) npgeo,nproc_read_from_database
+  !print *,'debug: npgeo,nproc_read_from_database ',myrank,npgeo,nproc_read_from_database
 
-  read(IIN) output_grid_Gnuplot,interpol
+  read(IIN) local_l1, local_l2 ! output_grid_Gnuplot,interpol
+  !print *,'debug: output_grid_Gnuplot,interpol',myrank,local_l1,local_l2
 
-  read(IIN) NSTEP_BETWEEN_OUTPUT_INFO
+  read(IIN) local_i ! NSTEP_BETWEEN_OUTPUT_INFO
+  !print *,'debug: NSTEP_BETWEEN_OUTPUT_INFO ',myrank,local_i
 
-  read(IIN) NSTEP_BETWEEN_OUTPUT_SEISMOS
+  read(IIN) local_i ! NSTEP_BETWEEN_OUTPUT_SEISMOS
+  !print *,'debug: NSTEP_BETWEEN_OUTPUT_SEISMOS ',myrank,local_i
 
-  read(IIN) NSTEP_BETWEEN_OUTPUT_IMAGES
+  read(IIN) local_i ! NSTEP_BETWEEN_OUTPUT_IMAGES
+  !print *,'debug: NSTEP_BETWEEN_OUTPUT_IMAGES ',myrank,local_i
 
-  read(IIN) PML_BOUNDARY_CONDITIONS
+  read(IIN) local_l ! PML_BOUNDARY_CONDITIONS
+  !print *,'debug: PML_BOUNDARY_CONDITIONS ',myrank,local_l
 
-  read(IIN) ROTATE_PML_ACTIVATE
+  if (local_l .neqv. PML_BOUNDARY_CONDITIONS) then
+    print *,'Warning: rank ',myrank,' read mesh: PML_BOUNDARY_CONDITIONS setting changed'
+    do_rerun_mesher = .true.
+  endif
 
-  read(IIN) ROTATE_PML_ANGLE
+  read(IIN) local_l ! ROTATE_PML_ACTIVATE
 
-  read(IIN) K_MIN_PML
+  read(IIN) local_dble ! ROTATE_PML_ANGLE
 
-  read(IIN) K_MAX_PML
+  read(IIN) local_dble ! K_MIN_PML
 
-  read(IIN) damping_change_factor_acoustic
+  read(IIN) local_dble ! K_MAX_PML
 
-  read(IIN) damping_change_factor_elastic
+  read(IIN) local_dble ! damping_change_factor_acoustic
 
-  read(IIN) PML_PARAMETER_ADJUSTMENT
+  read(IIN) local_dble ! damping_change_factor_elastic
 
-  read(IIN) read_external_mesh
+  read(IIN) local_l ! PML_PARAMETER_ADJUSTMENT
 
-  read(IIN) NELEM_PML_THICKNESS
+  read(IIN) local_l ! read_external_mesh
+  if (local_l .neqv. read_external_mesh) then
+     print *,'Warning: rank ',myrank,' read mesh: read_external_mesh setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
+  read(IIN) local_i ! NELEM_PML_THICKNESS
+  if (local_i /= NELEM_PML_THICKNESS) then
+     print *,'Warning: rank ',myrank,' read mesh: NELEM_PML_THICKNESS setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) output_postscript_snapshot,output_color_image
+  read(IIN) local_i, local_i, local_i ! subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
 
-  read(IIN) meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows
+  read(IIN) local_l, local_l ! output_postscript_snapshot,output_color_image
 
-  read(IIN) anglerec
+  ! meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows
+  read(IIN) local_l, local_l, local_l, local_dble, local_i, local_dble
 
-  read(IIN) initialfield
+  read(IIN) local_dble ! anglerec
 
-  read(IIN) add_Bielak_conditions_bottom,add_Bielak_conditions_right,add_Bielak_conditions_top,add_Bielak_conditions_left
+  read(IIN) local_l ! initialfield
+  if (local_l .neqv. initialfield) then
+     print *,'Warning: rank ',myrank,' read mesh: initialfield setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) seismotype,imagetype_postscript
+  ! add_Bielak_conditions_bottom,add_Bielak_conditions_right,add_Bielak_conditions_top,add_Bielak_conditions_left
+  read(IIN) local_l,local_l,local_l,local_l
 
-  read(IIN) MODEL
+  read(IIN) local_str,local_i ! seismotype,imagetype_postscript
 
-  read(IIN) SAVE_MODEL
+  read(IIN) local_str ! MODEL
+  if (trim(local_str) /= trim(MODEL)) then
+     print *,'Warning: rank ',myrank,' read mesh: MODEL setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) TOMOGRAPHY_FILE
+  read(IIN) local_str ! SAVE_MODEL
 
-  read(IIN) output_grid_ASCII,OUTPUT_ENERGY,NTSTEP_BETWEEN_OUTPUT_ENERGY,output_wavefield_dumps
+  read(IIN) local_str ! TOMOGRAPHY_FILE
+  if (trim(local_str) /= trim(TOMOGRAPHY_FILE)) then
+     print *,'Warning: rank ',myrank,' read mesh: TOMOGRAPHY_FILE setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) use_binary_for_wavefield_dumps
+  ! output_grid_ASCII,OUTPUT_ENERGY,NTSTEP_BETWEEN_OUTPUT_ENERGY,output_wavefield_dumps
+  read(IIN) local_l, local_l, local_i, local_l
 
-  read(IIN) ATTENUATION_VISCOELASTIC,ATTENUATION_PORO_FLUID_PART,ATTENUATION_VISCOACOUSTIC
+  read(IIN) local_l ! use_binary_for_wavefield_dumps
 
-  read(IIN) USE_SOLVOPT
+  read(IIN) local_l1, local_l2, local_l3 ! ATTENUATION_VISCOELASTIC,ATTENUATION_PORO_FLUID_PART,ATTENUATION_VISCOACOUSTIC
+  if (local_l1 .neqv. ATTENUATION_VISCOELASTIC) then
+     print *,'Warning: rank ',myrank,' read mesh: ATTENUATION_VISCOELASTIC setting changed'
+     do_rerun_mesher = .true.
+   endif       ! elements load changes in meshing
+  if (local_l2 .neqv. ATTENUATION_PORO_FLUID_PART) then
+     print *,'Warning: rank ',myrank,' read mesh: ATTENUATION_PORO_FLUID_PART setting changed'
+     do_rerun_mesher = .true.
+   endif
+  if (local_l3 .neqv. ATTENUATION_VISCOACOUSTIC) then
+     print *,'Warning: rank ',myrank,' read mesh: ATTENUATION_VISCOACOUSTIC setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) save_ASCII_seismograms
+  read(IIN) local_l ! USE_SOLVOPT
 
-  read(IIN) save_binary_seismograms_single,save_binary_seismograms_double
+  read(IIN) local_l ! save_ASCII_seismograms
 
-  read(IIN) USE_TRICK_FOR_BETTER_PRESSURE
+  read(IIN) local_l, local_l ! save_binary_seismograms_single,save_binary_seismograms_double
 
-  read(IIN) COMPUTE_INTEGRATED_ENERGY_FIELD
+  read(IIN) local_l ! USE_TRICK_FOR_BETTER_PRESSURE
 
-  read(IIN) save_ASCII_kernels
+  read(IIN) local_l ! COMPUTE_INTEGRATED_ENERGY_FIELD
 
-  read(IIN) NSTEP_BETWEEN_COMPUTE_KERNELS
+  read(IIN) local_l ! save_ASCII_kernels
 
-  read(IIN) NO_BACKWARD_RECONSTRUCTION
+  read(IIN) local_i ! NSTEP_BETWEEN_COMPUTE_KERNELS
 
-  read(IIN) DRAW_SOURCES_AND_RECEIVERS
+  read(IIN) local_l ! NO_BACKWARD_RECONSTRUCTION
 
-  read(IIN) Q0_poroelastic,freq0_poroelastic
+  read(IIN) local_l ! DRAW_SOURCES_AND_RECEIVERS
 
-  read(IIN) AXISYM
+  read(IIN) local_dble,local_dble ! Q0_poroelastic,freq0_poroelastic
 
-  read(IIN) P_SV
+  read(IIN) local_l ! AXISYM
+  if (local_l .neqv. AXISYM) then
+     print *,'Warning: rank ',myrank,' read mesh: AXISYM setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) factor_subsample_image
+  read(IIN) local_l ! P_SV
 
-  read(IIN) USE_CONSTANT_MAX_AMPLITUDE
+  read(IIN) local_dble ! factor_subsample_image
 
-  read(IIN) CONSTANT_MAX_AMPLITUDE_TO_USE
+  read(IIN) local_l ! USE_CONSTANT_MAX_AMPLITUDE
 
-  read(IIN) USE_SNAPSHOT_NUMBER_IN_FILENAME
+  read(IIN) local_dble ! CONSTANT_MAX_AMPLITUDE_TO_USE
 
-  read(IIN) DRAW_WATER_IN_BLUE
+  read(IIN) local_l ! USE_SNAPSHOT_NUMBER_IN_FILENAME
 
-  read(IIN) US_LETTER
+  read(IIN) local_l ! DRAW_WATER_IN_BLUE
 
-  read(IIN) POWER_DISPLAY_COLOR
+  read(IIN) local_l ! US_LETTER
 
-  read(IIN) SU_FORMAT
+  read(IIN) local_dble ! POWER_DISPLAY_COLOR
 
-  read(IIN) USER_T0
+  read(IIN) local_l ! SU_FORMAT
 
-  read(IIN) time_stepping_scheme
+  read(IIN) local_dble ! USER_T0
 
-  read(IIN) ADD_PERIODIC_CONDITIONS
+  read(IIN) local_i ! time_stepping_scheme
 
-  read(IIN) PERIODIC_HORIZ_DIST
+  read(IIN) local_l ! ADD_PERIODIC_CONDITIONS
+  if (local_l .neqv. ADD_PERIODIC_CONDITIONS) then
+     print *,'Warning: rank ',myrank,' read mesh: ADD_PERIODIC_CONDITIONS setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) GPU_MODE
+  read(IIN) local_dble ! PERIODIC_HORIZ_DIST
+  if (local_dble /= PERIODIC_HORIZ_DIST) then
+     print *,'Warning: rank ',myrank,' read mesh: PERIODIC_HORIZ_DIST setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) setup_with_binary_database
+  read(IIN) local_l ! GPU_MODE
+
+  read(IIN) local_i ! setup_with_binary_database
 
   !---- read time step
-  read(IIN) NSTEP,DT
+  read(IIN) local_ireg,local_dble ! NSTEP,DT
 
-  read(IIN) NT_DUMP_ATTENUATION
+  read(IIN) local_i ! NT_DUMP_ATTENUATION
 
   ! read the ACOUSTIC_FORCING flag
-  read(IIN) ACOUSTIC_FORCING
+  read(IIN) local_l ! ACOUSTIC_FORCING
+  if (local_l .neqv. ACOUSTIC_FORCING) then
+     print *,'Warning: rank ',myrank,' read mesh: ACOUSTIC_FORCING setting changed'
+     do_rerun_mesher = .true.
+   endif
 
   ! 'NUMBER_OF_SIMULTANEOUS_RUNS'
-  read(IIN) NUMBER_OF_SIMULTANEOUS_RUNS
+  read(IIN) local_i ! NUMBER_OF_SIMULTANEOUS_RUNS
 
   ! 'BROADCAST_SAME_MESH_AND_MODEL'
-  read(IIN) BROADCAST_SAME_MESH_AND_MODEL
+  read(IIN) local_l ! BROADCAST_SAME_MESH_AND_MODEL
+
+  read(IIN) local_l1,local_l2 ! ADD_RANDOM_PERTURBATION_TO_THE_MESH,ADD_PERTURBATION_AROUND_SOURCE_ONLY
+  if ((local_l1 .neqv. ADD_RANDOM_PERTURBATION_TO_THE_MESH) &
+      .or. (local_l2 .neqv. ADD_PERTURBATION_AROUND_SOURCE_ONLY)) then
+    print *,'Warning: rank ',myrank,' read mesh: ADD_RANDOM_PERTURBATION or ADD_PERTURBATION_AROUND_SOURCE setting changed'
+    do_rerun_mesher = .true.
+  endif
+
+  ! check if setup needs re-running mesher
+  if (do_rerun_mesher) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Setup in Par_file changed and requires re-running the mesher...exiting'
+    write(IMAIN,*)
+    call stop_the_code('Please re-run mesher')
+  endif
+  call synchronize_all()
+
+  ! At that point seismotype is a string (e.g 2,3,6). The following routine convert it to an integer array: seismotypeVec
+  call process_seismotype_line()
 
   !-------- finish reading init section
+
   ! sets time step for time scheme
-  deltat = DT
+  deltat = real(DT,kind=CUSTOM_REAL)
 
   ! user output
   if (myrank == 0) then
@@ -221,12 +334,13 @@
       write(IMAIN,*) '-----------------------------------------------------'
       write(IMAIN,*) '--- A x i s y m m e t r i c   S i m u l a t i o n ---'
       write(IMAIN,*) '-----------------------------------------------------'
+      call flush_IMAIN()
     endif
 
     ! outputs parameters read
     write(IMAIN,200) npgeo,NDIM
     write(IMAIN,600) NSTEP_BETWEEN_OUTPUT_INFO,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
-    write(IMAIN,700) seismotype,anglerec
+    write(IMAIN,700) trim(seismotype),anglerec
     write(IMAIN,750) initialfield, &
                  add_Bielak_conditions_bottom,add_Bielak_conditions_right,add_Bielak_conditions_top,add_Bielak_conditions_left, &
                  ATTENUATION_VISCOELASTIC,ATTENUATION_VISCOACOUSTIC,output_grid_ASCII,OUTPUT_ENERGY
@@ -238,7 +352,6 @@
     ! flush buffer
     call flush_IMAIN()
   endif
-
 
   ! -------------- formatting
   ! output formats
@@ -256,7 +369,7 @@
   ' == 1     number the mesh                      ')
 
 700 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
-  'Seismograms recording type . . . . . . .(seismotype) = ',i6/5x, &
+  'Seismograms recording type . . . . . . .(seismotype) = ',a/5x, &
   'Angle for first line of receivers. . . . .(anglerec) = ',f6.2)
 
 750 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
@@ -289,11 +402,7 @@
 
   subroutine read_mesh_databases()
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
-  use constants, only: IIN,ADD_A_SMALL_CRACK_IN_THE_MEDIUM
+  use constants, only: IIN,IMAIN,ADD_A_SMALL_CRACK_IN_THE_MEDIUM
   use specfem_par
 
   implicit none
@@ -302,11 +411,13 @@
   ! note: we opened the database file in read_mesh_for_init() and will continue reading from its current position
   !       thus, the ordering here must be consistent with the order in save_databases.f90
 
-  ! reads in source infos
-  call read_mesh_databases_sources()
-
-  ! sets source parameters
-  call set_source_parameters()
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*)
+    write(IMAIN,*) 'reading mesh databases:'
+    call flush_IMAIN()
+  endif
 
   ! reads the spectral macrobloc nodal coordinates
   ! and basic properties of the spectral elements
@@ -349,95 +460,16 @@
   ! closes input Database file
   close(IIN)
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'done reading mesh databases'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   end subroutine read_mesh_databases
 
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine read_mesh_databases_sources()
-
-! reads source parameters
-
-  use constants, only: IIN
-  use specfem_par
-  use specfem_par_movie
-
-  implicit none
-
-  ! local parameters
-  integer :: i_source,ier
-
-  !----  read source information
-  read(IIN) NSOURCES
-
-  ! safety check
-  ! note: in principle, the number of sources could be zero for noise simulations.
-  !       however, we want to make sure to have one defined at least, even if not really needed.
-  if (NSOURCES < 1) call stop_the_code('Need at least one source for running a simulation, please check...')
-
-  ! allocates source information arrays
-  allocate(source_type(NSOURCES), &
-           time_function_type(NSOURCES), &
-           name_of_source_file(NSOURCES), &
-           burst_band_width(NSOURCES), &
-           Mxx(NSOURCES), &
-           Mxz(NSOURCES), &
-           Mzz(NSOURCES), &
-           f0_source(NSOURCES), &
-           tshift_src(NSOURCES), &
-           factor(NSOURCES), &
-           anglesource(NSOURCES), &
-           ispec_selected_source(NSOURCES), &
-           iglob_source(NSOURCES), &
-           source_courbe_eros(NSOURCES), &
-           islice_selected_source(NSOURCES), &
-           sourcearrays(NSOURCES,NDIM,NGLLX,NGLLZ),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating source arrays')
-
-  ! source locations
-  allocate(x_source(NSOURCES), &
-           z_source(NSOURCES), &
-           xi_source(NSOURCES), &
-           gamma_source(NSOURCES),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating source arrays')
-
-  ! initializes
-  source_type(:) = 0
-  time_function_type(:) = 0
-
-  f0_source(:) = 0.d0
-  tshift_src(:) = 0.d0
-  factor(:) = 0.d0
-  anglesource(:) = 0.d0
-
-  Mxx(:) = 0.d0
-  Mzz(:) = 0.d0
-  Mxz(:) = 0.d0
-
-  x_source(:) = 0.d0
-  z_source(:) = 0.d0
-
-  islice_selected_source(:) = 0
-  ispec_selected_source(:) = 0
-  iglob_source(:) = 0
-
-  sourcearrays(:,:,:,:) = 0._CUSTOM_REAL
-
-  ! reads in source info from Database file (check with routine save_databases_sources())
-  do i_source = 1,NSOURCES
-    read(IIN) source_type(i_source),time_function_type(i_source)
-    read(IIN) name_of_source_file(i_source)
-    read(IIN) burst_band_width(i_source)
-    read(IIN) x_source(i_source),z_source(i_source)
-    read(IIN) f0_source(i_source),tshift_src(i_source)
-    read(IIN) factor(i_source),anglesource(i_source)
-    read(IIN) Mxx(i_source),Mzz(i_source),Mxz(i_source)
-  enddo
-
-  !if (AXISYM) factor = factor/(TWO*PI)   !!!!! axisym TODO verify
-
-  end subroutine read_mesh_databases_sources
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -457,6 +489,9 @@
   integer :: ipoin,ip,ier
   double precision, dimension(NDIM) :: coorgread
   integer :: nspec_all,nelem_acforcing_all,nelem_acoustic_surface_all
+
+  ! user output
+  if (myrank == 0) write(IMAIN,*) 'reading nodal coordinates...'
 
   ! safety check
   if (NDIM /= 2) call stop_the_code('Invalid NDIM value to read coordinates, please check...')
@@ -505,17 +540,14 @@
     write(IMAIN,107)
     write(IMAIN,207) nspec_all,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat, &
                      nelem_acforcing_all,nelem_acoustic_surface_all
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
   ! allocates mesh arrays
-  ! elements
-  allocate(kmato(nspec))
-  allocate(knods(ngnod,nspec))
-
-  ! material
+  ! default material
   allocate(density(2,numat))
-  allocate(anisotropy(10,numat)) ! don't forget c22 value (it is used for AXISYM simulations only)
+  allocate(anisotropycoef(10,numat)) ! don't forget c22 value (it is used for AXISYM simulations only)
 
   allocate(porosity(numat), &
            tortuosity(numat), &
@@ -525,13 +557,13 @@
   allocate(poroelastcoef(4,3,numat),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating poroelastcoef arrays')
 
-  allocate(QKappa_attenuation(numat), &
-           Qmu_attenuation(numat),stat=ier)
+  allocate(QKappa_attenuationcoef(numat), &
+           Qmu_attenuationcoef(numat),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
 
 
   ! output formats
-107 format(/5x,'-- Spectral Elements --',//)
+107 format(/1x,'-- Spectral Elements --',//)
 
 207 format(5x,'Number of spectral elements . . . . . . . . .  (nspec) =',i7,/5x, &
                'Number of control nodes per element . . . . . (ngnod) =',i7,/5x, &
@@ -553,11 +585,14 @@
 
 ! reads attenuation information
 
-  use constants, only: IIN,NGLLX,NGLLZ
+  use constants, only: IIN,IMAIN,NGLLX,NGLLZ
 
-  use specfem_par, only: N_SLS,ATTENUATION_f0_REFERENCE,READ_VELOCITIES_AT_f0
+  use specfem_par, only: myrank,N_SLS,ATTENUATION_f0_REFERENCE,READ_VELOCITIES_AT_f0
 
   implicit none
+
+  ! user output
+  if (myrank == 0) write(IMAIN,*) 'reading attenuation setup...'
 
   ! attenuation parameters
   read(IIN) N_SLS, ATTENUATION_f0_REFERENCE, READ_VELOCITIES_AT_f0
@@ -575,16 +610,18 @@
 
 ! reads spectral macrobloc data
 
-  use constants, only: IIN
+  use constants, only: IIN,IMAIN,myrank
 
-  use specfem_par, only: nspec,ngnod,kmato,knods,region_CPML,f0_source
+  use specfem_par, only: nspec,ngnod,kmato,knods,region_CPML,f0_source,numat
 
   implicit none
 
   ! local parameters
-  integer :: n,k,ispec,kmato_read,pml_read
-  integer :: ier
+  integer :: n,k,ispec,kmato_read,pml_read,imat,ier
   integer, dimension(:), allocatable :: knods_read
+
+  ! user output
+  if (myrank == 0) write(IMAIN,*) 'reading material properties..'
 
   ! reads and sets the material properties
   call read_materials(f0_source(1))
@@ -592,6 +629,11 @@
   ! add support for using PML in MPI mode with external mesh
   allocate(region_CPML(nspec),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating region_CPML array')
+
+  ! elements
+  allocate(kmato(nspec), &
+           knods(ngnod,nspec),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating kmato,.. array')
 
   ! initializes
   kmato(:) = 0
@@ -618,6 +660,16 @@
     knods(:,n)= knods_read(:)
   enddo
 
+  ! checks material array
+  do ispec = 1,nspec
+    imat = kmato(ispec)
+    if (imat < 1 .or. imat > numat) then
+      print *,'Error: rank ',myrank,'found element ',ispec,' with invalid material id',imat
+      print *,'Please check your material definitions and element assignments'
+      call stop_the_code('Invalid material id found')
+    endif
+  enddo
+
   ! frees temporary array
   deallocate(knods_read)
 
@@ -631,56 +683,53 @@
 
 ! reads in interface dimensions
 
-  use constants, only: IIN
+  use constants, only: IIN,IMAIN
   use specfem_par
 
   implicit none
 
   ! local parameters
-  integer :: num_interface,ie,my_interfaces_read
+  integer :: num_interface,ie,ier,my_interfaces_read
+
+  ! user output
+  if (myrank == 0) write(IMAIN,*) 'reading interfaces informations...'
 
   ! reads number of interfaces
   read(IIN) ninterface, max_interface_size
 
+  ! user output
+  if (myrank == 0) write(IMAIN,*) '  number of interfaces         = ',ninterface
+
   ! allocates arrays for mpi/partition interfaces
   if (ninterface > 0) then
-    allocate(my_neighbors(ninterface))
-    allocate(my_nelmnts_neighbors(ninterface))
-    allocate(my_interfaces(4,max_interface_size,ninterface))
+    allocate(my_neighbors(ninterface), &
+             my_nelmnts_neighbors(ninterface), &
+             my_interfaces(4,max_interface_size,ninterface),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating interfaces arrays')
 
-    allocate(ibool_interfaces_acoustic(NGLLX*max_interface_size,ninterface))
-    allocate(ibool_interfaces_elastic(NGLLX*max_interface_size,ninterface))
-    allocate(ibool_interfaces_poroelastic(NGLLX*max_interface_size,ninterface))
-    allocate(ibool_interfaces_ext_mesh_init(NGLLX*max_interface_size,ninterface))
+    allocate(ibool_interfaces_acoustic(NGLLX*max_interface_size,ninterface), &
+             ibool_interfaces_elastic(NGLLX*max_interface_size,ninterface), &
+             ibool_interfaces_poroelastic(NGLLX*max_interface_size,ninterface), &
+             ibool_interfaces_ext_mesh_init(NGLLX*max_interface_size,ninterface),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating interfaces ibool arrays')
 
-    allocate(nibool_interfaces_acoustic(ninterface))
-    allocate(nibool_interfaces_elastic(ninterface))
-    allocate(nibool_interfaces_poroelastic(ninterface))
-    allocate(nibool_interfaces_ext_mesh(ninterface))
-
-    allocate(inum_interfaces_acoustic(ninterface))
-    allocate(inum_interfaces_elastic(ninterface))
-    allocate(inum_interfaces_poroelastic(ninterface))
+    allocate(nibool_interfaces_acoustic(ninterface), &
+             nibool_interfaces_elastic(ninterface), &
+             nibool_interfaces_poroelastic(ninterface), &
+             nibool_interfaces_ext_mesh(ninterface), &
+             inum_interfaces_acoustic(ninterface), &
+             inum_interfaces_elastic(ninterface), &
+             inum_interfaces_poroelastic(ninterface),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating interfaces nibool arrays')
   else
-    allocate(my_neighbors(1))
-    allocate(my_nelmnts_neighbors(1))
-    allocate(my_interfaces(1,1,1))
-
-    allocate(ibool_interfaces_acoustic(1,1))
-    allocate(ibool_interfaces_elastic(1,1))
-    allocate(ibool_interfaces_poroelastic(1,1))
-    allocate(ibool_interfaces_ext_mesh_init(1,1))
-
-    allocate(nibool_interfaces_acoustic(1))
-    allocate(nibool_interfaces_elastic(1))
-    allocate(nibool_interfaces_poroelastic(1))
-    allocate(nibool_interfaces_ext_mesh(1))
-
-    allocate(inum_interfaces_acoustic(1))
-    allocate(inum_interfaces_elastic(1))
-    allocate(inum_interfaces_poroelastic(1))
+    ! dummy
+    allocate(my_neighbors(1),my_nelmnts_neighbors(1),my_interfaces(1,1,1))
+    allocate(ibool_interfaces_acoustic(1,1),ibool_interfaces_elastic(1,1))
+    allocate(ibool_interfaces_poroelastic(1,1),ibool_interfaces_ext_mesh_init(1,1))
+    allocate(nibool_interfaces_acoustic(1),nibool_interfaces_elastic(1))
+    allocate(nibool_interfaces_poroelastic(1),nibool_interfaces_ext_mesh(1))
+    allocate(inum_interfaces_acoustic(1),inum_interfaces_elastic(1),inum_interfaces_poroelastic(1))
   endif
-
   ! initializes
   my_neighbors(:) = -1
   my_nelmnts_neighbors(:) = 0
@@ -723,10 +772,6 @@
 
 ! reads in absorbing edges
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN,IIN,IEDGE1,IEDGE2,IEDGE3,IEDGE4
   use specfem_par
 
@@ -736,14 +781,26 @@
   integer :: inum,inum_duplicate,numabsread,typeabsread
   logical :: codeabsread(4)
 
-  integer :: nelemabs_tot,nspec_left_tot,nspec_right_tot,nspec_bottom_tot,nspec_top_tot
+  integer :: num_abs_boundary_faces_tot,nspec_left_tot,nspec_right_tot,nspec_bottom_tot,nspec_top_tot
   integer :: ier
+  integer, dimension(:), allocatable :: numabs
+
+  ! user output
+  if (myrank == 0) write(IMAIN,*) 'reading absorbing boundary...'
+
+  ! saftey check
+  if (nelemabs < 0) then
+    if (myrank == 0) write(IMAIN,*) '  Warning: read in negative nelemabs ',nelemabs,'...resetting to zero!'
+    nelemabs = 0
+  endif
+
+  ! number of boundary element faces (uses same name as in 3D versions; in 2D, the boundary would be edges)
+  ! (making sure that num_abs_boundary_faces is zero if there are no boundary faces)
+  num_abs_boundary_faces = nelemabs
 
   ! determines flag for absorbing boundaries
-  if (nelemabs <= 0) then
+  if (num_abs_boundary_faces <= 0) then
     anyabs = .false.
-    ! uses dummy value for allocation
-    nelemabs = 1
   else
     anyabs = .true.
   endif
@@ -755,55 +812,88 @@
     STACEY_ABSORBING_CONDITIONS = .false.
   endif
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of absorbing elements = ',num_abs_boundary_faces
+    write(IMAIN,*)
+    write(IMAIN,*) '  any absorbing boundary flag  = ',anyabs
+    write(IMAIN,*) '  PML boundary flag            = ',PML_BOUNDARY_CONDITIONS
+    write(IMAIN,*) '  Stacey boundary flag         = ',STACEY_ABSORBING_CONDITIONS
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! temporary array
+  if (num_abs_boundary_faces > 0) then
+    allocate(numabs(num_abs_boundary_faces),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating temporary absorbing array')
+  else
+    ! dummy
+    allocate(numabs(1))
+  endif
+  numabs(:) = 0
+
   ! allocate arrays for absorbing boundary conditions
-  allocate(numabs(nelemabs), &
-           codeabs(4,nelemabs),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating absorbing arrays')
+  if (num_abs_boundary_faces > 0) then
+    allocate(codeabs(4,num_abs_boundary_faces),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating absorbing array')
+  else
+    ! dummy
+    allocate(codeabs(1,1))
+  endif
+  codeabs(:,:) = .false.
 
-  !---codeabs_corner(1,nelemabs) denotes whether element is on bottom-left corner of absorbing boundary or not
-  !---codeabs_corner(2,nelemabs) denotes whether element is on bottom-right corner of absorbing boundary or not
-  !---codeabs_corner(3,nelemabs) denotes whether element is on top-left corner of absorbing boundary or not
-  !---codeabs_corner(4,nelemabs) denotes whether element is on top-right corner of absorbing boundary or not
-  allocate(codeabs_corner(4,nelemabs),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating absorbing codeabs_corner array')
+  !---codeabs_corner(1,num_abs_boundary_faces) denotes whether element is on bottom-left corner of absorbing boundary or not
+  !---codeabs_corner(2,num_abs_boundary_faces) denotes whether element is on bottom-right corner of absorbing boundary or not
+  !---codeabs_corner(3,num_abs_boundary_faces) denotes whether element is on top-left corner of absorbing boundary or not
+  !---codeabs_corner(4,num_abs_boundary_faces) denotes whether element is on top-right corner of absorbing boundary or not
+  if (num_abs_boundary_faces > 0) then
+    allocate(codeabs_corner(4,num_abs_boundary_faces),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating absorbing codeabs_corner array')
+  else
+    ! dummy
+    allocate(codeabs_corner(1,1))
+  endif
+  codeabs_corner(:,:) = .false.
 
-  allocate(typeabs(nelemabs))
+  if (num_abs_boundary_faces > 0) then
+    allocate(abs_boundary_type(num_abs_boundary_faces), &
+             ibegin_edge1(num_abs_boundary_faces), &
+             iend_edge1(num_abs_boundary_faces), &
+             ibegin_edge2(num_abs_boundary_faces), &
+             iend_edge2(num_abs_boundary_faces), &
+             ibegin_edge3(num_abs_boundary_faces), &
+             iend_edge3(num_abs_boundary_faces), &
+             ibegin_edge4(num_abs_boundary_faces), &
+             iend_edge4(num_abs_boundary_faces),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating absorbing boundary index arrays')
+    ! poroelastic
+    allocate(ibegin_edge1_poro(num_abs_boundary_faces), &
+             iend_edge1_poro(num_abs_boundary_faces), &
+             ibegin_edge2_poro(num_abs_boundary_faces), &
+             iend_edge2_poro(num_abs_boundary_faces), &
+             ibegin_edge3_poro(num_abs_boundary_faces), &
+             iend_edge3_poro(num_abs_boundary_faces), &
+             ibegin_edge4_poro(num_abs_boundary_faces), &
+             iend_edge4_poro(num_abs_boundary_faces),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating absorbing boundary poro arrays')
 
-  allocate(ibegin_edge1(nelemabs))
-  allocate(iend_edge1(nelemabs))
-
-  allocate(ibegin_edge2(nelemabs))
-  allocate(iend_edge2(nelemabs))
-
-  allocate(ibegin_edge3(nelemabs))
-  allocate(iend_edge3(nelemabs))
-
-  allocate(ibegin_edge4(nelemabs))
-  allocate(iend_edge4(nelemabs))
-
-  ! poroelastic
-  allocate(ibegin_edge1_poro(nelemabs))
-  allocate(iend_edge1_poro(nelemabs))
-
-  allocate(ibegin_edge2_poro(nelemabs))
-  allocate(iend_edge2_poro(nelemabs))
-
-  allocate(ibegin_edge3_poro(nelemabs))
-  allocate(iend_edge3_poro(nelemabs))
-
-  allocate(ibegin_edge4_poro(nelemabs))
-  allocate(iend_edge4_poro(nelemabs))
-
-  allocate(ib_left(nelemabs), &
-           ib_right(nelemabs), &
-           ib_bottom(nelemabs), &
-           ib_top(nelemabs),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating absorbing boundary arrays')
+    allocate(ib_left(num_abs_boundary_faces), &
+             ib_right(num_abs_boundary_faces), &
+             ib_bottom(num_abs_boundary_faces), &
+             ib_top(num_abs_boundary_faces),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating absorbing boundary arrays')
+  else
+    ! dummy
+    allocate(abs_boundary_type(1),ibegin_edge1(1),iend_edge1(1),ibegin_edge2(1),iend_edge2(1))
+    allocate(ibegin_edge3(1),iend_edge3(1),ibegin_edge4(1),iend_edge4(1))
+    allocate(ibegin_edge1_poro(1),iend_edge1_poro(1),ibegin_edge2_poro(1),iend_edge2_poro(1))
+    allocate(ibegin_edge3_poro(1),iend_edge3_poro(1),ibegin_edge4_poro(1),iend_edge4_poro(1))
+    allocate(ib_left(1),ib_right(1),ib_bottom(1),ib_top(1))
+  endif
 
   ! initializes
-  codeabs(:,:) = .false.
-  codeabs_corner(:,:) = .false.
-  typeabs(:) = 0
+  abs_boundary_type(:) = 0
 
   ibegin_edge1(:) = 0
   iend_edge1(:) = 0
@@ -844,7 +934,7 @@
   if (anyabs) then
 
     ! reads absorbing boundaries
-    do inum = 1,nelemabs
+    do inum = 1,num_abs_boundary_faces
 
       ! beware here and below that external meshes (for instance coming from CUBIT or Gmsh)
       ! may have rotated elements and thus edge 1 may not correspond to the bottom,
@@ -860,15 +950,15 @@
 
       numabs(inum) = numabsread
 
-      codeabs(IEDGE1,inum) = codeabsread(1)
-      codeabs(IEDGE2,inum) = codeabsread(2)
-      codeabs(IEDGE3,inum) = codeabsread(3)
-      codeabs(IEDGE4,inum) = codeabsread(4)
+      codeabs(IEDGE1,inum) = codeabsread(1) ! bottom
+      codeabs(IEDGE2,inum) = codeabsread(2) ! right
+      codeabs(IEDGE3,inum) = codeabsread(3) ! top
+      codeabs(IEDGE4,inum) = codeabsread(4) ! left
 
-      typeabs(inum) = typeabsread
+      abs_boundary_type(inum) = typeabsread ! type == IBOTTOM / IRIGHT / ITOP / ILEFT
 
       ! check that a single edge is defined for each element cited
-      ! (since elements with two absorbing edges MUST be cited twice, each time with a different "typeabs()" code
+      ! (since elements with two absorbing edges MUST be cited twice, each time with a different "type" code
       if (count(codeabs(:,inum) .eqv. .true.) /= 1) then
         print *,'Error for absorbing element inum = ',inum
         call stop_the_code('must have one and only one absorbing edge per absorbing line cited')
@@ -877,10 +967,10 @@
     enddo
 
     ! detection of the corner element
-    do inum = 1,nelemabs
+    do inum = 1,num_abs_boundary_faces
       if (codeabs(IEDGE1,inum)) then
         ! bottom
-        do inum_duplicate = 1,nelemabs
+        do inum_duplicate = 1,num_abs_boundary_faces
           if (inum == inum_duplicate) then
             ! left for blank, since no operation is needed.
             continue
@@ -901,7 +991,7 @@
 
       if (codeabs(IEDGE3,inum)) then
         ! top
-        do inum_duplicate = 1,nelemabs
+        do inum_duplicate = 1,num_abs_boundary_faces
           if (inum == inum_duplicate) then
             ! left for blank, since no operation is needed.
             continue
@@ -923,7 +1013,7 @@
 
     ! detection of the corner element
     ! boundary element numbering
-    do inum = 1,nelemabs
+    do inum = 1,num_abs_boundary_faces
       if (codeabs(IEDGE1,inum)) then
         ! bottom
         nspec_bottom = nspec_bottom + 1
@@ -951,24 +1041,41 @@
 
   else
     ! if this MPI slice has no absorbing element at all
-    nelemabs = 0
+    num_abs_boundary_faces = 0
     nspec_left = 0
     nspec_right = 0
     nspec_bottom = 0
     nspec_top = 0
   endif
 
+  ! sets up arrays for boundary routines
+  if (num_abs_boundary_faces > 0) then
+    allocate(abs_boundary_ispec(num_abs_boundary_faces),stat=ier)
+    if (ier /= 0) stop 'error allocating array abs_boundary_ispec etc.'
+  else
+    ! dummy allocation
+    allocate(abs_boundary_ispec(1))
+  endif
+  abs_boundary_ispec(:) = 0
+
+  if (num_abs_boundary_faces > 0) then
+    abs_boundary_ispec(:) = numabs(:)
+  endif
+
+  ! free memory
+  deallocate(numabs)
+
   ! collects total values
-  call sum_all_i(nelemabs, nelemabs_tot)
+  call sum_all_i(num_abs_boundary_faces, num_abs_boundary_faces_tot)
   call sum_all_i(nspec_left, nspec_left_tot)
   call sum_all_i(nspec_right, nspec_right_tot)
   call sum_all_i(nspec_bottom, nspec_bottom_tot)
   call sum_all_i(nspec_top, nspec_top_tot)
 
   ! user output
-  if (myrank == 0) then
-    write(IMAIN,*)
-    if (PML_BOUNDARY_CONDITIONS .or. STACEY_ABSORBING_CONDITIONS) then
+  if (PML_BOUNDARY_CONDITIONS .or. STACEY_ABSORBING_CONDITIONS) then
+    if (myrank == 0) then
+      write(IMAIN,*)
       write(IMAIN,*) 'Absorbing boundaries:'
       if (PML_BOUNDARY_CONDITIONS) &
         write(IMAIN,*) '  using PML boundary conditions'
@@ -977,88 +1084,15 @@
       ! for Stacey
       if (STACEY_ABSORBING_CONDITIONS) then
         write(IMAIN,*)
-        write(IMAIN,*) 'Number of absorbing elements: ',nelemabs_tot
-        write(IMAIN,*) '  nspec_left   = ',nspec_left_tot
-        write(IMAIN,*) '  nspec_right  = ',nspec_right_tot
-        write(IMAIN,*) '  nspec_bottom = ',nspec_bottom_tot
-        write(IMAIN,*) '  nspec_top    = ',nspec_top_tot
+        write(IMAIN,*) '  Total number of absorbing elements: ',num_abs_boundary_faces_tot
+        write(IMAIN,*) '    nspec_left   = ',nspec_left_tot
+        write(IMAIN,*) '    nspec_right  = ',nspec_right_tot
+        write(IMAIN,*) '    nspec_bottom = ',nspec_bottom_tot
+        write(IMAIN,*) '    nspec_top    = ',nspec_top_tot
         write(IMAIN,*)
       endif
-    endif
-    call flush_IMAIN()
-  endif
-
-  ! allocates arrays
-  if (anyabs) then
-    ! files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
-    if (any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_ABSORBING_CONDITIONS) then
-      allocate(b_absorb_elastic_left(NDIM,NGLLZ,nspec_left,NSTEP))
-      allocate(b_absorb_elastic_right(NDIM,NGLLZ,nspec_right,NSTEP))
-      allocate(b_absorb_elastic_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
-      allocate(b_absorb_elastic_top(NDIM,NGLLX,nspec_top,NSTEP))
-    else
-      allocate(b_absorb_elastic_left(1,1,1,1))
-      allocate(b_absorb_elastic_right(1,1,1,1))
-      allocate(b_absorb_elastic_bottom(1,1,1,1))
-      allocate(b_absorb_elastic_top(1,1,1,1))
-    endif
-    if (any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_ABSORBING_CONDITIONS) then
-      allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_left,NSTEP))
-      allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_right,NSTEP))
-      allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
-      allocate(b_absorb_poro_s_top(NDIM,NGLLX,nspec_top,NSTEP))
-      allocate(b_absorb_poro_w_left(NDIM,NGLLZ,nspec_left,NSTEP))
-      allocate(b_absorb_poro_w_right(NDIM,NGLLZ,nspec_right,NSTEP))
-      allocate(b_absorb_poro_w_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
-      allocate(b_absorb_poro_w_top(NDIM,NGLLX,nspec_top,NSTEP))
-    else
-      allocate(b_absorb_poro_s_left(1,1,1,1))
-      allocate(b_absorb_poro_s_right(1,1,1,1))
-      allocate(b_absorb_poro_s_bottom(1,1,1,1))
-      allocate(b_absorb_poro_s_top(1,1,1,1))
-      allocate(b_absorb_poro_w_left(1,1,1,1))
-      allocate(b_absorb_poro_w_right(1,1,1,1))
-      allocate(b_absorb_poro_w_bottom(1,1,1,1))
-      allocate(b_absorb_poro_w_top(1,1,1,1))
-    endif
-    if (any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_ABSORBING_CONDITIONS) then
-      allocate(b_absorb_acoustic_left(NGLLZ,nspec_left,NSTEP))
-      allocate(b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP))
-      allocate(b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP))
-      allocate(b_absorb_acoustic_top(NGLLX,nspec_top,NSTEP))
-    else
-      allocate(b_absorb_acoustic_left(1,1,1))
-      allocate(b_absorb_acoustic_right(1,1,1))
-      allocate(b_absorb_acoustic_bottom(1,1,1))
-      allocate(b_absorb_acoustic_top(1,1,1))
-    endif
-
-  else
-    ! dummy arrays
-    ! elastic domains
-    if (.not. allocated(b_absorb_elastic_left)) then
-      allocate(b_absorb_elastic_left(1,1,1,1))
-      allocate(b_absorb_elastic_right(1,1,1,1))
-      allocate(b_absorb_elastic_bottom(1,1,1,1))
-      allocate(b_absorb_elastic_top(1,1,1,1))
-    endif
-    ! poroelastic domains
-    if (.not. allocated(b_absorb_poro_s_left)) then
-      allocate(b_absorb_poro_s_left(1,1,1,1))
-      allocate(b_absorb_poro_s_right(1,1,1,1))
-      allocate(b_absorb_poro_s_bottom(1,1,1,1))
-      allocate(b_absorb_poro_s_top(1,1,1,1))
-      allocate(b_absorb_poro_w_left(1,1,1,1))
-      allocate(b_absorb_poro_w_right(1,1,1,1))
-      allocate(b_absorb_poro_w_bottom(1,1,1,1))
-      allocate(b_absorb_poro_w_top(1,1,1,1))
-    endif
-    ! acoustic domains
-    if (.not. allocated(b_absorb_acoustic_left)) then
-      allocate(b_absorb_acoustic_left(1,1,1))
-      allocate(b_absorb_acoustic_right(1,1,1))
-      allocate(b_absorb_acoustic_bottom(1,1,1))
-      allocate(b_absorb_acoustic_top(1,1,1))
+      write(IMAIN,*)
+      call flush_IMAIN()
     endif
   endif
 
@@ -1090,33 +1124,40 @@
   integer :: ier
   logical :: codeacforcingread(4)
 
-  if (.not. ACOUSTIC_FORCING) then
-    ! dummy value for allocation
-    nelem_acforcing = 1
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'reading acoustic forcing...'
+    write(IMAIN,*) '  acoustic forcing                             = ',ACOUSTIC_FORCING
+    write(IMAIN,*) '  number of acoustic forcing boundary elements = ',nelem_acforcing
   endif
 
-  ! allocates arrays for acoustic forcing boundary conditions
-  allocate(numacforcing(nelem_acforcing), &
-           codeacforcing(4,nelem_acforcing), &
-           typeacforcing(nelem_acforcing),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating acoustic forcing arrays')
+  if (ACOUSTIC_FORCING) then
+    ! allocates arrays for acoustic forcing boundary conditions
+    allocate(numacforcing(nelem_acforcing), &
+             codeacforcing(4,nelem_acforcing), &
+             typeacforcing(nelem_acforcing),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating acoustic forcing arrays')
 
-  allocate(ibegin_edge1_acforcing(nelem_acforcing))
-  allocate(iend_edge1_acforcing(nelem_acforcing))
-  allocate(ibegin_edge3_acforcing(nelem_acforcing))
-  allocate(iend_edge3_acforcing(nelem_acforcing))
-
-  allocate(ibegin_edge4_acforcing(nelem_acforcing))
-  allocate(iend_edge4_acforcing(nelem_acforcing))
-  allocate(ibegin_edge2_acforcing(nelem_acforcing))
-  allocate(iend_edge2_acforcing(nelem_acforcing))
-
-  allocate(ib_left_acforcing(nelem_acforcing), &
-           ib_right_acforcing(nelem_acforcing), &
-           ib_bottom_acforcing(nelem_acforcing), &
-           ib_top_acforcing(nelem_acforcing),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating acoustic forcing boundary arrays')
-
+    allocate(ibegin_edge1_acforcing(nelem_acforcing), &
+             iend_edge1_acforcing(nelem_acforcing), &
+             ibegin_edge3_acforcing(nelem_acforcing), &
+             iend_edge3_acforcing(nelem_acforcing), &
+             ibegin_edge4_acforcing(nelem_acforcing), &
+             iend_edge4_acforcing(nelem_acforcing), &
+             ibegin_edge2_acforcing(nelem_acforcing), &
+             iend_edge2_acforcing(nelem_acforcing), &
+             ib_left_acforcing(nelem_acforcing), &
+             ib_right_acforcing(nelem_acforcing), &
+             ib_bottom_acforcing(nelem_acforcing), &
+             ib_top_acforcing(nelem_acforcing),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating acoustic forcing boundary arrays')
+  else
+    ! dummy allocation
+    allocate(numacforcing(1),codeacforcing(1,1),typeacforcing(1))
+    allocate(ibegin_edge1_acforcing(1),iend_edge1_acforcing(1),ibegin_edge3_acforcing(1),iend_edge3_acforcing(1))
+    allocate(ibegin_edge4_acforcing(1),iend_edge4_acforcing(1),ibegin_edge2_acforcing(1),iend_edge2_acforcing(1))
+    allocate(ib_left_acforcing(1),ib_right_acforcing(1),ib_bottom_acforcing(1),ib_top_acforcing(1))
+  endif
   ! initializes
   codeacforcing(:,:) = .false.
   typeacforcing(:) = 0
@@ -1203,7 +1244,6 @@
 
     ! collects total number
     call sum_all_i(nelem_acforcing,nelem_acforcing_all)
-
     call sum_all_i(nspec_left_acforcing,nspec_left_acforcing_all)
     call sum_all_i(nspec_right_acforcing,nspec_right_acforcing_all)
     call sum_all_i(nspec_bottom_acforcing,nspec_bottom_acforcing_all)
@@ -1212,11 +1252,11 @@
     ! user output
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) 'Number of acoustic forcing elements: ',nelem_acforcing_all
-      write(IMAIN,*) '  nspec_left_acforcing = ',nspec_left_acforcing_all
-      write(IMAIN,*) '  nspec_right_acforcing = ',nspec_right_acforcing_all
-      write(IMAIN,*) '  nspec_bottom_acforcing = ',nspec_bottom_acforcing_all
-      write(IMAIN,*) '  nspec_top_acforcing = ',nspec_top_acforcing_all
+      write(IMAIN,*) '  Total number of acoustic forcing elements: ',nelem_acforcing_all
+      write(IMAIN,*) '    nspec_left_acforcing   = ',nspec_left_acforcing_all
+      write(IMAIN,*) '    nspec_right_acforcing  = ',nspec_right_acforcing_all
+      write(IMAIN,*) '    nspec_bottom_acforcing = ',nspec_bottom_acforcing_all
+      write(IMAIN,*) '    nspec_top_acforcing    = ',nspec_top_acforcing_all
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -1242,19 +1282,29 @@
   integer :: inum,nelem_acoustic_surface_all
   integer :: ier
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'reading free surface information...'
+    write(IMAIN,*) '  number of acoustic free surface boundary elements = ',nelem_acoustic_surface
+    call flush_IMAIN()
+  endif
+
   ! sets acoustic edges flag
   if (nelem_acoustic_surface > 0) then
     any_acoustic_edges = .true.
   else
     any_acoustic_edges = .false.
-    ! dummy value for allocation
-    nelem_acoustic_surface = 1
   endif
 
-  allocate(acoustic_edges(4,nelem_acoustic_surface), &
-           acoustic_surface(5,nelem_acoustic_surface),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating acoustic free surface arrays')
-
+  if (nelem_acoustic_surface > 0) then
+    allocate(acoustic_edges(4,nelem_acoustic_surface), &
+             acoustic_surface(5,nelem_acoustic_surface),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating acoustic free surface arrays')
+  else
+    ! dummy
+    allocate(acoustic_edges(1,1),acoustic_surface(1,1),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating acoustic free surface arrays')
+  endif
   ! initializes
   acoustic_edges(:,:) = 0
 
@@ -1264,9 +1314,6 @@
       read(IIN) acoustic_edges(1,inum), acoustic_edges(2,inum), acoustic_edges(3,inum), acoustic_edges(4,inum)
     enddo
   endif
-
-  ! resets nelem_acoustic_surface
-  if (any_acoustic_edges .eqv. .false. ) nelem_acoustic_surface = 0
 
   ! constructs (local) acoustic surface
   if (nelem_acoustic_surface > 0) then
@@ -1280,7 +1327,8 @@
     ! user output
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) 'Number of free surface elements: ',nelem_acoustic_surface_all
+      write(IMAIN,*) '  Total number of acoustic free surface elements: ',nelem_acoustic_surface_all
+      write(IMAIN,*)
       call flush_IMAIN()
     endif
   endif
@@ -1297,7 +1345,9 @@
 ! reads acoustic poroelastic coupled edges
 ! reads poroelastic elastic coupled edges
 
-  use constants, only: IIN
+  use constants, only: IIN,IMAIN
+
+  use specfem_par, only: myrank
 
   use specfem_par, only: num_fluid_solid_edges,any_fluid_solid_edges, &
                          fluid_solid_acoustic_ispec,fluid_solid_elastic_ispec, &
@@ -1318,55 +1368,83 @@
     solid_poro_poro_ispec_read,solid_poro_elastic_ispec_read
   integer :: ier
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'reading coupling surfaces...'
+    write(IMAIN,*) '  number of fluid-solid edges  = ',num_fluid_solid_edges
+    write(IMAIN,*) '  number of fluid-poro  edges  = ',num_fluid_poro_edges
+    write(IMAIN,*) '  number of solid-poro  edges  = ',num_solid_poro_edges
+    call flush_IMAIN()
+  endif
+
   ! sets flags fluid-solid domains
   if (num_fluid_solid_edges > 0) then
     any_fluid_solid_edges = .true.
   else
     any_fluid_solid_edges = .false.
-    ! dummy value for allocation
-    num_fluid_solid_edges = 1
   endif
 
-  allocate(fluid_solid_acoustic_ispec(num_fluid_solid_edges), &
-           fluid_solid_acoustic_iedge(num_fluid_solid_edges), &
-           fluid_solid_elastic_ispec(num_fluid_solid_edges), &
-           fluid_solid_elastic_iedge(num_fluid_solid_edges),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating fluid-solid arrays')
+  if (num_fluid_solid_edges > 0) then
+    allocate(fluid_solid_acoustic_ispec(num_fluid_solid_edges), &
+             fluid_solid_acoustic_iedge(num_fluid_solid_edges), &
+             fluid_solid_elastic_ispec(num_fluid_solid_edges), &
+             fluid_solid_elastic_iedge(num_fluid_solid_edges),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating fluid-solid arrays')
+  else
+    ! dummy allocation
+    allocate(fluid_solid_acoustic_ispec(1),fluid_solid_acoustic_iedge(1), &
+             fluid_solid_elastic_ispec(1),fluid_solid_elastic_iedge(1),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating fluid-solid arrays')
+  endif
+  ! initializes
+  fluid_solid_acoustic_ispec(:) = 0; fluid_solid_acoustic_iedge(:) = 0
+  fluid_solid_elastic_ispec(:) = 0; fluid_solid_elastic_iedge(:) = 0
 
   ! sets flags for poroelastic-acoustic coupled domains
   if (num_fluid_poro_edges > 0) then
     any_fluid_poro_edges = .true.
   else
     any_fluid_poro_edges = .false.
-    num_fluid_poro_edges = 1
   endif
 
-  allocate(fluid_poro_acoustic_ispec(num_fluid_poro_edges))
-  allocate(fluid_poro_acoustic_iedge(num_fluid_poro_edges))
-  allocate(fluid_poro_poroelastic_ispec(num_fluid_poro_edges))
-  allocate(fluid_poro_poroelastic_iedge(num_fluid_poro_edges))
+  if (num_fluid_poro_edges > 0) then
+    allocate(fluid_poro_acoustic_ispec(num_fluid_poro_edges), &
+             fluid_poro_acoustic_iedge(num_fluid_poro_edges), &
+             fluid_poro_poroelastic_ispec(num_fluid_poro_edges), &
+             fluid_poro_poroelastic_iedge(num_fluid_poro_edges),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating fluid-poro arrays')
+  else
+    ! dummy
+    allocate(fluid_poro_acoustic_ispec(1),fluid_poro_acoustic_iedge(1), &
+             fluid_poro_poroelastic_ispec(1),fluid_poro_poroelastic_iedge(1),stat=ier)
+   if (ier /= 0) call stop_the_code('Error allocating fluid-poro arrays')
+  endif
+  ! initializes
+  fluid_poro_acoustic_ispec(:) = 0; fluid_poro_acoustic_iedge(:) = 0
+  fluid_poro_poroelastic_ispec(:) = 0; fluid_poro_poroelastic_iedge(:) = 0
 
   ! sets flags for poroelastic-solid coupled domains
   if (num_solid_poro_edges > 0) then
     any_solid_poro_edges = .true.
   else
     any_solid_poro_edges = .false.
-    num_solid_poro_edges = 1
   endif
 
-  allocate(solid_poro_elastic_ispec(num_solid_poro_edges))
-  allocate(solid_poro_elastic_iedge(num_solid_poro_edges))
-  allocate(solid_poro_poroelastic_ispec(num_solid_poro_edges))
-  allocate(solid_poro_poroelastic_iedge(num_solid_poro_edges))
-
+  if (num_solid_poro_edges > 0) then
+    allocate(solid_poro_elastic_ispec(num_solid_poro_edges), &
+             solid_poro_elastic_iedge(num_solid_poro_edges), &
+             solid_poro_poroelastic_ispec(num_solid_poro_edges), &
+             solid_poro_poroelastic_iedge(num_solid_poro_edges),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating solid-poro arrays')
+  else
+    ! dummy
+    allocate(solid_poro_elastic_ispec(1),solid_poro_elastic_iedge(1), &
+             solid_poro_poroelastic_ispec(1),solid_poro_poroelastic_iedge(1),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating solid-poro arrays')
+  endif
   ! initializes
-  fluid_solid_acoustic_ispec(:) = 0
-  fluid_solid_elastic_ispec(:) = 0
-
-  fluid_poro_acoustic_ispec(:) = 0
-  fluid_poro_poroelastic_ispec(:) = 0
-  solid_poro_elastic_ispec(:) = 0
-  solid_poro_poroelastic_ispec(:) = 0
+  solid_poro_elastic_ispec(:) = 0; solid_poro_elastic_iedge(:) = 0
+  solid_poro_poroelastic_ispec(:) = 0; solid_poro_poroelastic_iedge(:) = 0
 
   ! reads acoustic elastic coupled edges
   if (any_fluid_solid_edges) then
@@ -1398,11 +1476,6 @@
     enddo
   endif
 
-  ! resets counters
-  if (any_fluid_solid_edges .eqv. .false. ) num_fluid_solid_edges = 0
-  if (any_fluid_poro_edges .eqv. .false. ) num_fluid_poro_edges = 0
-  if (any_solid_poro_edges .eqv. .false. ) num_solid_poro_edges = 0
-
   end subroutine read_mesh_databases_coupled
 
 !
@@ -1413,30 +1486,40 @@
 
 ! reads tangential detection curve
 
-  use constants, only: IIN
+  use constants, only: IIN,IMAIN
+
+  use specfem_par, only: myrank
 
   use specfem_par, only: nnodes_tangential_curve,nodes_tangential_curve, &
-                          force_normal_to_surface,rec_normal_to_surface, &
-                          any_tangential_curve,dist_tangential_detection_curve
+                         force_normal_to_surface,rec_normal_to_surface
 
   implicit none
 
   ! local parameters
   integer :: i,ier
+  logical :: any_tangential_curve
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'reading tangential curves...'
+    write(IMAIN,*) '  number of tangential curve nodes = ',nnodes_tangential_curve
+    call flush_IMAIN()
+  endif
 
   ! sets tangential flag
   if (nnodes_tangential_curve > 0) then
     any_tangential_curve = .true.
   else
     any_tangential_curve = .false.
-    ! dummy value for allocation
-    nnodes_tangential_curve = 1
   endif
 
-  allocate(nodes_tangential_curve(2,nnodes_tangential_curve), &
-           dist_tangential_detection_curve(nnodes_tangential_curve),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating tangential arrays')
-
+  if (nnodes_tangential_curve > 0) then
+    allocate(nodes_tangential_curve(2,nnodes_tangential_curve),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating tangential arrays')
+  else
+    ! dummy
+    allocate(nodes_tangential_curve(1,1))
+  endif
   ! initializes
   nodes_tangential_curve(:,:) = 0.d0
 
@@ -1452,9 +1535,6 @@
     rec_normal_to_surface = .false.
   endif
 
-  ! resets nnode_tangential_curve
-  if (any_tangential_curve .eqv. .false. ) nnodes_tangential_curve = 0
-
   end subroutine read_mesh_databases_tangential
 
 !
@@ -1464,10 +1544,6 @@
   subroutine read_mesh_databases_axial_elements()
 
 ! reads axial elements data
-
-#ifdef USE_MPI
-  use mpi
-#endif
 
   use constants, only: IIN,IMAIN
 
@@ -1479,6 +1555,13 @@
   integer :: nelem_on_the_axis_total
   integer :: i,ier,ispec
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'reading axial elements...'
+    write(IMAIN,*) '  number of axial elements     = ',nelem_on_the_axis
+    call flush_IMAIN()
+  endif
+
   ! axial flags
   allocate(is_on_the_axis(nspec),stat=ier)
   if (ier /= 0) call stop_the_code('Error: not enough memory to allocate array is_on_the_axis')
@@ -1486,13 +1569,13 @@
   is_on_the_axis(:) = .false.
 
   ! allocates ispec array for axial elements
-  if (nelem_on_the_axis == 0) then
+  if (nelem_on_the_axis > 0) then
+    allocate(ispec_of_axial_elements(nelem_on_the_axis),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating axial elements')
+  else
     ! dummy array
     allocate(ispec_of_axial_elements(1))
-  else
-    allocate(ispec_of_axial_elements(nelem_on_the_axis))
   endif
-
   ! initializes
   ispec_of_axial_elements(:) = 0
 
@@ -1518,9 +1601,180 @@
   ! user output
   if (myrank == 0 .and. AXISYM) then
     write(IMAIN,*)
-    write(IMAIN,*) 'Total number of elements on the axis : ',nelem_on_the_axis_total
+    write(IMAIN,*) ' Total number of elements on the axis : ',nelem_on_the_axis_total
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
   end subroutine read_mesh_databases_axial_elements
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine process_seismotype_line()
+
+ ! This subroutine convert the string "seismotype" (e.g 2,3,6) to an integer array: "seismotypeVec"
+
+  use specfem_par, only: NSIGTYPE,seismotype,seismotypeVec
+
+  implicit none
+
+    integer :: i
+    character(len=512) :: stringCopy, stringCopy1
+    character(len=52), parameter :: charVec = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ&
+                                     &abcdefghijklmnopqrstuvwxyz'
+    integer :: actual
+    integer :: stringLen, integs
+    integer :: res(512)
+
+    interface
+       subroutine AddToList(list, element)
+         integer, dimension(:), allocatable, intent(inout) :: list
+         integer, intent(in) :: element
+       end subroutine AddToList
+    end interface
+
+    actual = 1
+    NSIGTYPE = 0
+    stringLen = len(charVec)
+    stringCopy = trim(seismotype)
+
+    ! Strip spaces :
+    call StripSpaces(stringCopy)
+
+    ! Strip chars :
+    do while (actual < stringLen)
+      call StripChar(stringCopy, charVec(actual:actual))
+      actual = actual + 1
+    enddo
+
+    ! Convert to integer list :
+    if (index(stringCopy, ',') < 0) then
+      stop "This should never ever happen... this is an interesting bug really, memory broken somewhere?"
+    else if (index(stringCopy, ',') == 0) then
+      read(stringCopy, '(i3)') integs
+      call AddToList(seismotypeVec, integs)
+    else
+      do while (index(stringCopy, ',') > 0)
+        stringCopy1 = stringCopy(:index(stringCopy, ',')-1)
+        read(stringCopy1, '(i3)') integs
+        call AddToList(seismotypeVec, integs)
+        stringCopy = stringCopy(index(stringCopy, ',')+1:)
+        if (index(stringCopy, ',') < 1) then
+          read(stringCopy, '(i3)') integs
+          call AddToList(seismotypeVec, integs)
+        endif
+      enddo
+    endif
+
+    if (any(seismotypeVec == 0)) call stop_the_code("Seismotype line in Par_file contain a 0 or is malformed")
+
+    ! Delete duplicates
+    NSIGTYPE = 1
+    res(:) = 0
+    res(1) = seismotypeVec(1)
+    do i = 2, size(seismotypeVec)
+        ! if the number already exist in res check next
+        if (any( res == seismotypeVec(i) )) cycle
+        ! No match found so add it to the output
+        NSIGTYPE = NSIGTYPE + 1
+        res(NSIGTYPE) = seismotypeVec(i)
+    enddo
+
+    seismotypeVec = res(1:NSIGTYPE)
+
+  end subroutine process_seismotype_line
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine StripChar(string,char)
+    ! Remove all character "char" from string. Warning: "char" can't be " " !!!
+
+    implicit none
+
+    character(len=*),intent(inout) :: string
+    character(len=512) :: stringCopy1, stringCopy2
+    character,intent(in) :: char
+
+    if (char == ' ') then
+      stop 'This function can not be used to strip spaces, use StripSpaces instead'
+    endif
+
+    do while (index(string,char,back=.true.) > 0)
+      stringCopy1 = string(:index(string,char,back=.true.)-1)
+      stringCopy2 = string(index(string,char,back=.true.)+1:)
+      string = trim(stringCopy1)//trim(stringCopy2)
+    enddo
+
+  end subroutine StripChar
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine StripSpaces(string)
+
+  ! Remove all spaces from string
+
+  implicit none
+
+  character(len=*) :: string
+  integer :: stringLen
+  integer :: last, actual
+
+  stringLen = len (string)
+  last = 1
+  actual = 1
+
+  do while (actual < stringLen)
+      if (string(last:last) == ' ') then
+          actual = actual + 1
+          string(last:last) = string(actual:actual)
+          string(actual:actual) = ' '
+      else
+          last = last + 1
+          if (actual < last) &
+              actual = last
+      endif
+  enddo
+
+  end subroutine StripSpaces
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine AddToList(list, element)
+
+  ! Add an element to an integer list dynamically
+
+  implicit none
+
+  integer :: i, isize
+  integer, intent(in) :: element
+  integer, dimension(:), allocatable, intent(inout) :: list
+  integer, dimension(:), allocatable :: clist
+
+
+  if (allocated(list)) then
+      isize = size(list)
+      allocate(clist(isize+1))
+      do i=1,isize
+      clist(i) = list(i)
+      enddo
+      clist(isize+1) = element
+
+      deallocate(list)
+      call move_alloc(clist, list)
+
+  else
+      allocate(list(1))
+      list(1) = element
+  endif
+
+end subroutine AddToList
+
 

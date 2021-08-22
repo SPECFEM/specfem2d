@@ -97,11 +97,13 @@
 
   end subroutine save_forward_arrays_undoatt
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!----------------------------------------------------------------------------------------
+!
 
   subroutine save_forward_arrays_no_backward()
 
-  use constants, only: IOUT_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,APPROXIMATE_HESS_KL,NDIM
+  use constants, only: IOUT_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,APPROXIMATE_HESS_KL,NDIM,CUSTOM_REAL
 
   use specfem_par, only: myrank,it,NSTEP, &
     any_acoustic,any_elastic,potential_acoustic,displ_elastic,accel_elastic,GPU_MODE, &
@@ -149,20 +151,34 @@
 
   ! for the two first times, we only launch GPU = => RAM transfers
   if (no_backward_iframe < 3) then
+    if (any_acoustic) then
+      if (GPU_MODE) then
+        call transfer_async_pot_ac_from_device(no_backward_acoustic_buffer(nglob*buffer_num_GPU_transfer+1),Mesh_pointer)
+      else
+        no_backward_acoustic_buffer(nglob*buffer_num_GPU_transfer+1:nglob*(buffer_num_GPU_transfer+1)) = potential_acoustic
+      endif
+    endif
 
-    if (GPU_MODE) then
-      call transfer_async_pot_ac_from_device(no_backward_acoustic_buffer(nglob*buffer_num_GPU_transfer+1),Mesh_pointer)
-    else
-      no_backward_acoustic_buffer(nglob*buffer_num_GPU_transfer+1:nglob*(buffer_num_GPU_transfer+1)) = potential_acoustic
+    if (any_elastic) then
+      if (APPROXIMATE_HESS_KL) then
+        offset = 2 * CUSTOM_REAL * (NDIM*nglob) * (no_backward_iframe-1) + 1
+      else
+        offset = CUSTOM_REAL * (NDIM*nglob) * (no_backward_iframe-1) + 1
+      endif
+      no_backward_displ_buffer(:,:) = displ_elastic(:,:)
+      write(IOUT_UNDO_ATT,asynchronous='yes',pos=offset) no_backward_displ_buffer
+      if (APPROXIMATE_HESS_KL) then
+        no_backward_accel_buffer(:,:) = accel_elastic(:,:)
+        write(IOUT_UNDO_ATT,asynchronous='yes',pos=offset+CUSTOM_REAL*(NDIM*nglob)) no_backward_accel_buffer
+      endif
     endif
 
   else if (no_backward_iframe <= no_backward_Nframes) then
 
     if (any_acoustic) then
-
       ! the offset is calculated in two steps in order to avoid integer overflow
       offset = no_backward_iframe - 3
-      offset = offset * nglob * 4 + 1
+      offset = offset * nglob * CUSTOM_REAL + 1
       write(IOUT_UNDO_ATT,asynchronous='yes',pos=offset) &
                           no_backward_acoustic_buffer(nglob*buffer_num_async_IO+1:nglob*(buffer_num_async_IO+1))
 
@@ -181,29 +197,25 @@
         if (GPU_MODE) &
           call transfer_async_pot_ac_from_device(no_backward_acoustic_buffer(nglob*buffer_num_async_IO+1),Mesh_pointer)
 
-        write(IOUT_UNDO_ATT,pos=offset+4*nglob) &
+        write(IOUT_UNDO_ATT,pos=offset+CUSTOM_REAL*nglob) &
                             no_backward_acoustic_buffer(nglob*buffer_num_GPU_transfer+1:nglob*(buffer_num_GPU_transfer+1))
         write(IOUT_UNDO_ATT,asynchronous='yes',pos=offset+8*nglob) &
                             no_backward_acoustic_buffer(nglob*mod(no_backward_iframe+1,3)+1:nglob*(mod(no_backward_iframe+1,3)+1))
-
       endif
     endif
 
     if (any_elastic) then
-
       if (APPROXIMATE_HESS_KL) then
-        offset = 4*2*(NDIM*nglob)*(no_backward_Nframes - no_backward_iframe) + 1
+        offset = 2 * CUSTOM_REAL * (NDIM*nglob) * (no_backward_iframe-1) + 1
       else
-        offset = 4*(NDIM*nglob)*(no_backward_Nframes - no_backward_iframe) + 1
+        offset = CUSTOM_REAL * (NDIM*nglob) * (no_backward_iframe-1) + 1
       endif
-
       no_backward_displ_buffer(:,:) = displ_elastic(:,:)
       write(IOUT_UNDO_ATT,asynchronous='yes',pos=offset) no_backward_displ_buffer
       if (APPROXIMATE_HESS_KL) then
         no_backward_accel_buffer(:,:) = accel_elastic(:,:)
-        write(IOUT_UNDO_ATT,asynchronous='yes',pos=offset) no_backward_accel_buffer
+        write(IOUT_UNDO_ATT,asynchronous='yes',pos=offset+CUSTOM_REAL*(NDIM*nglob)) no_backward_accel_buffer
       endif
-
     endif
 
   endif

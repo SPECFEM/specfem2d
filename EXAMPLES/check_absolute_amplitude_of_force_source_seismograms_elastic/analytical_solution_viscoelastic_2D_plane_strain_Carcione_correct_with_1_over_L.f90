@@ -7126,10 +7126,10 @@
          '''')
   99998 FORMAT (1X,'** On entry, SCALE has illegal value: SCALE = ''',A, &
          '''')
-  99997 FORMAT (1X,'** No computation because abs(Z) =',1P,E13.5,' > ', &
+  99997 FORMAT (1X,'** No computation because abs(Z) =',1P,E13.5,'>', &
          E13.5)
   99996 FORMAT (1X,'** Results lack precision because abs(Z) =',1P,E13.5, &
-         ' > ',E13.5)
+         '>',E13.5)
   99995 FORMAT (1X,'** No computation - algorithm termination condition ', &
          'not met.')
   99994 FORMAT (1X,'** No computation because real(ZTA) too large, where', &
@@ -7580,18 +7580,18 @@
   99996 FORMAT (1X,'** On entry, N <= 0: N = ',I16)
   99995 FORMAT (1X,'** On entry, M has illegal value: M = ',I16)
   99994 FORMAT (1X,'** Results lack precision because abs(Z) =',1P,E13.5, &
-         ' > ',E13.5)
+         '>',E13.5)
   99993 FORMAT (1X,'** Results lack precision, FNU+N-1 =',1P,E13.5, &
-         ' > ',E13.5)
+         '>',E13.5)
   99992 FORMAT (1X,'** No computation - algorithm termination condition ', &
          'not met.')
   99991 FORMAT (1X,'** No computation because FNU+N-1 =',1P,E13.5,' is t', &
          'oo large.')
-  99990 FORMAT (1X,'** No computation because abs(Z) =',1P,E13.5,' < ', &
+  99990 FORMAT (1X,'** No computation because abs(Z) =',1P,E13.5,'<', &
          E13.5)
-  99989 FORMAT (1X,'** No computation because FNU+N-1 =',1P,E13.5,' > ', &
+  99989 FORMAT (1X,'** No computation because FNU+N-1 =',1P,E13.5,'>', &
          E13.5)
-  99988 FORMAT (1X,'** No computation because abs(Z) =',1P,E13.5,' > ', &
+  99988 FORMAT (1X,'** No computation because abs(Z) =',1P,E13.5,'>', &
          E13.5)
   END
   REAL function X02AHE(X)

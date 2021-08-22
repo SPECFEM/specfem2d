@@ -57,17 +57,20 @@
 !
 !-------------------------------------------------------------------------------------------------
 
-module my_mpi_communicator
+module my_mpi
 
 ! main parameter module for specfem simulations
 
-  !use MPI ! TODO
+#ifdef WITH_MPI
+  ! standard include of the MPI library
+  use mpi
+#endif
 
   implicit none
 
   integer :: my_local_mpi_comm_world, my_local_mpi_comm_for_bcast
 
-end module my_mpi_communicator
+end module my_mpi
 
 !-------------------------------------------------------------------------------------------------
 !
@@ -77,17 +80,12 @@ end module my_mpi_communicator
 
   subroutine init_mpi()
 
-  use my_mpi_communicator
+  use my_mpi
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
-
-#ifdef USE_MPI
-! standard include of the MPI library
-  use mpi
-#endif
 
   implicit none
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer :: myrank
   ! local parameters
   integer :: sizeprocs
@@ -105,20 +103,22 @@ end module my_mpi_communicator
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
   if (ier /= 0 ) call stop_the_code('Error getting MPI rank')
   if (myrank == 0) then
-    call open_parameter_file_from_master_only()
+    call open_parameter_file_from_main_only()
     ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read
     call read_value_integer_p(NUMBER_OF_SIMULTANEOUS_RUNS, 'NUMBER_OF_SIMULTANEOUS_RUNS')
     call read_value_logical_p(BROADCAST_SAME_MESH_AND_MODEL, 'BROADCAST_SAME_MESH_AND_MODEL')
     ! close parameter file
     call close_parameter_file()
   endif
-  ! broadcast parameters read from master to all processes
+  ! broadcast parameters read from main to all processes
   my_local_mpi_comm_world = MPI_COMM_WORLD
   call bcast_all_singlei(NUMBER_OF_SIMULTANEOUS_RUNS)
   call bcast_all_singlel(BROADCAST_SAME_MESH_AND_MODEL)
 ! create sub-communicators if needed, if running more than one earthquake from the same job
   call world_split()
+
 #else
+
   NUMBER_OF_SIMULTANEOUS_RUNS = NUMBER_OF_SIMULTANEOUS_RUNS ! To avoid compiler warning
   BROADCAST_SAME_MESH_AND_MODEL = BROADCAST_SAME_MESH_AND_MODEL ! To avoid compiler warning
   ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS is read, thus read the parameter file
@@ -128,6 +128,7 @@ end module my_mpi_communicator
   call open_parameter_file()
   ! read only parameters (without receiver-line section, material tables or region definitions)
   call read_parameter_file_only()
+
 #endif
 
   end subroutine init_mpi
@@ -138,15 +139,11 @@ end module my_mpi_communicator
 
   subroutine finalize_mpi()
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  ! standard include of the MPI library
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
@@ -169,16 +166,15 @@ end module my_mpi_communicator
 
   subroutine abort_mpi()
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
+  use my_mpi
+#ifdef WITH_MPI
   use constants, only: MAX_STRING_LEN,mygroup
   use shared_input_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
 #endif
 
   implicit none
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
 
   integer :: my_local_rank,my_global_rank,ier
@@ -216,7 +212,7 @@ end module my_mpi_communicator
   call MPI_ABORT(MPI_COMM_WORLD,30,ier)
 #endif
 
-  call stop_the_code('Error, program ended in exit_MPI')
+  stop 'Error, program ended in exit_MPI'
 
   end subroutine abort_mpi
 
@@ -226,15 +222,11 @@ end module my_mpi_communicator
 
   subroutine synchronize_all()
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-! standard include of the MPI library
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
@@ -248,23 +240,43 @@ end module my_mpi_communicator
 !-------------------------------------------------------------------------------------------------
 !
 
+  double precision function wtime()
+
+  use my_mpi
+
+  implicit none
+
+#ifdef WITH_MPI
+  wtime = MPI_WTIME()
+#else
+  real :: ct
+
+  ! note: for simplicity, we take cpu_time which returns the elapsed CPU time in seconds
+  !          (instead of wall clock time for parallel MPI function)
+  call cpu_time(ct)
+  wtime = ct
+#endif
+
+  end function wtime
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
 
   subroutine wait_req(req)
 
-#ifdef USE_MPI
-! standard include of the MPI library
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   integer :: req
 
-#ifndef USE_MPI
+#ifndef WITH_MPI
   integer :: dummy
 #endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
@@ -286,20 +298,17 @@ end module my_mpi_communicator
 
   subroutine bcast_all_i(buffer, countval)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   integer :: countval
   integer, dimension(countval) :: buffer
-#ifndef USE_MPI
+#ifndef WITH_MPI
   integer :: dummy
 #endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer :: ier
 
   call MPI_BCAST(buffer,countval,MPI_INTEGER,0,my_local_mpi_comm_world,ier)
@@ -316,19 +325,16 @@ end module my_mpi_communicator
 
   subroutine bcast_all_singlei(buffer)
 
- use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   integer :: buffer
-#ifndef USE_MPI
+#ifndef WITH_MPI
   integer :: dummy
 #endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer :: ier
 
   call MPI_BCAST(buffer,1,MPI_INTEGER,0,my_local_mpi_comm_world,ier)
@@ -343,21 +349,47 @@ end module my_mpi_communicator
 !-------------------------------------------------------------------------------------------------
 !
 
+
+  subroutine bcast_all_l(buffer, countval)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: countval
+  logical, dimension(countval) :: buffer
+#ifndef WITH_MPI
+  logical :: dummy
+#endif
+
+#ifdef WITH_MPI
+  integer :: ier
+
+  call MPI_BCAST(buffer,countval,MPI_LOGICAL,0,my_local_mpi_comm_world,ier)
+#else
+  ! to avoid compiler warning
+  dummy = buffer(1)
+#endif
+
+  end subroutine bcast_all_l
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
   subroutine bcast_all_singlel(buffer)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   logical :: buffer
-#ifndef USE_MPI
+#ifndef WITH_MPI
   logical :: dummy
 #endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer :: ier
 
   call MPI_BCAST(buffer,1,MPI_LOGICAL,0,my_local_mpi_comm_world,ier)
@@ -373,21 +405,45 @@ end module my_mpi_communicator
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine bcast_all_dp(buffer, countval)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: countval
+  double precision, dimension(countval) :: buffer
+#ifndef WITH_MPI
+  double precision :: dummy
+#endif
+
+#ifdef WITH_MPI
+  integer :: ier
+
+  call MPI_BCAST(buffer,countval,MPI_DOUBLE_PRECISION,0,my_local_mpi_comm_world,ier)
+#else
+  ! to avoid compiler warning
+  dummy = buffer(1)
+#endif
+
+  end subroutine bcast_all_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine bcast_all_singledp(buffer)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   double precision :: buffer
-#ifndef USE_MPI
+#ifndef WITH_MPI
   double precision :: dummy
 #endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer :: ier
 
   call MPI_BCAST(buffer,1,MPI_DOUBLE_PRECISION,0,my_local_mpi_comm_world,ier)
@@ -402,24 +458,48 @@ end module my_mpi_communicator
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine bcast_all_string(buffer)
+  subroutine bcast_all_string_array(buffer, countval)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
+  use my_mpi
+  use constants, only: MAX_STRING_LEN
+
+  implicit none
+
+  integer :: countval
+  character(len=MAX_STRING_LEN), dimension(countval) :: buffer
+#ifndef WITH_MPI
+  character(len=MAX_STRING_LEN) :: dummy
 #endif
 
+#ifdef WITH_MPI
+  integer :: ier
+
+  call MPI_BCAST(buffer,countval*MAX_STRING_LEN,MPI_CHARACTER,0,my_local_mpi_comm_world,ier)
+#else
+  ! to avoid compiler warning
+  dummy = buffer(1)
+#endif
+
+  end subroutine bcast_all_string_array
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_string(buffer)
+
+  use my_mpi
   use constants, only: MAX_STRING_LEN
 
   implicit none
 
   character(len=MAX_STRING_LEN) :: buffer
 
-#ifndef USE_MPI
+#ifndef WITH_MPI
   character(len=MAX_STRING_LEN) :: dummy
 #endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer :: ier
 
   call MPI_BCAST(buffer,MAX_STRING_LEN,MPI_CHARACTER,0,my_local_mpi_comm_world,ier)
@@ -436,10 +516,7 @@ end module my_mpi_communicator
 
   subroutine bcast_all_i_for_database(buffer, countval)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
 
   implicit none
@@ -448,13 +525,13 @@ end module my_mpi_communicator
   ! of indices, provided we call the routine using the first memory cell of that multidimensional array,
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
   integer :: buffer
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer ier
 #endif
 
   if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   call MPI_BCAST(buffer,countval,MPI_INTEGER,0,my_local_mpi_comm_for_bcast,ier)
 #else
   ! to avoid compiler warning
@@ -473,10 +550,7 @@ end module my_mpi_communicator
 
   subroutine bcast_all_l_for_database(buffer, countval)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
 
   implicit none
@@ -487,13 +561,13 @@ end module my_mpi_communicator
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
   logical :: buffer
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer ier
 #endif
 
   if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   call MPI_BCAST(buffer,countval,MPI_INTEGER,0,my_local_mpi_comm_for_bcast,ier)
 #else
   ! to avoid compiler warning
@@ -509,15 +583,12 @@ end module my_mpi_communicator
 
   subroutine bcast_all_cr_for_database(buffer, countval)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
   use constants, only: CUSTOM_REAL
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
 
   implicit none
-#ifdef USE_MPI
+#ifdef WITH_MPI
   include "precision.h"
 #endif
 
@@ -527,13 +598,13 @@ end module my_mpi_communicator
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
   real(kind=CUSTOM_REAL) :: buffer
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer ier
 #endif
 
   if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   call MPI_BCAST(buffer,countval,CUSTOM_MPI_TYPE,0,my_local_mpi_comm_for_bcast,ier)
 #else
   ! to avoid compiler warning
@@ -549,10 +620,7 @@ end module my_mpi_communicator
 
   subroutine bcast_all_dp_for_database(buffer, countval)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
 
   implicit none
@@ -584,10 +652,7 @@ end module my_mpi_communicator
 
   subroutine bcast_all_r_for_database(buffer, countval)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
 
   implicit none
@@ -598,13 +663,13 @@ end module my_mpi_communicator
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
   real :: buffer
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer ier
 #endif
 
   if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   call MPI_BCAST(buffer,countval,MPI_REAL,0,my_local_mpi_comm_for_bcast,ier)
 #else
   ! to avoid compiler warning
@@ -622,16 +687,13 @@ end module my_mpi_communicator
 
   subroutine min_all_i(sendbuf, recvbuf)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   integer:: sendbuf, recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer ier
 
@@ -648,16 +710,13 @@ end module my_mpi_communicator
 
   subroutine max_all_i(sendbuf, recvbuf)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   integer :: sendbuf, recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
@@ -674,16 +733,13 @@ end module my_mpi_communicator
 
   subroutine min_all_all_dp(sendbuf, recvbuf)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   double precision :: sendbuf, recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer ier
 
   call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_MIN,my_local_mpi_comm_world,ier)
@@ -697,23 +753,50 @@ end module my_mpi_communicator
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine max_all_cr(sendbuf, recvbuf)
+  subroutine min_all_1Darray_cr(sendbuf, recvbuf, nx)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
   use constants, only: CUSTOM_REAL
 
   implicit none
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
+  include "precision.h"
+#endif
+
+  integer :: nx
+  real(kind=CUSTOM_REAL),dimension(nx) :: sendbuf, recvbuf
+
+#ifdef WITH_MPI
+  integer :: ier
+
+
+  call MPI_REDUCE(sendbuf,recvbuf,nx,CUSTOM_MPI_TYPE,MPI_MIN,0,my_local_mpi_comm_world,ier)
+#else
+  recvbuf(:) = sendbuf(:)
+#endif
+
+  end subroutine min_all_1Darray_cr
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine max_all_cr(sendbuf, recvbuf)
+
+  use my_mpi
+  use constants, only: CUSTOM_REAL
+
+  implicit none
+
+#ifdef WITH_MPI
   include "precision.h"
 #endif
 
   real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer ier
 
   call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MAX,0,my_local_mpi_comm_world,ier)
@@ -727,18 +810,44 @@ end module my_mpi_communicator
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine max_all_1Darray_cr(sendbuf, recvbuf, nx)
+
+  use my_mpi
+  use constants, only: CUSTOM_REAL
+
+  implicit none
+
+#ifdef WITH_MPI
+  include "precision.h"
+#endif
+
+  integer :: nx
+  real(kind=CUSTOM_REAL),dimension(nx) :: sendbuf, recvbuf
+
+#ifdef WITH_MPI
+  integer :: ier
+
+
+  call MPI_REDUCE(sendbuf,recvbuf,nx,CUSTOM_MPI_TYPE,MPI_MAX,0,my_local_mpi_comm_world,ier)
+#else
+  recvbuf(:) = sendbuf(:)
+#endif
+
+  end subroutine max_all_1Darray_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine max_all_all_i(sendbuf, recvbuf)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   integer :: sendbuf, recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer ier
 
   call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier)
@@ -755,16 +864,13 @@ end module my_mpi_communicator
 
   subroutine max_all_all_dp(sendbuf, recvbuf)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   double precision :: sendbuf, recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer ier
 
   call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_MAX,my_local_mpi_comm_world,ier)
@@ -780,16 +886,13 @@ end module my_mpi_communicator
 
   subroutine any_all_l(sendbuf, recvbuf)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   logical :: sendbuf, recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer :: ier
 
   call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_LOGICAL,MPI_LOR,my_local_mpi_comm_world,ier)
@@ -807,16 +910,13 @@ end module my_mpi_communicator
 
   subroutine sum_all_i(sendbuf, recvbuf)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   integer :: sendbuf, recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
@@ -833,16 +933,13 @@ end module my_mpi_communicator
 
   subroutine sum_all_all_i(sendbuf, recvbuf)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   integer :: sendbuf, recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
@@ -859,21 +956,18 @@ end module my_mpi_communicator
 
   subroutine sum_all_cr(sendbuf, recvbuf)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
   use constants, only: CUSTOM_REAL
 
   implicit none
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   include "precision.h"
 #endif
 
   real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
@@ -890,16 +984,13 @@ end module my_mpi_communicator
 
   subroutine sum_all_dp(sendbuf, recvbuf)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   double precision :: sendbuf, recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
@@ -917,24 +1008,20 @@ end module my_mpi_communicator
 
   subroutine sum_all_1Darray_i(sendbuf, recvbuf, nx)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   integer :: nx
   integer, dimension(nx) :: sendbuf, recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer :: ier
 
   call MPI_REDUCE(sendbuf,recvbuf,nx,MPI_INTEGER,MPI_SUM,0,my_local_mpi_comm_world,ier)
 #else
   ! to avoid compiler warning
-  recvbuf = sendbuf
-  nx = nx
+  recvbuf(:) = sendbuf(:)
 #endif
 
   end subroutine sum_all_1Darray_i
@@ -945,16 +1032,13 @@ end module my_mpi_communicator
 
   subroutine sum_all_all_dp(sendbuf, recvbuf)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   double precision :: sendbuf, recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
@@ -975,28 +1059,23 @@ end module my_mpi_communicator
 
   subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-! standard include of the MPI library
-  use mpi
-#endif
-
+  use my_mpi
   use constants, only: CUSTOM_REAL
 
   implicit none
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   include "precision.h"
 #endif
 
   integer :: sendcount, dest, sendtag, req
   real(kind=CUSTOM_REAL), dimension(sendcount) :: sendbuf
 
-#ifndef USE_MPI
+#ifndef WITH_MPI
   integer :: dummy
 #endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer :: ier
 
   call MPI_ISEND(sendbuf,sendcount,CUSTOM_MPI_TYPE,dest,sendtag,my_local_mpi_comm_world,req,ier)
@@ -1020,27 +1099,22 @@ end module my_mpi_communicator
 
  ! asynchronuous receive
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-! standard include of the MPI library
-  use mpi
-#endif
-
+  use my_mpi
   use constants, only: CUSTOM_REAL
 
   implicit none
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   include "precision.h"
 #endif
 
   integer :: recvcount, dest, recvtag, req
   real(kind=CUSTOM_REAL), dimension(recvcount) :: recvbuf
-#ifndef USE_MPI
+#ifndef WITH_MPI
   integer :: dummy
 #endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer :: ier
 
   call MPI_IRECV(recvbuf,recvcount,CUSTOM_MPI_TYPE,dest,recvtag,my_local_mpi_comm_world,req,ier)
@@ -1059,15 +1133,14 @@ end module my_mpi_communicator
 !-------------------------------------------------------------------------------------------------
 !
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
 
 
   subroutine send_singlei(sendbuf, dest, sendtag)
 
 ! synchronuous/blocking send
 
-  use my_mpi_communicator
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1085,14 +1158,13 @@ end module my_mpi_communicator
 !
 !-------------------------------------------------------------------------------------------------
 !
-#ifdef USE_MPI
+#ifdef WITH_MPI
 
   subroutine send_singledp(sendbuf, dest, sendtag)
 
 ! synchronuous/blocking send
 
-  use my_mpi_communicator
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1110,13 +1182,13 @@ end module my_mpi_communicator
 !
 !-------------------------------------------------------------------------------------------------
 !
-#ifdef USE_MPI
+#ifdef WITH_MPI
 
   subroutine recv_singlei(recvbuf, dest, recvtag )
 
 ! synchronuous/blocking receive
-  use my_mpi_communicator
-  use mpi
+
+  use my_mpi
 
   implicit none
 
@@ -1134,14 +1206,38 @@ end module my_mpi_communicator
 !
 !-------------------------------------------------------------------------------------------------
 !
+#ifdef WITH_MPI
 
-#ifdef USE_MPI
+  subroutine recv_any_singlei(recvbuf, recvtag )
+
+! synchronuous/blocking receive
+
+  use my_mpi
+
+  implicit none
+
+  integer :: recvtag
+  integer :: recvbuf
+
+  integer :: ier
+
+  call MPI_RECV(recvbuf,1,MPI_INTEGER,MPI_ANY_SOURCE,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
+
+  end subroutine recv_any_singlei
+
+#endif
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+#ifdef WITH_MPI
 
   subroutine recv_singledp(recvbuf, dest, recvtag )
 
 ! synchronuous/blocking receive
-  use my_mpi_communicator
-  use mpi
+
+  use my_mpi
 
   implicit none
 
@@ -1160,15 +1256,40 @@ end module my_mpi_communicator
 !-------------------------------------------------------------------------------------------------
 !
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
+
+  subroutine recv_any_singledp(recvbuf, recvtag )
+
+! synchronuous/blocking receive
+
+  use my_mpi
+
+  implicit none
+
+  integer :: recvtag
+  double precision :: recvbuf
+
+  integer :: ier
+
+  call MPI_RECV(recvbuf,1,MPI_DOUBLE_PRECISION,MPI_ANY_SOURCE,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
+
+  end subroutine recv_any_singledp
+
+#endif
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+#ifdef WITH_MPI
 
 
   subroutine send_i(sendbuf, sendcount, dest, sendtag)
 
 ! synchronuous/blocking send
 
-  use my_mpi_communicator
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1188,14 +1309,13 @@ end module my_mpi_communicator
 !-------------------------------------------------------------------------------------------------
 !
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
 
   subroutine send_dp(sendbuf, sendcount, dest, sendtag)
 
 ! synchronuous/blocking send
 
-  use my_mpi_communicator
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1215,13 +1335,39 @@ end module my_mpi_communicator
 !-------------------------------------------------------------------------------------------------
 !
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
+
+  subroutine send_l(sendbuf, sendcount, dest, sendtag)
+
+! synchronuous/blocking send
+
+  use my_mpi
+
+  implicit none
+
+  integer :: dest,sendtag
+  integer :: sendcount
+  logical,dimension(sendcount):: sendbuf
+
+  integer :: ier
+
+  call MPI_SEND(sendbuf,sendcount,MPI_LOGICAL,dest,sendtag,my_local_mpi_comm_world,ier)
+
+  end subroutine send_l
+
+#endif
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+#ifdef WITH_MPI
 
   subroutine recv_i(recvbuf,recvcount, dest, recvtag )
 
 ! synchronuous/blocking receive
-  use my_mpi_communicator
-  use mpi
+
+  use my_mpi
 
   implicit none
 
@@ -1241,13 +1387,13 @@ end module my_mpi_communicator
 !-------------------------------------------------------------------------------------------------
 !
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
 
   subroutine recv_dp(recvbuf,recvcount, dest, recvtag )
 
 ! synchronuous/blocking receive
-  use my_mpi_communicator
-  use mpi
+
+  use my_mpi
 
   implicit none
 
@@ -1263,6 +1409,32 @@ end module my_mpi_communicator
 
 #endif
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+#ifdef WITH_MPI
+
+  subroutine recv_l(recvbuf,recvcount, dest, recvtag )
+
+! synchronuous/blocking receive
+
+  use my_mpi
+
+  implicit none
+
+  integer :: dest,recvtag
+  integer :: recvcount
+  logical,dimension(recvcount):: recvbuf
+
+  integer :: ier
+
+  call MPI_RECV(recvbuf,recvcount,MPI_LOGICAL,dest,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
+
+  end subroutine recv_l
+
+#endif
+
 
 !-------------------------------------------------------------------------------------------------
 !
@@ -1272,10 +1444,7 @@ end module my_mpi_communicator
 
   subroutine gather_all_i(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
@@ -1283,7 +1452,7 @@ end module my_mpi_communicator
   integer, dimension(sendcnt) :: sendbuf
   integer, dimension(recvcount,0:NPROC-1) :: recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
@@ -1300,10 +1469,7 @@ end module my_mpi_communicator
 
   subroutine gather_all_dp(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
@@ -1311,7 +1477,7 @@ end module my_mpi_communicator
   double precision, dimension(sendcnt) :: sendbuf
   double precision, dimension(recvcount,0:NPROC-1) :: recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
@@ -1328,10 +1494,7 @@ end module my_mpi_communicator
 
   subroutine gather_all_singlei(sendbuf, recvbuf, NPROC)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
@@ -1339,7 +1502,7 @@ end module my_mpi_communicator
   integer :: sendbuf
   integer, dimension(0:NPROC-1) :: recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
@@ -1354,12 +1517,33 @@ end module my_mpi_communicator
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine gather_all_singledp(sendbuf, recvbuf, NPROC)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: NPROC
+  double precision  :: sendbuf
+  double precision, dimension(0:NPROC-1) :: recvbuf
+
+#ifdef WITH_MPI
+  ! local parameters
+  integer :: ier
+  call MPI_GATHER(sendbuf,1,MPI_DOUBLE_PRECISION,recvbuf,1,MPI_DOUBLE_PRECISION,0,my_local_mpi_comm_world,ier)
+#else
+  recvbuf(0) = sendbuf
+#endif
+
+end subroutine gather_all_singledp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine gather_all_all_singlei(sendbuf, recvbuf, NPROC)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
@@ -1367,7 +1551,7 @@ end module my_mpi_communicator
   integer :: sendbuf
   integer, dimension(0:NPROC-1) :: recvbuf
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
@@ -1389,16 +1573,13 @@ end module my_mpi_communicator
 
   subroutine world_size(sizeval)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   integer,intent(out) :: sizeval
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
@@ -1417,24 +1598,20 @@ end module my_mpi_communicator
 
   subroutine world_rank(rank)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-! standard include of the MPI library
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   integer,intent(out) :: rank
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! local parameters
   integer :: ier
 
   call MPI_COMM_RANK(my_local_mpi_comm_world,rank,ier)
   if (ier /= 0 ) call stop_the_code('Error getting MPI rank')
 #else
-  ! always returns master rank zero
+  ! always returns main rank zero
   rank = 0
 #endif
 
@@ -1446,17 +1623,13 @@ end module my_mpi_communicator
 
   subroutine world_duplicate(comm)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-! standard include of the MPI library
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
   integer,intent(out) :: comm
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer :: ier
 
   call MPI_COMM_DUP(my_local_mpi_comm_world,comm,ier)
@@ -1473,11 +1646,7 @@ end module my_mpi_communicator
 
   subroutine world_get_comm(comm)
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-! standard include of the MPI library
-  use mpi
-#endif
+  use my_mpi
 
   implicit none
 
@@ -1491,16 +1660,14 @@ end module my_mpi_communicator
 !-------------------------------------------------------------------------------------------------
 !
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
 ! create sub-communicators if needed, if running more than one earthquake from the same job.
 ! create a sub-communicator for each independent run;
 ! if there is a single run to do, then just copy the default communicator to the new one
 
   subroutine world_split()
 
-  use my_mpi_communicator
-! standard include of the MPI library
-  use mpi
+  use my_mpi
 
   use constants, only: MAX_STRING_LEN,OUTPUT_FILES, &
     IMAIN,ISTANDARD_OUTPUT,mygroup,I_should_read_the_database
@@ -1595,10 +1762,8 @@ end module my_mpi_communicator
 ! close sub-communicators if needed, if running more than one earthquake from the same job.
   subroutine world_unsplit()
 
-  use my_mpi_communicator
-#ifdef USE_MPI
-! standard include of the MPI library
-  use mpi
+  use my_mpi
+#ifdef WITH_MPI
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
 
   implicit none

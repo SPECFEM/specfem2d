@@ -48,8 +48,8 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK, &
     NGLJ,TWO_THIRDS
 
-  use specfem_par, only: time_stepping_scheme,i_stage,it,deltat, &
-                         assign_external_model,rhoext,vpext,density,poroelastcoef,kmato, &
+  use specfem_par, only: time_stepping_scheme,i_stage,it,DT,deltat, &
+                         assign_external_model,rhostore,kappastore,density,poroelastcoef,kmato, &
                          ibool,jacobian, &
                          wxgll,wzgll, &
                          rmemory_potential_acoustic,rmemory_potential_acoustic_LDDRK, &
@@ -80,7 +80,7 @@
   double precision :: A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
 
   ! material properties of the acoustic medium
-  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl,rhol
+  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,rhol
   real(kind=CUSTOM_REAL) :: fac
 
   ! checks if anything to do in this slice
@@ -91,11 +91,11 @@
   select case (time_stepping_scheme)
   case (1)
     ! Newmark
-    time_n = (it-1) * deltat
-    time_nsub1 = (it-2) * deltat
+    time_n = (it-1) * DT
+    time_nsub1 = (it-2) * DT
   case (2)
     ! LDDRK
-    time_n = (it-1) * deltat + C_LDDRK(i_stage) * deltat
+    time_n = (it-1) * DT + C_LDDRK(i_stage) * DT
   case default
     call stop_the_code('Sorry, time stepping scheme for PML accel contribution not implemented yet')
   end select
@@ -120,7 +120,7 @@
       beta_z = alpha_z + d_z / kappa_z
 
       ! the subroutine of l_parameter_computation is located at the end of compute_forces_viscoelastic.F90
-      call l_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+      call l_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                    CPML_region_local,A0,A1,A2,A3,A4, &
                                    bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
@@ -148,15 +148,17 @@
                deltat * (-bb_2 * rmemory_potential_acoustic(2,i,j,ispec_PML) + potential_acoustic(iglob))
         rmemory_potential_acoustic(2,i,j,ispec_PML) = rmemory_potential_acoustic(2,i,j,ispec_PML) + &
                BETA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML)
+
+      case default
+        call stop_the_code('PML for RK4 not implement yet in pml_compute_accel_contribution_acoustic()')
       end select
 
       ! material properties
       if (assign_external_model) then
-        rhol = rhoext(i,j,ispec)
-        cpl = vpext(i,j,ispec)
+        rhol = rhostore(i,j,ispec)
         !assuming that in fluid(acoustic) part input cpl is defined by sqrt(kappal/rhol), &
         !which is not the same as in cpl input in elastic part
-        kappal = rhol * cpl * cpl ! CHECK Kappa : it is ok here because we are in acoustic elements
+        kappal = kappastore(i,j,ispec)
       else
         rhol = density(1,kmato(ispec))
         lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
@@ -205,8 +207,8 @@
   use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,NGLJ,TWO_THIRDS, &
                        CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
-  use specfem_par, only: time_stepping_scheme,i_stage,deltat, &
-                         assign_external_model,rhoext,density,kmato, &
+  use specfem_par, only: time_stepping_scheme,i_stage,DT,deltat, &
+                         assign_external_model,rhostore,density,kmato, &
                          ibool,jacobian,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,coord,wxglj, &
                          rmemory_displ_elastic,rmemory_displ_elastic_LDDRK
@@ -265,7 +267,7 @@
       beta_x = alpha_x + d_x / kappa_x
       beta_z = alpha_z + d_z / kappa_z
 
-      call l_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+      call l_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                    CPML_region_local,A0,A1,A2,A3,A4, &
                                    bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
@@ -312,7 +314,7 @@
       end select
 
       if (assign_external_model) then
-        rhol = rhoext(i,j,ispec)
+        rhol = rhostore(i,j,ispec)
       else
         rhol = density(1,kmato(ispec))
       endif

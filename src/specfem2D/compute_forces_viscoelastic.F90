@@ -36,18 +36,18 @@
 
   ! compute forces for the elastic elements
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
-    ONE,TWO,PI,TINYVAL,FOUR_THIRDS,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
+    ONE,TWO,PI,TINYVAL,FOUR_THIRDS
 
   use specfem_par, only: nglob,assign_external_model,P_SV, &
                          ATTENUATION_VISCOELASTIC,nspec_ATT_el,N_SLS, &
                          ibool,kmato,ispec_is_elastic, &
                          poroelastcoef,xix,xiz,gammax,gammaz, &
-                         jacobian,vpext,vsext,rhoext, &
-                         QKappa_attenuation,Qmu_attenuation,QKappa_attenuationext,Qmu_attenuationext, &
-                         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext, &
-                         ispec_is_anisotropic,anisotropy, &
+                         jacobian,rho_vpstore,mustore,rhostore, &
+                         QKappa_attenuationcoef,Qmu_attenuationcoef,QKappa_attenuationext,Qmu_attenuationext, &
+                         c11ext,c12ext,c13ext,c15ext,c22ext,c23ext,c25ext,c33ext,c35ext,c55ext, &
+                         ispec_is_anisotropic,anisotropycoef, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-                         it,coord,iglob_is_forced
+                         coord,iglob_is_forced
 
   ! overlapping communication
   use specfem_par, only: nspec_inner_elastic,nspec_outer_elastic,phase_ispec_inner_elastic
@@ -104,7 +104,7 @@
 
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
-    lambdaplus2mu_unrelaxed_elastic,cpl,csl,rhol,lambdalplusmul_unrelaxed_elastic
+    lambdaplus2mu_unrelaxed_elastic,cpl,rhol,lambdalplusmul_unrelaxed_elastic
 
   ! for anisotropy
   double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25,c22
@@ -152,8 +152,8 @@
 
     if (ATTENUATION_VISCOELASTIC) then
       if (.not. assign_external_model) then
-        qkappal = QKappa_attenuation(kmato(ispec))
-        qmul = Qmu_attenuation(kmato(ispec))
+        qkappal = QKappa_attenuationcoef(kmato(ispec))
+        qmul = Qmu_attenuationcoef(kmato(ispec))
       else
         qkappal = maxval(QKappa_attenuationext(:,:,ispec))
         qmul =  maxval(Qmu_attenuationext(:,:,ispec))
@@ -273,72 +273,161 @@
       do i = 1,NGLLX
         !--- if external medium, get elastic parameters of current grid point
         if (assign_external_model) then
-          cpl = vpext(i,j,ispec)
-          csl = vsext(i,j,ispec)
-          rhol = rhoext(i,j,ispec)
+          mul_unrelaxed_elastic = mustore(i,j,ispec)
+          rhol = rhostore(i,j,ispec)
+          cpl = rho_vpstore(i,j,ispec)/rhol
 
-          mul_unrelaxed_elastic = rhol*csl*csl
           lambdal_unrelaxed_elastic = rhol*cpl*cpl - 2._CUSTOM_REAL * mul_unrelaxed_elastic
           lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
           lambdalplusmul_unrelaxed_elastic = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
         endif
 
         ! compute stress tensor (include attenuation or anisotropy if needed)
-        if (AXISYM) then
-          if (is_on_the_axis(ispec)) then
-            if (i == 1) then
-              ! First GLJ point
-              sigma_xx = 0._CUSTOM_REAL
-              sigma_zz = 0._CUSTOM_REAL
-              sigma_thetatheta(i,j) = 0._CUSTOM_REAL
-              xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-              r_xiplus1(i,j) = xxi
-              do k = 1,NGLJ
-                sigma_xx = sigma_xx + dummy_loc(1,k,j)*hprimeBar_xx(i,k)
-                sigma_zz = sigma_zz + dummy_loc(1,k,j)*hprimeBar_xx(i,k)
-                sigma_thetatheta(i,j) = sigma_thetatheta(i,j) + dummy_loc(1,k,j)*hprimeBar_xx(i,k)
-              enddo
-              sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl(i,j) &
-                        + lambdal_unrelaxed_elastic * (duz_dzl(i,j) + sigma_xx/xxi)
-              sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl(i,j) &
-                       + lambdal_unrelaxed_elastic * (dux_dxl(i,j) + sigma_zz/xxi)
-              sigma_xz = mul_unrelaxed_elastic*(duz_dxl(i,j) + dux_dzl(i,j))
-              sigma_thetatheta(i,j) = lambdal_unrelaxed_elastic * (duz_dzl(i,j) + dux_dxl(i,j)) &
-                                 + lambdaplus2mu_unrelaxed_elastic*sigma_thetatheta(i,j)/xxi
+        if (.not. ispec_is_anisotropic(ispec)) then
+          ! isotropic elastic
+          if (AXISYM) then
+            if (is_on_the_axis(ispec)) then
+              if (i == 1) then
+                ! First GLJ point
+                sigma_xx = 0._CUSTOM_REAL
+                sigma_zz = 0._CUSTOM_REAL
+                sigma_thetatheta(i,j) = 0._CUSTOM_REAL
+                xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+                r_xiplus1(i,j) = xxi
+                do k = 1,NGLJ
+                  sigma_xx = sigma_xx + dummy_loc(1,k,j)*hprimeBar_xx(i,k)
+                  sigma_zz = sigma_zz + dummy_loc(1,k,j)*hprimeBar_xx(i,k)
+                  sigma_thetatheta(i,j) = sigma_thetatheta(i,j) + dummy_loc(1,k,j)*hprimeBar_xx(i,k)
+                enddo
+                sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl(i,j) &
+                          + lambdal_unrelaxed_elastic * (duz_dzl(i,j) + sigma_xx/xxi)
+                sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl(i,j) &
+                         + lambdal_unrelaxed_elastic * (dux_dxl(i,j) + sigma_zz/xxi)
+                sigma_xz = mul_unrelaxed_elastic*(duz_dxl(i,j) + dux_dzl(i,j))
+                sigma_zx = sigma_xz
+                sigma_thetatheta(i,j) = lambdal_unrelaxed_elastic * (duz_dzl(i,j) + dux_dxl(i,j)) &
+                                   + lambdaplus2mu_unrelaxed_elastic*sigma_thetatheta(i,j)/xxi
+              else
+                ! Not first GLJ point
+                sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl(i,j) &
+                           + lambdal_unrelaxed_elastic * (duz_dzl(i,j) + dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec)))
+                sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl(i,j) &
+                           + lambdal_unrelaxed_elastic * (dux_dxl(i,j) + dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec)))
+                sigma_xz = mul_unrelaxed_elastic*(duz_dxl(i,j) + dux_dzl(i,j))
+                sigma_zx = sigma_xz
+                sigma_thetatheta(i,j) = lambdal_unrelaxed_elastic * (duz_dzl(i,j) + dux_dxl(i,j)) &
+                                        + lambdaplus2mu_unrelaxed_elastic * dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
+                r_xiplus1(i,j) = coord(1,ibool(i,j,ispec))/(xiglj(i)+ONE)
+              endif
             else
-              ! Not first GLJ point
+              ! Not on the axis
               sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl(i,j) &
                          + lambdal_unrelaxed_elastic * (duz_dzl(i,j) + dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec)))
               sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl(i,j) &
                          + lambdal_unrelaxed_elastic * (dux_dxl(i,j) + dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec)))
               sigma_xz = mul_unrelaxed_elastic*(duz_dxl(i,j) + dux_dzl(i,j))
+              sigma_zx = sigma_xz
               sigma_thetatheta(i,j) = lambdal_unrelaxed_elastic * (duz_dzl(i,j) + dux_dxl(i,j)) &
                                       + lambdaplus2mu_unrelaxed_elastic * dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
-              r_xiplus1(i,j) = coord(1,ibool(i,j,ispec))/(xiglj(i)+ONE)
             endif
           else
-            ! Not on the axis
-            sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl(i,j) &
-                       + lambdal_unrelaxed_elastic * (duz_dzl(i,j) + dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec)))
-            sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl(i,j) &
-                       + lambdal_unrelaxed_elastic * (dux_dxl(i,j) + dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec)))
-            sigma_xz = mul_unrelaxed_elastic*(duz_dxl(i,j) + dux_dzl(i,j))
-            sigma_thetatheta(i,j) = lambdal_unrelaxed_elastic * (duz_dzl(i,j) + dux_dxl(i,j)) &
-                                    + lambdaplus2mu_unrelaxed_elastic * dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
-          endif
-        else ! Not axisym
-          if (P_SV) then
-            ! P_SV case
-            sigma_xx = lambdaplus2mu_unrelaxed_elastic * dux_dxl(i,j) + lambdal_unrelaxed_elastic * duz_dzl(i,j)
-            sigma_zz = lambdaplus2mu_unrelaxed_elastic * duz_dzl(i,j) + lambdal_unrelaxed_elastic * dux_dxl(i,j)
-            sigma_xz = mul_unrelaxed_elastic * (duz_dxl(i,j) + dux_dzl(i,j))
-            sigma_zx = sigma_xz
+            ! Not AXISYM
+            if (P_SV) then
+              ! P_SV case
+              sigma_xx = lambdaplus2mu_unrelaxed_elastic * dux_dxl(i,j) + lambdal_unrelaxed_elastic * duz_dzl(i,j)
+              sigma_zz = lambdaplus2mu_unrelaxed_elastic * duz_dzl(i,j) + lambdal_unrelaxed_elastic * dux_dxl(i,j)
+              sigma_xz = mul_unrelaxed_elastic * (duz_dxl(i,j) + dux_dzl(i,j))
+              sigma_zx = sigma_xz
+            else
+              ! SH-case
+              sigma_xy = mul_unrelaxed_elastic * dux_dxl(i,j)
+              sigma_zy = mul_unrelaxed_elastic * dux_dzl(i,j)
+            endif
+          endif ! AXISYM
+
+        else
+          ! full anisotropy
+          if (assign_external_model) then
+            c11 = c11ext(i,j,ispec)
+            c13 = c13ext(i,j,ispec)
+            c15 = c15ext(i,j,ispec)
+            c33 = c33ext(i,j,ispec)
+            c35 = c35ext(i,j,ispec)
+            c55 = c55ext(i,j,ispec)
+            c12 = c12ext(i,j,ispec)
+            c23 = c23ext(i,j,ispec)
+            c25 = c25ext(i,j,ispec)
+            if (AXISYM) then
+              c22 = c22ext(i,j,ispec) ! This variable is used for axisym simulations only
+            endif
           else
-            ! SH-case
-            sigma_xy = mul_unrelaxed_elastic * dux_dxl(i,j)
-            sigma_zy = mul_unrelaxed_elastic * dux_dzl(i,j)
+            c11 = anisotropycoef(1,kmato(ispec))
+            c13 = anisotropycoef(2,kmato(ispec))
+            c15 = anisotropycoef(3,kmato(ispec))
+            c33 = anisotropycoef(4,kmato(ispec))
+            c35 = anisotropycoef(5,kmato(ispec))
+            c55 = anisotropycoef(6,kmato(ispec))
+            c12 = anisotropycoef(7,kmato(ispec))
+            c23 = anisotropycoef(8,kmato(ispec))
+            c25 = anisotropycoef(9,kmato(ispec))
+            if (AXISYM) then
+              c22 = anisotropycoef(10,kmato(ispec)) ! This variable is used for axisym simulations only
+            endif
           endif
-        endif ! AXISYM
+
+          ! implement anisotropy in 2D
+          if (AXISYM) then
+            if (is_on_the_axis(ispec)) then
+              if (i == 1) then
+                ! first GLJ point, on the axis
+                sigma_xx = 0._CUSTOM_REAL
+                sigma_zz = 0._CUSTOM_REAL
+                sigma_thetatheta(i,j) = 0._CUSTOM_REAL
+                xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+                r_xiplus1(i,j) = xxi
+                do k = 1,NGLJ ! Compute the sum
+                  sigma_xx = sigma_xx + dummy_loc(1,k,j)*hprimeBar_xx(i,k)
+                  sigma_zz = sigma_zz + dummy_loc(1,k,j)*hprimeBar_xx(i,k)
+                  sigma_thetatheta(i,j) = sigma_thetatheta(i,j) + dummy_loc(1,k,j)*hprimeBar_xx(i,k)
+                enddo
+                sigma_xx = c11*dux_dxl(i,j) + c13*duz_dzl(i,j) + c12*sigma_xx/xxi
+                sigma_zz = c13*dux_dxl(i,j) + c33*duz_dzl(i,j) + c23*sigma_zz/xxi
+                sigma_xz = c15*dux_dxl(i,j) + c35*duz_dzl(i,j) + c55*(duz_dxl(i,j) + dux_dzl(i,j))
+                sigma_zx = sigma_xz
+                sigma_thetatheta(i,j) = c12*dux_dxl(i,j) + c23*duz_dzl(i,j) + c22*sigma_thetatheta(i,j)/xxi
+              else
+                ! not first GLJ point but not on the axis
+                sigma_xx = c11*dux_dxl(i,j) + c13*duz_dzl(i,j) + c12*dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
+                sigma_zz = c13*dux_dxl(i,j) + c33*duz_dzl(i,j) + c23*dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
+                sigma_xz = c15*dux_dxl(i,j) + c35*duz_dzl(i,j) + c55*(duz_dxl(i,j) + dux_dzl(i,j))
+                sigma_zx = sigma_xz
+                sigma_thetatheta(i,j) = c12*dux_dxl(i,j) + c23*duz_dzl(i,j) + &
+                                        c22*dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
+              endif
+            else
+              ! axisym but not on the axis
+              sigma_xx = c11*dux_dxl(i,j) + c13*duz_dzl(i,j) + c12*dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
+              sigma_zz = c13*dux_dxl(i,j) + c33*duz_dzl(i,j) + c23*dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
+              sigma_xz = c15*dux_dxl(i,j) + c35*duz_dzl(i,j) + c55*(duz_dxl(i,j) + dux_dzl(i,j))
+              sigma_zx = sigma_xz
+              sigma_thetatheta(i,j) = c12*dux_dxl(i,j) + c23*duz_dzl(i,j) + c22*dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
+            endif
+          else
+            ! not AXISYM
+            if (P_SV) then
+              ! P_SV case
+              sigma_xx = c11*dux_dxl(i,j) + c13*duz_dzl(i,j) + c15*(duz_dxl(i,j) + dux_dzl(i,j))
+              sigma_zz = c13*dux_dxl(i,j) + c33*duz_dzl(i,j) + c35*(duz_dxl(i,j) + dux_dzl(i,j))
+              sigma_xz = c15*dux_dxl(i,j) + c35*duz_dzl(i,j) + c55*(duz_dxl(i,j) + dux_dzl(i,j))
+              sigma_zx = sigma_xz
+            else
+              ! SH-case
+              ! note: uses c55 == mu in both directions, thus still isotropic for SH case
+              sigma_xy = c55 * dux_dxl(i,j)
+              sigma_zy = c55 * dux_dzl(i,j)
+            endif
+          endif ! AXISYM
+        endif ! anisotropic
 
         ! add the memory variables using the relaxed parameters (Carcione 2007 page 125)
         ! beware: there is a bug in Carcione's equation (2c) of his 1993 paper for sigma_zz, we fixed it in the code below.
@@ -367,10 +456,18 @@
 
 ! use the right formula with 1/N included
 ! i.e. use the unrelaxed moduli here (see Carcione's book, third edition, equation (3.189))
-          sigma_xx = sigma_xx + lambdalplusmul_unrelaxed_elastic * e1_sum + TWO * mul_unrelaxed_elastic * e11_sum
-          sigma_xz = sigma_xz + mul_unrelaxed_elastic * e13_sum
-          sigma_zz = sigma_zz + lambdalplusmul_unrelaxed_elastic * e1_sum - TWO * mul_unrelaxed_elastic * e11_sum
-          sigma_zx = sigma_xz
+          if (P_SV) then
+            ! P_SV case
+            sigma_xx = sigma_xx + lambdalplusmul_unrelaxed_elastic * e1_sum + TWO * mul_unrelaxed_elastic * e11_sum
+            sigma_xz = sigma_xz + mul_unrelaxed_elastic * e13_sum
+            sigma_zz = sigma_zz + lambdalplusmul_unrelaxed_elastic * e1_sum - TWO * mul_unrelaxed_elastic * e11_sum
+            sigma_zx = sigma_xz
+          else
+            ! SH case
+            ! attenuation not implemented yet for SH case ...
+            sigma_xy = sigma_xy + 0._CUSTOM_REAL
+            sigma_zy = sigma_zy + 0._CUSTOM_REAL
+          endif
         endif ! ATTENUATION_VISCOELASTIC
 
         if (PML_BOUNDARY_CONDITIONS) then
@@ -396,7 +493,8 @@
             if (ispec_is_PML(ispec) .and. nspec_PML > 0) then
               if (ROTATE_PML_ACTIVATE) then
                 theta = - ROTATE_PML_ANGLE/180._CUSTOM_REAL*PI
-                if (it == 1) write(*,*) theta,ROTATE_PML_ACTIVATE,cos(theta),sin(theta)
+                !debug
+                !if (it == 1) write(*,*) 'debug: rotate PML',theta,ROTATE_PML_ACTIVATE,cos(theta),sin(theta)
                 ct = cos(theta)
                 st = sin(theta)
                 sigma_xx_prime = lambdaplus2mu_unrelaxed_elastic * (ct**2*dux_dxl(i,j) + ct*st*duz_dxl(i,j) + &
@@ -433,80 +531,6 @@
 
           endif ! ATTENUATION
         endif ! PML_BOUNDARY_CONDITION
-
-        ! full anisotropy
-        if (ispec_is_anisotropic(ispec)) then
-          if (assign_external_model) then
-            c11 = c11ext(i,j,ispec)
-            c13 = c13ext(i,j,ispec)
-            c15 = c15ext(i,j,ispec)
-            c33 = c33ext(i,j,ispec)
-            c35 = c35ext(i,j,ispec)
-            c55 = c55ext(i,j,ispec)
-            c12 = c12ext(i,j,ispec)
-            c23 = c23ext(i,j,ispec)
-            c25 = c25ext(i,j,ispec)
-            if (AXISYM) then
-              c22 = c22ext(i,j,ispec) ! This variable is used for axisym simulations only
-            endif
-          else
-            c11 = anisotropy(1,kmato(ispec))
-            c13 = anisotropy(2,kmato(ispec))
-            c15 = anisotropy(3,kmato(ispec))
-            c33 = anisotropy(4,kmato(ispec))
-            c35 = anisotropy(5,kmato(ispec))
-            c55 = anisotropy(6,kmato(ispec))
-            c12 = anisotropy(7,kmato(ispec))
-            c23 = anisotropy(8,kmato(ispec))
-            c25 = anisotropy(9,kmato(ispec))
-            if (AXISYM) then
-              c22 = anisotropy(10,kmato(ispec)) ! This variable is used for axisym simulations only
-            endif
-          endif
-
-          ! implement anisotropy in 2D
-          if (AXISYM) then
-            if (is_on_the_axis(ispec)) then
-              if (i == 1) then
-                ! first GLJ point, on the axis
-                sigma_xx = 0._CUSTOM_REAL
-                sigma_zz = 0._CUSTOM_REAL
-                sigma_thetatheta(i,j) = 0._CUSTOM_REAL
-                xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-                r_xiplus1(i,j) = xxi
-                do k = 1,NGLJ ! Compute the sum
-                  sigma_xx = sigma_xx + dummy_loc(1,k,j)*hprimeBar_xx(i,k)
-                  sigma_zz = sigma_zz + dummy_loc(1,k,j)*hprimeBar_xx(i,k)
-                  sigma_thetatheta(i,j) = sigma_thetatheta(i,j) + dummy_loc(1,k,j)*hprimeBar_xx(i,k)
-                enddo
-                sigma_xx = c11*dux_dxl(i,j) + c13*duz_dzl(i,j) + c12*sigma_xx/xxi
-                sigma_zz = c13*dux_dxl(i,j) + c33*duz_dzl(i,j) + c23*sigma_zz/xxi
-                sigma_xz = c15*dux_dxl(i,j) + c35*duz_dzl(i,j) + c55*(duz_dxl(i,j) + dux_dzl(i,j))
-                sigma_thetatheta(i,j) = c12*dux_dxl(i,j) + c23*duz_dzl(i,j) + c22*sigma_thetatheta(i,j)/xxi
-
-              else
-                ! not first GLJ point but not on the axis
-                sigma_xx = c11*dux_dxl(i,j) + c13*duz_dzl(i,j) + c12*dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
-                sigma_zz = c13*dux_dxl(i,j) + c33*duz_dzl(i,j) + c23*dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
-                sigma_xz = c15*dux_dxl(i,j) + c35*duz_dzl(i,j) + c55*(duz_dxl(i,j) + dux_dzl(i,j))
-                sigma_thetatheta(i,j) = c12*dux_dxl(i,j) + c23*duz_dzl(i,j) + &
-                                        c22*dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
-              endif
-            else
-              ! axisym but not on the axis
-              sigma_xx = c11*dux_dxl(i,j) + c13*duz_dzl(i,j) + c12*dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
-              sigma_zz = c13*dux_dxl(i,j) + c33*duz_dzl(i,j) + c23*dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
-              sigma_xz = c15*dux_dxl(i,j) + c35*duz_dzl(i,j) + c55*(duz_dxl(i,j) + dux_dzl(i,j))
-              sigma_thetatheta(i,j) = c12*dux_dxl(i,j) + c23*duz_dzl(i,j) + c22*dummy_loc(1,i,j)/coord(1,ibool(i,j,ispec))
-            endif
-          else
-            ! not AXISYM
-            sigma_xx = c11*dux_dxl(i,j) + c13*duz_dzl(i,j) + c15*(duz_dxl(i,j) + dux_dzl(i,j))
-            sigma_zz = c13*dux_dxl(i,j) + c33*duz_dzl(i,j) + c35*(duz_dxl(i,j) + dux_dzl(i,j))
-            sigma_xz = c15*dux_dxl(i,j) + c35*duz_dzl(i,j) + c55*(duz_dxl(i,j) + dux_dzl(i,j))
-            sigma_zx = sigma_xz
-          endif
-        endif
 
         ! weak formulation term based on stress tensor (non-symmetric form)
         xixl = deriv(1,i,j)

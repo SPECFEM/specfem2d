@@ -81,7 +81,7 @@ For the moment just one model can be read from an external file but it is not ve
 
 @author: alexis bottero (alexis dot bottero at gmail dot com)
 """
-
+from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -127,7 +127,7 @@ spacing_z = (end_z-orig_z)/(nz-1)
 
 # Open a file in write mode
 fo = open("profile.xyz", "w+") # Name of the file it has to be set in the Par_file
-print "Name of the file: ", fo.name
+print("Name of the file: ", fo.name)
 line1 = str(orig_x)+" "+str(orig_z)+" "+str(end_x)+" "+str(end_z)+"\n"
 line2 = str(spacing_x)+" "+str(spacing_z)+"\n"
 line3 = str(nx)+" "+str(nz)+"\n"

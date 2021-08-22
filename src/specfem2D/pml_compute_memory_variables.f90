@@ -45,7 +45,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
-  use specfem_par, only: time_stepping_scheme,i_stage,it,deltat, &
+  use specfem_par, only: time_stepping_scheme,i_stage,it,DT,deltat, &
                          ibool,xix,xiz,gammax,gammaz, &
                          hprime_xx,hprime_zz, &
                          rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz, &
@@ -123,7 +123,7 @@
         PML_dux_dxl_old(i,j) = dux_dxi * xixl + dux_dgamma * gammaxl
         PML_dux_dzl_old(i,j) = dux_dxi * xizl + dux_dgamma * gammazl
 
-!        if (AXISYM) then ! TODO LDDRK
+!        if (AXISYM) then
 !          if (is_on_the_axis(ispec) .and. i == 1) then
 !            ! dchi/dr=rho * u_r=0 on the axis
 !            PML_dux_dxl_old(i,j) = 0._CUSTOM_REAL
@@ -137,11 +137,11 @@
   select case (time_stepping_scheme)
   case (1)
     ! Newmark
-    time_n = (it-1) * deltat
-    time_nsub1 = (it-2) * deltat
+    time_n = (it-1) * DT
+    time_nsub1 = (it-2) * DT
   case (2)
     ! LDDRK
-    time_n = (it-1) * deltat + C_LDDRK(i_stage) * deltat
+    time_n = (it-1) * DT + C_LDDRK(i_stage) * DT
   case default
     call stop_the_code('Sorry, time stepping scheme not implemented yet in PML memory variable updates')
   end select
@@ -166,11 +166,11 @@
 
       ! gets PML coefficients
       ! the subroutine of lik_parameter_computation is located at the end of compute_forces_viscoelastic.F90
-      call lik_parameter_computation(deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
+      call lik_parameter_computation(DT,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
                                      CPML_region_local,31,A5,A6,A7,bb_zx_1,bb_zx_2, &
                                      coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2)
 
-      call lik_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+      call lik_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                      CPML_region_local,13,A8,A9,A10,bb_xz_1,bb_xz_2, &
                                      coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
 
@@ -239,7 +239,7 @@
   use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,NGLJ, &
     CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
-  use specfem_par, only: time_stepping_scheme,i_stage,it,deltat, &
+  use specfem_par, only: time_stepping_scheme,i_stage,it,DT,deltat, &
                          ibool,xix,xiz,gammax,gammaz, &
                          hprime_xx,hprime_zz, &
                          AXISYM,is_on_the_axis,hprimeBar_xx
@@ -293,7 +293,7 @@
       PML_duz_dzl(i,j) = duz_dzl(i,j)
       PML_duz_dxl(i,j) = duz_dxl(i,j)
 
-      if (AXISYM) then ! TODO LDDRK
+      if (AXISYM) then
         if (is_on_the_axis(ispec) .and. i == 1) then
           ! d_uz/dr=0 on the axis
           PML_duz_dxl(i,j) = 0._CUSTOM_REAL
@@ -338,7 +338,7 @@
       PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl !duz_dxl_old
       PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl !duz_dzl_old
 
-      if (AXISYM) then ! TODO LDDRK
+      if (AXISYM) then
         if (is_on_the_axis(ispec) .and. i == 1) then
           ! d_uz/dr=0 on the axis
           PML_duz_dxl_old(i,j) = 0._CUSTOM_REAL
@@ -354,11 +354,11 @@
   select case (time_stepping_scheme)
   case (1)
     ! Newmark
-    time_n = (it-1) * deltat
-    time_nsub1 = (it-2) * deltat
+    time_n = (it-1) * DT
+    time_nsub1 = (it-2) * DT
   case (2)
     ! LDDRK
-    time_n = (it-1) * deltat + C_LDDRK(i_stage) * deltat
+    time_n = (it-1) * DT + C_LDDRK(i_stage) * DT
   case default
     call stop_the_code('Sorry, time stepping scheme not implemented yet in PML memory variable updates')
   end select
@@ -382,11 +382,11 @@
       beta_z = alpha_z + d_z / kappa_z
 
       ! gets PML coefficients
-      call lik_parameter_computation(deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
+      call lik_parameter_computation(DT,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
                                      CPML_region_local,31,A5,A6,A7,bb_zx_1,bb_zx_2, &
                                      coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2)
 
-      call lik_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+      call lik_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                      CPML_region_local,13,A8,A9,A10,bb_xz_1,bb_xz_2, &
                                      coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
 
@@ -516,7 +516,7 @@
     enddo
   enddo
 
-  ! AXISYM enforces zero derivatives on axis ! TODO LDDRK
+  ! AXISYM enforces zero derivatives on axis
   if (AXISYM) then
     if (is_on_the_axis(ispec)) then
       ! d_uz/dr=0 on the axis
@@ -553,7 +553,7 @@
 
   use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY
 
-  use specfem_par, only: time_stepping_scheme,deltat, &
+  use specfem_par, only: time_stepping_scheme,DT, &
                          ibool,xix,xiz,gammax,gammaz,hprime_xx,hprime_zz
 
   use specfem_par, only: rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
@@ -610,9 +610,6 @@
 
   ! compute the spatial derivatives
 
-  ! AXISYM case
-  if (AXISYM .and. is_on_the_axis(ispec)) then
-
   do j = 1,NGLLZ
     do i = 1,NGLLX
 
@@ -626,12 +623,6 @@
       duz_dxi_old = 0._CUSTOM_REAL
       dux_dgamma_old = 0._CUSTOM_REAL
       duz_dgamma_old = 0._CUSTOM_REAL
-      do k = 1,NGLLX
-        dux_dxi_old = dux_dxi_old + displ_elastic_old(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
-        duz_dxi_old = duz_dxi_old + displ_elastic_old(2,ibool(k,j,ispec))*hprimeBar_xx(i,k)
-        dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
-        duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
-      enddo
 
       ! derivatives of displacement
       xixl = xix(i,j,ispec)
@@ -639,49 +630,49 @@
       gammaxl = gammax(i,j,ispec)
       gammazl = gammaz(i,j,ispec)
 
-      PML_dux_dxl_old(i,j) = dux_dxi_old*xixl + dux_dgamma_old*gammaxl ! this is dux_dxl_old
-      PML_dux_dzl_old(i,j) = dux_dxi_old*xizl + dux_dgamma_old*gammazl ! this is dux_dzl_old
-      PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl ! this is duz_dxl_old
-      PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl ! this is duz_dzl_old
+      ! AXISYM case
+      ! Beware: do not gather the two conditions because is_on_the_axis is not allocated if not AXISYM
+      ! (this may be worth it to avoid this kind of clutter, which is very frequent in the code)
+      if (AXISYM) then
+        if (is_on_the_axis(ispec)) then
+          do k = 1,NGLLX
+            dux_dxi_old = dux_dxi_old + displ_elastic_old(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+            duz_dxi_old = duz_dxi_old + displ_elastic_old(2,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+            dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
+            duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
+          enddo
+          if (i /= 1) then
+            PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl ! this is duz_dxl_old
+            PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl ! this is duz_dzl_old
+          else
+            PML_duz_dxl_old(1,j) = 0._CUSTOM_REAL
+            PML_duz_dzl_old(i,j) = duz_dgamma_old*gammazl ! this is duz_dzl_old
+          endif
+
+        else  ! Not on the axis
+          do k = 1,NGLLX
+            dux_dxi_old = dux_dxi_old + displ_elastic_old(1,ibool(k,j,ispec))*hprime_xx(i,k)
+            duz_dxi_old = duz_dxi_old + displ_elastic_old(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
+            duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
+          enddo
+          PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl ! this is duz_dxl_old
+          PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl ! this is duz_dzl_old
+        endif  ! end of test is_on_the_axis
+      else ! Not AXISYM
+        do k = 1,NGLLX
+          dux_dxi_old = dux_dxi_old + displ_elastic_old(1,ibool(k,j,ispec))*hprime_xx(i,k)
+          duz_dxi_old = duz_dxi_old + displ_elastic_old(2,ibool(k,j,ispec))*hprime_xx(i,k)
+          dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
+          duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
+        enddo
+        PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl ! this is duz_dxl_old
+        PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl ! this is duz_dzl_old
+      endif ! end of test on AXISYM
+        PML_dux_dxl_old(i,j) = dux_dxi_old*xixl + dux_dgamma_old*gammaxl ! this is dux_dxl_old
+        PML_dux_dzl_old(i,j) = dux_dxi_old*xizl + dux_dgamma_old*gammazl ! this is dux_dzl_old
     enddo
   enddo
-
-  else ! non AXISYM case
-
-  do j = 1,NGLLZ
-    do i = 1,NGLLX
-
-      ! stores initial derivatives
-      PML_dux_dxl(i,j) = dux_dxl(i,j)
-      PML_dux_dzl(i,j) = dux_dzl(i,j)
-      PML_duz_dzl(i,j) = duz_dzl(i,j)
-      PML_duz_dxl(i,j) = duz_dxl(i,j)
-
-      dux_dxi_old = 0._CUSTOM_REAL
-      duz_dxi_old = 0._CUSTOM_REAL
-      dux_dgamma_old = 0._CUSTOM_REAL
-      duz_dgamma_old = 0._CUSTOM_REAL
-      do k = 1,NGLLX
-        dux_dxi_old = dux_dxi_old + displ_elastic_old(1,ibool(k,j,ispec))*hprime_xx(i,k)
-        duz_dxi_old = duz_dxi_old + displ_elastic_old(2,ibool(k,j,ispec))*hprime_xx(i,k)
-        dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
-        duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
-      enddo
-
-      ! derivatives of displacement
-      xixl = xix(i,j,ispec)
-      xizl = xiz(i,j,ispec)
-      gammaxl = gammax(i,j,ispec)
-      gammazl = gammaz(i,j,ispec)
-
-      PML_dux_dxl_old(i,j) = dux_dxi_old*xixl + dux_dgamma_old*gammaxl ! this is dux_dxl_old
-      PML_dux_dzl_old(i,j) = dux_dxi_old*xizl + dux_dgamma_old*gammazl ! this is dux_dzl_old
-      PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl ! this is duz_dxl_old
-      PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl ! this is duz_dzl_old
-    enddo
-  enddo
-
-  endif ! end of test on AXISYM
 
   ! local PML element
   ispec_PML = spec_to_PML(ispec)
@@ -728,44 +719,44 @@
 
       ! loop on all the standard linear solids
 
-      call compute_coef_convolution(alpha_z,deltat,coef0_zx_1,coef1_zx_1,coef2_zx_1)
-      call compute_coef_convolution(beta_x,deltat,coef0_zx_2,coef1_zx_2,coef2_zx_2)
-      call compute_coef_convolution(alpha_x,deltat,coef0_xz_1,coef1_xz_1,coef2_xz_1)
-      call compute_coef_convolution(beta_z,deltat,coef0_xz_2,coef1_xz_2,coef2_xz_2)
+      call compute_coef_convolution(alpha_z,DT,coef0_zx_1,coef1_zx_1,coef2_zx_1)
+      call compute_coef_convolution(beta_x,DT,coef0_zx_2,coef1_zx_2,coef2_zx_2)
+      call compute_coef_convolution(alpha_x,DT,coef0_xz_1,coef1_xz_1,coef2_xz_1)
+      call compute_coef_convolution(beta_z,DT,coef0_xz_2,coef1_xz_2,coef2_xz_2)
 
 
       select case (time_stepping_scheme)
       case (1)
         ! Newmark
-! alpha_z convolve dux_dx
+        ! alpha_z convolve dux_dx
         rmemory_dux_dx(i,j,ispec_PML,1) = coef0_zx_1 * rmemory_dux_dx(i,j,ispec_PML,1) + &
                                           coef1_zx_1 * PML_dux_dxl(i,j) + coef2_zx_1 * PML_dux_dxl_old(i,j)
 
-! alpha_z convolve duz_dx
+        ! alpha_z convolve duz_dx
         rmemory_duz_dx(i,j,ispec_PML,1) = coef0_zx_1 * rmemory_duz_dx(i,j,ispec_PML,1) + &
                                           coef1_zx_1 * PML_duz_dxl(i,j) + coef2_zx_1 * PML_duz_dxl_old(i,j)
 
-! beta_x convolve dux_dx
+        ! beta_x convolve dux_dx
         rmemory_dux_dx(i,j,ispec_PML,2) = coef0_zx_2 * rmemory_dux_dx(i,j,ispec_PML,2) + &
                                           coef1_zx_2 * PML_dux_dxl(i,j) + coef2_zx_2 * PML_dux_dxl_old(i,j)
 
-! beta_x convolve duz_dx
+        ! beta_x convolve duz_dx
         rmemory_duz_dx(i,j,ispec_PML,2) = coef0_zx_2 * rmemory_duz_dx(i,j,ispec_PML,2) + &
                                           coef1_zx_2 * PML_duz_dxl(i,j) + coef2_zx_2 * PML_duz_dxl_old(i,j)
 
-! alpha_x convolve dux_dz
+        ! alpha_x convolve dux_dz
         rmemory_dux_dz(i,j,ispec_PML,1) = coef0_xz_1 * rmemory_dux_dz(i,j,ispec_PML,1) + &
                                           coef1_xz_1 * PML_dux_dzl(i,j) + coef2_xz_1 * PML_dux_dzl_old(i,j)
 
-! alpha_x convolve duz_dz
+        ! alpha_x convolve duz_dz
         rmemory_duz_dz(i,j,ispec_PML,1) = coef0_xz_1 * rmemory_duz_dz(i,j,ispec_PML,1) + &
                                           coef1_xz_1 * PML_duz_dzl(i,j) + coef2_xz_1 * PML_duz_dzl_old(i,j)
 
-! beta_z convolve dux_dz
+        ! beta_z convolve dux_dz
         rmemory_dux_dz(i,j,ispec_PML,2) = coef0_xz_2 * rmemory_dux_dz(i,j,ispec_PML,2) + &
                                           coef1_xz_2 * PML_dux_dzl(i,j) + coef2_xz_2 * PML_dux_dzl_old(i,j)
 
-! beta_z convolve duz_dz
+        ! beta_z convolve duz_dz
         rmemory_duz_dz(i,j,ispec_PML,2) = coef0_xz_2 * rmemory_duz_dz(i,j,ispec_PML,2) + &
                                           coef1_xz_2 * PML_duz_dzl(i,j) + coef2_xz_2 * PML_duz_dzl_old(i,j)
       case (2)
@@ -803,35 +794,35 @@
                                               CPML_region_local,13,A_10,A_4_mu,A_5_mu,A_ik_mu,tauinv_mu, &
                                               tao_epsilon_mu)
 
-        call compute_coef_convolution(tauinv_kappa,deltat,coef0_l_ka,coef1_l_ka,coef2_l_ka)
-        call compute_coef_convolution(tauinv_mu,deltat,coef0_l_mu,coef1_l_mu,coef2_l_mu)
+        call compute_coef_convolution(tauinv_kappa,DT,coef0_l_ka,coef1_l_ka,coef2_l_ka)
+        call compute_coef_convolution(tauinv_mu,DT,coef0_l_mu,coef1_l_mu,coef2_l_mu)
 
         select case (time_stepping_scheme)
 
         case (1)
-        ! Newmark
+          ! Newmark
 
-! inv_tau_sigma_nu1 convolve dux_dx
+          ! inv_tau_sigma_nu1 convolve dux_dx
           kaPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) = coef0_l_ka * kaPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) + &
                                                        coef1_l_ka * PML_dux_dxl(i,j) + coef2_l_ka * PML_dux_dxl_old(i,j)
 
-! inv_tau_sigma_nu1 convolve duz_dz
+          ! inv_tau_sigma_nu1 convolve duz_dz
           kaPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) = coef0_l_ka * kaPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) + &
                                                        coef1_l_ka * PML_duz_dzl(i,j) + coef2_l_ka * PML_duz_dzl_old(i,j)
 
-! inv_tau_sigma_nu2 convolve dux_dx
+          ! inv_tau_sigma_nu2 convolve dux_dx
           muPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) + &
                                                        coef1_l_mu * PML_dux_dxl(i,j) + coef2_l_mu * PML_dux_dxl_old(i,j)
 
-! inv_tau_sigma_nu2 convolve duz_dz
+          ! inv_tau_sigma_nu2 convolve duz_dz
           muPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) + &
                                                        coef1_l_mu * PML_duz_dzl(i,j) + coef2_l_mu * PML_duz_dzl_old(i,j)
 
-! inv_tau_sigma_nu2 convolve dux_dz
+          ! inv_tau_sigma_nu2 convolve dux_dz
           muPML_rmemory_dux_dzl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_dux_dzl(i,j,ispec_PML,i_sls) + &
                                                        coef1_l_mu * PML_dux_dzl(i,j) + coef2_l_mu * PML_dux_dzl_old(i,j)
 
-! inv_tau_sigma_nu2 convolve duz_dx
+          ! inv_tau_sigma_nu2 convolve duz_dx
           muPML_rmemory_duz_dxl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_duz_dxl(i,j,ispec_PML,i_sls) + &
                                                        coef1_l_mu * PML_duz_dxl(i,j) + coef2_l_mu * PML_duz_dxl_old(i,j)
           A_2_ka_sum = A_2_ka_sum + A_2_ka
@@ -860,7 +851,7 @@
           sum_mu_duz_dx = sum_mu_duz_dx + A_mu * muPML_rmemory_duz_dxl(i,j,ispec_PML,i_sls)
 
         case (2)
-        ! LDDRK
+          ! LDDRK
           call stop_the_code('Time stepping scheme LDDRK not implemented yet for viscoelastic PML memory variable update')
 
         case default

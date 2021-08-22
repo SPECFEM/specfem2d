@@ -38,11 +38,11 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
     ZERO,ONE,TWO,TWO_THIRDS, &
-    ALPHA_LDDRK,BETA_LDDRK,C_LDDRK,USE_A_STRONG_FORMULATION_FOR_E1
+    USE_A_STRONG_FORMULATION_FOR_E1
 
   use specfem_par, only: nglob,nspec_ATT_ac, &
                          assign_external_model,ibool,kmato,ispec_is_acoustic, &
-                         density,rhoext, &
+                         density,rhostore, &
                          xix,xiz,gammax,gammaz,jacobian, &
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -127,13 +127,13 @@
         deriv(5,i,j) = jacobian(i,j,ispec)
         ! if external density model
         if (assign_external_model) then
-          rhol = rhoext(i,j,ispec)
+          rhol = rhostore(i,j,ispec)
         endif
         deriv(6,i,j) = jacobian(i,j,ispec) / rhol
 
         if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. time_stepping_scheme > 1) then
-                deriv_e1(1,i,j,:) = phi_nu1(i,j,ispec,:)
-                deriv_e1(2,i,j,:) = inv_tau_sigma_nu1(i,j,ispec,:)
+          deriv_e1(1,i,j,:) = phi_nu1(i,j,ispec,:)
+          deriv_e1(2,i,j,:) = inv_tau_sigma_nu1(i,j,ispec,:)
         endif
 
       enddo
@@ -297,9 +297,8 @@
               ! sums contributions from each element to the global values
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
                                                   - (wzgll(j) * temp1l + wxglj(i) * temp2l)
-              if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) &
-                   .and. time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) &
-                                                      - (wzgll(j) * temp1l + wxglj(i) * temp2l)
+              if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. time_stepping_scheme > 1) &
+                dot_e1(iglob,:) = dot_e1(iglob,:) - (wzgll(j) * temp1l + wxglj(i) * temp2l)
             endif
           enddo
         enddo
@@ -318,9 +317,8 @@
               ! sums contributions from each element to the global values
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
                                                   - (wzgll(j) * temp1l + wxgll(i) * temp2l)
-              if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) &
-                  .and. time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) &
-                                                      - (wzgll(j) * temp1l + wxgll(i) * temp2l)
+              if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. time_stepping_scheme > 1) &
+                dot_e1(iglob,:) = dot_e1(iglob,:) - (wzgll(j) * temp1l + wxgll(i) * temp2l)
             endif
           enddo
         enddo
@@ -341,8 +339,10 @@
             ! sums contributions from each element to the global values
             sum_forces = wzgll(j) * temp1l + wxgll(i) * temp2l
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - sum_forces
-            if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) &
-                .and. time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) - sum_forces
+
+            if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. time_stepping_scheme > 1) &
+              dot_e1(iglob,:) = dot_e1(iglob,:) - sum_forces
+
             if (ATTENUATION_VISCOACOUSTIC .and. USE_A_STRONG_FORMULATION_FOR_E1) then
               call get_attenuation_forces_strong_form(sum_forces,sum_forces_old(i,j,ispec), &
                                                       forces_attenuation,i,j,ispec,iglob,e1_acous_sf)

@@ -18,20 +18,26 @@ available in the
 
 - HTML manual (latest version): [specfem2d.readthedocs.io](http://specfem2d.readthedocs.io/)
 
-
 For a quick test, run the default example with these commands:
-
-  ./configure FC=gfortran
-  make all
-  ./bin/xmeshfem2D
-  ./bin/xspecfem2D
-
-and check the output files in ./OUTPUT_FILES/
+```
+./configure FC=gfortran
+make all
+./bin/xmeshfem2D
+./bin/xspecfem2D
+```
+and check the output files in `./OUTPUT_FILES/`
 
 
 ## Development
 
-[![Build Status](https://travis-ci.org/geodynamics/specfem2d.svg?branch=devel)](https://travis-ci.org/geodynamics/specfem2d) [![codecov](https://codecov.io/gh/geodynamics/specfem2d/branch/devel/graph/badge.svg)](https://codecov.io/gh/geodynamics/specfem2d)
+[![Build Status](https://travis-ci.org/geodynamics/specfem2d.svg?branch=devel)](https://travis-ci.org/geodynamics/specfem2d)
+[![codecov](https://codecov.io/gh/geodynamics/specfem2d/branch/devel/graph/badge.svg)](https://codecov.io/gh/geodynamics/specfem2d)
+[![Documentation Status](https://readthedocs.org/projects/specfem2d/badge/?version=latest)](https://specfem2d.readthedocs.io/en/latest/?badge=latest)
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
+
+
+* Travis tests: [travis-ci specfem2d](https://travis-ci.org/geodynamics/specfem2d/builds)
+
 
 Development is hosted on GitHub in the
 [geodynamics/specfem2d repository](https://github.com/geodynamics/specfem2d).
@@ -44,4 +50,3 @@ To contribute, please follow the guidelines in the SPECFEM3D github wiki:
 ## Computational Infrastructure for Geodynamics (CIG)
 
 Seismology software repository: [SPECFEM2D](https://geodynamics.org/cig/software/specfem2d/)
-

@@ -8,11 +8,11 @@ SPECFEM2D allows users to perform 2D and 2.5D (i.e., axisymmetric) simulations o
 acoustic, elastic, viscoelastic, and poroelastic seismic wave propagation
 as well as full waveform imaging (FWI) or adjoint tomography.\\
 
-\red{In fluids,
+In fluids,
 %% DK DK removed that because gravity is implemented in SPECFEM3D but not in SPECFEM2D
 % when gravity is turned off,
 SPECFEM2D uses the classical linearized Euler equation; thus if you have sharp local variations of density in the fluid (highly heterogeneous fluids
-in terms of density) or if density becomes extremely small in some regions of your model (e.g. for upper-atmosphere studies), before using the code please make sure the linearized Euler equation is a valid approximation in the case you want to study. For more details on that see e.g. \cite{COA2011}.}\\
+in terms of density) or if density becomes extremely small in some regions of your model (e.g. for upper-atmosphere studies), before using the code please make sure the linearized Euler equation is a valid approximation in the case you want to study. For more details on that see e.g. \cite{COA2011}.\\
 
 The 2D spectral-element solver accommodates
 regular and unstructured meshes, generated for example by Cubit
@@ -64,13 +64,13 @@ include \cite{SePr94}, \cite{PrCaSe94} and \cite{SePrPr95}.
 In the Legendre version that we use in SPECFEM the mass matrix is purposely slightly inexact but diagonal (but can be made exact if needed, see \cite{Teu15}),
 while in the Chebyshev version it is exact but non diagonal.\\
 
-\red{Beware that, in a spectral-element method, some spurious modes (that have some similarities with classical so-called "Hourglass modes" in finite-element techniques,
+Beware that, in a spectral-element method, some spurious modes (that have some similarities with classical so-called "Hourglass modes" in finite-element techniques,
 although in the SEM they are not zero-energy modes) can appear in some (but not all) cases in the spectral element in which the source is located.
 Fortunately, they do not propagate away from the source element.
 However, this means that if you put a receiver in the same spectral element as a source, the recorded signals may in some cases be wrong, typically exhibiting some spurious
 oscillations, which are often even non causal.
 If that is the case, an easy option is to slightly change the mesh in the source region in order to get rid of these Hourglass-like spurious modes,
-as explained in \cite{DuLiScGa14}, in which this phenomenon is described in details, and in which practical solutions to avoid it are suggested.}\\
+as explained in \cite{DuLiScGa14}, in which this phenomenon is described in details, and in which practical solutions to avoid it are suggested.\\
 
 All SPECFEM2D software is written in Fortran2003 with full portability
 in mind, and conforms strictly to the Fortran2003 standard. It uses
@@ -111,7 +111,7 @@ written by the developers of the package, for instance:
 \item \cite{KoLiTrSuStSh04},
 \item \cite{MoTr08},
 \item \cite{BlKoChLoXi16},
-\item and/or other articles from \url{http://komatitsch.free.fr/publications.html}.
+\item and/or other articles from \url{https://specfem.github.io/komatitsch.free.fr/publications.html}.
 \end{itemize}
 %
 If you use the C-PML absorbing layer capabilities of the code, please cite at least one article

@@ -349,7 +349,7 @@
 
   use shared_parameters
   use part_unstruct_par
-  use source_file_par
+!  use source_file_par
   use compute_elements_load_par
 
   implicit none
@@ -357,7 +357,8 @@
   include 'version.fh'
 
   integer :: nspec_cpml
-  integer :: i,j,i_source,ier,num_elmnt
+  integer :: i,j,ier,num_elmnt
+  logical :: BROADCAST_AFTER_READ
 
   ! MPI initialization
   call init_mpi()
@@ -376,7 +377,7 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
-#ifdef USE_MPI
+#ifdef WITH_MPI
     write(IMAIN,*) '**********************************************'
     write(IMAIN,*) '*** Specfem 2-D Mesher - MPI version       ***'
     write(IMAIN,*) '**********************************************'
@@ -396,16 +397,14 @@
   remove_min_to_start_at_zero = 0
 
   ! mesher works only for single process
-  ! (slave processes can sit idle)
+  ! (secondary processes can sit idle)
   if (myrank == 0) then
     ! ***
     ! *** read the parameter file
     ! ***
-    write(IMAIN,*) 'Reading the parameter file...'
-    write(IMAIN,*)
-
     ! reads in parameters in DATA/Par_file
-    call read_parameter_file(1,.false.)
+    BROADCAST_AFTER_READ = .false.
+    call read_parameter_file(1,BROADCAST_AFTER_READ)
 
     ! reads in additional files for mesh elements
     if (read_external_mesh) then
@@ -413,6 +412,7 @@
       ! user output
       write(IMAIN,*)
       write(IMAIN,*) 'Mesh from external meshing:'
+      call flush_IMAIN()
 
       ! reads in mesh
       call read_external_mesh_file(mesh_file, remove_min_to_start_at_zero, ngnod)
@@ -422,8 +422,14 @@
 
     else
       ! internal meshing
+      ! user output
+      write(IMAIN,*)
+      write(IMAIN,*) 'Mesh from internal meshing:'
+      call flush_IMAIN()
+
       allocate(elmnts(0:ngnod*nelmnts-1),stat=ier)
       if (ier /= 0) call stop_the_code('Error allocating array elmnts')
+      elmnts(:) = 0
 
       ! stores mesh point indices in array 'elmnts'
       if (ngnod == 4) then
@@ -458,12 +464,16 @@
       endif
 
       ! user output
-      write(IMAIN,*) 'Total number of spectral elements         = ',nelmnts
+      write(IMAIN,*) '  Total number of spectral elements         = ',nelmnts
       write(IMAIN,*)
       call flush_IMAIN()
     endif
 
     ! PML mesh elements
+    ! user output
+    write(IMAIN,*) 'PML mesh elements:'
+    call flush_IMAIN()
+
     allocate(region_pml_external_mesh(nelmnts),stat=ier)
     if (ier /= 0) call stop_the_code('Error allocating array region_pml_external_mesh')
     region_pml_external_mesh(:) = 0
@@ -471,37 +481,55 @@
     allocate(is_pml(0:nelmnts-1),stat=ier)
     if (ier /= 0) call stop_the_code('Error allocating array is_pml')
     is_pml(:) = .false.
+    nspec_cpml = 0
 
-    if (read_external_mesh) then
-      if (PML_BOUNDARY_CONDITIONS) then
+    if (PML_BOUNDARY_CONDITIONS) then
+      if (read_external_mesh) then
         call read_external_pml_element(absorbing_cpml_file, region_pml_external_mesh, nspec_cpml)
       else
+        ! no need to read in PML values.
+        ! the internal mesher will assign PML elements in routine pml_init() in the solver.
         nspec_cpml = 0
+        write(IMAIN,*) '  using internal mesh, PML elements will be determined in solver run...'
+        write(IMAIN,*)
       endif
+    else
+      ! no PML condition
+      ! user output
+      write(IMAIN,*) '  Total number of PML elements = ',nspec_cpml
+      write(IMAIN,*)
     endif
 
     ! user output
-    write(IMAIN,*)
-    write(IMAIN,*) 'Parameter file successfully read '
-    write(IMAIN,*)
     write(IMAIN,*) 'The mesh contains ',nelmnts,' elements'
     write(IMAIN,*)
     write(IMAIN,*) 'Control elements have ',ngnod,' nodes'
     write(IMAIN,*)
+    call flush_IMAIN()
 
     ! reads in source descriptions
-    call read_source_file(NSOURCES)
+    ! daniel todo: for now needed for ADD_PERTURBATION_AROUND_SOURCE_ONLY and if source_surf(..) is set to .true.
+    !              will try to avoid dependency on sources in mesher in future...
+    call read_source_file(NSOURCES,BROADCAST_AFTER_READ)
 
     ! reads in tangential detection
     call read_mesh_tangential_curve_file()
 
     ! reads in node coordinates
+    ! user output
+    write(IMAIN,*) 'Node coordinates:'
+    call flush_IMAIN()
+
     if (read_external_mesh) then
       call read_external_mesh_nodes_coords(nodes_coords_file)
     else
       ! reads interfaces and sets node coordinates
       call read_mesh_nodes_coords_from_interfaces()
     endif
+
+    ! user output
+    write(IMAIN,*) 'Mesh surfaces:'
+    call flush_IMAIN()
 
     if (read_external_mesh) then
       call read_external_acoustic_surface(free_surface_file, num_material, &
@@ -531,7 +559,12 @@
       call determine_abs_surface()
     endif
 
+    ! axi-symmetric mesh
     if (AXISYM) then
+      ! user output
+      write(IMAIN,*) 'Axisymmetric mesh:'
+      call flush_IMAIN()
+
       if (read_external_mesh) then
         ! external meshing
         call read_external_axial_elements_file(axial_elements_file,remove_min_to_start_at_zero)
@@ -595,33 +628,46 @@
     write(IMAIN,*)
 
     ! create a Gnuplot file that displays the grid
-    if (output_grid_Gnuplot .and. .not. read_external_mesh) call save_gnuplot_file(ngnod,nx,nz,grid_point_x,grid_point_z)
+    if (output_grid_Gnuplot .and. .not. read_external_mesh) &
+      call save_gnuplot_file(ngnod,nx_elem_internal,nz_elem_internal,grid_point_x,grid_point_z)
 
     ! partitioning
+    ! user output
+    write(IMAIN,*) 'Mesh partitioning:'
+    call flush_IMAIN()
+
     call decompose_mesh()
 
     ! setting absorbing boundaries by elements instead of edges
     if (any_abs) then
+      ! user output
+      write(IMAIN,*) 'Absorbing boundaries:'
+      call flush_IMAIN()
+
       call merge_abs_boundaries(nbmodels, phi_read, num_material, ngnod)
     endif
 
     ! setting acoustic forcing boundaries by elements instead of edges
     if (ACOUSTIC_FORCING) then
+      ! user output
+      write(IMAIN,*) 'Acoustic forcing boundaries:'
+      call flush_IMAIN()
+
       call merge_acoustic_forcing_boundaries(ngnod)
     endif
 
     ! generate the databases for the solver
-    call save_databases()
+    ! user output
+    write(IMAIN,*) 'Saving databases:'
+    call flush_IMAIN()
 
-    ! print position of the source
-    do i_source= 1,NSOURCES
-      write(IMAIN,*)
-      write(IMAIN,*) 'Position (x,z) of the source = ',xs(i_source),zs(i_source)
-      write(IMAIN,*)
-    enddo
+    call save_databases()
 
     !--- compute position of the receivers and write the STATIONS file
     if (.not. use_existing_STATIONS) then
+      ! user output
+      write(IMAIN,*) 'creating STATIONS file...'
+      call flush_IMAIN()
 
 !! DK DK for now we cannot use both record_at_surface_same_vertical and read_external_mesh
 !! DK DK because we need to know splines to define the shape of the surface of the model
@@ -638,6 +684,14 @@
         allocate(coefs_interface_top(1))
       endif
 
+      ! daniel todo: move to solver?
+      !         note that the STATIONS file will be written out here and then read in the solver to locate them.
+      !         in case we have record_at_surface_same_vertical(.) set to .true., the stations will be
+      !         placed at the surface, using splines for the top interface.
+      !
+      !         in future, we might want to move this to the solver, to make the solver more independant
+      !         and work in a similar way like the 3D versions.
+      !         still, this would require to have these top splines in the solver...
       call save_stations_file(nreceiversets,nrec_line,xdeb,zdeb,xfin,zfin,record_at_surface_same_vertical, &
                               xinterface_top,zinterface_top,coefs_interface_top, &
                               npoints_interface_top,max_npoints_interface)
@@ -664,7 +718,7 @@
   ! close main output file
   if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
 
-  ! slave processes wait
+  ! secondary processes wait
   call synchronize_all()
 
   ! MPI finish

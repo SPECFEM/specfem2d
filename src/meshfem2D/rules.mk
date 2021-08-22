@@ -55,11 +55,6 @@ meshfem2D_OBJECTS = \
 	$O/metis_partitioning.mesh.o \
 	$O/part_unstruct.mesh.o \
 	$O/read_external_mesh_files.mesh.o \
-	$O/read_interfaces_file.mesh.o \
-	$O/read_material_table.mesh.o \
-	$O/read_parameter_file.mesh.o \
-	$O/read_regions.mesh.o \
-	$O/read_source_file.mesh.o \
 	$O/read_mesh_files.mesh.o \
 	$O/repartition_coupling.mesh.o \
 	$O/rotate_mesh.mesh.o \
@@ -67,7 +62,6 @@ meshfem2D_OBJECTS = \
 	$O/save_gnuplot_file.mesh.o \
 	$O/save_stations_file.mesh.o \
 	$O/scotch_partitioning.mesh.o \
-	$O/spline_routines.mesh.o \
 	$O/meshfem2D.mesh.o \
 	$(EMPTY_MACRO)
 
@@ -75,15 +69,21 @@ meshfem2D_MODULES = \
 	$(FC_MODDIR)/decompose_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/part_unstruct_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/compute_elements_load_par.$(FC_MODEXT) \
-	$(FC_MODDIR)/source_file_par.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 meshfem2D_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
-	$O/read_value_parameters.shared.o \
 	$O/exit_mpi.shared.o \
-	$O/parallel.shared.o \
+	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
+	$O/read_interfaces_file.shared.o \
+	$O/read_material_table.shared.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_regions.shared.o \
+	$O/read_source_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/spline_routines.shared.o \
+	$O/write_VTK_data.shared.o \
 	$(EMPTY_MACRO)
 
 # default mesher flags
@@ -152,10 +152,10 @@ $O/meshfem2D.mesh.o: ${SETUP}/version.fh
 ####
 
 $O/%.mesh_module.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
-	${F90} ${FCFLAGS_f90_MESH} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90_MESH} -c -o $@ $<
 
 $O/%.mesh.o: $S/%.f90 ${SETUP}/constants.h $O/meshfem2D_par.mesh_module.o
-	${F90} ${FCFLAGS_f90_MESH} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90_MESH} -c -o $@ $<
 
 $O/%.mesh.o: $S/%.F90 ${SETUP}/constants.h $O/meshfem2D_par.mesh_module.o
-	${F90} ${FCFLAGS_f90_MESH} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90_MESH} -c -o $@ $<

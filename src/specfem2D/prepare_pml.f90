@@ -39,12 +39,9 @@
   implicit none
 
   ! local parameters
+  integer :: nspec_PML_tot
   integer :: i,ier
   character(len=MAX_STRING_LEN) :: outputname
-
-  ! safety check
-  if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) call stop_the_code( &
-'Error : PML not implemented on GPU mode. Please use Stacey instead')
 
   ! PML absorbing conditions
   ! sets global flag for all slices
@@ -55,6 +52,8 @@
     if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'Preparing PML'
+      write(IMAIN,*) '  rotate PML activated   :',ROTATE_PML_ACTIVATE
+      write(IMAIN,*) '  backward reconstruction:',NO_BACKWARD_RECONSTRUCTION
       call flush_IMAIN()
     endif
 
@@ -81,9 +80,23 @@
       allocate(mask_ibool_pml(1))
     endif
 
+    ! reads in PML
     call pml_init()
 
-    if ((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS) then
+    ! outputs total
+    call sum_all_i(nspec_PML,nspec_PML_tot)
+    if (myrank == 0) then
+      write(IMAIN,*) "  total number of PML spectral elements: ", nspec_PML_tot
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    ! PML boundary points on absorbing boundaries
+    call determine_boundary_abs_points_PML()
+
+    ! allocates arrays
+    if ((.not. NO_BACKWARD_RECONSTRUCTION) .and. &
+        ((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)) then
 
       if (nglob_interface > 0) then
         allocate(point_interface(nglob_interface),stat=ier)
@@ -108,20 +121,31 @@
         if (ier /= 0) call stop_the_code('error: not enough memory to allocate array pml_interface_history_potential_dot_dot')
       endif
 
+      ! interface
       if (nglob_interface > 0) then
-        call determin_interface_pml_interior()
+        call determine_interface_pml_interior()
+
         deallocate(PML_interior_interface)
         deallocate(mask_ibool_pml)
       endif
 
+      ! opens i/o files
       if (any_elastic .and. nglob_interface > 0) then
         write(outputname,'(a,i6.6,a)') 'pml_interface_elastic',myrank,'.bin'
-        open(unit=71,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted')
+        open(unit=71,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) then
+          print *,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
+          call stop_the_code('Error opening file pml_interface_elastic**.bin')
+        endif
       endif
 
       if (any_acoustic .and. nglob_interface > 0) then
         write(outputname,'(a,i6.6,a)') 'pml_interface_acoustic',myrank,'.bin'
-        open(unit=72,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted')
+        open(unit=72,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) then
+          print *,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
+          call stop_the_code('Error opening file pml_interface_elastic**.bin')
+        endif
       endif
     else
       allocate(point_interface(1))
@@ -133,7 +157,7 @@
       allocate(pml_interface_history_potential_dot_dot(1,1))
     endif
 
-    if (SIMULATION_TYPE == 3 .and. PML_BOUNDARY_CONDITIONS) then
+    if ((.not. NO_BACKWARD_RECONSTRUCTION) .and. SIMULATION_TYPE == 3 .and. PML_BOUNDARY_CONDITIONS) then
 
       if (any_elastic .and. nglob_interface > 0) then
         do it = 1,NSTEP
@@ -160,8 +184,12 @@
 
     deallocate(which_PML_elem)
 
-    if (nspec_PML == 0) nspec_PML=1 ! DK DK added this
-
+    ! defines PML coefficients
+    !
+    !daniel debug: let nspec_PML be zero in case the partition has no PML boundary
+    !if (nspec_PML == 0) nspec_PML=1 ! DK DK added this
+    !
+    ! initializes arrays
     if (nspec_PML > 0) then
       allocate(K_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
       if (ier /= 0) call stop_the_code('error: not enough memory to allocate array K_x_store')
@@ -175,33 +203,31 @@
       if (ier /= 0) call stop_the_code('error: not enough memory to allocate array alpha_x_store')
       allocate(alpha_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
       if (ier /= 0) call stop_the_code('error: not enough memory to allocate array alpha_z_store')
-      K_x_store(:,:,:) = ZERO
-      K_z_store(:,:,:) = ZERO
-      d_x_store(:,:,:) = ZERO
-      d_z_store(:,:,:) = ZERO
-      alpha_x_store(:,:,:) = ZERO
-      alpha_z_store(:,:,:) = ZERO
-      call define_PML_coefficients()
     else
-      allocate(K_x_store(NGLLX,NGLLZ,1),stat=ier)
+      ! dummy arrays
+      allocate(K_x_store(1,1,1),stat=ier)
       if (ier /= 0) call stop_the_code('error: not enough memory to allocate array K_x_store')
-      allocate(K_z_store(NGLLX,NGLLZ,1),stat=ier)
+      allocate(K_z_store(1,1,1),stat=ier)
       if (ier /= 0) call stop_the_code('error: not enough memory to allocate array K_z_store')
-      allocate(d_x_store(NGLLX,NGLLZ,1),stat=ier)
+      allocate(d_x_store(1,1,1),stat=ier)
       if (ier /= 0) call stop_the_code('error: not enough memory to allocate array d_x_store')
-      allocate(d_z_store(NGLLX,NGLLZ,1),stat=ier)
+      allocate(d_z_store(1,1,1),stat=ier)
       if (ier /= 0) call stop_the_code('error: not enough memory to allocate array d_z_store')
-      allocate(alpha_x_store(NGLLX,NGLLZ,1),stat=ier)
+      allocate(alpha_x_store(1,1,1),stat=ier)
       if (ier /= 0) call stop_the_code('error: not enough memory to allocate array alpha_x_store')
-      allocate(alpha_z_store(NGLLX,NGLLZ,1),stat=ier)
+      allocate(alpha_z_store(1,1,1),stat=ier)
       if (ier /= 0) call stop_the_code('error: not enough memory to allocate array alpha_z_store')
-      K_x_store(:,:,:) = ZERO
-      K_z_store(:,:,:) = ZERO
-      d_x_store(:,:,:) = ZERO
-      d_z_store(:,:,:) = ZERO
-      alpha_x_store(:,:,:) = ZERO
-      alpha_z_store(:,:,:) = ZERO
     endif
+    K_x_store(:,:,:) = ZERO
+    K_z_store(:,:,:) = ZERO
+    d_x_store(:,:,:) = ZERO
+    d_z_store(:,:,:) = ZERO
+    alpha_x_store(:,:,:) = ZERO
+    alpha_z_store(:,:,:) = ZERO
+
+    ! defines coefficients in PML
+    ! (note this routine must be called by all MPI processes)
+    call define_PML_coefficients()
 
     ! elastic PML memory variables
     if (any_elastic .and. nspec_PML > 0) then
@@ -304,7 +330,7 @@
       endif
 
     else
-
+      ! dummy arrays
       allocate(rmemory_displ_elastic(1,1,1,1,1))
       allocate(rmemory_dux_dx(1,1,1,1))
       allocate(rmemory_dux_dz(1,1,1,1))
@@ -352,6 +378,7 @@
           muPML_rmemory_dux_dzl(:,:,:,:) = 0_CUSTOM_REAL
           muPML_rmemory_duz_dxl(:,:,:,:) = 0_CUSTOM_REAL
         else
+          ! dummy arrays
           allocate(kaPML_rmemory_dux_dxl(1,1,1,1),stat=ier)
           allocate(kaPML_rmemory_duz_dzl(1,1,1,1),stat=ier)
           allocate(muPML_rmemory_dux_dxl(1,1,1,1),stat=ier)
@@ -361,6 +388,7 @@
         endif
       endif
     endif
+
     !addtional variables needed for CPML in viscoelastic simulation
 
     if (any_acoustic .and. nspec_PML > 0) then
@@ -371,9 +399,9 @@
       allocate(rmemory_acoustic_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
       if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_acoustic_dux_dz')
 
-      rmemory_potential_acoustic = 0._CUSTOM_REAL
-      rmemory_acoustic_dux_dx = 0._CUSTOM_REAL
-      rmemory_acoustic_dux_dz = 0._CUSTOM_REAL
+      rmemory_potential_acoustic(:,:,:,:) = 0._CUSTOM_REAL
+      rmemory_acoustic_dux_dx(:,:,:,:) = 0._CUSTOM_REAL
+      rmemory_acoustic_dux_dz(:,:,:,:) = 0._CUSTOM_REAL
 
       if (time_stepping_scheme == 2) then
         allocate(rmemory_potential_acoustic_LDDRK(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
@@ -388,17 +416,20 @@
         allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1,1),stat=ier)
       endif
 
-      rmemory_potential_acoustic_LDDRK = 0._CUSTOM_REAL
-      rmemory_acoustic_dux_dx_LDDRK = 0._CUSTOM_REAL
-      rmemory_acoustic_dux_dz_LDDRK = 0._CUSTOM_REAL
+      rmemory_potential_acoustic_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
+      rmemory_acoustic_dux_dx_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
+      rmemory_acoustic_dux_dz_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
 
     else
+      ! dummy arrays
       allocate(rmemory_potential_acoustic(1,1,1,1))
       allocate(rmemory_acoustic_dux_dx(1,1,1,1))
       allocate(rmemory_acoustic_dux_dz(1,1,1,1))
     endif
 
   else
+    ! case of no (PML_BOUNDARY_CONDITIONS .and. anyabs_glob)
+    ! dummy arrays
     allocate(rmemory_dux_dx(1,1,1,1))
     allocate(rmemory_dux_dz(1,1,1,1))
     allocate(rmemory_duz_dx(1,1,1,1))
@@ -442,14 +473,17 @@
   ! avoid a potential side effect owing to the "if" statements above: this array may be unallocated,
   ! if so we need to allocate a dummy version in order to be able to use that array as an argument
   ! in some subroutine calls below
-  if (.not. allocated(rmemory_fsb_displ_elastic)) allocate(rmemory_fsb_displ_elastic(1,NDIM,NGLLX,NGLLZ,1))
-  if (.not. allocated(rmemory_sfb_potential_ddot_acoustic)) allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
-  if (.not. allocated(rmemory_fsb_displ_elastic_LDDRK)) then
+  if (.not. allocated(rmemory_fsb_displ_elastic)) &
+    allocate(rmemory_fsb_displ_elastic(1,NDIM,NGLLX,NGLLZ,1))
+  if (.not. allocated(rmemory_sfb_potential_ddot_acoustic)) &
+    allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
+  if (.not. allocated(rmemory_fsb_displ_elastic_LDDRK)) &
     allocate(rmemory_fsb_displ_elastic_LDDRK(1,NDIM,NGLLX,NGLLZ,1))
-  endif
-  if (.not. allocated(rmemory_sfb_potential_ddot_acoustic_LDDRK)) then
+  if (.not. allocated(rmemory_sfb_potential_ddot_acoustic_LDDRK)) &
     allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
-  endif
+
+  ! done
+  call synchronize_all()
 
   end subroutine prepare_PML
 

@@ -12,7 +12,7 @@
 
 rm ./OUTPUT_FILES/Database*
 
-./xmeshfem2D
+./bin/xmeshfem2D
 
 qsub ./qsub_UPPA_serial.sh
 

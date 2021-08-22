@@ -93,12 +93,12 @@ xcombine_sem_SHARED_OBJECTS = \
 	$O/specfem2D_par.spec_module.o \
 	$O/shared_par.shared_module.o \
 	$O/exit_mpi.shared.o \
-	$O/parallel.shared.o \
-	$O/read_parameter_file.mesh.o \
+	$O/parallel.sharedmpi.o \
+	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
-	$O/read_material_table.mesh.o \
-	$O/read_interfaces_file.mesh.o \
-	$O/read_regions.mesh.o \
+	$O/read_material_table.shared.o \
+	$O/read_interfaces_file.shared.o \
+	$O/read_regions.shared.o \
 	$O/param_reader.cc.o \
 	$(EMPTY_MACRO)
 
@@ -126,46 +126,38 @@ xsmooth_sem_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/exit_mpi.shared.o \
 	$O/gll_library.shared.o \
-	$O/parallel.shared.o \
-	$O/read_parameter_file.mesh.o \
+	$O/parallel.sharedmpi.o \
+	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
-	$O/read_material_table.mesh.o \
-	$O/read_interfaces_file.mesh.o \
-	$O/read_regions.mesh.o \
+	$O/read_material_table.shared.o \
+	$O/read_interfaces_file.shared.o \
+	$O/read_regions.shared.o \
 	$O/param_reader.cc.o \
 	$(EMPTY_MACRO)
 
-cuda_smooth_sem_STUBS = \
-	$O/smooth_sem_cuda_stubs.postprocess.o \
-	$(EMPTY_MACRO)
-
-cuda_smooth_sem_OBJECTS = \
-	$O/smooth_cuda.postprocess.cuda.o \
-	$O/check_fields_cuda.cuda.o \
-	$O/initialize_cuda.cuda.o \
-	$(EMPTY_MACRO)
-
-cuda_smooth_sem_DEVICE_OBJ = \
-	$O/cuda_device_smooth_obj.o \
-	$(EMPTY_MACRO)
-
+###
+### GPU
+###
 ifeq ($(CUDA),yes)
 ## cuda version
-xsmooth_sem_OBJECTS += $(cuda_smooth_sem_OBJECTS)
+xsmooth_sem_OBJECTS += $(gpu_OBJECTS)
 ifeq ($(CUDA_PLUS),yes)
-xsmooth_sem_OBJECTS += $(cuda_smooth_sem_DEVICE_OBJ)
+xsmooth_sem_OBJECTS += $(gpu_DEVICE_OBJ)
 endif
 ## libs
 xsmooth_sem_LIBS = $(MPILIBS) $(CUDA_LINK)
 INFO_CUDA_SEM="building xsmooth_sem with CUDA support"
+
 else
 ## non-cuda version
-xsmooth_sem_OBJECTS += $(cuda_smooth_sem_STUBS)
+xsmooth_sem_OBJECTS += $(gpu_STUBS)
 ## libs
 xsmooth_sem_LIBS = $(MPILIBS)
 INFO_CUDA_SEM="building xsmooth_sem without CUDA support"
 endif
 
+# extra dependencies
+$O/smooth_sem.postprocess.o: $O/specfem2D_par.spec_module.o $O/postprocess_par.postprocess_module.o
 
 ${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS)
 	@echo ""

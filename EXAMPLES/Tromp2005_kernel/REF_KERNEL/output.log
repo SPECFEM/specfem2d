@@ -1,9 +1,9 @@
-running example: Thu Jun  9 22:17:16 AST 2016
+running example: Sat Feb  9 23:19:43 AST 2019
 
 running forward simulation (with saving forward wavefield)
 
 Changed simulation_type to 1 and save_forward = .true. in Par_file 
-running example: Thu Jun  9 22:17:16 AST 2016
+running example: Sat Feb  9 23:19:43 AST 2019
 
 setting up example...
 
@@ -16,45 +16,57 @@ running mesher...
  *** Specfem 2-D Mesher - MPI version       ***
  **********************************************
 
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
+
  Reading the parameter file...
 
  Title of the simulation: Tromp-Tape-Liu (GJI 2005)
 
 
+ Receiver lines:
+   Nb of line sets =            1
 
- Nb of solid, fluid or porous materials =            1
+ Materials:
+   Nb of solid, fluid or porous materials =            1
 
+ --------
  Material #           1  isotropic
- rho,cp,cs =    2600.0000000000000        5800.0000000000000        3198.5999999999999        10.000000000000000        10.000000000000000     
+ rho,cp,cs   =    2600.0000000000000        5800.0000000000000        3198.5999999999999     
+ Qkappa, Qmu =    10.000000000000000        10.000000000000000     
  Material is solid
+ --------
 
+ Mesh from internal meshing:
 
- mesh from internal meshing
-
-
- Reading interface data from file DATA/./interfaces_Tromp2005.dat to count the spectral elements
+ Reading interface data from file: ./DATA/./interfaces_Tromp2005.dat                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
  Reading            2  points for interface            1
  Reading            2  points for interface            2
+
  Total number of layers in z direction =            1
  There are           32  spectral elements along Z in layer            1
 
+ Total number of spectral elements along X =           80
  Total number of spectral elements along Z =           32
 
+ Regions:
+   Nb of regions in the mesh =            1
 
- Nb of regions in the mesh =            1
-
+ ------
  Region            1
  IX from            1  to           80
  IZ from            1  to           32
  Material #            1  isotropic
  Material is solid
- vp =    5800.0000000000000     
- vs =    3198.5999999999999     
- rho =    2600.0000000000000     
- Poisson's ratio =   0.28147164981632822     
- QKappa =    10.000000000000000     
- Qmu =    10.000000000000000     
-  -----
+ vp     =    5800.00000    
+ vs     =    3198.60010    
+ rho    =    2600.00000    
+ Poisson's ratio =   0.281471640    
+ QKappa =    10.0000000    
+ Qmu    =    10.0000000    
+ ------
+ Total number of spectral elements         =         2560
+
 
  Parameter file successfully read 
 
@@ -65,7 +77,7 @@ running mesher...
  Source           1
    Position xs, zs =    50000.000000000000        40000.000000000000     
 
-   Source type (1=force, 2=moment tensor):            1
+   Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, 5=plane incident S):            1
    Force source:
    Angle of the source (deg) =    4.7123889803846897     
    Multiplying factor  =    7500000000.0000000     
@@ -74,10 +86,11 @@ running mesher...
    Ricker wavelet (first-derivative):
    Frequency, delay =   0.41999999999999998        0.0000000000000000     
 
- Reading interface data from file DATA/./interfaces_Tromp2005.dat
+ Reading interface data from file: ./DATA/./interfaces_Tromp2005.dat
 
- Min and max value of X in the grid =    0.0000000000000000        200000.00000000000     
- Min and max value of Z in the grid =    0.0000000000000000        80000.000000000000     
+ Mesh dimensions: 
+   Min and max value of X in the grid =    0.0000000000000000        200000.00000000000     
+   Min and max value of Z in the grid =    0.0000000000000000        80000.000000000000     
 
  nedges_coupled (acoustic/elastic)     =            0
  nedges_coupled (acoustic/poroelastic) =            0
@@ -88,7 +101,7 @@ running mesher...
  Position (x,z) of the source =    50000.000000000000        40000.000000000000     
 
 
- writing the DATA/STATIONS file
+ writing the ./DATA/STATIONS file
 
 
  There are            1  receivers
@@ -107,10 +120,14 @@ running solver...
  **** Specfem 2-D Solver - MPI version     ****
  **********************************************
 
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
+
  There are            1  MPI processes
  Processes are numbered from 0 to            0
 
  There is a total of            1  slices
+
 
  NDIM =            2
 
@@ -127,10 +144,10 @@ running solver...
  Program SPECFEM2D: 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Tromp-Tape-Liu (GJI 2005)                         
+ Tromp-Tape-Liu (GJI 2005)
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 09 - 06 - 2016                                 T i m e  : 22:17:16
+ D a t e : 09 - 02 - 2019                                 T i m e  : 23:19:43
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
@@ -147,17 +164,17 @@ running solver...
 
      Display frequency . . . .(NSTEP_BETWEEN_OUTPUT_INFO) =    400
      Color display . . . . . . . . . . . . . . . (colors) =      1
-             ==  0     black and white display              
-             ==  1     color display                        
+      == 0     black and white display              
+      == 1     color display                        
      Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
-             ==  0     do not number the mesh               
-             ==  1     number the mesh                      
+      == 0     do not number the mesh               
+      == 1     number the mesh                      
 
 
  C o n t r o l
  =============
 
-     Seismograms recording type . . . . . . .(seismotype) =      1
+     Seismograms recording type . . . . . . .(seismotype) = 1
      Angle for first line of receivers. . . . .(anglerec) =   0.00
 
 
@@ -169,9 +186,10 @@ running solver...
      Add Bielak conditions .(add_Bielak_conditions_right) =      F
      Add Bielak conditions . .(add_Bielak_conditions_top) =      F
      Add Bielak conditions. .(add_Bielak_conditions_left) =      F
-     Attenuation on/off .(ATTENUATION_VISCOELASTIC_SOLID) =      F
+     Attenuation in solid . . .(ATTENUATION_VISCOELASTIC) =      F
+     Attenuation in fluid . . (ATTENUATION_VISCOACOUSTIC) =      F
      Save grid in ASCII file or not . (output_grid_ASCII) =      F
-     Save a file with total energy or not.(output_energy) =      F
+     Save a file with total energy or not.(OUTPUT_ENERGY) =      F
 
 
  C o n t r o l
@@ -209,9 +227,9 @@ running solver...
      Onset time. . . . . . =   -8.0000000000000000     
      Fundamental period. . =    2.3809523809523809     
      Fundamental frequency =   0.41999999999999998     
-     --> onset time ok
+     The onset time is ok
 
-     --> Spectral Elements (for mesh slice 0 only if using MPI runs) <--
+     -- Spectral Elements --
 
 
      Number of spectral elements . . . . . . . . .  (nspec) =   2560
@@ -238,7 +256,7 @@ running solver...
      P-wave velocity. . . . . . . . . . . (cp) = 5.80000000E+03
      S-wave velocity. . . . . . . . . . . (cs) = 3.19860000E+03
      Mass density. . . . . . . . . . (density) = 2.60000000E+03
-     Poisson's ratio. . . . . . . . .(poisson) = 3.09259751E-01
+     Poisson's ratio. . . . . . . . .(poisson) = 2.81471650E-01
      First Lame parameter Lambda. . . (lambda) = 3.42625818E+10
      Second Lame parameter Mu. . . . . . .(mu) = 2.66007091E+10
      Bulk modulus Kappa . . . . . . . .(kappa) = 6.08632909E+10
@@ -256,15 +274,15 @@ running solver...
    nspec_top    =            0
 
 
+ Setting up mesh
 
  Generating global mesh numbering (fast version)...
 
+ Mesh numbering:
+   Total number of elements:         2560
 
- Total number of elements:         2560
- decomposed as follows:
-
- Total number of elastic/visco/poro elements:         2560
- Total number of acoustic elements:            0
+   Total number of acoustic elements           =            0
+   Total number of elastic/visco/poro elements =         2560
 
  Approximate total number of grid points in the mesh
  (with a few duplicates coming from MPI buffers):        41409
@@ -280,13 +298,37 @@ running solver...
    are counted as elastic in the above three estimates;
    in reality they have more degrees of freedom)
 
+ Mesh dimensions:
+   Xmin,Xmax of the whole mesh =    0.0000000000000000        200000.00000000003     
+   Zmin,Zmax of the whole mesh =    0.0000000000000000        80000.000000000000     
 
- Xmin,Xmax of the whole mesh =    0.0000000000000000        200000.00000000003     
- Zmin,Zmax of the whole mesh =    0.0000000000000000        80000.000000000000     
+ Domains:
+   total number of acoustic elements        =            0
+   total number of elastic elements         =         2560
+   total number of poroelastic elements     =            0
 
+ Setting up MPI communication arrays
 
- basic mesh setup is successful
+   maximum number of MPI interfaces (for a single slice) =            0
 
+   This is a single process simulation, no need for MPI communication
+
+   number of outer elements  =            0
+   number of inner elements  =         2560
+
+   percentage of outer elements    0.00000000     %
+   percentage of inner elements    100.000000     %
+
+   number of global nodes in outer elements  =            0
+   number of global nodes in inner elements  =        41409
+
+   determining communication phases:
+   elastic domains:
+   total number of outer/inner elements =            0        2560
+   total percentage of outer elements    0.00000000     %
+   total percentage of inner elements    100.000000     %
+
+ All mesh setup done successfully
 
  sources:
 
@@ -298,9 +340,10 @@ running solver...
  Force source:
              original x:    50000.0000    
              original z:    40000.0000    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in rank            0
   in element         1220
+  in elastic domain
   at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
 
 
@@ -316,17 +359,17 @@ running solver...
   locating receivers
  ********************
 
- reading receiver information from the DATA/STATIONS file
+ reading receiver information from the ./DATA/STATIONS file
 
 
  Station #            1     AA      S0001                           
              original x:    150000.000    
              original z:    40000.0000    
-   distance from source:    100000.000    
- closest estimate found:    2.91038305E-11  m away
+ Closest estimate found:    0.00000000      m away
   in element         1260
-  at process            0
-  at xi,gamma coordinates =    1.0000000000000004       0.99999999999999822     
+  in rank            0
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
+ Distance from source:    100000.000      m
 
 
  end of receiver detection
@@ -342,6 +385,8 @@ running solver...
  Preparing mass matrices
    initializing mass matrices
    inverting mass matrices
+
+ Preparing image coloring
 
  Checking mesh and stability
 
@@ -374,13 +419,15 @@ running solver...
 
  ----
  Number of points per wavelength:
+ ----
+   Source            1
    maximum dominant source frequency =    1.0500000000000000      Hz
- 
-   Nb pts / lambdaP_fmax min =    8.8380952380952369     
-   Nb pts / lambdaP_fmax max =    8.8380952380952369     
- 
-   Nb pts / lambdaS_fmax min =    4.8740571428571435     
-   Nb pts / lambdaS_fmax max =    4.8740571428571435     
+
+   Nb pts / lambdaP_fmax min =    8.83809566    
+   Nb pts / lambdaP_fmax max =    8.83809566    
+
+   Nb pts / lambdaS_fmax min =    4.87405729    
+   Nb pts / lambdaS_fmax max =    4.87405729    
 
  -----------------------------------------
 
@@ -421,19 +468,20 @@ running solver...
  total number of elements in fluid and solid regions =         2560
 
 
- Preparing image coloring
-   allocating color image arrays
-   locating all the pixels of color images
-   done locating all the pixels of color images
-   coloring image background based on vp
-
  Preparing source time function
    saving the source time function in a text file...
 
- Preparing attenuation
- 
+ Preparing material arrays
+
+ Preparing image coloring
+   allocating color image arrays
+   locating all the pixels of color images
+   total number of image pixels =        17765
+   done locating all the pixels of color images
+   coloring image background based on vp
+
  done, preparation successful
- 
+
 
  =========================================
  =  T i m e  e v o l u t i o n  l o o p  =
@@ -443,272 +491,315 @@ running solver...
  Starting time iteration loop ...
 
 
- Creating color image of size          210  x           90  for time step            1
- drawing scalar image of part of the displacement vector...
- Color image created
-
  ******************************************************************
 Time step number       5   t =    0.0800 s out of    3000
  ******************************************************************
  We have done   0.133377790     % of the total
- Max norm of vector field in solid (elastic) =    0.0000000000000000     
- Elapsed time in seconds =    2.4999856948852539E-002
+ Max norm of vector field in solid (elastic) =    0.00000000    
+ Elapsed time in seconds =    1.2000083923339844E-002
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    4.9999713897705082E-003
+ Mean elapsed time per time step in seconds =    2.4000167846679687E-003
  Time steps remaining =         2995
- Estimated remaining time in seconds =    14.974914312362673     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 14 s
- Estimated total run time in seconds =    14.999914169311525     
- Estimated total run time in hh:mm:ss =      0 h 00 m 14 s
- The run will finish approximately on: Thu Jun 09, 2016 22:18
+ Estimated remaining time in seconds =    7.1880502700805664     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 07 s
+ Estimated total run time in seconds =    7.2000503540039062     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
+
+ Creating color image of size          210  x           90  for time step            5
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
 
  Creating color image of size          210  x           90  for time step          100
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    3.1597012529217379E-030
  Color image created
 
  Creating color image of size          210  x           90  for time step          200
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    7.9707046473739316E-015
  Color image created
 
  Creating color image of size          210  x           90  for time step          300
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.8001194148923225E-005
  Color image created
 
  ******************************************************************
 Time step number     400   t =    7.9800 s out of    3000
  ******************************************************************
  We have done    13.3044348     % of the total
- Max norm of vector field in solid (elastic) =    8.2087635993957520E-002
- Elapsed time in seconds =    1.2829999923706055     
- Elapsed time in hh:mm:ss =      0 h 00 m 01 s
- Mean elapsed time per time step in seconds =    3.2074999809265136E-003
+ Max norm of vector field in solid (elastic) =    2.35748831E-02
+ Elapsed time in seconds =   0.94799995422363281     
+ Elapsed time in hh:mm:ss =      0 h 00 m 00 s
+ Mean elapsed time per time step in seconds =    2.3699998855590820E-003
  Time steps remaining =         2600
- Estimated remaining time in seconds =    8.3394999504089355     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 08 s
- Estimated total run time in seconds =    9.6224999427795410     
- Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
- The run will finish approximately on: Thu Jun 09, 2016 22:17
+ Estimated remaining time in seconds =    6.1619997024536133     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
+ Estimated total run time in seconds =    7.1099996566772461     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
 
  Creating color image of size          210  x           90  for time step          400
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.9087344461241738E-002
  Color image created
 
  Creating color image of size          210  x           90  for time step          500
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    9.4899033223300316E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step          600
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    7.7797600163430625E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step          700
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    6.6985858812243920E-003
  Color image created
 
  ******************************************************************
 Time step number     800   t =   15.9800 s out of    3000
  ******************************************************************
  We have done    26.6422138     % of the total
- Max norm of vector field in solid (elastic) =    2.0470730960369110E-002
- Elapsed time in seconds =    2.5490000247955322     
- Elapsed time in hh:mm:ss =      0 h 00 m 02 s
- Mean elapsed time per time step in seconds =    3.1862500309944152E-003
+ Max norm of vector field in solid (elastic) =    5.87902125E-03
+ Elapsed time in seconds =    1.8949999809265137     
+ Elapsed time in hh:mm:ss =      0 h 00 m 01 s
+ Mean elapsed time per time step in seconds =    2.3687499761581420E-003
  Time steps remaining =         2200
- Estimated remaining time in seconds =    7.0097500681877136     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 07 s
- Estimated total run time in seconds =    9.5587500929832458     
- Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
- The run will finish approximately on: Thu Jun 09, 2016 22:17
+ Estimated remaining time in seconds =    5.2112499475479126     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
+ Estimated total run time in seconds =    7.1062499284744263     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
 
  Creating color image of size          210  x           90  for time step          800
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    5.8582165791042926E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step          900
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    5.2194199258096602E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1000
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    7.9188823761649225E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1100
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    7.3655018463902070E-003
  Color image created
 
  ******************************************************************
 Time step number    1200   t =   23.9800 s out of    3000
  ******************************************************************
  We have done    39.9799919     % of the total
- Max norm of vector field in solid (elastic) =    1.9739974290132523E-002
- Elapsed time in seconds =    3.8259999752044678     
- Elapsed time in hh:mm:ss =      0 h 00 m 03 s
- Mean elapsed time per time step in seconds =    3.1883333126703898E-003
+ Max norm of vector field in solid (elastic) =    5.64937945E-03
+ Elapsed time in seconds =    2.8180000782012939     
+ Elapsed time in hh:mm:ss =      0 h 00 m 02 s
+ Mean elapsed time per time step in seconds =    2.3483333985010782E-003
  Time steps remaining =         1800
- Estimated remaining time in seconds =    5.7389999628067017     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    9.5649999380111694     
- Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
- The run will finish approximately on: Thu Jun 09, 2016 22:17
+ Estimated remaining time in seconds =    4.2270001173019409     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
+ Estimated total run time in seconds =    7.0450001955032349     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
 
  Creating color image of size          210  x           90  for time step         1200
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    5.6491269464255377E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1300
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    4.1738359730179144E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1400
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    4.1062008617910517E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1500
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    3.5312616170125673E-003
  Color image created
 
  ******************************************************************
 Time step number    1600   t =   31.9800 s out of    3000
  ******************************************************************
  We have done    53.3177719     % of the total
- Max norm of vector field in solid (elastic) =    1.1793287470936775E-002
- Elapsed time in seconds =    5.0959999561309814     
- Elapsed time in hh:mm:ss =      0 h 00 m 05 s
- Mean elapsed time per time step in seconds =    3.1849999725818636E-003
+ Max norm of vector field in solid (elastic) =    3.38317128E-03
+ Elapsed time in seconds =    3.7430000305175781     
+ Elapsed time in hh:mm:ss =      0 h 00 m 03 s
+ Mean elapsed time per time step in seconds =    2.3393750190734862E-003
  Time steps remaining =         1400
- Estimated remaining time in seconds =    4.4589999616146088     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    9.5549999177455902     
- Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
- The run will finish approximately on: Thu Jun 09, 2016 22:17
+ Estimated remaining time in seconds =    3.2751250267028804     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
+ Estimated total run time in seconds =    7.0181250572204590     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
 
  Creating color image of size          210  x           90  for time step         1600
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    3.3841709300085321E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1700
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    3.2942606102944992E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1800
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    3.1740459352180509E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1900
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.9623422265511699E-003
  Color image created
 
  ******************************************************************
 Time step number    2000   t =   39.9800 s out of    3000
  ******************************************************************
  We have done    66.6555481     % of the total
- Max norm of vector field in solid (elastic) =    1.0278896428644657E-002
- Elapsed time in seconds =    6.3589999675750732     
- Elapsed time in hh:mm:ss =      0 h 00 m 06 s
- Mean elapsed time per time step in seconds =    3.1794999837875368E-003
+ Max norm of vector field in solid (elastic) =    2.95987143E-03
+ Elapsed time in seconds =    4.7079999446868896     
+ Elapsed time in hh:mm:ss =      0 h 00 m 04 s
+ Mean elapsed time per time step in seconds =    2.3539999723434448E-003
  Time steps remaining =         1000
- Estimated remaining time in seconds =    3.1794999837875366     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    9.5384999513626099     
- Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
- The run will finish approximately on: Thu Jun 09, 2016 22:17
+ Estimated remaining time in seconds =    2.3539999723434448     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
+ Estimated total run time in seconds =    7.0619999170303345     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
 
  Creating color image of size          210  x           90  for time step         2000
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.9461169255926862E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         2100
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.9213360439875428E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         2200
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.7489684585121923E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         2300
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.5838721561606383E-003
  Color image created
 
  ******************************************************************
 Time step number    2400   t =   47.9800 s out of    3000
  ******************************************************************
  We have done    79.9933319     % of the total
- Max norm of vector field in solid (elastic) =    8.9460751041769981E-003
- Elapsed time in seconds =    7.6239998340606689     
- Elapsed time in hh:mm:ss =      0 h 00 m 07 s
- Mean elapsed time per time step in seconds =    3.1766665975252787E-003
+ Max norm of vector field in solid (elastic) =    2.57650111E-03
+ Elapsed time in seconds =    5.7000000476837158     
+ Elapsed time in hh:mm:ss =      0 h 00 m 05 s
+ Mean elapsed time per time step in seconds =    2.3750000198682151E-003
  Time steps remaining =          600
- Estimated remaining time in seconds =    1.9059999585151672     
+ Estimated remaining time in seconds =    1.4250000119209290     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
- Estimated total run time in seconds =    9.5299997925758362     
- Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
- The run will finish approximately on: Thu Jun 09, 2016 22:17
+ Estimated total run time in seconds =    7.1250000596046448     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
 
  Creating color image of size          210  x           90  for time step         2400
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.5709964594520900E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         2500
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.4896687485157455E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         2600
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.4160591693908255E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         2700
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.4187147440914779E-003
  Color image created
 
  ******************************************************************
 Time step number    2800   t =   55.9800 s out of    3000
  ******************************************************************
  We have done    93.3311081     % of the total
- Max norm of vector field in solid (elastic) =    8.0760791897773743E-003
- Elapsed time in seconds =    8.8780000209808350     
- Elapsed time in hh:mm:ss =      0 h 00 m 08 s
- Mean elapsed time per time step in seconds =    3.1707142932074412E-003
+ Max norm of vector field in solid (elastic) =    2.32279766E-03
+ Elapsed time in seconds =    6.6419999599456787     
+ Elapsed time in hh:mm:ss =      0 h 00 m 06 s
+ Mean elapsed time per time step in seconds =    2.3721428428377426E-003
  Time steps remaining =          200
- Estimated remaining time in seconds =   0.63414285864148823     
+ Estimated remaining time in seconds =   0.47442856856754850     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    9.5121428796223224     
- Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
- The run will finish approximately on: Thu Jun 09, 2016 22:17
+ Estimated total run time in seconds =    7.1164285285132269     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
 
  Creating color image of size          210  x           90  for time step         2800
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.3165949940132124E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         2900
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.2987018551182009E-003
  Color image created
 
  ******************************************************************
 Time step number    3000   t =   59.9800 s out of    3000
  ******************************************************************
  We have done    100.000000     % of the total
- Max norm of vector field in solid (elastic) =    7.6051889918744564E-003
- Elapsed time in seconds =    9.5139999389648438     
- Elapsed time in hh:mm:ss =      0 h 00 m 09 s
- Mean elapsed time per time step in seconds =    3.1713333129882813E-003
+ Max norm of vector field in solid (elastic) =    2.18263105E-03
+ Elapsed time in seconds =    7.1129999160766602     
+ Elapsed time in hh:mm:ss =      0 h 00 m 07 s
+ Mean elapsed time per time step in seconds =    2.3709999720255533E-003
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    9.5139999389648438     
- Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
+ Estimated total run time in seconds =    7.1129999160766602     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
 
 
  Creating color image of size          210  x           90  for time step         3000
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.1493892700011428E-003
  Color image created
+
+ Total duration of the time loop in seconds =    7.12115145      s
+ Total number of time steps =         3000
+ Average duration of a time step of the time loop =    2.37371726E-03  s
+ Total number of spectral elements in the mesh =         2560
+     of which         2560  are regular elements
+     and            0  are PML elements.
+ Average duration of the calculation per spectral element =    9.27233259E-07  s
+
+
+ Total duration of the timeloop in seconds, measured using 
+ date and time of the system :    7.12199974      s
 
  Saving elastic last frame...
 
@@ -719,50 +810,56 @@ Time step number    3000   t =   59.9800 s out of    3000
  Program SPECFEM2D: 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Tromp-Tape-Liu (GJI 2005)                         
+ Tromp-Tape-Liu (GJI 2005)
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 09 - 06 - 2016                                 T i m e  : 22:17:26
+ D a t e : 09 - 02 - 2019                                 T i m e  : 23:19:50
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
 see results in directory: OUTPUT_FILES/
 
 done
-Thu Jun 9 22:17:26 AST 2016
+Sat Feb 9 23:19:50 AST 2019
 
 setting up adjoint sources
-
-using compiler: gfortran
 
 
 running adjoint source creation
 
  adjoint source - seismogram:
- 
- parameters:
-   NSTEP  =         3000
-   deltat =    1.9999999552965164E-002
-   nrec   =            1
-   t0     =    8.0000000000000000     
- 
+
  setup:
+   number of adjoint stations (nrec)   =            1
+   station name            1 :    AA.S0001                                                                                                                                              
+
    seismogram components   =            2
    seismogram labels       = BXX / BXZ
-   station name            = S0001
- 
-   time window start/end                           =    35.000000000000000        40.000000000000000     
-   adjoint source trace component (1==X/2==Y/3==Z) =            1
- 
- istart =        1750 iend =        2000
- tstart =   34.999999217689037      tend =   39.999999105930328     
- BXX
- Norm =  -1.0177808750935293E-004
- BXY
+
+   time window start/end                           =    27.000000000000000        32.000000000000000     
+   adjoint source trace component (1 == X / 2 == Y / 3 == Z) =            1
+
+ reading input traces:
+   number of time steps (NSTEP)  =         3000
+
+   start time (t0)               =   -8.0000000000000000     
+   end time                      =    51.980000000000004     
+   time step size (deltat)       =    2.0000000000000000E-002
+
+ time window:
+   index      : istart =        1751 iend =        2001
+   time window: tstart =   27.000000000000000      tend =   32.000000000000000     
+
+ component: BXX
+ Norm =  -8.6302144144745891E-006
+
+ component: BXY
  Norm < EPS for file, zeroeing out trace
  Norm =   0.0000000000000000     
- BXZ
- Norm =  -1.5598025167460537E-007
+
+ component: BXZ
+ Norm =  -1.2516391634024930E-008
+
  *************************
  The input files (AA.S****.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in folder SEM/
  *************************
@@ -770,7 +867,7 @@ running adjoint source creation
 running kernel simulation
 
 Changed simulation_type to 3 in Par_file 
-running example: Thu Jun  9 22:17:27 AST 2016
+running example: Sat Feb  9 23:19:50 AST 2019
 
 setting up example...
 
@@ -782,45 +879,57 @@ running mesher...
  *** Specfem 2-D Mesher - MPI version       ***
  **********************************************
 
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
+
  Reading the parameter file...
 
  Title of the simulation: Tromp-Tape-Liu (GJI 2005)
 
 
+ Receiver lines:
+   Nb of line sets =            1
 
- Nb of solid, fluid or porous materials =            1
+ Materials:
+   Nb of solid, fluid or porous materials =            1
 
+ --------
  Material #           1  isotropic
- rho,cp,cs =    2600.0000000000000        5800.0000000000000        3198.5999999999999        10.000000000000000        10.000000000000000     
+ rho,cp,cs   =    2600.0000000000000        5800.0000000000000        3198.5999999999999     
+ Qkappa, Qmu =    10.000000000000000        10.000000000000000     
  Material is solid
+ --------
 
+ Mesh from internal meshing:
 
- mesh from internal meshing
-
-
- Reading interface data from file DATA/./interfaces_Tromp2005.dat to count the spectral elements
+ Reading interface data from file: ./DATA/./interfaces_Tromp2005.dat                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
  Reading            2  points for interface            1
  Reading            2  points for interface            2
+
  Total number of layers in z direction =            1
  There are           32  spectral elements along Z in layer            1
 
+ Total number of spectral elements along X =           80
  Total number of spectral elements along Z =           32
 
+ Regions:
+   Nb of regions in the mesh =            1
 
- Nb of regions in the mesh =            1
-
+ ------
  Region            1
  IX from            1  to           80
  IZ from            1  to           32
  Material #            1  isotropic
  Material is solid
- vp =    5800.0000000000000     
- vs =    3198.5999999999999     
- rho =    2600.0000000000000     
- Poisson's ratio =   0.28147164981632822     
- QKappa =    10.000000000000000     
- Qmu =    10.000000000000000     
-  -----
+ vp     =    5800.00000    
+ vs     =    3198.60010    
+ rho    =    2600.00000    
+ Poisson's ratio =   0.281471640    
+ QKappa =    10.0000000    
+ Qmu    =    10.0000000    
+ ------
+ Total number of spectral elements         =         2560
+
 
  Parameter file successfully read 
 
@@ -831,7 +940,7 @@ running mesher...
  Source           1
    Position xs, zs =    50000.000000000000        40000.000000000000     
 
-   Source type (1=force, 2=moment tensor):            1
+   Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, 5=plane incident S):            1
    Force source:
    Angle of the source (deg) =    4.7123889803846897     
    Multiplying factor  =    7500000000.0000000     
@@ -840,10 +949,11 @@ running mesher...
    Ricker wavelet (first-derivative):
    Frequency, delay =   0.41999999999999998        0.0000000000000000     
 
- Reading interface data from file DATA/./interfaces_Tromp2005.dat
+ Reading interface data from file: ./DATA/./interfaces_Tromp2005.dat
 
- Min and max value of X in the grid =    0.0000000000000000        200000.00000000000     
- Min and max value of Z in the grid =    0.0000000000000000        80000.000000000000     
+ Mesh dimensions: 
+   Min and max value of X in the grid =    0.0000000000000000        200000.00000000000     
+   Min and max value of Z in the grid =    0.0000000000000000        80000.000000000000     
 
  nedges_coupled (acoustic/elastic)     =            0
  nedges_coupled (acoustic/poroelastic) =            0
@@ -854,7 +964,7 @@ running mesher...
  Position (x,z) of the source =    50000.000000000000        40000.000000000000     
 
 
- writing the DATA/STATIONS file
+ writing the ./DATA/STATIONS file
 
 
  There are            1  receivers
@@ -873,10 +983,14 @@ running solver...
  **** Specfem 2-D Solver - MPI version     ****
  **********************************************
 
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
+
  There are            1  MPI processes
  Processes are numbered from 0 to            0
 
  There is a total of            1  slices
+
 
  NDIM =            2
 
@@ -893,10 +1007,10 @@ running solver...
  Program SPECFEM2D: 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Tromp-Tape-Liu (GJI 2005)                         
+ Tromp-Tape-Liu (GJI 2005)
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 09 - 06 - 2016                                 T i m e  : 22:17:27
+ D a t e : 09 - 02 - 2019                                 T i m e  : 23:19:51
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
@@ -913,17 +1027,17 @@ running solver...
 
      Display frequency . . . .(NSTEP_BETWEEN_OUTPUT_INFO) =    400
      Color display . . . . . . . . . . . . . . . (colors) =      1
-             ==  0     black and white display              
-             ==  1     color display                        
+      == 0     black and white display              
+      == 1     color display                        
      Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
-             ==  0     do not number the mesh               
-             ==  1     number the mesh                      
+      == 0     do not number the mesh               
+      == 1     number the mesh                      
 
 
  C o n t r o l
  =============
 
-     Seismograms recording type . . . . . . .(seismotype) =      1
+     Seismograms recording type . . . . . . .(seismotype) = 1
      Angle for first line of receivers. . . . .(anglerec) =   0.00
 
 
@@ -935,9 +1049,10 @@ running solver...
      Add Bielak conditions .(add_Bielak_conditions_right) =      F
      Add Bielak conditions . .(add_Bielak_conditions_top) =      F
      Add Bielak conditions. .(add_Bielak_conditions_left) =      F
-     Attenuation on/off .(ATTENUATION_VISCOELASTIC_SOLID) =      F
+     Attenuation in solid . . .(ATTENUATION_VISCOELASTIC) =      F
+     Attenuation in fluid . . (ATTENUATION_VISCOACOUSTIC) =      F
      Save grid in ASCII file or not . (output_grid_ASCII) =      F
-     Save a file with total energy or not.(output_energy) =      F
+     Save a file with total energy or not.(OUTPUT_ENERGY) =      F
 
 
  C o n t r o l
@@ -975,9 +1090,9 @@ running solver...
      Onset time. . . . . . =   -8.0000000000000000     
      Fundamental period. . =    2.3809523809523809     
      Fundamental frequency =   0.41999999999999998     
-     --> onset time ok
+     The onset time is ok
 
-     --> Spectral Elements (for mesh slice 0 only if using MPI runs) <--
+     -- Spectral Elements --
 
 
      Number of spectral elements . . . . . . . . .  (nspec) =   2560
@@ -1004,7 +1119,7 @@ running solver...
      P-wave velocity. . . . . . . . . . . (cp) = 5.80000000E+03
      S-wave velocity. . . . . . . . . . . (cs) = 3.19860000E+03
      Mass density. . . . . . . . . . (density) = 2.60000000E+03
-     Poisson's ratio. . . . . . . . .(poisson) = 3.09259751E-01
+     Poisson's ratio. . . . . . . . .(poisson) = 2.81471650E-01
      First Lame parameter Lambda. . . (lambda) = 3.42625818E+10
      Second Lame parameter Mu. . . . . . .(mu) = 2.66007091E+10
      Bulk modulus Kappa . . . . . . . .(kappa) = 6.08632909E+10
@@ -1022,15 +1137,15 @@ running solver...
    nspec_top    =            0
 
 
+ Setting up mesh
 
  Generating global mesh numbering (fast version)...
 
+ Mesh numbering:
+   Total number of elements:         2560
 
- Total number of elements:         2560
- decomposed as follows:
-
- Total number of elastic/visco/poro elements:         2560
- Total number of acoustic elements:            0
+   Total number of acoustic elements           =            0
+   Total number of elastic/visco/poro elements =         2560
 
  Approximate total number of grid points in the mesh
  (with a few duplicates coming from MPI buffers):        41409
@@ -1046,13 +1161,37 @@ running solver...
    are counted as elastic in the above three estimates;
    in reality they have more degrees of freedom)
 
+ Mesh dimensions:
+   Xmin,Xmax of the whole mesh =    0.0000000000000000        200000.00000000003     
+   Zmin,Zmax of the whole mesh =    0.0000000000000000        80000.000000000000     
 
- Xmin,Xmax of the whole mesh =    0.0000000000000000        200000.00000000003     
- Zmin,Zmax of the whole mesh =    0.0000000000000000        80000.000000000000     
+ Domains:
+   total number of acoustic elements        =            0
+   total number of elastic elements         =         2560
+   total number of poroelastic elements     =            0
 
+ Setting up MPI communication arrays
 
- basic mesh setup is successful
+   maximum number of MPI interfaces (for a single slice) =            0
 
+   This is a single process simulation, no need for MPI communication
+
+   number of outer elements  =            0
+   number of inner elements  =         2560
+
+   percentage of outer elements    0.00000000     %
+   percentage of inner elements    100.000000     %
+
+   number of global nodes in outer elements  =            0
+   number of global nodes in inner elements  =        41409
+
+   determining communication phases:
+   elastic domains:
+   total number of outer/inner elements =            0        2560
+   total percentage of outer elements    0.00000000     %
+   total percentage of inner elements    100.000000     %
+
+ All mesh setup done successfully
 
  sources:
 
@@ -1064,9 +1203,10 @@ running solver...
  Force source:
              original x:    50000.0000    
              original z:    40000.0000    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in rank            0
   in element         1220
+  in elastic domain
   at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
 
 
@@ -1082,17 +1222,17 @@ running solver...
   locating receivers
  ********************
 
- reading receiver information from the DATA/STATIONS file
+ reading receiver information from the ./DATA/STATIONS file
 
 
  Station #            1     AA      S0001                           
              original x:    150000.000    
              original z:    40000.0000    
-   distance from source:    100000.000    
- closest estimate found:    2.91038305E-11  m away
+ Closest estimate found:    0.00000000      m away
   in element         1260
-  at process            0
-  at xi,gamma coordinates =    1.0000000000000004       0.99999999999999822     
+  in rank            0
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
+ Distance from source:    100000.000      m
 
 
  end of receiver detection
@@ -1101,8 +1241,10 @@ running solver...
 
 
  adjoint sources:
+   adjoint source type:           1
    reading ASCII adjoint source files
    number of adjoint sources =            1
+   adjoint sources min/max   =   -373.259827       224.704834    
 
  Preparing array allocations
    arrays for elastic domains
@@ -1112,6 +1254,8 @@ running solver...
  Preparing mass matrices
    initializing mass matrices
    inverting mass matrices
+
+ Preparing image coloring
 
  Checking mesh and stability
 
@@ -1144,13 +1288,15 @@ running solver...
 
  ----
  Number of points per wavelength:
+ ----
+   Source            1
    maximum dominant source frequency =    1.0500000000000000      Hz
- 
-   Nb pts / lambdaP_fmax min =    8.8380952380952369     
-   Nb pts / lambdaP_fmax max =    8.8380952380952369     
- 
-   Nb pts / lambdaS_fmax min =    4.8740571428571435     
-   Nb pts / lambdaS_fmax max =    4.8740571428571435     
+
+   Nb pts / lambdaP_fmax min =    8.83809566    
+   Nb pts / lambdaP_fmax max =    8.83809566    
+
+   Nb pts / lambdaS_fmax min =    4.87405729    
+   Nb pts / lambdaS_fmax max =    4.87405729    
 
  -----------------------------------------
 
@@ -1191,12 +1337,6 @@ running solver...
  total number of elements in fluid and solid regions =         2560
 
 
- Preparing image coloring
-   allocating color image arrays
-   locating all the pixels of color images
-   done locating all the pixels of color images
-   coloring image background based on vp
-
  Preparing adjoint simulation
    initializing adjoint sensitivity kernels
    reading Stacey boundary arrays
@@ -1204,10 +1344,17 @@ running solver...
  Preparing source time function
    saving the source time function in a text file...
 
- Preparing attenuation
- 
+ Preparing material arrays
+
+ Preparing image coloring
+   allocating color image arrays
+   locating all the pixels of color images
+   total number of image pixels =        17765
+   done locating all the pixels of color images
+   coloring image background based on vp
+
  done, preparation successful
- 
+
 
  =========================================
  =  T i m e  e v o l u t i o n  l o o p  =
@@ -1217,272 +1364,470 @@ running solver...
  Starting time iteration loop ...
 
 
- Creating color image of size          210  x           90  for time step            1
- drawing scalar image of part of the displacement vector...
- Color image created
-
  ******************************************************************
 Time step number       5   t =    0.0800 s out of    3000
  ******************************************************************
  We have done   0.133377790     % of the total
- Max norm of vector field in solid (elastic) =    0.0000000000000000     
- Elapsed time in seconds =    4.2000055313110352E-002
+ Max norm of vector field in solid (elastic) =    0.00000000    
+ Elapsed time in seconds =    3.5000085830688477E-002
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    8.4000110626220696E-003
+ Mean elapsed time per time step in seconds =    7.0000171661376955E-003
  Time steps remaining =         2995
- Estimated remaining time in seconds =    25.158033132553097     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 25 s
- Estimated total run time in seconds =    25.200033187866207     
- Estimated total run time in hh:mm:ss =      0 h 00 m 25 s
- The run will finish approximately on: Thu Jun 09, 2016 22:18
+ Estimated remaining time in seconds =    20.965051412582397     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 20 s
+ Estimated total run time in seconds =    21.000051498413086     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
+
+ Creating color image of size          210  x           90  for time step            5
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
+
+ Creating color image of size          210  x           90  for time step            5
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    2.1779356676191013E-003
+ Color image created
 
  Creating color image of size          210  x           90  for time step          100
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
+
+ Creating color image of size          210  x           90  for time step          100
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    2.3119464133660910E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step          200
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
+
+ Creating color image of size          210  x           90  for time step          200
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    2.3233288939783401E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step          300
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
+
+ Creating color image of size          210  x           90  for time step          300
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    2.4213607671416111E-003
  Color image created
 
  ******************************************************************
 Time step number     400   t =    7.9800 s out of    3000
  ******************************************************************
  We have done    13.3044348     % of the total
- Max norm of vector field in solid (elastic) =    0.0000000000000000     
- Elapsed time in seconds =    3.6970000267028809     
- Elapsed time in hh:mm:ss =      0 h 00 m 03 s
- Mean elapsed time per time step in seconds =    9.2425000667572029E-003
+ Max norm of vector field in solid (elastic) =    0.00000000    
+ Elapsed time in seconds =    2.8930001258850098     
+ Elapsed time in hh:mm:ss =      0 h 00 m 02 s
+ Mean elapsed time per time step in seconds =    7.2325003147125245E-003
  Time steps remaining =         2600
- Estimated remaining time in seconds =    24.030500173568729     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 24 s
- Estimated total run time in seconds =    27.727500200271610     
- Estimated total run time in hh:mm:ss =      0 h 00 m 27 s
- The run will finish approximately on: Thu Jun 09, 2016 22:18
+ Estimated remaining time in seconds =    18.804500818252563     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 18 s
+ Estimated total run time in seconds =    21.697500944137573     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
 
  Creating color image of size          210  x           90  for time step          400
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
+
+ Creating color image of size          210  x           90  for time step          400
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    2.4120673070908974E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step          500
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
+
+ Creating color image of size          210  x           90  for time step          500
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    2.4847612132966037E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step          600
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
+
+ Creating color image of size          210  x           90  for time step          600
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    2.5598516772935911E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step          700
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
+
+ Creating color image of size          210  x           90  for time step          700
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    2.5674319026795277E-003
  Color image created
 
  ******************************************************************
 Time step number     800   t =   15.9800 s out of    3000
  ******************************************************************
  We have done    26.6422138     % of the total
- Max norm of vector field in solid (elastic) =    0.0000000000000000     
- Elapsed time in seconds =    7.4059998989105225     
- Elapsed time in hh:mm:ss =      0 h 00 m 07 s
- Mean elapsed time per time step in seconds =    9.2574998736381538E-003
+ Max norm of vector field in solid (elastic) =    0.00000000    
+ Elapsed time in seconds =    5.7710001468658447     
+ Elapsed time in hh:mm:ss =      0 h 00 m 05 s
+ Mean elapsed time per time step in seconds =    7.2137501835823062E-003
  Time steps remaining =         2200
- Estimated remaining time in seconds =    20.366499722003937     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 20 s
- Estimated total run time in seconds =    27.772499620914459     
- Estimated total run time in hh:mm:ss =      0 h 00 m 27 s
- The run will finish approximately on: Thu Jun 09, 2016 22:18
+ Estimated remaining time in seconds =    15.870250403881073     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 15 s
+ Estimated total run time in seconds =    21.641250550746918     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
 
  Creating color image of size          210  x           90  for time step          800
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
+
+ Creating color image of size          210  x           90  for time step          800
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    2.7714247524764702E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step          900
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
+
+ Creating color image of size          210  x           90  for time step          900
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    2.9213672337140280E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1000
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         1000
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    2.9299547070202351E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1100
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    2.6011223483837741E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         1100
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    2.9404830824819035E-003
  Color image created
 
  ******************************************************************
 Time step number    1200   t =   23.9800 s out of    3000
  ******************************************************************
  We have done    39.9799919     % of the total
- Max norm of vector field in solid (elastic) =    3.8775846422645088E-010
- Elapsed time in seconds =    11.108000040054321     
- Elapsed time in hh:mm:ss =      0 h 00 m 11 s
- Mean elapsed time per time step in seconds =    9.2566667000452685E-003
+ Max norm of vector field in solid (elastic) =    1.33064426E-09
+ Elapsed time in seconds =    8.7050001621246338     
+ Elapsed time in hh:mm:ss =      0 h 00 m 08 s
+ Mean elapsed time per time step in seconds =    7.2541668017705278E-003
  Time steps remaining =         1800
- Estimated remaining time in seconds =    16.662000060081482     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 16 s
- Estimated total run time in seconds =    27.770000100135803     
- Estimated total run time in hh:mm:ss =      0 h 00 m 27 s
- The run will finish approximately on: Thu Jun 09, 2016 22:18
+ Estimated remaining time in seconds =    13.057500243186951     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 13 s
+ Estimated total run time in seconds =    21.762500405311584     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
 
  Creating color image of size          210  x           90  for time step         1200
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    1.3036146592434332E-009
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         1200
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    3.1805272069317103E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1300
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    1.0468367909198189E-009
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         1300
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    3.2720046357786704E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1400
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    8.3476499401875352E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         1400
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    3.3779128859688463E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1500
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    7.4716399932930672E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         1500
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    3.5449582400184257E-003
  Color image created
 
  ******************************************************************
 Time step number    1600   t =   31.9800 s out of    3000
  ******************************************************************
  We have done    53.3177719     % of the total
- Max norm of vector field in solid (elastic) =    2.0617006712964070E-010
- Elapsed time in seconds =    14.753999948501587     
- Elapsed time in hh:mm:ss =      0 h 00 m 14 s
- Mean elapsed time per time step in seconds =    9.2212499678134916E-003
+ Max norm of vector field in solid (elastic) =    7.07720660E-10
+ Elapsed time in seconds =    11.604000091552734     
+ Elapsed time in hh:mm:ss =      0 h 00 m 11 s
+ Mean elapsed time per time step in seconds =    7.2525000572204587E-003
  Time steps remaining =         1400
- Estimated remaining time in seconds =    12.909749954938889     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 12 s
- Estimated total run time in seconds =    27.663749903440475     
- Estimated total run time in hh:mm:ss =      0 h 00 m 27 s
- The run will finish approximately on: Thu Jun 09, 2016 22:18
+ Estimated remaining time in seconds =    10.153500080108643     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 10 s
+ Estimated total run time in seconds =    21.757500171661377     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
 
  Creating color image of size          210  x           90  for time step         1600
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    7.0851147846418859E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         1600
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    4.0868193183456808E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1700
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    6.0750890004982085E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         1700
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    4.1577113771659241E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1800
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    9.8877326242791400E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         1800
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    5.6377020062164133E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         1900
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    7.8313395270832300E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         1900
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    7.3335339317207133E-003
  Color image created
 
  ******************************************************************
 Time step number    2000   t =   39.9800 s out of    3000
  ******************************************************************
  We have done    66.6555481     % of the total
- Max norm of vector field in solid (elastic) =    1.8453914785165892E-010
- Elapsed time in seconds =    18.408999919891357     
- Elapsed time in hh:mm:ss =      0 h 00 m 18 s
- Mean elapsed time per time step in seconds =    9.2044999599456782E-003
+ Max norm of vector field in solid (elastic) =    6.33910979E-10
+ Elapsed time in seconds =    14.462000131607056     
+ Elapsed time in hh:mm:ss =      0 h 00 m 14 s
+ Mean elapsed time per time step in seconds =    7.2310000658035280E-003
  Time steps remaining =         1000
- Estimated remaining time in seconds =    9.2044999599456787     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 09 s
- Estimated total run time in seconds =    27.613499879837036     
- Estimated total run time in hh:mm:ss =      0 h 00 m 27 s
- The run will finish approximately on: Thu Jun 09, 2016 22:18
+ Estimated remaining time in seconds =    7.2310000658035278     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 07 s
+ Estimated total run time in seconds =    21.693000197410583     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
 
  Creating color image of size          210  x           90  for time step         2000
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    6.2144493763243554E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         2000
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    8.0836141067892799E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         2100
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    4.5771701921759830E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         2100
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    5.2035434042769545E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         2200
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    4.2552729408345744E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         2200
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    5.8368729915198401E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         2300
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    4.2141786253966013E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         2300
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    6.6966028497651197E-003
  Color image created
 
  ******************************************************************
 Time step number    2400   t =   47.9800 s out of    3000
  ******************************************************************
  We have done    79.9933319     % of the total
- Max norm of vector field in solid (elastic) =    1.1884952744178889E-010
- Elapsed time in seconds =    22.065000057220459     
- Elapsed time in hh:mm:ss =      0 h 00 m 22 s
- Mean elapsed time per time step in seconds =    9.1937500238418578E-003
+ Max norm of vector field in solid (elastic) =    4.08262091E-10
+ Elapsed time in seconds =    17.305999994277954     
+ Elapsed time in hh:mm:ss =      0 h 00 m 17 s
+ Mean elapsed time per time step in seconds =    7.2108333309491473E-003
  Time steps remaining =          600
- Estimated remaining time in seconds =    5.5162500143051147     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    27.581250071525574     
- Estimated total run time in hh:mm:ss =      0 h 00 m 27 s
- The run will finish approximately on: Thu Jun 09, 2016 22:18
+ Estimated remaining time in seconds =    4.3264999985694885     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
+ Estimated total run time in seconds =    21.632499992847443     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
 
  Creating color image of size          210  x           90  for time step         2400
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    4.1077871270832885E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         2400
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    7.8321351977051427E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         2500
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    3.8023437142726563E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         2500
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    9.5185507684187581E-003
  Color image created
 
  Creating color image of size          210  x           90  for time step         2600
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    3.8011996884968991E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         2600
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    1.8646554079562467E-002
  Color image created
 
  Creating color image of size          210  x           90  for time step         2700
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    3.6454523856154717E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         2700
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    2.0800756591128335E-005
  Color image created
 
  ******************************************************************
 Time step number    2800   t =   55.9800 s out of    3000
  ******************************************************************
  We have done    93.3311081     % of the total
- Max norm of vector field in solid (elastic) =    1.0338448847013737E-010
- Elapsed time in seconds =    25.723999977111816     
- Elapsed time in hh:mm:ss =      0 h 00 m 25 s
- Mean elapsed time per time step in seconds =    9.1871428489685054E-003
+ Max norm of vector field in solid (elastic) =    3.54565377E-10
+ Elapsed time in seconds =    20.161000013351440     
+ Elapsed time in hh:mm:ss =      0 h 00 m 20 s
+ Mean elapsed time per time step in seconds =    7.2003571476255144E-003
  Time steps remaining =          200
- Estimated remaining time in seconds =    1.8374285697937012     
+ Estimated remaining time in seconds =    1.4400714295251029     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
- Estimated total run time in seconds =    27.561428546905518     
- Estimated total run time in hh:mm:ss =      0 h 00 m 27 s
- The run will finish approximately on: Thu Jun 09, 2016 22:18
+ Estimated total run time in seconds =    21.601071442876542     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Sat Feb 09, 2019 23:20
 
 
  Creating color image of size          210  x           90  for time step         2800
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    3.5121894762416888E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         2800
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    5.5825677488043110E-009
  Color image created
 
  Creating color image of size          210  x           90  for time step         2900
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    3.3796048249005886E-010
+ Color image created
+
+ Creating color image of size          210  x           90  for time step         2900
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    5.7585765011967032E-009
  Color image created
 
  ******************************************************************
 Time step number    3000   t =   59.9800 s out of    3000
  ******************************************************************
  We have done    100.000000     % of the total
- Max norm of vector field in solid (elastic) =    9.9169603084980906E-011
- Elapsed time in seconds =    27.544999837875366     
- Elapsed time in hh:mm:ss =      0 h 00 m 27 s
- Mean elapsed time per time step in seconds =    9.1816666126251223E-003
+ Max norm of vector field in solid (elastic) =    3.40395490E-10
+ Elapsed time in seconds =    21.577000141143799     
+ Elapsed time in hh:mm:ss =      0 h 00 m 21 s
+ Mean elapsed time per time step in seconds =    7.1923333803812660E-003
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    27.544999837875366     
- Estimated total run time in hh:mm:ss =      0 h 00 m 27 s
+ Estimated total run time in seconds =    21.577000141143799     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
 
 
  Creating color image of size          210  x           90  for time step         3000
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    3.2445262614549565E-010
  Color image created
+
+ Creating color image of size          210  x           90  for time step         3000
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    5.9646291342334810E-009
+ Color image created
+
+ Total duration of the time loop in seconds =    21.5839291      s
+ Total number of time steps =         3000
+ Average duration of a time step of the time loop =    7.19464291E-03  s
+ Total number of spectral elements in the mesh =         2560
+     of which         2560  are regular elements
+     and            0  are PML elements.
+ Average duration of the calculation per spectral element =    2.81040752E-06  s
+
+
+ Total duration of the timeloop in seconds, measured using 
+ date and time of the system :    21.5930004      s
 
  Writing Kernels file
 
@@ -1493,19 +1838,19 @@ Time step number    3000   t =   59.9800 s out of    3000
  Program SPECFEM2D: 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Tromp-Tape-Liu (GJI 2005)                         
+ Tromp-Tape-Liu (GJI 2005)
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 09 - 06 - 2016                                 T i m e  : 22:17:56
+ D a t e : 09 - 02 - 2019                                 T i m e  : 23:20:13
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
 see results in directory: OUTPUT_FILES/
 
 done
-Thu Jun 9 22:17:56 AST 2016
+Sat Feb 9 23:20:13 AST 2019
 
 see results in directory: OUTPUT_FILES/
 
 done
-Thu Jun  9 22:17:56 AST 2016
+Sat Feb  9 23:20:13 AST 2019

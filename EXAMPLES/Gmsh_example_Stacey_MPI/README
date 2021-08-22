@@ -1,0 +1,44 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This example creates a simple mesh with circular inclusions with Gmsh.
+
+requires:
+ * Gmsh       - for downloading, see http://gmsh.info
+ * numpy      - scientific computing with python, see http://www.numpy.org
+
+
+tested for Gmsh 3.0.6, numpy 1.14.0
+
+0. installation:
+  
+   - Gmsh:
+       download Gmsh and install package (make sure that command gmsh is in your PATH)
+       http://gmsh.info
+
+1. to generate mesh, type:
+    > cd MESH/
+    > gmsh SqrCirc.geo -2 -order 2 -format msh22 -o SqrCirc.msh
+    > python ../../../utils/Gmsh/LibGmsh2Specfem_convert_Gmsh_to_Specfem2D_official.py SqrCirc.msh -t F -l A -b A -r A
+    > cd ../
+
+   or for all of these steps, just run the script in this folder:
+    > ./process_the_Gmsh_file_once_and_for_all.sh
+
+
+2. run simulation:
+    
+   - run script:
+     > ./run_this_example.sh
+
+
+Compare your seismograms in OUTPUT_FILES/ with the reference ones in directory REF_SEIS/
+
+NOTE:
+  The mesh files provided in this example have been created originally by Paul Cristini with a now outdated Gmsh version.
+  Re-creating the mesh with the provided *.geo file will likely produce another mesh with the current Gmsh version.
+
+  Still, we provide here the original mesh files as they work nicely with a larger DT step size.
+
+

@@ -10,14 +10,16 @@
 #
 # September 2012, 6rd
 #
-import sys, string
+from __future__ import print_function
+
+import sys #, string
 from os.path import splitext
 
 try:
     from numpy import *
 except ImportError:
-    print "error: package python-numpy is not installed"
-#
+    print("error: package python-numpy is not installed")
+
 def SauvFicSpecfem(Ng, Ct, Var, Fv):
     # Sauvegarde au format ascii
     # Ng est le nom generique
@@ -29,62 +31,76 @@ def SauvFicSpecfem(Ng, Ct, Var, Fv):
     savetxt(fd, Var, fmt=Fv)
     fd.close()
     return
-#
+
+
 def OuvreGmsh(Dir,Nom,Bords):
     # Reading file .msh created with Gmsh
-    if splitext(Nom)[-1]=='.msh':
-       fic=Nom
-       Nom=splitext(Nom)[0]
-    elif splitext(Nom)[-1]=='':
-       fic=Nom+'.msh'
+    if splitext(Nom)[-1] == '.msh':
+       fic = Nom
+       Nom = splitext(Nom)[0]
+    elif splitext(Nom)[-1] == '':
+       fic = Nom+'.msh'
     else:
-        print 'File extension is not correct'
-        print 'script aborted'
+        print('File extension is not correct')
+        print('script aborted')
         sys.exit()
-    print '#'*20+' STARTING PROCESSING '+'#'*20
-    print 'File : ', fic
-    print '-'*60
+    print('#'*20+' STARTING PROCESSING '+'#'*20)
+    print('File : ', fic)
+    print('-'*60)
     #
     # Open the file and get the lines
     #
-    f = file(Dir+fic,'rU')
-    lignes= f.readlines()
+    #deprecated: f = file(Dir+fic,'rU')
+    f = open(Dir+fic,'r')
+    lignes = f.readlines()
     f.close()
     # Looking for positions
     #
     for ii in range(len(lignes)):
+        if lignes[ii]=='$MeshFormat\n': PosFormat=ii
         if lignes[ii]=='$Nodes\n': PosNodes=ii
         if lignes[ii]=='$PhysicalNames\n': PosPhys=ii
         if lignes[ii]=='$Elements\n':
             PosElem=ii
             break
+    # Mesh Format should be 2.2
+    Format = str.split(lignes[PosFormat+1])[0]
+    print('MeshFormat   : ',Format)
+    if Format != "2.2":
+        print('*** Error: MeshFormat should be 2.2, please consider storing your mesh with added option: -format msh22 ..')
+        sys.exit(1)
     # Elements type 4 nodes or 9 nodes
-    TypElem1D = int(string.split(lignes[PosElem+2])[1])
-    if TypElem1D==1:
+    TypElem1D = int(str.split(lignes[PosElem+2])[1])
+    if TypElem1D == 1:
         Ngnod, LinElem, SurfElem = 4, 1, 3
         len1D, len2D = 2, 4
-    elif TypElem1D==8:
+    elif TypElem1D == 8:
         Ngnod, LinElem, SurfElem = 9, 8, 10
         len1D, len2D = 3, 9
     else:
-        print 'The number of nodes of elemnts is not 4 nor 9'
+        print('Error: Element type TypElem1D = ',TypElem1D,', should be 1 or 8')
+        print('       The number of nodes of elemnts is not 4 nor 9')
+        print('Please create mesh using gmsh with -order 1 or 2')
+        sys.exit(1)
+    print('Elements type: ',TypElem1D)
+    print('-'*60)
     #-------------------------------------------------------------------------
     # Conditions on sides of the domain
     # Possible choices: Abso, Free
     Bord_abso, Bord_free = [], []  # Initialization
     PML = False
-    print Bords
+    print(Bords)
     #-------------------------------------------------------------------------
     # PHYSICAL NAMES
-    NbPhysNames = int(string.split(lignes[PosPhys+1])[0])
+    NbPhysNames = int(str.split(lignes[PosPhys+1])[0])
     # Detection of the presence of PML
     for Ip in range(NbPhysNames):
-        Nam = string.split(lignes[PosPhys+2+Ip])[2][1:-1]
+        Nam = str.split(lignes[PosPhys+2+Ip])[2][1:-1]
         if Nam.endswith('PML'):
             PML = True
             break
-    print 'Number of physical Names : ', NbPhysNames
-    print 'PML : ', PML
+    print('Number of physical Names : ', NbPhysNames)
+    print('PML : ', PML)
     # Structure de la variable : 1 entier et une chaine de caractere de taille 16
     dt = dtype([('dimension',int), ('zone', int), ('name', str, 16)])
     PhysCar=zeros((NbPhysNames,), dtype=dt)
@@ -97,13 +113,13 @@ def OuvreGmsh(Dir,Nom,Bords):
     PML_top, PML_bottom = 0, 0
 
     for Ip in range(NbPhysNames):
-        Dim = int(string.split(lignes[PosPhys+2+Ip])[0])
-        Zon = int(string.split(lignes[PosPhys+2+Ip])[1])
-        Nam = string.split(lignes[PosPhys+2+Ip])[2][1:-1]
+        Dim = int(str.split(lignes[PosPhys+2+Ip])[0])
+        Zon = int(str.split(lignes[PosPhys+2+Ip])[1])
+        Nam = str.split(lignes[PosPhys+2+Ip])[2][1:-1]
         PhysCar[Ip] = (Dim, Zon, Nam)
-        print PhysCar[Ip]
+        print(PhysCar[Ip])
         if Nam.startswith('M'): Med[Zon]=int(Nam[1:])   # Milieux
-        if Bords.has_key(Nam):
+        if Nam in Bords:
             if Bords[Nam] == 'Abso': Bord_abso.append(Zon)
             if Bords[Nam] == 'Free': Bord_free.append(Zon)
         if PML:
@@ -132,35 +148,35 @@ def OuvreGmsh(Dir,Nom,Bords):
             if Nam == 'LT'    : PML_left_top, Med[Zon] = Zon, 1        # Corner
             if Nam == 'B'     : PML_bottom, Med[Zon] = Zon, 1
     #--------------------------------------------------------------------------
-    print '-'*60
-    print 'Absorbing boundaries : ', Bord_abso
-    print 'Free boundaries : ', Bord_free
-    print '-'*60
-    print 'Right boundaries : ', Bord_right
-    print 'Left boundaries : ', Bord_left
-    print 'Top boundaries : ', Bord_top
-    print 'Bottom boundaries : ', Bord_bottom
-    print '-'*60
-    print 'Med : ',Med
+    print('-'*60)
+    print('Absorbing boundaries : ', Bord_abso)
+    print('Free boundaries : ', Bord_free)
+    print('-'*60)
+    print('Right boundaries : ', Bord_right)
+    print('Left boundaries : ', Bord_left)
+    print('Top boundaries : ', Bord_top)
+    print('Bottom boundaries : ', Bord_bottom)
+    print('-'*60)
+    print('Med : ',Med)
     #---------------------------------------------------------------------------
     # Infos sur le fichier Gmsh
-    Ver=float(string.split(lignes[1])[0])
-    File_Type=int(string.split(lignes[1])[1])
-    Data_Size=int(string.split(lignes[1])[2])
+    Ver=float(str.split(lignes[1])[0])
+    File_Type=int(str.split(lignes[1])[1])
+    Data_Size=int(str.split(lignes[1])[2])
     # Nodes
-    NbNodes=int(string.split(lignes[PosNodes+1])[0])
-    print 'Number of nodes: ',NbNodes
+    NbNodes=int(str.split(lignes[PosNodes+1])[0])
+    print('Number of nodes: ',NbNodes)
     Nodes=zeros((NbNodes,2),dtype=float)
     for Ninc in range(NbNodes):
         Nodes[Ninc]= [float(val) for val in \
-                      (string.split(lignes[PosNodes+2+Ninc])[1:3])]
+                      (str.split(lignes[PosNodes+2+Ninc])[1:3])]
     #
     # Save to SPECFEM format
     SauvFicSpecfem('Nodes_'+Nom, NbNodes, Nodes, '%f')
     # Elements
     DecElem=12+NbNodes
-    NbElements=int(string.split(lignes[PosElem+1])[0])
-    print 'Number of elements: ', NbElements
+    NbElements=int(str.split(lignes[PosElem+1])[0])
+    print('Number of elements: ', NbElements)
     #--------------------------------------------------------------------------
     #      Initialization
     #
@@ -191,13 +207,13 @@ def OuvreGmsh(Dir,Nom,Bords):
     #
     for Ninc in range(NbElements):
         Pos     = PosElem+Ninc+2
-        Ispec   = int(string.split(lignes[Pos])[0])
-        TypElem = int(string.split(lignes[Pos])[1])
-        ZonP    = int(string.split(lignes[Pos])[3])
+        Ispec   = int(str.split(lignes[Pos])[0])
+        TypElem = int(str.split(lignes[Pos])[1])
+        ZonP    = int(str.split(lignes[Pos])[3])
         #
         if TypElem==LinElem: # Elements 1D (lines)
             Elements1D[N1D] = [int(val) for val in \
-                               (string.split(lignes[Pos])[5:])]
+                               (str.split(lignes[Pos])[5:])]
             #  Bottom
             if ZonP==Bord_bottom:
                 Elements1DBordBottom[N1DBordBottom] = Elements1D[N1D]
@@ -232,7 +248,7 @@ def OuvreGmsh(Dir,Nom,Bords):
 
         if TypElem==SurfElem:
             Elements[N2D]= [int(val) for val in \
-                            (string.split(lignes[Pos])[5:])]
+                            (str.split(lignes[Pos])[5:])]
             Milieu[N2D]= Med[ZonP]
             if PML:
                 # PML Bottom
@@ -270,9 +286,9 @@ def OuvreGmsh(Dir,Nom,Bords):
                     N2DPML+=1
             N2D+=1
     #--------------------------------------------------------------------------
-    print '-'*60
-    print "Elements 1D, 2D : ", N1D, N2D
-    if PML: print "Elements PML : ", N2DPML
+    print('-'*60)
+    print("Elements 1D, 2D : ", N1D, N2D)
+    if PML: print("Elements PML : ", N2DPML)
     #--------------------------------------------------------------------------
     Elements      = Elements[:N2D,:]
     Milieu        = Milieu[:N2D,:]
@@ -298,13 +314,13 @@ def OuvreGmsh(Dir,Nom,Bords):
     #--------------------------------------------------------------------------
     ctf, cta = 0, 0
     #
-    print '#'*60
-    print 'Identification of elements in contact with sides'
-    print '# Corners  '
+    print('#'*60)
+    print('Identification of elements in contact with sides')
+    print('# Corners  ')
     #--------------------------------------------------------------------------
     #  Detection of elements in contact with sides
 
-    for Ct2D in xrange(N2D):
+    for Ct2D in range(N2D):
         #
         jj=set(Elements[Ct2D,:])  # take the nodes of the element
         ct_corner = 0
@@ -369,13 +385,13 @@ def OuvreGmsh(Dir,Nom,Bords):
                     ctf+=1
                 ct_corner +=1
 
-        if ct_corner > 1: print 'Corner', ct_corner, Ct2D+1
+        if ct_corner > 1: print('Corner', ct_corner, Ct2D+1)
 
     #
-    print '-'*60
-    print 'Number of elements in contact with a free surface', ctf
-    print 'Number of elements in contact with an absorbing surface', cta
-    print '#'*20+' END OF PROCESSING '+'#'*20
+    print('-'*60)
+    print('Number of elements in contact with a free surface', ctf)
+    print('Number of elements in contact with an absorbing surface', cta)
+    print('#'*20+' END OF PROCESSING '+'#'*20)
     # remove unnecessary zeros created at initialization
     #----------------------------------------------------------------------
     Elements2DBordAbso   = Elements2DBordAbso[:cta,:]
@@ -393,13 +409,26 @@ def OuvreGmsh(Dir,Nom,Bords):
     if PML: SauvFicSpecfem('EltPML_'+Nom, N2DPML, ElementsPML, '%i')
     #
     return
+
+
 if __name__=='__main__':
+    # usage
+    if len(sys.argv) <= 1:
+        print("usage: ./LibGmsh2Specfem.py <my-mesh>.msh -t F -l A -b A -r A")
+        print("  with ")
+        print("    -t <F/A>  - top surface  F==free / A==absorbing")
+        print("    -l <F/A>  - left edge    F==free / A==absorbing")
+        print("    -r <F/A>  - right edge   F==free / A==absorbing")
+        print("    -b <F/A>  - bottom edge  F==free / A==absorbing")
+        sys.exit(1)
+
     set_printoptions(precision=6, threshold=None, edgeitems=None, \
-    linewidth=200, suppress=None, nanstr=None, infstr=None)
+                     linewidth=200, suppress=None, nanstr=None, infstr=None)
     #
     # Reading input parameter if provided
     #
-    Fic = sys.argv[1];                          del sys.argv[1]
+    Fic = sys.argv[1]
+    del sys.argv[1]
     #
     # Default values
     Bords   = {'Top':'Abso', 'Bottom':'Abso', 'Left':'Abso' , 'Right':'Abso' }
@@ -412,7 +441,7 @@ if __name__=='__main__':
             elif sys.argv[1]== 'A':
                 Bords['Top']='Abso'
             else:
-                print 'Wrong condition'
+                print('Wrong condition')
             del sys.argv[1]
         elif opt == '-b':
             if sys.argv[1]== 'F':
@@ -420,7 +449,7 @@ if __name__=='__main__':
             elif sys.argv[1]== 'A':
                 Bords['Bottom']='Abso'
             else:
-                print 'Wrong condition'
+                print('Wrong condition')
             del sys.argv[1]
         elif opt == '-l':
             if sys.argv[1]== 'F':
@@ -428,7 +457,7 @@ if __name__=='__main__':
             elif sys.argv[1]== 'A':
                 Bords['Left']='Abso'
             else:
-                print 'Wrong condition'
+                print('Wrong condition')
             del sys.argv[1]
         elif opt == '-r':
             if sys.argv[1]== 'F':
@@ -436,10 +465,10 @@ if __name__=='__main__':
             elif sys.argv[1]== 'A':
                 Bords['Right']='Abso'
             else:
-                print 'Wrong condition'
+                print('Wrong condition')
             del sys.argv[1]
         else:
-            print sys.argv[0], ': invalid option', option
+            print(sys.argv[0], ': invalid option', option)
             sys.exit(1)
     #
     OuvreGmsh('',Fic, Bords)

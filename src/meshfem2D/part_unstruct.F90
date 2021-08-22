@@ -150,11 +150,13 @@
   implicit none
   integer, intent(in)  :: nparts
 
-  integer  :: num_glob, num_part
+  integer :: num_glob, num_part
   integer, dimension(0:nparts-1)  :: num_loc
+  integer :: ier
 
-
-  allocate(glob2loc_elmnts(0:nelmnts-1))
+  allocate(glob2loc_elmnts(0:nelmnts-1),stat=ier)
+  if (ier /= 0) stop 'Error allocating array glob2loc_elmnts'
+  glob2loc_elmnts(:) = -1
 
   ! initializes number of local elements per partition
   do num_part = 0, nparts-1
@@ -197,22 +199,20 @@
   allocate(glob2loc_nodes_nparts(0:nnodes))
 
   size_glob2loc_nodes = 0
-
   parts_node(:) = 0
 
-
   do num_node = 0, nnodes-1
-     glob2loc_nodes_nparts(num_node) = size_glob2loc_nodes
-     do el = 0, nnodes_elmnts(num_node)-1
-        parts_node(part(nodes_elmnts(el+MAX_NSIZE_SHARED*num_node))) = 1
-     enddo
+    glob2loc_nodes_nparts(num_node) = size_glob2loc_nodes
+    do el = 0, nnodes_elmnts(num_node)-1
+      parts_node(part(nodes_elmnts(el+MAX_NSIZE_SHARED*num_node))) = 1
+    enddo
 
-     do num_part = 0, nparts-1
-        if (parts_node(num_part) == 1) then
-           size_glob2loc_nodes = size_glob2loc_nodes + 1
-           parts_node(num_part) = 0
-        endif
-     enddo
+    do num_part = 0, nparts-1
+      if (parts_node(num_part) == 1) then
+        size_glob2loc_nodes = size_glob2loc_nodes + 1
+        parts_node(num_part) = 0
+      endif
+    enddo
 
   enddo
 
@@ -222,27 +222,24 @@
   allocate(glob2loc_nodes(0:glob2loc_nodes_nparts(nnodes)-1))
 
   glob2loc_nodes(0) = 0
-
   parts_node(:) = 0
   num_parts(:) = 0
   size_glob2loc_nodes = 0
 
-
   do num_node = 0, nnodes-1
-     do el = 0, nnodes_elmnts(num_node)-1
-        parts_node(part(nodes_elmnts(el+MAX_NSIZE_SHARED*num_node))) = 1
-     enddo
-     do num_part = 0, nparts-1
+    do el = 0, nnodes_elmnts(num_node)-1
+      parts_node(part(nodes_elmnts(el+MAX_NSIZE_SHARED*num_node))) = 1
+    enddo
 
-        if (parts_node(num_part) == 1) then
-           glob2loc_nodes_parts(size_glob2loc_nodes) = num_part
-           glob2loc_nodes(size_glob2loc_nodes) = num_parts(num_part)
-           size_glob2loc_nodes = size_glob2loc_nodes + 1
-           num_parts(num_part) = num_parts(num_part) + 1
-           parts_node(num_part) = 0
-        endif
-
-     enddo
+    do num_part = 0, nparts-1
+      if (parts_node(num_part) == 1) then
+        glob2loc_nodes_parts(size_glob2loc_nodes) = num_part
+        glob2loc_nodes(size_glob2loc_nodes) = num_parts(num_part)
+        size_glob2loc_nodes = size_glob2loc_nodes + 1
+        num_parts(num_part) = num_parts(num_part) + 1
+        parts_node(num_part) = 0
+      endif
+    enddo
   enddo
 
   end subroutine construct_glob2loc_nodes
@@ -472,30 +469,31 @@
   integer, dimension(1:nelmnts)  :: num_pml
   integer, intent(in)  :: ngnod
 
+  ! local parameters
   integer  :: i,j,k
   integer, dimension(0:ngnod-1)  :: loc_nodes
 
   if (num_phase == 1) then
-
-     nspec = 0
-
-     do i = 0, nelmnts-1
-        if (part(i) == iproc) nspec = nspec + 1
-     enddo
+    ! only counts number of elements for this given partition iproc
+    nspec = 0
+    do i = 0, nelmnts-1
+      if (part(i) == iproc) nspec = nspec + 1
+    enddo
 
   else
-     do i = 0, nelmnts-1
-        if (part(i) == iproc) then
-
-           do j = 0, ngnod-1
-              do k = glob2loc_nodes_nparts(elmnts(i*ngnod+j)), glob2loc_nodes_nparts(elmnts(i*ngnod+j)+1)-1
-                 if (glob2loc_nodes_parts(k) == iproc) loc_nodes(j) = glob2loc_nodes(k)
-              enddo
-           enddo
-           write(IIN_database) glob2loc_elmnts(i)+1, num_modele(i+1), (loc_nodes(k)+1, k=0,ngnod-1), num_pml(i+1)
-        endif
-     enddo
-
+    ! saves array to file
+    do i = 0, nelmnts-1
+      if (part(i) == iproc) then
+        ! sets element node indices
+        do j = 0, ngnod-1
+          do k = glob2loc_nodes_nparts(elmnts(i*ngnod+j)), glob2loc_nodes_nparts(elmnts(i*ngnod+j)+1)-1
+            if (glob2loc_nodes_parts(k) == iproc) loc_nodes(j) = glob2loc_nodes(k)
+          enddo
+        enddo
+        ! writes element entry to file
+        write(IIN_database) glob2loc_elmnts(i)+1, num_modele(i+1), (loc_nodes(k)+1, k=0,ngnod-1), num_pml(i+1)
+      endif
+    enddo
   endif
 
   end subroutine write_partition_database
@@ -508,7 +506,7 @@
   ! Write interfaces (element and common nodes) pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------
   subroutine write_interfaces_database(IIN_database, nparts, iproc, &
-                        my_ninterface, my_interfaces, my_nb_interfaces, num_phase)
+                                       my_ninterface, my_interfaces, my_nb_interfaces, num_phase)
 
   use part_unstruct_par, only: ninterfaces,tab_size_interfaces,tab_interfaces, &
     glob2loc_elmnts,glob2loc_nodes_nparts,glob2loc_nodes_parts,glob2loc_nodes
@@ -713,7 +711,7 @@
 
   subroutine merge_abs_boundaries(nbmodels, phi_material, num_material, ngnod)
 
-  use constants, only: IEDGE1,IEDGE2,IEDGE3,IEDGE4,NGLLX,NGLLZ
+  use constants, only: IEDGE1,IEDGE2,IEDGE3,IEDGE4,NGLLX,NGLLZ,IMAIN,myrank
 
   use part_unstruct_par, only: nelmnts,elmnts,nelemabs,nelemabs_merge,abs_surface, &
     abs_surface_char,abs_surface_merge,abs_surface_merge,abs_surface_type, &
@@ -936,6 +934,14 @@
     endif
 
   enddo
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  nedge_bound   : ',nedge_bound
+    write(IMAIN,*) '  nelemabs_merge: ',nelemabs_merge
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   end subroutine merge_abs_boundaries
 

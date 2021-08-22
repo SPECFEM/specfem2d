@@ -3,10 +3,14 @@
  **** Specfem 2-D Solver - MPI version     ****
  **********************************************
 
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
+
  There are            4  MPI processes
  Processes are numbered from 0 to            3
 
  There is a total of            4  slices
+
 
  NDIM =            2
 
@@ -26,7 +30,7 @@
  SALT2D
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 11 - 05 - 2017                                 T i m e  : 15:24:42
+ D a t e : 09 - 02 - 2019                                 T i m e  : 16:24:24
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
@@ -53,7 +57,7 @@
  C o n t r o l
  =============
 
-     Seismograms recording type . . . . . . .(seismotype) =      1
+     Seismograms recording type . . . . . . .(seismotype) = 1
      Angle for first line of receivers. . . . .(anglerec) =   0.00
 
 
@@ -65,7 +69,8 @@
      Add Bielak conditions .(add_Bielak_conditions_right) =      F
      Add Bielak conditions . .(add_Bielak_conditions_top) =      F
      Add Bielak conditions. .(add_Bielak_conditions_left) =      F
-     Attenuation on/off . . . .(ATTENUATION_VISCOELASTIC) =      F
+     Attenuation in solid . . .(ATTENUATION_VISCOELASTIC) =      F
+     Attenuation in fluid . . (ATTENUATION_VISCOACOUSTIC) =      F
      Save grid in ASCII file or not . (output_grid_ASCII) =      F
      Save a file with total energy or not.(OUTPUT_ENERGY) =      F
 
@@ -126,7 +131,7 @@
      P-wave velocity. . . . . . . . . . . (cp) = 2.50000000E+03
      S-wave velocity. . . . . . . . . . . (cs) = 2.00000000E+03
      Mass density. . . . . . . . . . (density) = 4.00000000E+03
-     Poisson's ratio. . . . . . . . .(poisson) =-5.81395349E-02
+     Poisson's ratio. . . . . . . . .(poisson) =-3.88888889E-01
      First Lame parameter Lambda. . . (lambda) =-7.00000000E+09
      Second Lame parameter Mu. . . . . . .(mu) = 1.60000000E+10
      Bulk modulus Kappa . . . . . . . .(kappa) = 9.00000000E+09
@@ -182,7 +187,6 @@
    total number of acoustic elements        =            0
    total number of elastic elements         =        95956
    total number of poroelastic elements     =            0
-   total number of gravitoacoustic elements =            0
 
  Setting up MPI communication arrays
 
@@ -222,7 +226,7 @@
  Force source:
              original x:    29520.0000
              original z:    10000.0000
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in rank            3
   in element        20603
   in elastic domain
@@ -247,121 +251,121 @@
  Station #            1     AA      S0001
              original x:    8000.00000
              original z:    3000.00000
-   distance from source:    22629.8555
- closest estimate found:    1.28621972E-12  m away
+ Closest estimate found:    0.00000000      m away
   in element         6136
   in rank            0
-  at xi,gamma coordinates =    1.0000000000000104        1.9563750449481093E-028
+  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000
+ Distance from source:    22629.8555      m
 
 
  Station #            2     AA      S0002
              original x:    9000.00000
              original z:    3000.00000
-   distance from source:    21681.1074
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         6149
   in rank            0
   at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
+ Distance from source:    21681.1074      m
 
 
  Station #            3     AA      S0003
              original x:    10000.0000
              original z:    3000.00000
-   distance from source:    20737.1738
- closest estimate found:    3.66629036E-12  m away
+ Closest estimate found:    0.00000000      m away
   in element         6161
   in rank            0
-  at xi,gamma coordinates =    1.0000000000000104       -1.1368683772161556E-014
+  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000
+ Distance from source:    20737.1738      m
 
 
  Station #            4     AA      S0004
              original x:    11000.0000
              original z:    3000.00000
-   distance from source:    19798.7480
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         6174
   in rank            0
   at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
+ Distance from source:    19798.7480      m
 
 
  Station #            5     AA      S0005
              original x:    12000.0000
              original z:    3000.00000
-   distance from source:    18866.6484
- closest estimate found:    9.09494702E-13  m away
-  in element         6187
+ Closest estimate found:    0.00000000      m away
+  in element         6186
   in rank            0
-  at xi,gamma coordinates =   -1.0000000000000104        0.0000000000000000
+  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000
+ Distance from source:    18866.6484      m
 
 
  Station #            6     AA      S0006
              original x:    13000.0000
              original z:    3000.00000
-   distance from source:    17941.8613
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         5299
   in rank            1
   at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
+ Distance from source:    17941.8613      m
 
 
  Station #            7     AA      S0007
              original x:    14000.0000
              original z:    3000.00000
-   distance from source:    17025.5801
- closest estimate found:    1.87497132E-12  m away
+ Closest estimate found:    0.00000000      m away
   in element         5311
   in rank            1
-  at xi,gamma coordinates =    1.0000000000000104       -1.1368683772161593E-014
+  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000
+ Distance from source:    17025.5801      m
 
 
  Station #            8     AA      S0008
              original x:    15000.0000
              original z:    3000.00000
-   distance from source:    16119.2559
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         5324
   in rank            1
   at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
+ Distance from source:    16119.2559      m
 
 
  Station #            9     AA      S0009
              original x:    16000.0000
              original z:    3000.00000
-   distance from source:    15224.6641
- closest estimate found:    1.87497132E-12  m away
+ Closest estimate found:    0.00000000      m away
   in element         5336
   in rank            1
-  at xi,gamma coordinates =    1.0000000000000104       -9.4056171673626152E-015
+  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000
+ Distance from source:    15224.6641      m
 
 
  Station #           10     AA      S0010
              original x:    17000.0000
              original z:    3000.00000
-   distance from source:    14344.0020
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         5349
   in rank            1
   at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
+ Distance from source:    14344.0020      m
 
 
  Station #           11     AA      S0011
              original x:    18000.0000
              original z:    3000.00000
-   distance from source:    13480.0000
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         5361
   in rank            1
-  at xi,gamma coordinates =    1.0000000000000560       -2.9976714398398449E-029
+  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000
+ Distance from source:    13480.0000      m
 
 
  Station #           12     AA      S0012
              original x:    19000.0000
              original z:    3000.00000
-   distance from source:    12636.0752
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         5374
   in rank            1
   at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
+ Distance from source:    12636.0752      m
 
 
  end of receiver detection
@@ -487,20 +491,32 @@ Time step number       5   t =    0.0020 s out of       5
  ******************************************************************
  We have done    100.000000     % of the total
  Max norm of vector field in solid (elastic) =    1.11535576E-06
- Elapsed time in seconds =   0.14299988746643066
+ Elapsed time in seconds =    9.5000028610229492E-002
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    2.8599977493286133E-002
+ Mean elapsed time per time step in seconds =    1.9000005722045899E-002
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =   0.14299988746643066
+ Estimated total run time in seconds =    9.5000028610229492E-002
  Estimated total run time in hh:mm:ss =      0 h 00 m 00 s
 
 
  Creating color image of size         1250  x          304  for time step            5
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
  Color image maximum amplitude =    1.2149314443377079E-008
  Color image created
+
+ Total duration of the time loop in seconds =   0.142665982      s
+ Total number of time steps =            5
+ Average duration of a time step of the time loop =    2.85331961E-02  s
+ Total number of spectral elements in the mesh =        23540
+     of which        23540  are regular elements
+     and            0  are PML elements.
+ Average duration of the calculation per spectral element =    1.21211542E-06  s
+
+
+ Total duration of the timeloop in seconds, measured using
+ date and time of the system :   0.143000126      s
 
 
  -------------------------------------------------------------------------------
@@ -511,6 +527,6 @@ Time step number       5   t =    0.0020 s out of       5
  SALT2D
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 11 - 05 - 2017                                 T i m e  : 15:24:45
+ D a t e : 09 - 02 - 2019                                 T i m e  : 16:24:28
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # written by Paul Cristini for CNRS, LMA, Marseille, France in January 2012
-
+from __future__ import print_function
 from pylab import *
 from numpy import *
 import numpy.fft as f
@@ -55,7 +55,7 @@ def compute_solution():
     k0 = 2*pi*f0/c0
     a0 = 0.000002
 
-    print 'Q =',1/(c0*a0)
+    print('Q =',1/(c0*a0))
 
     # Position of the receiver
     PosX = receiver_X

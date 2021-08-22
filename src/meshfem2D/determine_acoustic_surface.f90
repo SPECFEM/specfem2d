@@ -33,7 +33,7 @@
 
   subroutine determine_acoustic_surface()
 
-  use constants, only: ANISOTROPIC_MATERIAL,TINYVAL
+  use constants, only: ANISOTROPIC_MATERIAL,TINYVAL,IMAIN,myrank
 
   use part_unstruct_par, only: nelem_acoustic_surface,acoustic_surface, &
     nxread,nzread,elmnts
@@ -46,6 +46,12 @@
   ! local parameters
   integer :: i,j,ier
   integer :: imaterial_number
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  determining acoustic free surface...'
+    call flush_IMAIN()
+  endif
 
   ! count the number of acoustic free-surface elements
   nelem_acoustic_surface = 0
@@ -92,8 +98,14 @@
   ! allocates surface elements
   allocate(acoustic_surface(4,nelem_acoustic_surface),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating acoustic_surface array')
-
+  acoustic_surface(:,:) = 0
   nelem_acoustic_surface = 0
+
+  ! 'acoustic_surface' contains
+  ! 1/ element number,
+  ! 2/ number of nodes that form the free surface,
+  ! 3/ first node on the free surface,
+  ! 4/ second node on the free surface, if relevant (if 2/ is equal to 2)
 
   if (.not. absorbtop) then
     j = nzread
@@ -147,6 +159,13 @@
           acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))
        endif
     enddo
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of acoustic elements with free surface = ',nelem_acoustic_surface
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   end subroutine determine_acoustic_surface

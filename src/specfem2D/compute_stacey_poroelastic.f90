@@ -42,7 +42,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
   use specfem_par, only: it,STACEY_ABSORBING_CONDITIONS, &
-                         anyabs,nelemabs,numabs, &
+                         anyabs,num_abs_boundary_faces,abs_boundary_ispec, &
                          ATTENUATION_PORO_FLUID_PART, &
                          ibool,kmato,ispec_is_poroelastic, &
                          codeabs,codeabs_corner, &
@@ -57,7 +57,8 @@
                          b_absorb_poro_w_left,b_absorb_poro_w_right, &
                          b_absorb_poro_w_bottom,b_absorb_poro_w_top, &
                          ib_left,ib_right,ib_bottom,ib_top, &
-                         freq0_poroelastic,Q0_poroelastic
+                         freq0_poroelastic,Q0_poroelastic, &
+                         NO_BACKWARD_RECONSTRUCTION
 
   implicit none
 
@@ -84,9 +85,9 @@
   if (.not. anyabs) return
 
   ! absorbing boundaries
-  do ispecabs= 1,nelemabs
+  do ispecabs = 1,num_abs_boundary_faces
 
-    ispec = numabs(ispecabs)
+    ispec = abs_boundary_ispec(ispecabs)
 
     if (ispec_is_poroelastic(ispec)) then
 
@@ -99,15 +100,15 @@
       permlxx = permeability(1,kmato(ispec))
 
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                   tort,rho_s,rho_f,eta_f,permlxx,f0,freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                      tort,rho_s,rho_f,eta_f,permlxx, &
+                                      f0,freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIl = sqrt(cpIsquare)
       cpIIl = sqrt(cpIIsquare)
       csl = sqrt(cssquare)
 
-!--- left absorbing boundary
+      !--- left absorbing boundary
       if (codeabs(IEDGE4,ispecabs)) then
-
         i = 1
 
         jbegin = ibegin_edge4_poro(ispecabs)
@@ -143,7 +144,7 @@
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - tx*weight
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
 
-            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. (.not. NO_BACKWARD_RECONSTRUCTION)) then
               b_absorb_poro_w_left(1,j,ib_left(ispecabs),it) = tx*weight
               b_absorb_poro_w_left(2,j,ib_left(ispecabs),it) = tz*weight
             endif
@@ -154,9 +155,8 @@
 
       endif  !  end of left absorbing boundary
 
-!--- right absorbing boundary
+      !--- right absorbing boundary
       if (codeabs(IEDGE2,ispecabs)) then
-
         i = NGLLX
 
         jbegin = ibegin_edge2_poro(ispecabs)
@@ -192,7 +192,7 @@
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - tx*weight
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
 
-            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. (.not. NO_BACKWARD_RECONSTRUCTION)) then
               b_absorb_poro_w_right(1,j,ib_right(ispecabs),it) = tx*weight
               b_absorb_poro_w_right(2,j,ib_right(ispecabs),it) = tz*weight
             endif
@@ -203,9 +203,8 @@
 
       endif  !  end of right absorbing boundary
 
-!--- bottom absorbing boundary
+      !--- bottom absorbing boundary
       if (codeabs(IEDGE1,ispecabs)) then
-
         j = 1
 
         ibegin = ibegin_edge1_poro(ispecabs)
@@ -245,7 +244,7 @@
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - tx*weight
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
 
-            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. (.not. NO_BACKWARD_RECONSTRUCTION)) then
               b_absorb_poro_w_bottom(1,i,ib_bottom(ispecabs),it) = tx*weight
               b_absorb_poro_w_bottom(2,i,ib_bottom(ispecabs),it) = tz*weight
             endif
@@ -256,9 +255,8 @@
 
       endif  !  end of bottom absorbing boundary
 
-!--- top absorbing boundary
+      !--- top absorbing boundary
       if (codeabs(IEDGE3,ispecabs)) then
-
         j = NGLLZ
 
         ibegin = ibegin_edge3_poro(ispecabs)
@@ -298,7 +296,7 @@
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - tx*weight
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
 
-            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. (.not. NO_BACKWARD_RECONSTRUCTION)) then
               b_absorb_poro_w_top(1,i,ib_top(ispecabs),it) = tx*weight
               b_absorb_poro_w_top(2,i,ib_top(ispecabs),it) = tz*weight
             endif
@@ -323,8 +321,8 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
-  use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
-                         anyabs,nelemabs,numabs, &
+  use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS,NO_BACKWARD_RECONSTRUCTION, &
+                         anyabs,num_abs_boundary_faces,abs_boundary_ispec, &
                          ibool,ispec_is_poroelastic, &
                          codeabs,codeabs_corner, &
                          b_accelw_poroelastic, &
@@ -344,12 +342,14 @@
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
   if (.not. anyabs) return
+  if (NO_BACKWARD_RECONSTRUCTION) return
+
   if (SIMULATION_TYPE /= 3) return
 
   ! absorbing boundaries
-  do ispecabs= 1,nelemabs
+  do ispecabs= 1,num_abs_boundary_faces
 
-    ispec = numabs(ispecabs)
+    ispec = abs_boundary_ispec(ispecabs)
 
     if (ispec_is_poroelastic(ispec)) then
 
@@ -454,7 +454,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
   use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
-                         anyabs,nelemabs,numabs, &
+                         anyabs,num_abs_boundary_faces,abs_boundary_ispec, &
                          ATTENUATION_PORO_FLUID_PART, &
                          ibool,kmato,ispec_is_poroelastic, &
                          codeabs,codeabs_corner, &
@@ -496,9 +496,9 @@
   if (.not. anyabs) return
 
   ! absorbing boundaries
-  do ispecabs = 1,nelemabs
+  do ispecabs = 1,num_abs_boundary_faces
 
-    ispec = numabs(ispecabs)
+    ispec = abs_boundary_ispec(ispecabs)
 
     if (ispec_is_poroelastic(ispec)) then
 
@@ -511,7 +511,8 @@
       permlxx = permeability(1,kmato(ispec))
 
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                    tort,rho_s,rho_f,eta_f,permlxx,f0,freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                      tort,rho_s,rho_f,eta_f,permlxx, &
+                                      f0,freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIl = sqrt(cpIsquare)
       cpIIl = sqrt(cpIIsquare)
@@ -760,8 +761,8 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
-  use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
-                         anyabs,nelemabs,numabs, &
+  use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS,NO_BACKWARD_RECONSTRUCTION, &
+                         anyabs,num_abs_boundary_faces,abs_boundary_ispec, &
                          ibool,ispec_is_poroelastic, &
                          codeabs,codeabs_corner, &
                          b_accels_poroelastic, &
@@ -781,12 +782,14 @@
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
   if (.not. anyabs) return
+  if (NO_BACKWARD_RECONSTRUCTION) return
+
   if (SIMULATION_TYPE /= 3) return
 
   ! absorbing boundaries
-  do ispecabs = 1,nelemabs
+  do ispecabs = 1,num_abs_boundary_faces
 
-    ispec = numabs(ispecabs)
+    ispec = abs_boundary_ispec(ispecabs)
 
     if (ispec_is_poroelastic(ispec)) then
 

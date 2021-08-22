@@ -35,9 +35,9 @@
 
   subroutine compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,myrank
 
-  use specfem_par, only: myrank,P_SV,ispec_is_elastic,nglob_elastic, &
+  use specfem_par, only: P_SV,ispec_is_elastic,nglob_elastic, &
                          NSOURCES,source_time_function, &
                          islice_selected_source,ispec_selected_source,sourcearrays, &
                          ibool
@@ -73,8 +73,8 @@
           do j = 1,NGLLZ
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(i_source,1,i,j) * stf_used
-              accel_elastic(2,iglob) = accel_elastic(2,iglob) + sourcearrays(i_source,2,i,j) * stf_used
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(1,i,j,i_source) * stf_used
+              accel_elastic(2,iglob) = accel_elastic(2,iglob) + sourcearrays(2,i,j,i_source) * stf_used
             enddo
           enddo
         else
@@ -83,7 +83,7 @@
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
 
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(i_source,1,i,j) * stf_used
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(1,i,j,i_source) * stf_used
 
             enddo
           enddo
@@ -99,18 +99,22 @@
 !=====================================================================
 !
 
-  subroutine compute_add_sources_viscoelastic_moving_source(accel_elastic,it,i_stage)
+  subroutine compute_add_sources_viscoelastic_moving_sources(accel_elastic,it,i_stage)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,SOURCE_IS_MOVING,TINYVAL,NGLJ,IMAIN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,TINYVAL,NGLJ,IMAIN
 
   use specfem_par, only: P_SV,ispec_is_elastic,nglob_elastic, &
                          NSOURCES,source_time_function, &
                          islice_selected_source,ispec_selected_source,sourcearrays, &
-                         ibool,coord,nspec,nglob,xigll,zigll,z_source,NPROC, & !These 3 lines are for moving src
-                         xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source,deltat,t0,myrank, &
+                         ibool,coord,nspec,nglob,xigll,zigll,NPROC, &
+                         xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source, &
+                         vx_source,vz_source,DT,t0,myrank, &
                          time_stepping_scheme,hxis_store,hgammas_store,tshift_src,source_type,ispec_is_acoustic, &
                          hxis,hpxis,hgammas,hpgammas,anglesource,ispec_is_poroelastic,Mxx,Mxz,Mzz,gammax,gammaz,xix,xiz, &
-                         AXISYM,xiglj,is_on_the_axis,initialfield
+                         AXISYM,xiglj,is_on_the_axis,initialfield,SOURCE_IS_MOVING
+
+  use moving_sources_par, only: locate_source_moving
+
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic) :: accel_elastic
@@ -120,37 +124,61 @@
   integer :: i_source,i,j,iglob,ispec
   real(kind=CUSTOM_REAL) :: stf_used
   double precision :: hlagrange
-  double precision :: xminSource,vSource,timeval,t_used
+  double precision :: xsrc,zsrc,timeval,t_used
   ! single source array
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
 
   ! checks if anything to do
   if (.not. SOURCE_IS_MOVING) return
 
-  !xminSource = -5000.0d0 !m
-  !vSource = 2150.0d0 !1425.0d0 !1250.0 !m/s
-  xminSource = -60.0d0 !m
-  vSource = 60.0d0 !m/s
-
   if (time_stepping_scheme == 1) then
     ! Newmark
-    timeval = (it-1)*deltat
+    timeval = (it-1)*DT
   else
-    call exit_MPI(myrank,'Not implemented!')
+    call exit_MPI(myrank,'Only Newmark time scheme is implemented for moving sources (3)')
   endif
 
-  ! moves and re-locates sources along x-axis
+  if ((myrank == 0) .and. (it == 1)) then
+    write(IMAIN,*)
+    write(IMAIN,*) '****************************************************************************************'
+    write(IMAIN,*) 'Your are using elastic moving source capabilities. Please cite:'
+    write(IMAIN,*) 'Bottero (2018) Full-wave numerical simulation of T-waves and of moving acoustic sources'
+    write(IMAIN,*) 'PhD thesis'
+    write(IMAIN,*) 'https://tel.archives-ouvertes.fr/tel-01893011'
+    write(IMAIN,*) '****************************************************************************************'
+    write(IMAIN,*)
+    write(IMAIN,*) 'Note: subroutine compute_add_sources_viscoelastic_moving_sources can be greatly'
+    write(IMAIN,*) 'optimized. See what is done in init_moving_sources (in moving_sources_par.f90).'
+    write(IMAIN,*) 'This is easy to do and would probably greatly improve the computational time'
+    write(IMAIN,*)
+    ! timing warning
+    do i_source = 1,NSOURCES
+      if ((abs(tshift_src(i_source)) > 0.0d0) .or. (abs(t0) > 0.0d0)) then
+        write(IMAIN,*) 'Source #',i_source
+        write(IMAIN,*) ' !! BEWARE !! Parameters tshift and/or t0 are used with moving source !'
+        write(IMAIN,*) ' The time step for the moving source is: '
+        write(IMAIN,*) '    t_used = (it_l-1)*DT-t0-tshift_src(i_source)'
+        write(IMAIN,*) ' And the source position is calculated like:'
+        write(IMAIN,*) '  xsrc = x_source + vx_source*t_used'
+        write(IMAIN,*)
+      endif
+    enddo
+  endif
 
   do i_source = 1,NSOURCES
     if (abs(source_time_function(i_source,it,i_stage)) > TINYVAL) then
       t_used = (timeval-t0-tshift_src(i_source))
-
-      x_source(i_source) = xminSource + vSource*t_used !timeval?
-
+      ! moves and re-locates sources along x and z-axis
+      xsrc = x_source(i_source) + vx_source(i_source)*t_used
+      zsrc = z_source(i_source) + vz_source(i_source)*t_used
       ! collocated force source
       if (source_type(i_source) == 1) then
+        ! TODO: this would be more efficient compled with first guess as in init_moving_sources_GPU()
+        !call locate_source_moving(xsrc,zsrc, &
+        !                   ispec_selected_source(i_source),islice_selected_source(i_source), &
+        !                   NPROC,myrank,xi_source(i_source),gamma_source(i_source),.true.)
         call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
-                           x_source(i_source),z_source(i_source), &
+                           xsrc,zsrc, &
                            ispec_selected_source(i_source),islice_selected_source(i_source), &
                            NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
                            iglob_source(i_source),.true.)
@@ -158,7 +186,7 @@
       else if (source_type(i_source) == 2) then
         ! moment-tensor source
         call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
-                           x_source(i_source),z_source(i_source), &
+                           xsrc,zsrc, &
                            ispec_selected_source(i_source),islice_selected_source(i_source), &
                            NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
                            iglob_source(i_source),.false.)
@@ -259,7 +287,7 @@
         end select
 
         ! stores sourcearray for all sources
-        sourcearrays(i_source,:,:,:) = sourcearray(:,:,:)
+        sourcearrays(:,:,:,i_source) = sourcearray(:,:,:)
 
       endif
     endif
@@ -288,10 +316,8 @@
           do j = 1,NGLLZ
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
-                                       sourcearrays(i_source,1,i,j) * stf_used
-              accel_elastic(2,iglob) = accel_elastic(2,iglob) + &
-                                       sourcearrays(i_source,2,i,j) * stf_used
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(1,i,j,i_source) * stf_used
+              accel_elastic(2,iglob) = accel_elastic(2,iglob) + sourcearrays(2,i,j,i_source) * stf_used
             enddo
           enddo
         else
@@ -300,13 +326,12 @@
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
 
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
-                                       sourcearrays(i_source,1,i,j) * stf_used
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(1,i,j,i_source) * stf_used
 
               ! daniel debug source contribution
               !if (iglob == 37905) &
-              !write(1234,*) it, dble(sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)), &
-              !              accel_elastic(1,iglob),source_time_function(i_source,it,i_stage),sourcearrays(i_source,1,i,j)
+              !write(1234,*) it, dble(sourcearrays(1,i,j,i_source) * source_time_function(i_source,it,i_stage)), &
+              !              accel_elastic(1,iglob),source_time_function(i_source,it,i_stage),sourcearrays(1,i,j,i_source)
 
 
             enddo
@@ -317,7 +342,7 @@
     endif ! if this processor core carries the source
   enddo ! do i_source= 1,NSOURCES
 
-  end subroutine compute_add_sources_viscoelastic_moving_source
+  end subroutine compute_add_sources_viscoelastic_moving_sources
 
 !
 !=====================================================================

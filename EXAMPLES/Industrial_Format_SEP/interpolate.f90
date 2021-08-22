@@ -58,6 +58,8 @@
       if (ier == 0) then
         ! left trim
         line = adjustl(line)
+        ! skip comment lines
+        if (line(1:1) == '#') cycle
         ! suppress trailing comment
         if (index(line,'#') > 0) line = line(1:index(line,'#')-1)
         ! checks parameter name
@@ -122,31 +124,31 @@
   print *
 
   open(unit=15,file='./DATA/interface_industry.dat',status='unknown')
-  write(15,*)'#'
-  write(15,*)'# number of interfaces'
-  write(15,*)'#'
-  write(15,*)' 2'
-  write(15,*)'#'
-  write(15,*)'# for each interface below, we give the number of points and then x,z for each point'
-  write(15,*)'#'
-  write(15,*)'#'
-  write(15,*)'# interface number 1 (bottom of the mesh)'
-  write(15,*)'#'
-  write(15,*)' 2'
+  write(15,'(a)')'#'
+  write(15,'(a)')'# number of interfaces'
+  write(15,'(a)')'#'
+  write(15,'(a)')' 2'
+  write(15,'(a)')'#'
+  write(15,'(a)')'# for each interface below, we give the number of points and then x,z for each point'
+  write(15,'(a)')'#'
+  write(15,'(a)')'#'
+  write(15,'(a)')'# interface number 1 (bottom of the mesh)'
+  write(15,'(a)')'#'
+  write(15,'(a)')' 2'
   write(15,*) OX,OZ
   write(15,*) OX+(NX-1)*DX,OZ
-  write(15,*)'#'
-  write(15,*)'# interface number 2 (topography, top of the mesh)'
-  write(15,*)'#'
-  write(15,*)' 2'
+  write(15,'(a)')'#'
+  write(15,'(a)')'# interface number 2 (topography, top of the mesh)'
+  write(15,'(a)')'#'
+  write(15,'(a)')' 2'
   write(15,*) OX,OZ+(NZ-1)*DZ
   write(15,*) OX+(NX-1)*DX,OZ+(NZ-1)*DZ
-  write(15,*)'#'
-  write(15,*)'# for each layer, we give the number of spectral elements in the vertical direction'
-  write(15,*)'#'
-  write(15,*)'#'
-  write(15,*)'# layer number 1 (bottom layer)'
-  write(15,*)'#'
+  write(15,'(a)')'#'
+  write(15,'(a)')'# for each layer, we give the number of spectral elements in the vertical direction'
+  write(15,'(a)')'#'
+  write(15,'(a)')'#'
+  write(15,'(a)')'# layer number 1 (bottom layer)'
+  write(15,'(a)')'#'
   write(15,*) (NZ-1)/INTERPOLATION_POINTS
   close(15)
 
@@ -181,12 +183,14 @@
   call system(trim(system_command))
 
   ! nbregions
-  call system('sed -i "$ d" ./DATA/Par_file')
+  !call system('sed -i "$ d" ./DATA/Par_file')
   write(tmpstring,*) '1',(NX-1)/INTERPOLATION_POINTS,'1',(NZ-1)/INTERPOLATION_POINTS,'1'
   tmpstring = adjustl(tmpstring)
   !write (*,*) trim(tmpstring)
-  write(system_command,*) 'sed -i "/nbregions   /a',trim(tmpstring),'" ./DATA/Par_file'
-     !write(system_command,*) 'echo ${tmpstring}'
+  !write(system_command,*) 'echo ${tmpstring}'
+  !write(system_command,*) 'sed -i "/nbregions   /a',trim(tmpstring),'" ./DATA/Par_file'
+  ! original Par_file line for regions to replace is: 1 20 1 20 1
+  write(system_command,*) 'sed -i "s/^1 20 .*/',trim(tmpstring),'/" ./DATA/Par_file'
   write (*,*) trim(system_command)
   call system(trim(system_command))
 
@@ -223,12 +227,12 @@
 
   ! runs mesher
   print *,'call xmeshfem2d'
-  call system('./xmeshfem2D > OUTPUT_FILES/output_mesher.step_1.txt')
+  call system('./bin/xmeshfem2D > OUTPUT_FILES/output_mesher.step_1.txt')
 
   ! runs first forward simulation to generate new specfem files
   print *,'call xspecfem2d'
   write(num,'(i2.2)') nproc
-  call system('mpirun -np ' //num//' ./xspecfem2D > OUTPUT_FILES/output_solver.step_1.txt')
+  call system('mpirun -np ' //num//' ./bin/xspecfem2D > OUTPUT_FILES/output_solver.step_1.txt')
 
   print *
   print *, '************ Setting up new simulation ************ '
@@ -243,7 +247,7 @@
 
   ! runs mesher
   print *,'call xmeshfem2d'
-  call system('./xmeshfem2D')
+  call system('./bin/xmeshfem2D')
 
   ! scaling model values
   if (SCALE_FROM_VP) then
@@ -282,7 +286,7 @@
 
   ! runs forward simulation
   print *,'call xspecfem2d'
-  call system('mpirun -np ' //num//' ./xspecfem2D ')
+  call system('mpirun -np ' //num//' ./bin/xspecfem2D ')
 
   end program main_interpolate
 

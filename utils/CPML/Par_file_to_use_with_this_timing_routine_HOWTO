@@ -75,9 +75,9 @@ ATTENUATION_VISCOACOUSTIC       = .false.        # turn attenuation (viscoacoust
 
 # for viscoelastic or viscoacoustic attenuation
 N_SLS                           = 3              # number of standard linear solids for attenuation (3 is usually the minimum)
-f0_attenuation                  = 5.196          # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
-READ_VELOCITIES_AT_f0           = .false.        # shift velocities to account for physical dispersion (see user manual for more information)
-USE_SOLVOPT                     = .false.        # use more precise but much more expensive way of determining the Q factor relaxation times, as in http://komatitsch.free.fr/preprints/GJI_Lombard_2016.pdf
+ATTENUATION_f0_REFERENCE        = 5.196          # in case of attenuation, reference frequency in Hz at which the velocity values in the velocity model are given (unused otherwise); relevant only if source is a Dirac or a Heaviside, otherwise it is automatically set to f0 the dominant frequency of the source in the DATA/SOURCE file
+READ_VELOCITIES_AT_f0           = .false.        # read seismic velocities at ATTENUATION_f0_REFERENCE instead of at infinite frequency (see user manual for more information)
+USE_SOLVOPT                     = .false.        # use more precise but much more expensive way of determining the Q factor relaxation times, as in https://doi.org/10.1093/gji/ggw024
 
 # for poroelastic attenuation
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
@@ -91,6 +91,9 @@ freq0_poroelastic               = 10             # frequency for viscous attenua
 UNDO_ATTENUATION_AND_OR_PML     = .false.
 NT_DUMP_ATTENUATION             = 500
 
+# Instead of reconstructing the forward wavefield, this option reads it from the disk using asynchronous I/O.
+# Outperforms conventional mode using a value of NSTEP_BETWEEN_COMPUTE_KERNELS high enough.
+NO_BACKWARD_RECONSTRUCTION      = .false.
 
 #-----------------------------------------------------------------------------
 #
@@ -112,6 +115,18 @@ add_Bielak_conditions_left      = .false.
 # acoustic forcing
 ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
 
+# noise simulations - type of noise source time function:
+# 0=external (S_squared), 1=Ricker(second derivative), 2=Ricker(first derivative), 3=Gaussian, 4=Figure 2a of Tromp et al. 2010
+# (default value 4 is chosen to reproduce the time function from Fig 2a of "Tromp et al., 2010, Noise Cross-Correlation Sensitivity Kernels")
+noise_source_time_function_type = 4
+
+# moving sources
+# Set write_moving_sources_database to .true. if the generation of moving source databases takes
+# a long time. Then the simulation is done in two steps: first you run the code and it writes the databases to file
+# (in DATA folder by default). Then you rerun the code and it will read the databases in there directly possibly
+# saving a lot of time.
+# This is only useful for GPU version (for now)
+write_moving_sources_database   = .false.
 
 #-----------------------------------------------------------------------------
 #
@@ -120,13 +135,19 @@ ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoust
 #-----------------------------------------------------------------------------
 
 # receiver set parameters for recording stations (i.e. recording points)
-seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
+# seismotype : record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
+seismotype                      = 1              # several values can be chosen. For example : 1,2,4
 
 # subsampling of the seismograms to create smaller files (but less accurately sampled in time)
 subsamp_seismos                 = 1
 
 # so far, this option can only be used if all the receivers are in acoustic elements
 USE_TRICK_FOR_BETTER_PRESSURE   = .false.
+
+# every how many time steps we save the seismograms
+# (costly, do not use a very small value; if you use a very large value that is larger than the total number
+#  of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
+NSTEP_BETWEEN_OUTPUT_SEISMOS    = 1000
 
 # use this t0 as earliest starting time rather than the automatically calculated one
 USER_T0                         = 0.0d0
@@ -165,6 +186,8 @@ record_at_surface_same_vertical = .true.         # receivers inside the medium o
 # save sensitivity kernels in ASCII format (much bigger files, but compatible with current GMT scripts) or in binary format
 save_ASCII_kernels              = .true.
 
+# since the accuracy of kernel integration may not need to respect the CFL, this option permits to save computing time, and memory with UNDO_ATTENUATION_AND_OR_PML mode
+NSTEP_BETWEEN_COMPUTE_KERNELS   = 1
 
 #-----------------------------------------------------------------------------
 #
@@ -178,7 +201,12 @@ PML_BOUNDARY_CONDITIONS         = .true.
 NELEM_PML_THICKNESS             = 3
 ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
-# set to .false. unless you know what you are doing; this implements automatic adjustment of the PML parameters for elongated models.
+# change the four parameters below only if you know what you are doing; they change the damping profiles inside the PMLs
+K_MIN_PML                       = 1.0d0          # from Gedney page 8.11
+K_MAX_PML                       = 1.0d0
+damping_change_factor_acoustic  = 0.5d0
+damping_change_factor_elastic   = 1.0d0
+# set the parameter below to .false. unless you know what you are doing; this implements automatic adjustment of the PML parameters for elongated models.
 # The goal is to improve the absorbing efficiency of PML for waves with large incidence angles, but this can lead to artefacts.
 # In particular, this option is efficient only when the number of sources NSOURCES is equal to one.
 PML_PARAMETER_ADJUSTMENT        = .false.
@@ -198,18 +226,20 @@ PERIODIC_HORIZ_DIST             = 4000.d0
 #-----------------------------------------------------------------------------
 nbmodels                        = 1
 # available material types (see user manual for more information)
-#   acoustic:    model_number 1 rho Vp 0  0 0 QKappa Qmu 0 0 0 0 0 0 (for QKappa and Qmu use 9999 to ignore them)
-#### currently acoustic media have no attenuation and thus QKappa and Qmu are ignored, but this will or should change soon
-# when viscoelasticity is turned on, the Vp and Vs values that are read here are the UNRELAXED ones i.e. the values at infinite frequency
-# unless the READ_VELOCITIES_AT_f0 parameter above is set to true, in which case they are the values at frequency f0.
-# Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp.
-# To convert one to the other see doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf and
-# utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
-#   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0 (for QKappa and Qmu use 9999 to ignore them)
-#   anisotropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
-#   anisotropic in AXISYM: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 c22 0 0
-#   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
-#   tomo:        model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
+#   acoustic:              model_number 1 rho Vp 0  0 0 QKappa 9999 0 0 0 0 0 0 (for QKappa use 9999 to ignore it)
+#   elastic:               model_number 1 rho Vp Vs 0 0 QKappa Qmu  0 0 0 0 0 0 (for QKappa and Qmu use 9999 to ignore them)
+#   anisotropic:           model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25   0 QKappa Qmu
+#   anisotropic in AXISYM: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 c22 QKappa Qmu
+#   poroelastic:           model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
+#   tomo:                  model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
+#
+# note: When viscoelasticity or viscoacousticity is turned on,
+#       the Vp and Vs values that are read here are the UNRELAXED ones i.e. the values at infinite frequency
+#       unless the READ_VELOCITIES_AT_f0 parameter above is set to true, in which case they are the values at frequency f0.
+#
+#       Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp.
+#       To convert one to the other see doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf and
+#       utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
 1 1 2700.d0 3000.d0 1732.051d0 0 0 9999 9999 0 0 0 0 0 0
 
 # external tomography file

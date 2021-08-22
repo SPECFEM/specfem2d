@@ -1,22 +1,57 @@
-# The components of a moment tensor source must be given in N.m, not in dyne.cm as in the DATA/CMTSOLUTION source file of the 3D version of the code.
-# source 1
+## Source 1
 source_surf                     = .false.        # source inside the medium, or source automatically moved exactly at the surface by the solver
-xs                              = 1000.0d0            # source location x in meters
-zs                              = -4000.0d0          # source location z in meters (zs is ignored if source_surf is set to true, it is replaced with the topography height)
-# source type: elastic force or acoustic pressure = 1 or moment tensor = 2;
-# for a plane wave including converted and reflected waves at the free surface, P wave = 1, S wave = 2, Rayleigh wave = 3
-# for a plane wave without converted nor reflected waves at the free surface, i.e. with the incident wave only, P wave = 4, S wave = 5
+xs                              = 1000.0d0       # source location x in meters
+zs                              = -4000.0d0      # source location z in meters (zs is ignored if source_surf is set to true, it is replaced with the topography height)
+## Source type parameters:
+#  1 = elastic force or acoustic pressure
+#  2 = moment tensor
+# or Initial field type (when initialfield set in Par_file):
+# For a plane wave including converted and reflected waves at the free surface:
+#  1 = P wave,
+#  2 = S wave,
+#  3 = Rayleigh wave
+# For a plane wave without converted nor reflected waves at the free surface, i.e. with the incident wave only:
+#  4 = P wave,
+#  5 = S wave
+# For initial mode displacement:
+#  6 = mode (2,3) of a rectangular membrane
 source_type                     = 1
-time_function_type              = 1             # second derivative of a Gaussian (a.k.a. Ricker) = 1, first derivative of a Gaussian = 2, Gaussian = 3, Dirac = 4, Heaviside = 5 (4 and 5 will produce noisy recordings because of frequencies above the mesh resolution limit)
-# time function_type == 8 source read from file, if time function_type == 9 : burst
+# Source time function:
+# In the case of a source located in an acoustic medium,
+# to get pressure for a Ricker in the seismograms, here we need to select a Gaussian for the potential Chi
+# used as a source, rather than a Ricker, because pressure = - Chi_dot_dot.
+# This is true both when USE_TRICK_FOR_BETTER_PRESSURE is set to .true. or to .false.
+# Options:
+#  1 = second derivative of a Gaussian (a.k.a. Ricker),
+#  2 = first derivative of a Gaussian,
+#  3 = Gaussian,
+#  4 = Dirac,
+#  5 = Heaviside (4 and 5 will produce noisy recordings because of frequencies above the mesh resolution limit),
+#  6 = ocean acoustics type I,
+#  7 = ocean acoustics type II,
+#  8 = external source time function = 8 (source read from file),
+#  9 = burst,
+# 10 = Sinus source time function,
+# 11 = Marmousi Ormsby wavelet
+time_function_type              = 1
 # If time_function_type == 8, enter below the custom source file to read (two columns file with time and amplitude) :
-# (For the moment dt must be equal to the dt of the simulation. File name can't exceed 150 characters)
-name_of_source_file             = /home1/bottero/specfem2d/EXAMPLES/Radiation_Une_Source/output.txt # Only for option 8 : file containing the source wavelet
-burst_band_width                = 5.0         # Only for option 9 : band width of the burst
-f0                              = 4.0d0           # dominant source frequency (Hz) if not Dirac or Heaviside
+# (For the moment dt must be equal to the dt of the simulation. File name cannot exceed 150 characters)
+# IMPORTANT: do NOT put quote signs around the file name, just put the file name itself otherwise the run will stop
+name_of_source_file             = /home1/bottero/specfem2d/EXAMPLES/Radiation_Une_Source/output.txt   # Only for option 8 : file containing the source wavelet
+burst_band_width                = 5.0            # Only for option 9 : band width of the burst
+f0                              = 4.0d0          # dominant source frequency (Hz) if not Dirac or Heaviside
 tshift                          = 0.0            # time shift when multi sources (if one source, must be zero)
-anglesource                     = 0.0            # angle of the source (for a force only); for a plane wave, this is the incidence angle; for moment tensor sources this is unused
+## Force source
+# angle of the source (for a force only); for a plane wave, this is the incidence angle; for moment tensor sources this is unused
+anglesource                     = 0.0
+## Moment tensor
+# The components of a moment tensor source must be given in N.m, not in dyne.cm as in the DATA/CMTSOLUTION source file of the 3D version of the code.
 Mxx                             = 1.             # Mxx component (for a moment tensor source only)
 Mzz                             = 1.             # Mzz component (for a moment tensor source only)
 Mxz                             = 0.             # Mxz component (for a moment tensor source only)
-factor                          = 1.0d10            # amplification factor
+## Amplification (factor to amplify source time function)
+factor                          = 1.0d10         # amplification factor
+## Moving source parameters
+vx                              = 0.0            # Horizontal source velocity (m/s)
+vz                              = 0.0            # Vertical source velocity (m/s)
+

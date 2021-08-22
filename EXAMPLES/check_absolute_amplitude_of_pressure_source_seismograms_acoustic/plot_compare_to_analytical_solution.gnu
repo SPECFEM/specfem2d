@@ -1,6 +1,6 @@
 
 set term x11
-set term qt
+#set term qt
 
 set xlabel "Time (s)"
 set ylabel "Pressure"

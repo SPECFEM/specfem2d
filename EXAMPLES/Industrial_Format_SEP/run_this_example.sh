@@ -26,14 +26,21 @@ mkdir -p OUTPUT_FILES
 rm -rf OUTPUT_FILES/*
 
 # links executables
+mkdir -p bin
+cd bin/
 rm -f xmeshfem2D xspecfem2D
-ln -s ../../bin/xmeshfem2D
-ln -s ../../bin/xspecfem2D
+ln -s ../../../bin/xmeshfem2D
+ln -s ../../../bin/xspecfem2D
+cd ../
+
+# backup
+cp -v DATA/Par_file DATA/Par_file.bak
+
 
 echo
 echo "compiling xinterpolate..."
 echo
-$f90 $flags -o xinterpolate interpolate.f90
+$f90 $flags -o bin/xinterpolate interpolate.f90
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 
@@ -41,13 +48,16 @@ if [[ $? -ne 0 ]]; then exit 1; fi
 echo
 echo "running interpolation..."
 echo
-./xinterpolate
+./bin/xinterpolate
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 
 # stores setup
 cp DATA/Par_file OUTPUT_FILES/
 cp DATA/SOURCE OUTPUT_FILES/
+
+# restores original Par_file
+cp -v DATA/Par_file.bak DATA/Par_file
 
 echo
 echo "see results in directory: OUTPUT_FILES/"

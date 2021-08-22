@@ -1,0 +1,14 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This example creates an internal mesh with 3 elastic regions, where an anisotropic layer is embedded into 
+an isotropic media. The strongly anisotropic medium properties are the same as in the anisotropic_zinc_crystal/ example.
+
+To run the simulation, type:
+
+> ./run_this_example.sh
+
+
+Reference seismograms are provided in REF_SEIS/ to compare against.
+

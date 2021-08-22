@@ -37,15 +37,18 @@
 
   use specfem_par, only: coord,npgeo,myrank
 
+  use shared_parameters, only: factor_subsample_image
+
   use specfem_par_movie, only: NX_IMAGE_color,NZ_IMAGE_color, &
                           xmin_color_image,xmax_color_image, &
-                          zmin_color_image,zmax_color_image,factor_subsample_image
+                          zmin_color_image,zmax_color_image
   implicit none
 
   ! local parameters
   integer  :: npgeo_glob
   double precision  :: xmin_color_image_loc, xmax_color_image_loc, &
                        zmin_color_image_loc,zmax_color_image_loc
+  double precision :: factor
 
   ! horizontal min and max coordinates of the image
   xmin_color_image_loc = minval(coord(1,:))
@@ -60,12 +63,14 @@
   xmax_color_image = xmax_color_image_loc
   zmin_color_image = zmin_color_image_loc
   zmax_color_image = zmax_color_image_loc
-  npgeo_glob = npgeo
 
   call min_all_all_dp(xmin_color_image_loc, xmin_color_image)
   call max_all_all_dp(xmax_color_image_loc, xmax_color_image)
   call min_all_all_dp(zmin_color_image_loc, zmin_color_image)
   call max_all_all_dp(zmax_color_image_loc, zmax_color_image)
+
+  ! number of spectral element control nodes (in this slice)
+  npgeo_glob = npgeo
 
   ! collects total on all processes
   call sum_all_all_i(npgeo, npgeo_glob)
@@ -77,21 +82,28 @@
   NX_IMAGE_color = nint(sqrt(dble(npgeo_glob))) * (NGLLX-1) + 1
 
   ! compute number of pixels in the vertical direction based on ratio of sizes
-  NZ_IMAGE_color = nint(NX_IMAGE_color * (zmax_color_image - zmin_color_image) &
-                                      / (xmax_color_image - xmin_color_image))
+  NZ_IMAGE_color = nint(NX_IMAGE_color * (zmax_color_image - zmin_color_image) / (xmax_color_image - xmin_color_image))
 
   ! convert pixel sizes to even numbers because easier to reduce size,
   ! create MPEG movies in postprocessing
   NX_IMAGE_color = 2 * nint((NX_IMAGE_color / 2 + 1) / factor_subsample_image)
   NZ_IMAGE_color = 2 * nint((NZ_IMAGE_color / 2 + 1) / factor_subsample_image)
 
+  ! check tat image size is not too small
+  if (NX_IMAGE_color < 4) call exit_MPI(myrank,'output image too small: NX_IMAGE_color < 4.')
+  if (NZ_IMAGE_color < 4) call exit_MPI(myrank,'output image too small: NZ_IMAGE_color < 4.')
+
+  ! scales to a minimum of 800 pixels
+  if (max(NX_IMAGE_color,NZ_IMAGE_color) < 800) then
+    factor = 800.d0 / max(NX_IMAGE_color,NZ_IMAGE_color)
+    NX_IMAGE_color = nint( factor * NX_IMAGE_color)
+    NZ_IMAGE_color = nint( factor * NZ_IMAGE_color)
+  endif
+
   ! check that image size is not too big
 ! because from http://www.jpegcameras.com/libjpeg/libjpeg-2.html
 ! we know that the size limit of the image in each dimension is 65535:
 ! "JPEG supports image dimensions of 1 to 64K pixels in either direction".
-  if (NX_IMAGE_color < 4) call exit_MPI(myrank,'output image too small: NX_IMAGE_color < 4.')
-  if (NZ_IMAGE_color < 4) call exit_MPI(myrank,'output image too small: NZ_IMAGE_color < 4.')
-
   if (NX_IMAGE_color > 65534) &
     call exit_MPI(myrank,'output image too big: NX_IMAGE_color > 65534; increase factor_subsample_image in DATA/Par_file.')
   if (NZ_IMAGE_color > 65534) &
@@ -122,12 +134,12 @@
   use specfem_par, only: myrank,coord,coorg,nspec,knods,ibool, &
                           NSOURCES,nrec,x_source,z_source,st_xval,st_zval
 
+  use shared_parameters, only: DRAW_SOURCES_AND_RECEIVERS
 
   use specfem_par_movie, only: NX_IMAGE_color,NZ_IMAGE_color, &
                               xmin_color_image,xmax_color_image, &
                               zmin_color_image,zmax_color_image, &
                               nb_pixel_loc,iglob_image_color, &
-                              DRAW_SOURCES_AND_RECEIVERS, &
                               ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver
 
   implicit none
@@ -275,17 +287,15 @@
 
 ! stores P-velocity model in image_color_vp_display
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: NGLLX,NGLLZ,HALF,TWO,IMAIN
 
   use specfem_par, only: nglob,nspec,ispec_is_elastic,ispec_is_poroelastic,ibool,kmato, &
-    density,poroelastcoef,NPROC,myrank,assign_external_model,vpext
+    density,poroelastcoef,NPROC,myrank,assign_external_model,rho_vpstore,rhostore
+
+  use shared_parameters, only: DRAW_WATER_IN_BLUE
 
   use specfem_par_movie, only: image_color_vp_display,iglob_image_color, &
-    NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc,num_pixel_loc,DRAW_WATER_IN_BLUE
+    NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc,num_pixel_loc
 
   implicit none
 
@@ -301,7 +311,7 @@
   double precision :: cpIsquare
 
   integer  :: i,j,k,ispec
-#ifdef USE_MPI
+#ifdef WITH_MPI
   double precision, dimension(:), allocatable  :: data_pixel_recv
   double precision, dimension(:), allocatable  :: data_pixel_send
   integer, dimension(:,:), allocatable  :: num_pixel_recv
@@ -351,7 +361,7 @@
         do i = 1,NGLLX
           !--- if external medium, get elastic parameters of current grid point
           if (assign_external_model) then
-            vp_display(ibool(i,j,ispec)) = vpext(i,j,ispec)
+            vp_display(ibool(i,j,ispec)) = rho_vpstore(i,j,ispec)/rhostore(i,j,ispec)
           else
             vp_display(ibool(i,j,ispec)) = sqrt((lambdal_relaxed + 2.d0*mul_relaxed) / rhol)
           endif
@@ -371,7 +381,7 @@
 
           !--- if external medium, get elastic parameters of current grid point
           if (assign_external_model) then
-            vp_of_the_model = vpext(i,j,ispec)
+            vp_of_the_model = rho_vpstore(i,j,ispec)/rhostore(i,j,ispec)
           else
             vp_of_the_model = sqrt((lambdal_relaxed + 2.d0*mul_relaxed) / rhol)
           endif
@@ -404,7 +414,7 @@
   enddo
 
 ! assembling array image_color_vp_display on process zero for color output
-#ifdef USE_MPI
+#ifdef WITH_MPI
 
   allocate(tmp_nb_pixel_per_proc(0:NPROC-1))
   tmp_nb_pixel_per_proc(:) = 0

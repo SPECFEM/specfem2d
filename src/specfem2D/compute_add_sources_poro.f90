@@ -35,9 +35,9 @@
 
   subroutine compute_add_sources_poro(accels_poroelastic,accelw_poroelastic,it,i_stage)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,myrank
 
-  use specfem_par, only: myrank,ispec_is_poroelastic,nglob_poroelastic, &
+  use specfem_par, only: ispec_is_poroelastic,nglob_poroelastic, &
                          NSOURCES,source_time_function,sourcearrays, &
                          islice_selected_source,ispec_selected_source, &
                          ibool,porosity,tortuosity,density,kmato
@@ -88,15 +88,15 @@
 
             ! solid contribution
             accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + &
-                        fac_s * sourcearrays(i_source,1,i,j) * stf_used
+                        fac_s * sourcearrays(1,i,j,i_source) * stf_used
             accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + &
-                        fac_s * sourcearrays(i_source,2,i,j) * stf_used
+                        fac_s * sourcearrays(2,i,j,i_source) * stf_used
 
             ! fluid contribution
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) + &
-                        fac_w * sourcearrays(i_source,1,i,j) * stf_used
+                        fac_w * sourcearrays(1,i,j,i_source) * stf_used
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + &
-                        fac_w * sourcearrays(i_source,2,i,j) * stf_used
+                        fac_w * sourcearrays(2,i,j,i_source) * stf_used
           enddo
         enddo
       endif

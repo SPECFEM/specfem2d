@@ -36,8 +36,8 @@ S := ${S_TOP}/src/specfem2D
 $(specfem2D_OBJECTS): S := ${S_TOP}/src/specfem2D
 
 # libjpeg file directory
-LIBJPEG = ${S_TOP}/src/specfem2D/libjpeg
-$(JPEGLIB_OBJECTS): S := ${S_TOP}/src/specfem2D/libjpeg
+S_LIBJPEG = ${S_TOP}/external_libs/libjpeg
+$(JPEGLIB_OBJECTS): S := ${S_TOP}/external_libs/libjpeg
 
 
 ####
@@ -49,7 +49,9 @@ specfem2D_TARGETS = \
 	$E/xspecfem2D \
 	$(EMPTY_MACRO)
 
-
+# AB AB: Do not reorganize the following list !!
+# it looks like their order is important and this has nothing to do with alphabetical order...
+# (source files containing modules should be above source files using them)
 specfem2D_OBJECTS = \
 	$O/specfem2D_par.spec_module.o \
 	$O/acoustic_forcing_boundary.spec.o \
@@ -121,6 +123,7 @@ specfem2D_OBJECTS = \
 	$O/iterate_time_undoatt.spec.o \
 	$O/locate_receivers.spec.o \
 	$O/locate_source.spec.o \
+	$O/moving_sources_par.spec.o \
 	$O/netlib_specfun_erf.spec.o \
 	$O/noise_tomography.spec.o \
 	$O/paco_beyond_critical.spec.o \
@@ -133,6 +136,7 @@ specfem2D_OBJECTS = \
 	$O/pml_compute_memory_variables.spec.o \
 	$O/prepare_absorb.spec.o \
 	$O/prepare_assemble_MPI.spec.o \
+	$O/prepare_attenuation.spec.o \
 	$O/prepare_color_image.spec.o \
 	$O/prepare_gpu.spec.o \
 	$O/prepare_initial_field.spec.o \
@@ -147,6 +151,8 @@ specfem2D_OBJECTS = \
 	$O/read_save_binary_database.spec.o \
 	$O/recompute_jacobian.spec.o \
 	$O/save_adjoint_kernels.spec.o \
+	$O/save_forward_arrays.spec.o \
+	$O/save_model_files.spec.o \
 	$O/save_openDX_jacobian.spec.o \
 	$O/set_source_parameters.spec.o \
 	$O/setup_GLL_points.spec.o \
@@ -157,6 +163,7 @@ specfem2D_OBJECTS = \
 	$O/update_displacement_LDDRK.spec.o \
 	$O/update_displacement_Newmark.spec.o \
 	$O/update_displacement_RK.spec.o \
+	$O/update_displacement_symplectic.spec.o \
 	$O/compute_kernels.spec.o \
 	$O/write_jpeg_image.cc.o \
 	$O/attenuation_compute_param.cc.o \
@@ -176,6 +183,7 @@ specfem2D_MODULES = \
 	$(FC_MODDIR)/specfem_par_gpu.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_movie.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_noise.$(FC_MODEXT) \
+	$(FC_MODDIR)/moving_sources_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/interpolation.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_tomography_par.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
@@ -187,12 +195,13 @@ specfem2D_SHARED_OBJECTS = \
 	$O/force_ftz.cc.o \
 	$O/gll_library.shared.o \
 	$O/lagrange_poly.shared.o \
-	$O/parallel.shared.o \
-	$O/read_parameter_file.mesh.o \
+	$O/parallel.sharedmpi.o \
+	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
-	$O/read_material_table.mesh.o \
-	$O/read_interfaces_file.mesh.o \
-	$O/read_regions.mesh.o \
+	$O/read_material_table.shared.o \
+	$O/read_interfaces_file.shared.o \
+	$O/read_regions.shared.o \
+	$O/read_source_file.shared.o \
 	$O/param_reader.cc.o \
 	$O/set_color_palette.shared.o \
 	$(EMPTY_MACRO)
@@ -250,44 +259,15 @@ specfem2D_OBJECTS += $(JPEGLIB_OBJECTS)
 
 
 ###
-### CUDA
+### GPU
 ###
-
-cuda_specfem2D_OBJECTS = \
-	$O/assemble_MPI_scalar_cuda.cuda.o \
-	$O/assemble_MPI_vector_cuda.cuda.o \
-	$O/check_fields_cuda.cuda.o \
-	$O/compute_add_sources_viscoacoustic_cuda.cuda.o \
-	$O/compute_add_sources_viscoelastic_cuda.cuda.o \
-	$O/compute_coupling_cuda.cuda.o \
-	$O/compute_forces_acoustic_cuda.cuda.o \
-	$O/compute_forces_viscoelastic_cuda.cuda.o \
-	$O/compute_kernels_cuda.cuda.o \
-	$O/compute_stacey_acoustic_cuda.cuda.o \
-	$O/compute_stacey_viscoelastic_cuda.cuda.o \
-	$O/initialize_cuda.cuda.o \
-	$O/prepare_mesh_constants_cuda.cuda.o \
-	$O/transfer_fields_cuda.cuda.o \
-	$O/update_displacement_cuda.cuda.o \
-	$O/write_seismograms_cuda.cuda.o \
-	$(EMPTY_MACRO)
-
-
-cuda_specfem2D_STUBS = \
-	$O/specfem2D_gpu_cuda_method_stubs.cudacc.o \
-	$(EMPTY_MACRO)
-
-cuda_specfem2D_DEVICE_OBJ = \
-	$O/cuda_device_obj.o \
-	$(EMPTY_MACRO)
-
 ifeq ($(CUDA),yes)
-specfem2D_OBJECTS += $(cuda_specfem2D_OBJECTS)
+specfem2D_OBJECTS += $(gpu_OBJECTS)
 ifeq ($(CUDA_PLUS),yes)
-specfem2D_OBJECTS += $(cuda_specfem2D_DEVICE_OBJ)
+specfem2D_OBJECTS += $(gpu_DEVICE_OBJ)
 endif
 else
-specfem2D_OBJECTS += $(cuda_specfem2D_STUBS)
+specfem2D_OBJECTS += $(gpu_STUBS)
 endif
 
 #######################################
@@ -307,7 +287,7 @@ ifeq ($(CUDA),yes)
 ## cuda version
 ifeq ($(CUDA_PLUS),yes)
 ## cuda 5x & 6x version
-INFO_CUDA="building xspecfem2D with CUDA support"
+INFO_CUDA="building xspecfem3D $(BUILD_VERSION_TXT)"
 else
 ## cuda 4 version
 INFO_CUDA="building xspecfem2D with CUDA 4 support"
@@ -345,9 +325,13 @@ endif
 # the general dependency on the specfem module is handled by the rules below
 
 $O/specfem2D.spec.o: $O/specfem2D_par.spec_module.o
-
 # Version file
 $O/initialize_simulation.spec.o: ${SETUP}/version.fh
+
+$O/compute_add_sources_acoustic.spec.o: $O/moving_sources_par.spec.o
+$O/compute_add_sources_viscoelastic.spec.o: $O/moving_sources_par.spec.o
+$O/compute_gpu_acoustic.spec.o: $O/moving_sources_par.spec.o
+$O/prepare_gpu.spec.o: $O/moving_sources_par.spec.o
 
 ##
 ## object files
@@ -358,28 +342,21 @@ $O/initialize_simulation.spec.o: ${SETUP}/version.fh
 ####
 
 $O/%.spec_module.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.spec.o: $S/%.f90 ${SETUP}/constants.h $O/specfem2D_par.spec_module.o
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.spec.o: $S/%.F90 ${SETUP}/constants.h $O/specfem2D_par.spec_module.o
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.cc.o: $S/%.c ${SETUP}/config.h
-	${CC} ${CFLAGS} -c -o $@ $<
-
-###
-### CUDA 5 only
-###
-
-$(cuda_specfem2D_DEVICE_OBJ): $(cuda_OBJECTS)
-	${NVCCLINK} -o $(cuda_specfem2D_DEVICE_OBJ) $(cuda_OBJECTS)
+	${CC} ${CFLAGS} -I${S_LIBJPEG} -c -o $@ $<
 
 
 ##
 ## JPEG library files
 ##
 
-$O/%.cc_jpeg.o: $S/libjpeg/%.c
-	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $@ $<
+$O/%.cc_jpeg.o: $(S_LIBJPEG)/%.c
+	${CC} -c $(CFLAGS) -I${S_LIBJPEG} -o $@ $<

@@ -36,15 +36,29 @@
   use constants, only: USE_ENFORCE_FIELDS,IOUT_ENERGY,IMAIN,OUTPUT_FILES
   use specfem_par
   use specfem_par_movie
-  use specfem_par_noise, only: NOISE_TOMOGRAPHY
 
   implicit none
 
-  if (setup_with_binary_database == 2 ) then
-   call setup_mesh_external_models()
-   call read_sources_receivers()
-   if (SIMULATION_TYPE == 3) call setup_adjoint_sources()
-   call read_binary_database_part1()
+  ! user output
+  call synchronize_all()
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) "Preparing timerun:"
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! reads binary database for setup
+  if (setup_with_binary_database == 2) then
+    ! updates external model properties in case
+    call setup_mesh_external_models()
+
+    ! updates source/receivers
+    call read_sources_receivers()
+    if (SIMULATION_TYPE == 3) call setup_adjoint_sources()
+
+    ! reads binary database
+    call read_binary_database_part1()
   endif
 
   ! Test compatibility with axisymmetric formulation
@@ -59,23 +73,24 @@
   ! PML preparation
   call prepare_PML()
 
-  if (setup_with_binary_database /= 2) then
+  ! Stacey preparation
+  call prepare_timerun_Stacey()
 
-    ! attenuation
-    !! DK DK moved preparation of attenuation to before preparation of mass matrix
-    !! DK DK because now that we have support for viscoacoustic fluids, we need to use
-    !! DK DK the unrelaxed Kappa modulus in the fluid mass matrix when ATTENUATION_VISCOACOUSTIC is on
-    !! DK DK and thus we need to prepare attenuation before preparing the mass matrix
-    call prepare_timerun_attenuation()
+  ! attenuation
+  !! DK DK moved preparation of attenuation to before preparation of mass matrix
+  !! DK DK because now that we have support for viscoacoustic fluids, we need to use
+  !! DK DK the unrelaxed Kappa modulus in the fluid mass matrix when ATTENUATION_VISCOACOUSTIC is on
+  !! DK DK and thus we need to prepare attenuation before preparing the mass matrix
+  call prepare_attenuation()
+
+  ! default preparation
+  if (setup_with_binary_database /= 2) then
 
     ! prepares mass matrices
     call prepare_timerun_mass_matrix()
 
     ! check which GLL will be forced or not
     if (USE_ENFORCE_FIELDS) call build_forced()
-
-    ! postscript images for grids and snapshots
-    call prepare_timerun_postscripts()
 
     ! for adjoint kernel runs
     call prepare_timerun_adjoint()
@@ -89,16 +104,23 @@
     ! prepares noise simulations
     if (NOISE_TOMOGRAPHY /= 0) call prepare_timerun_noise()
 
-    if (setup_with_binary_database == 1 ) call save_binary_database()
+    ! saves setup as binary database to skip these steps for repeated runs (mode == 2 used reading database)
+    !
+    ! daniel todo: note that most of the mesh setup steps should go into the mesher as is done in 3D versions.
+    !              the 2D version historically does only basic mesh setups in the mesher, but then assigns most
+    !              of the mesh population tasks (like xgenerate_databases in 3D Cartesian) to the solver.
+    !              in future, one could move the time consuming meshing parts to the mesher and avoid
+    !              this binary_database parameter handling.
+    !
+    if (setup_with_binary_database == 1) call save_binary_database()
 
   else
-
+    ! reads binary setup database
     call read_binary_database_part2()
-
   endif
 
-  ! compute material property arrays
-  call prepare_material_arrays()
+  ! postscript images for grids and snapshots
+  call prepare_timerun_postscripts()
 
   ! jpeg images
   call prepare_timerun_image_coloring()
@@ -110,6 +132,9 @@
   if (GPU_MODE) call prepare_GPU()
 
   !-------------------------------------------------------------
+
+  ! check the mesh, stability and number of points per wavelength
+  call check_grid()
 
   ! creates a Gnuplot script to display the energy curve in log scale
   if (OUTPUT_ENERGY .and. myrank == 0) then
@@ -148,24 +173,34 @@
 
   end subroutine prepare_timerun
 
-
 !
 !-------------------------------------------------------------------------------------
 !
 
   subroutine prepare_timerun_constants()
 
-  use constants, only: HALF,ZERO
+  use constants, only: IMAIN,HALF,CUSTOM_REAL
   use specfem_par
 
   implicit none
 
-  ! local parameters
-  integer :: ier
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Preparing timerun constants'
+    call flush_IMAIN()
+  endif
 
   ! defines coefficients of the Newmark time scheme
-  deltatover2 = HALF * deltat
-  deltatsquareover2 = HALF * deltat * deltat
+  !
+  ! note: whenever possible, we will use deltat,.. values with CUSTOM_REAL precision to avoid implicit conversions
+  !       when multiplying with CUSTOM_REAL wavefields etc.
+  !
+  !       DT will be kept in double precision and used when higher accuracy is needed or for non-critical computation
+  !       (e.g., determining time for seismogram trace outputs)
+  deltat = real(DT,kind=CUSTOM_REAL)
+  deltatover2 = real(HALF * deltat,kind=CUSTOM_REAL)
+  deltatsquareover2 = real(HALF * deltat * deltat,kind=CUSTOM_REAL)
 
   !  define coefficients of the Newmark time scheme for the backward wavefield
   if (SIMULATION_TYPE == 3) then
@@ -177,8 +212,8 @@
     else
       ! reconstructed wavefield moves backward in time from last snapshot
       b_deltat = - deltat
-      b_deltatover2 = HALF * b_deltat
-      b_deltatsquareover2 = HALF * b_deltat * b_deltat
+      b_deltatover2 = real(HALF * b_deltat,kind=CUSTOM_REAL)
+      b_deltatsquareover2 = real(HALF * b_deltat * b_deltat,kind=CUSTOM_REAL)
     endif
   else
     ! will not be used, but initialized
@@ -187,22 +222,10 @@
     b_deltatsquareover2 = 0._CUSTOM_REAL
   endif
 
-  ! seismograms
-  ! allocate seismogram arrays
-  allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
-           sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
-           siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating seismogram arrays')
-
-  sisux(:,:) = ZERO ! double precision zero
-  sisuz(:,:) = ZERO
-  siscurl(:,:) = ZERO
-
   ! synchronizes all processes
   call synchronize_all()
 
   end subroutine prepare_timerun_constants
-
 
 !
 !-------------------------------------------------------------------------------------
@@ -210,23 +233,18 @@
 
   subroutine prepare_timerun_mass_matrix()
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN
   use specfem_par
 
   implicit none
 
   ! local variable
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer :: n_sls_loc
 #endif
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*)
     write(IMAIN,*) 'Preparing mass matrices'
     call flush_IMAIN()
   endif
@@ -234,7 +252,7 @@
   ! builds the global mass matrix
   call invert_mass_matrix_init()
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   n_sls_loc = 0
   if (ATTENUATION_VISCOACOUSTIC) n_sls_loc = N_SLS
   ! assembling the mass matrix of shared nodes on MPI partition interfaces
@@ -274,7 +292,7 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'Preparing image coloring'
+    write(IMAIN,*) 'Preparing image coloring: postscripts'
     call flush_IMAIN()
   endif
 
@@ -282,6 +300,7 @@
   allocate(shape2D_display(ngnod,pointsdisp,pointsdisp), &
            dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating shape arrays for display')
+  shape2D_display(:,:,:) = 0.d0; dershape2D_display(:,:,:,:) = 0.d0
 
   ! computes shape functions and their derivatives for regular interpolated display grid
   do j = 1,pointsdisp
@@ -295,11 +314,14 @@
   ! for postscript snapshots
   ! arrays for display images as snapshot postscript images
   allocate(flagrange(NGLLX,pointsdisp))
+  flagrange(:,:) = 0.d0
+
   if (AXISYM) then
     allocate(flagrange_GLJ(NGLJ,pointsdisp))
   else
     allocate(flagrange_GLJ(1,1))
   endif
+  flagrange_GLJ(:,:) = 0.d0
 
   ! compute Lagrange interpolants on a regular interpolated grid in (xi,gamma)
   ! for display (assumes NGLLX = NGLLZ)
@@ -315,25 +337,22 @@
   allocate(zinterp(pointsdisp,pointsdisp))
   allocate(Uxinterp(pointsdisp,pointsdisp))
   allocate(Uzinterp(pointsdisp,pointsdisp))
+  xinterp(:,:) = 0.d0; zinterp(:,:) = 0.d0
+  Uxinterp(:,:) = 0.d0; Uzinterp(:,:) = 0.d0
 
   ! to display the whole vector field (it needs to be computed from the potential in acoustic elements,
   ! thus it does not exist as a whole in case of simulations that contain some acoustic elements
   ! and it thus needs to be computed specifically for display purposes)
   allocate(vector_field_display(NDIM,nglob))
-
   ! when periodic boundary conditions are on, some global degrees of freedom are going to be removed,
   ! thus we need to set this array to zero otherwise some of its locations may contain random values
   ! if the memory is not cleaned
   vector_field_display(:,:) = 0.d0
 
-  ! check the mesh, stability and number of points per wavelength
-  call check_grid()
-
   ! synchronizes all processes
   call synchronize_all()
 
   end subroutine prepare_timerun_postscripts
-
 
 !
 !-------------------------------------------------------------------------------------
@@ -341,12 +360,8 @@
 
   subroutine prepare_timerun_image_coloring()
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN
-#ifdef USE_MPI
+#ifdef WITH_MPI
   use constants, only: DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
 #endif
   use specfem_par
@@ -387,7 +402,7 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'Preparing image coloring'
+    write(IMAIN,*) 'Preparing image coloring: jpeg'
     call flush_IMAIN()
   endif
 
@@ -407,12 +422,14 @@
     if (ier /= 0) call stop_the_code('error in an allocate statement 1')
     allocate(image_color_vp_display(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
     if (ier /= 0) call stop_the_code('error in an allocate statement 2')
+    image_color_data(:,:) = 0.d0; image_color_vp_display(:,:) = 0.d0
 
     ! allocate an array for the grid point that corresponds to a given image data point
     allocate(iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
     if (ier /= 0) call stop_the_code('error in an allocate statement 3')
     allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
     if (ier /= 0) call stop_the_code('error in an allocate statement 4')
+    iglob_image_color(:,:) = 0; copy_iglob_image_color(:,:) = 0
 
     !remember which image are going to produce
     if (USE_SNAPSHOT_NUMBER_IN_FILENAME) then
@@ -426,7 +443,7 @@
     ! creating and filling array num_pixel_loc with the positions of each colored
     ! pixel owned by the local process (useful for parallel jobs)
     allocate(num_pixel_loc(nb_pixel_loc))
-
+    num_pixel_loc(:) = 0
     ipixel = 0
     do i = 1, NX_IMAGE_color
        do j = 1, NZ_IMAGE_color
@@ -444,7 +461,7 @@
     ! filling array iglob_image_color, containing info on which process owns which pixels.
     iproc = 0
     k = 0
-#ifdef USE_MPI
+#ifdef WITH_MPI
     allocate(nb_pixel_per_proc(0:NPROC-1))
     nb_pixel_per_proc(:) = 0
     call gather_all_singlei(nb_pixel_loc,nb_pixel_per_proc,NPROC)
@@ -452,12 +469,14 @@
     if (myrank == 0) then
       allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),NPROC))
       allocate(data_pixel_recv(maxval(nb_pixel_per_proc(:))))
+      num_pixel_recv(:,:) = 0; data_pixel_recv(:) = 0.d0
     endif
-
     allocate(data_pixel_send(nb_pixel_loc))
+    data_pixel_send(:) = 0.d0
+
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
           call recv_i(num_pixel_recv(1,iproc+1), nb_pixel_per_proc(iproc), iproc, 42)
 
@@ -507,7 +526,7 @@
     endif
 
     ! allocate arrays for postscript output
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (modelvect) then
       d1_coorg_recv_ps_velocity_model = 2
       call max_all_all_i(nspec,d2_coorg_recv_ps_velocity_model)
@@ -561,7 +580,7 @@
     call max_all_all_i(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh)
 
     d1_coorg_send_ps_abs=5
-    d2_coorg_send_ps_abs=4*nelemabs
+    d2_coorg_send_ps_abs=4*num_abs_boundary_faces
     call max_all_all_i(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs)
     call max_all_all_i(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs)
 
@@ -651,20 +670,22 @@
     d1_dump_send = 2
 
     d2_dump_send = nspec*NGLLX*NGLLZ
+    call max_all_all_i(d2_dump_send,d2_dump_recv)
 
-#ifdef USE_MPI
-    call mpi_allreduce(d2_dump_send,d2_dump_recv,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-#else
-    d2_dump_recv = d2_dump_send
-#endif
-
+    ! allocates temporary arrays for wavefield outputs
     allocate(dump_send(d1_dump_send, d2_dump_send))
     allocate(dump_recv(d1_dump_recv, d2_dump_recv))
+    dump_send(:,:) = 0.d0
+    dump_recv(:,:) = 0.d0
 
     allocate(dump_duplicate_send(d2_dump_send))
     allocate(dump_duplicate_recv(d2_dump_recv))
+    dump_duplicate_send(:) = .false.
+    dump_duplicate_recv(:) = .false.
 
-    allocate(dump_recv_counts(0:NPROC-1))
+    allocate(dump_recv_counts(0:NPROC-1),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating wavefield_dumps arrays')
+    dump_recv_counts(:) = 0
 
     this_is_the_first_time_we_dump = .true.
 
@@ -692,12 +713,32 @@
   ! checks if anything to do
   if (.not. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) return
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    if (SAVE_FORWARD) then
+      write(IMAIN,*) 'Preparing save forward simulation:'
+    else
+      write(IMAIN,*) 'Preparing kernel simulation:'
+    endif
+    write(IMAIN,*) '  estimated minimum period resolved by mesh        : ',sngl(mesh_T_min)
+    write(IMAIN,*) '  estimated number of time steps for minimum period: ',int(mesh_T_min / DT)
+    ! note: to reconstruct kernels, the stepping to approximate kernel depends on both source and adjoint source frequency,
+    !       as well as the minimum period resolved by the mesh.
+    !       by comparison, we see that close-enough reconstructions (within ~90% accuracy) need about
+    !       a stepping of the size of a quarter of the minimum period resolved.
+    !       this lower estimate can then be compared against the NSTEP_BETWEEN_COMPUTE_KERNELS setting.
+    write(IMAIN,*) '  estimated steps between compute kernels (for a fair reconstruction): ',int(mesh_T_min / DT / 4.0)
+    write(IMAIN,*)
+    write(IMAIN,*) '  number of steps between compute kernels: ',NSTEP_BETWEEN_COMPUTE_KERNELS
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   ! prepares kernels
   if (SIMULATION_TYPE == 3) then
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*)
       write(IMAIN,*) 'Preparing adjoint simulation'
       call flush_IMAIN()
     endif
@@ -773,17 +814,12 @@
 
   end subroutine prepare_timerun_adjoint
 
-
 !
 !-------------------------------------------------------------------------------------
 !
 
   subroutine prepare_timerun_kernels()
 
-
-#ifdef USE_MPI
-  use mpi
-#endif
 
   use constants, only: IMAIN,APPROXIMATE_HESS_KL,OUTPUT_FILES
   use specfem_par
@@ -1056,77 +1092,77 @@
   endif
 
   ! safety checks
-  if (.not. any_elastic) &
-    call stop_the_code('Sorry, initial field (plane wave source) only implemented for elastic simulations so far...')
-  if (any_acoustic .or. any_poroelastic) &
+  if (any_poroelastic) &
     call stop_the_code('Initial field currently implemented for purely elastic simulation only')
 
   ! Calculation of the initial field for a plane wave
-  if (any_elastic) then
+  ! calculates initial plane wave coefficients
+  call prepare_initial_field(cploc,csloc)
 
-    ! calculates initial plane wave coefficients
-    call prepare_initial_field(cploc,csloc)
+  ! special case for Rayleigh waves, SV waves above critical angle
+  if (over_critical_angle) then
 
-    ! special case for Rayleigh waves, SV waves above critical angle
-    if (over_critical_angle) then
+    ! allocates boundaries
+    allocate(left_bound(num_abs_boundary_faces*NGLLX))
+    allocate(right_bound(num_abs_boundary_faces*NGLLX))
+    allocate(bot_bound(num_abs_boundary_faces*NGLLZ))
 
-      ! allocates boundaries
-      allocate(left_bound(nelemabs*NGLLX))
-      allocate(right_bound(nelemabs*NGLLX))
-      allocate(bot_bound(nelemabs*NGLLZ))
+    ! sets up boundary points
+    call prepare_initial_field_paco()
 
-      ! sets up boundary points
-      call prepare_initial_field_paco()
+    allocate(v0x_left(count_left,NSTEP))
+    allocate(v0z_left(count_left,NSTEP))
+    allocate(t0x_left(count_left,NSTEP))
+    allocate(t0z_left(count_left,NSTEP))
 
-      allocate(v0x_left(count_left,NSTEP))
-      allocate(v0z_left(count_left,NSTEP))
-      allocate(t0x_left(count_left,NSTEP))
-      allocate(t0z_left(count_left,NSTEP))
+    allocate(v0x_right(count_right,NSTEP))
+    allocate(v0z_right(count_right,NSTEP))
+    allocate(t0x_right(count_right,NSTEP))
+    allocate(t0z_right(count_right,NSTEP))
 
-      allocate(v0x_right(count_right,NSTEP))
-      allocate(v0z_right(count_right,NSTEP))
-      allocate(t0x_right(count_right,NSTEP))
-      allocate(t0z_right(count_right,NSTEP))
+    allocate(v0x_bot(count_bottom,NSTEP))
+    allocate(v0z_bot(count_bottom,NSTEP))
+    allocate(t0x_bot(count_bottom,NSTEP))
+    allocate(t0z_bot(count_bottom,NSTEP))
 
-      allocate(v0x_bot(count_bottom,NSTEP))
-      allocate(v0z_bot(count_bottom,NSTEP))
-      allocate(t0x_bot(count_bottom,NSTEP))
-      allocate(t0z_bot(count_bottom,NSTEP))
+    ! call Paco's routine to compute in frequency and convert to time by Fourier transform
+    call paco_beyond_critical(anglesource(1),f0_source(1), &
+                              QKappa_attenuationcoef(1),source_type(1), &
+                              left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom), &
+                              count_left,count_right,count_bottom, &
+                              x_source(1),cploc,csloc)
 
-      ! call Paco's routine to compute in frequency and convert to time by Fourier transform
-      call paco_beyond_critical(anglesource(1),f0_source(1), &
-                                QKappa_attenuation(1),source_type(1), &
-                                left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom), &
-                                count_left,count_right,count_bottom, &
-                                x_source(1),cploc,csloc)
+    ! frees memory
+    deallocate(left_bound)
+    deallocate(right_bound)
+    deallocate(bot_bound)
 
-      ! frees memory
-      deallocate(left_bound)
-      deallocate(right_bound)
-      deallocate(bot_bound)
-
-      ! user output
-      if (myrank == 0) then
-        write(IMAIN,*)
-        write(IMAIN,*)  '***********'
-        write(IMAIN,*)  'done calculating the initial wave field'
-        write(IMAIN,*)  '***********'
-        write(IMAIN,*)
-        call flush_IMAIN()
-      endif
-
-    endif ! beyond critical angle
-
+    ! user output
     if (myrank == 0) then
-      write(IMAIN,*) 'Max norm of initial elastic displacement = ', &
-                      maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
+      write(IMAIN,*)
+      write(IMAIN,*)  '***********'
+      write(IMAIN,*)  'done calculating the initial wave field'
+      write(IMAIN,*)  '***********'
+      write(IMAIN,*)
       call flush_IMAIN()
     endif
 
+  endif ! beyond critical angle
+
+  if (myrank == 0) then
+    if (any_elastic) then
+      write(IMAIN,*) 'Max norm of initial elastic displacement = ', &
+                      maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
+    endif
+    if (any_acoustic) then
+      write(IMAIN,*) 'Max norm of initial acoustic displacement = ', &
+                      maxval(potential_acoustic(:))
+    endif
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   end subroutine prepare_timerun_initialfield
-
 
 !
 !-------------------------------------------------------------------------------------
@@ -1136,19 +1172,19 @@
 
 ! for noise simulations
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT,TWO_THIRDS,OUTPUT_FILES
 
   use specfem_par, only: myrank,AXISYM,NSTEP,nglob,nspec,ibool,coord, &
-                         rhoext,vpext,vsext,density,poroelastcoef,kmato,assign_external_model
+                         rhostore,rho_vpstore,rho_vsstore, &
+                         density,poroelastcoef,kmato,assign_external_model, &
+                         NOISE_TOMOGRAPHY
+
   use specfem_par_noise
 
   implicit none
 
   integer :: i,j,iglob,ispec,ier
+  double precision :: rhol,vs,vp
 
   ! checks if anything to do
   if (NOISE_TOMOGRAPHY <= 0) return
@@ -1161,15 +1197,13 @@
   endif
 
   ! allocates arrays for noise tomography
-  allocate(time_function_noise(NSTEP), &
-           source_array_noise(NDIM,NGLLX,NGLLZ,NSTEP), &
+  allocate(noise_sourcearray(NDIM,NGLLX,NGLLZ,NSTEP), &
            mask_noise(nglob), &
-           surface_movie_y_or_z_noise(nglob),stat=ier)
+           noise_surface_movie_y_or_z(nglob),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating noise arrays')
-
-  ! initializes
-  source_array_noise(:,:,:,:) = 0._CUSTOM_REAL
-  surface_movie_y_or_z_noise(:) = 0._CUSTOM_REAL
+  noise_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
+  mask_noise(:) = 0._CUSTOM_REAL
+  noise_surface_movie_y_or_z(:) = 0._CUSTOM_REAL
 
   ! user output
   if (myrank == 0) then
@@ -1181,67 +1215,72 @@
   call read_parameters_noise()
 
   if (NOISE_TOMOGRAPHY == 1) then
+    ! creates generating noise source
     call compute_source_array_noise()
 
     ! write out coordinates of mesh
     open(unit=504,file=trim(OUTPUT_FILES)//'mesh_spec',status='unknown',action='write')
-      do ispec = 1, nspec
-        do j = 1, NGLLZ
-          do i = 1, NGLLX
-            iglob = ibool(i,j,ispec)
-            write(504,'(1pe11.3,1pe11.3,2i3,i7)') coord(1,iglob), coord(2,iglob), i, j, ispec
-         enddo
-        enddo
+    do ispec = 1, nspec
+      do j = 1, NGLLZ
+        do i = 1, NGLLX
+          iglob = ibool(i,j,ispec)
+          write(504,'(1pe11.3,1pe11.3,2i3,i7)') coord(1,iglob), coord(2,iglob), i, j, ispec
+       enddo
       enddo
+    enddo
     close(504)
 
     open(unit=504,file=trim(OUTPUT_FILES)//'mesh_glob',status='unknown',action='write')
-      do iglob = 1, nglob
-        write(504,'(1pe11.3,1pe11.3,i7)') coord(1,iglob), coord(2,iglob), iglob
-      enddo
+    do iglob = 1, nglob
+      write(504,'(1pe11.3,1pe11.3,i7)') coord(1,iglob), coord(2,iglob), iglob
+    enddo
     close(504)
 
     ! write out spatial distribution of noise sources
     call create_mask_noise()
+
     open(unit=504,file=trim(OUTPUT_FILES)//'mask_noise',status='unknown',action='write')
-      do iglob = 1, nglob
-            write(504,'(1pe11.3,1pe11.3,1pe11.3)') coord(1,iglob), coord(2,iglob), mask_noise(iglob)
-      enddo
+    do iglob = 1, nglob
+      write(504,'(1pe11.3,1pe11.3,1pe11.3)') coord(1,iglob), coord(2,iglob), mask_noise(iglob)
+    enddo
     close(504)
 
     ! write out velocity model
     if (assign_external_model) then
       open(unit=504,file=trim(OUTPUT_FILES)//'model_rho_vp_vs',status='unknown',action='write')
-        do ispec = 1, nspec
-          do j = 1, NGLLZ
-            do i = 1, NGLLX
-              iglob = ibool(i,j,ispec)
-              write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
-                coord(1,iglob), coord(2,iglob), rhoext(i,j,ispec), vpext(i,j,ispec), vsext(i,j,ispec)
-            enddo
+      do ispec = 1, nspec
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            iglob = ibool(i,j,ispec)
+            rhol = dble(rhostore(i,j,ispec))
+            vs = dble(rho_vsstore(i,j,ispec)/rhol)
+            vp = dble(rho_vpstore(i,j,ispec)/rhol)
+
+            write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') coord(1,iglob), coord(2,iglob), rhol, vp, vs
           enddo
         enddo
+      enddo
       close(504)
     else
       open(unit=504,file=trim(OUTPUT_FILES)//'model_rho_kappa_mu',status='unknown',action='write')
-        do ispec = 1, nspec
-          do j = 1, NGLLZ
-            do i = 1, NGLLX
-              iglob = ibool(i,j,ispec)
-              if (AXISYM) then ! CHECK kappa
-                write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
-                  coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
-                  poroelastcoef(1,1,kmato(ispec)) + TWO_THIRDS * poroelastcoef(2,1,kmato(ispec)), &
-                  poroelastcoef(2,1,kmato(ispec))
-              else
-                write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
-                  coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
-                  poroelastcoef(1,1,kmato(ispec)) + poroelastcoef(2,1,kmato(ispec)), &
-                  poroelastcoef(2,1,kmato(ispec))
-              endif
-            enddo
+      do ispec = 1, nspec
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            iglob = ibool(i,j,ispec)
+            if (AXISYM) then ! CHECK kappa
+              write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
+                coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
+                poroelastcoef(1,1,kmato(ispec)) + TWO_THIRDS * poroelastcoef(2,1,kmato(ispec)), &
+                poroelastcoef(2,1,kmato(ispec))
+            else
+              write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
+                coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
+                poroelastcoef(1,1,kmato(ispec)) + poroelastcoef(2,1,kmato(ispec)), &
+                poroelastcoef(2,1,kmato(ispec))
+            endif
           enddo
         enddo
+      enddo
       close(504)
     endif
 
@@ -1252,10 +1291,13 @@
     ! noise movie
     if (NOISE_MOVIE_OUTPUT) then
       call create_mask_noise()
+
       ! prepare array that will hold wavefield snapshots
       noise_output_ncol = 5
       allocate(noise_output_array(noise_output_ncol,nglob), &
                noise_output_rhokl(nglob))
+      noise_output_array(:,:) = 0._CUSTOM_REAL
+      noise_output_rhokl(:) = 0._CUSTOM_REAL
     endif
 
   endif
@@ -1265,708 +1307,10 @@
 
   end subroutine prepare_timerun_noise
 
-
 !
 !-------------------------------------------------------------------------------------
 !
 
-  subroutine prepare_timerun_attenuation()
-
-#ifdef USE_MPI
-  use mpi
-#endif
-
-  use constants, only: IMAIN,TWO,PI,FOUR_THIRDS,TWO_THIRDS,USE_A_STRONG_FORMULATION_FOR_E1
-  use specfem_par
-
-  implicit none
-
-  ! local parameters
-  integer :: i,j,ispec,n,ier
-  ! for shifting of velocities if needed in the case of viscoelasticity
-  double precision :: vp,vs,rhol,mul,lambdal
-  double precision :: qkappal,qmul
-  ! attenuation factors
-  real(kind=CUSTOM_REAL) :: Mu_nu1_sent,Mu_nu2_sent
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: tau_epsilon_nu1_sent,tau_epsilon_nu2_sent
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent, &
-                                                       phi_nu1_sent,phi_nu2_sent
-  real(kind=CUSTOM_REAL), dimension(N_SLS) ::  phinu,tauinvnu,temp,coef
-
-  ! attenuation
-  if (ATTENUATION_VISCOELASTIC) then
-    nspec_ATT_el = nspec
-  else
-    nspec_ATT_el = 1
-  endif
-
-  ! allocate memory variables for attenuation
-  allocate(e1(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
-           e11(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
-           e13(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
-           dux_dxl_old(NGLLX,NGLLZ,nspec_ATT_el), &
-           duz_dzl_old(NGLLX,NGLLZ,nspec_ATT_el), &
-           dux_dzl_plus_duz_dxl_old(NGLLX,NGLLZ,nspec_ATT_el), &
-           A_newmark_nu1(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
-           B_newmark_nu1(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
-           A_newmark_nu2(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
-           B_newmark_nu2(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), stat=ier)
-
-  ! attenuation
-  if (ATTENUATION_VISCOACOUSTIC) then
-    nglob_ATT = nglob
-    nspec_ATT_ac = nspec
-  else
-    nglob_ATT = 1
-    nspec_ATT_ac = 1
-  endif
-
-  allocate(e1_acous_sf(N_SLS,NGLLX,NGLLZ,nspec_ATT_ac), &
-           sum_forces_old(NGLLX,NGLLZ,nspec_ATT_ac), stat=ier)
-
-  if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) then
-
-    allocate(e1_acous(nglob_acoustic,N_SLS), &
-             dot_e1(nglob_acoustic,N_SLS), &
-             A_newmark_e1_sf(1,1,1,1), &
-             B_newmark_e1_sf(1,1,1,1),stat=ier)
-    if (time_stepping_scheme == 1) then
-      allocate(dot_e1_old(nglob_acoustic,N_SLS), &
-               A_newmark_e1(nglob_acoustic,N_SLS), &
-               B_newmark_e1(nglob_acoustic,N_SLS),stat=ier)
-    else
-      allocate(dot_e1_old(1,N_SLS), &
-               A_newmark_e1(1,N_SLS), &
-               B_newmark_e1(1,N_SLS),stat=ier)
-    endif
-
-    if (time_stepping_scheme == 2) then
-      allocate(e1_acous_temp(nglob_acoustic,N_SLS),stat=ier)
-    else
-      allocate(e1_acous_temp(1,N_SLS),stat=ier)
-    endif
-
-  else if (ATTENUATION_VISCOACOUSTIC .and. USE_A_STRONG_FORMULATION_FOR_E1) then
-
-    allocate(e1_acous(1,N_SLS), &
-             e1_acous_temp(1,N_SLS), &
-             dot_e1(1,N_SLS), &
-             dot_e1_old(1,N_SLS), &
-             A_newmark_e1(1,N_SLS), &
-             B_newmark_e1(1,N_SLS),stat=ier)
-    allocate(A_newmark_e1_sf(N_SLS,NGLLX,NGLLZ,nspec), &
-             B_newmark_e1_sf(N_SLS,NGLLX,NGLLZ,nspec),stat=ier)
-
-  else ! no ATTENUATION_VISCOACOUSTIC
-
-    allocate(e1_acous(1,N_SLS), &
-             e1_acous_temp(1,N_SLS), &
-             dot_e1(1,N_SLS), &
-             dot_e1_old(1,N_SLS), &
-             A_newmark_e1(1,N_SLS), &
-             B_newmark_e1(1,N_SLS), &
-             A_newmark_e1_sf(1,1,1,1), &
-             B_newmark_e1_sf(1,1,1,1),stat=ier)
-  endif
-
-  if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
-  e1(:,:,:,:) = 0._CUSTOM_REAL
-  e11(:,:,:,:) = 0._CUSTOM_REAL
-  e13(:,:,:,:) = 0._CUSTOM_REAL
-  dux_dxl_old(:,:,:) = 0._CUSTOM_REAL
-  duz_dzl_old(:,:,:) = 0._CUSTOM_REAL
-  dux_dzl_plus_duz_dxl_old(:,:,:) = 0._CUSTOM_REAL
-
-  e1_acous(:,:) = 0._CUSTOM_REAL
-  e1_acous_sf(:,:,:,:) = 0._CUSTOM_REAL
-
-  dot_e1_old = 0._CUSTOM_REAL
-  dot_e1     = 0._CUSTOM_REAL
-  sum_forces_old = 0._CUSTOM_REAL
-
-  if (time_stepping_scheme == 2) then
-    if (ATTENUATION_VISCOELASTIC) then
-      allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
-      allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
-      allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
-    else
-      allocate(e1_LDDRK(1,1,1,1))
-      allocate(e11_LDDRK(1,1,1,1))
-      allocate(e13_LDDRK(1,1,1,1))
-    endif
-
-    if (ATTENUATION_VISCOACOUSTIC) then
-        allocate(e1_LDDRK_acous(nglob_att,N_SLS))
-    else
-        allocate(e1_LDDRK_acous(1,1))
-    endif
-  else
-    allocate(e1_LDDRK(1,1,1,1))
-    allocate(e11_LDDRK(1,1,1,1))
-    allocate(e13_LDDRK(1,1,1,1))
-
-    allocate(e1_LDDRK_acous(1,1))
-  endif
-  e1_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
-  e11_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
-  e13_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
-
-  e1_LDDRK_acous(:,:) = 0._CUSTOM_REAL
-
-  if (time_stepping_scheme == 3) then
-    allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
-    allocate(e11_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
-    allocate(e13_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
-    allocate(e1_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
-    allocate(e11_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
-    allocate(e13_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
-
-    if (ATTENUATION_VISCOACOUSTIC) then
-            allocate(e1_initial_rk_acous(nglob_att,N_SLS))
-            allocate(e1_force_rk_acous(nglob_att,N_SLS,stage_time_scheme))
-    else
-            allocate(e1_initial_rk_acous(1,1))
-            allocate(e1_force_rk_acous(1,1,1))
-    endif
-  else
-    allocate(e1_initial_rk(1,1,1,1))
-    allocate(e11_initial_rk(1,1,1,1))
-    allocate(e13_initial_rk(1,1,1,1))
-    allocate(e1_force_rk(1,1,1,1,1))
-    allocate(e11_force_rk(1,1,1,1,1))
-    allocate(e13_force_rk(1,1,1,1,1))
-
-    allocate(e1_initial_rk_acous(1,1))
-    allocate(e1_force_rk_acous(1,1,1))
-  endif
-  e1_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
-  e11_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
-  e13_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
-  e1_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
-  e11_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
-  e13_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
-
-  e1_initial_rk_acous(:,:) = 0._CUSTOM_REAL
-  e1_force_rk_acous(:,:,:) = 0._CUSTOM_REAL
-
-  ! attenuation arrays
-  if (.not. assign_external_model) then
-    allocate(already_shifted_velocity(numat),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating attenuation Qkappa,Qmu,.. arrays')
-    already_shifted_velocity(:) = .false.
-  endif
-
-  allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
-           inv_tau_sigma_nu2(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
-           phi_nu1(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
-           phi_nu2(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
-           Mu_nu1(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac)), &
-           Mu_nu2(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac)), &
-! ZX ZX needed for further optimization with nspec_ATT_el replaced with nspec_PML
-           tau_epsilon_nu1(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
-           tau_epsilon_nu2(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
-
-  ! temporary arrays for function argument
-  allocate(tau_epsilon_nu1_sent(N_SLS), &
-           tau_epsilon_nu2_sent(N_SLS), &
-           inv_tau_sigma_nu1_sent(N_SLS), &
-           inv_tau_sigma_nu2_sent(N_SLS), &
-           phi_nu1_sent(N_SLS), &
-           phi_nu2_sent(N_SLS),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating attenuation coefficient arrays')
-
-  ! initialize to dummy values
-  ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
-  inv_tau_sigma_nu1(:,:,:,:) = -1._CUSTOM_REAL
-  inv_tau_sigma_nu2(:,:,:,:) = -1._CUSTOM_REAL
-
-  tau_epsilon_nu1(:,:,:,:) = -1._CUSTOM_REAL
-  tau_epsilon_nu2(:,:,:,:) = -1._CUSTOM_REAL
-
-  phi_nu1(:,:,:,:) = 0._CUSTOM_REAL
-  phi_nu2(:,:,:,:) = 0._CUSTOM_REAL
-
-  ! do not change this, in the case of a viscoacoustic medium the mass matrix is multiplied by this,
-  ! and thus the factor needs to be equal to +1 when QKappa = 9999 i.e. when viscoacousticity is turned off in parts of the medium
-  Mu_nu1(:,:,:) = +1._CUSTOM_REAL
-  Mu_nu2(:,:,:) = +1._CUSTOM_REAL
-
-  ! if source is not a Dirac or Heavyside then ATTENUATION_f0_REFERENCE is f0 of the first source
-  if (.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
-    ATTENUATION_f0_REFERENCE = f0_source(1)
-  endif
-
-  ! setup attenuation
-  if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC) then
-    ! user output
-    if (myrank == 0) then
-      write(IMAIN,*)
-      write(IMAIN,*) 'Preparing attenuation in viscoelastic or viscoacoustic parts of the model:'
-      write(IMAIN,*) '  using external model for Qkappa and Qmu: ',assign_external_model
-      write(IMAIN,*) '  reading velocity at f0                 : ',READ_VELOCITIES_AT_f0
-      write(IMAIN,*) '  using an attenuation reference frequency of ',ATTENUATION_f0_REFERENCE,'Hz'
-      call flush_IMAIN()
-    endif
-
-    ! define the attenuation quality factors.
-    do ispec = 1,nspec
-
-      ! get values for internal meshes
-      if (.not. assign_external_model) then
-        qkappal = QKappa_attenuation(kmato(ispec))
-        qmul = Qmu_attenuation(kmato(ispec))
-        ! if no attenuation in that elastic element
-        if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
-
-        ! determines attenuation factors
-        call attenuation_model(qkappal,qmul,ATTENUATION_f0_REFERENCE,N_SLS, &
-                               tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
-                               tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
-      endif
-
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-
-          ! get values for external meshes
-          if (assign_external_model) then
-
-            qkappal = QKappa_attenuationext(i,j,ispec)
-            qmul = Qmu_attenuationext(i,j,ispec)
-
-            ! if no attenuation in that elastic element
-            if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
-
-            ! determines attenuation factors
-            call attenuation_model(qkappal,qmul,ATTENUATION_f0_REFERENCE,N_SLS, &
-                                   tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
-                                   tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
-          endif
-
-          ! stores attenuation values
-          inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
-          tau_epsilon_nu1(i,j,ispec,:) = tau_epsilon_nu1_sent(:)
-          phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
-
-          inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:)
-          tau_epsilon_nu2(i,j,ispec,:) = tau_epsilon_nu2_sent(:)
-          phi_nu2(i,j,ispec,:) = phi_nu2_sent(:)
-
-          Mu_nu1(i,j,ispec) = Mu_nu1_sent
-          Mu_nu2(i,j,ispec) = Mu_nu2_sent
-
-          if (ATTENUATION_VISCOACOUSTIC .and. USE_A_STRONG_FORMULATION_FOR_E1 .and. time_stepping_scheme == 1 ) then
-            phinu(:)    = phi_nu1(i,j,ispec,:)
-            tauinvnu(:) = inv_tau_sigma_nu1(i,j,ispec,:)
-            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
-            coef(:)     = (1.d0 - temp(:)) / tauinvnu(:)
-            A_newmark_e1_sf(:,i,j,ispec) = temp(:)
-            B_newmark_e1_sf(:,i,j,ispec) = phinu(:) * coef(:)
-          endif
-
-          if (ATTENUATION_VISCOELASTIC .and. time_stepping_scheme == 1 ) then
-            phinu(:)    = phi_nu1(i,j,ispec,:)
-            tauinvnu(:) = inv_tau_sigma_nu1(i,j,ispec,:)
-            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
-            coef(:)     = (1.d0 - temp(:)) / tauinvnu(:)
-            A_newmark_nu1(:,i,j,ispec) = temp(:)
-            B_newmark_nu1(:,i,j,ispec) = phinu(:) * coef(:)
-
-            phinu(:)    = phi_nu2(i,j,ispec,:)
-            tauinvnu(:) = inv_tau_sigma_nu2(i,j,ispec,:)
-            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
-            coef(:)     = (1.d0 - temp(:)) / tauinvnu(:)
-            A_newmark_nu2(:,i,j,ispec) = temp(:)
-            B_newmark_nu2(:,i,j,ispec) = phinu(:) * coef(:)
-          endif
-
-          ! shifts velocities
-          if (READ_VELOCITIES_AT_f0) then
-
-            ! safety check
-            if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec)) &
-              call stop_the_code('READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic materials for now')
-
-            if (ispec_is_acoustic(ispec)) then
-              do n = 1,100
-                print *,'WARNING: READ_VELOCITIES_AT_f0 in viscoacoustic elements may imply having to rebuild the mass matrix &
-                   &with the shifted velocities, since the fluid mass matrix contains Kappa; not implemented yet, BEWARE!!'
-              enddo
-            endif
-
-            if (assign_external_model) then
-              ! external mesh model
-              rhol = dble(rhoext(i,j,ispec))
-              vp = dble(vpext(i,j,ispec))
-              vs = dble(vsext(i,j,ispec))
-
-              ! shifts vp and vs (according to f0 and attenuation band)
-              call shift_velocities_from_f0(vp,vs,rhol, &
-                                    ATTENUATION_f0_REFERENCE,N_SLS, &
-                                    tau_epsilon_nu1_sent,tau_epsilon_nu2_sent,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
-
-              ! stores shifted values
-              vpext(i,j,ispec) = vp
-              vsext(i,j,ispec) = vs
-            else
-              ! internal mesh
-              n = kmato(ispec)
-              if (.not. already_shifted_velocity(n)) then
-                rhol = density(1,n)
-                lambdal = poroelastcoef(1,1,n)
-                mul = poroelastcoef(2,1,n)
-
-                vp = sqrt((lambdal + TWO * mul) / rhol)
-                vs = sqrt(mul/rhol)
-
-                ! shifts vp and vs
-                call shift_velocities_from_f0(vp,vs,rhol, &
-                                      ATTENUATION_f0_REFERENCE,N_SLS, &
-                                      tau_epsilon_nu1_sent,tau_epsilon_nu2_sent,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
-
-                ! stores shifted mu,lambda
-                mul = rhol * vs*vs
-                lambdal = rhol * vp*vp - TWO * mul
-
-                poroelastcoef(1,1,n) = lambdal
-                poroelastcoef(2,1,n) = mul
-                poroelastcoef(3,1,n) = lambdal + TWO * mul
-
-                already_shifted_velocity(n) = .true.
-              endif
-            endif
-          endif
-        enddo
-      enddo
-    enddo
-
-    if (PML_BOUNDARY_CONDITIONS) call prepare_timerun_attenuation_with_PML()
-
-  endif ! of if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC)
-
-  ! allocate memory variables for viscous attenuation (poroelastic media)
-  if (ATTENUATION_PORO_FLUID_PART) then
-    allocate(rx_viscous(NGLLX,NGLLZ,nspec))
-    allocate(rz_viscous(NGLLX,NGLLZ,nspec))
-    allocate(viscox(NGLLX,NGLLZ,nspec))
-    allocate(viscoz(NGLLX,NGLLZ,nspec))
-    ! initialize memory variables for attenuation
-    rx_viscous(:,:,:) = 0.d0
-    rz_viscous(:,:,:) = 0.d0
-    viscox(:,:,:) = 0.d0
-    viscoz(:,:,:) = 0.d0
-
-    if (time_stepping_scheme == 2) then
-      allocate(rx_viscous_LDDRK(NGLLX,NGLLZ,nspec))
-      allocate(rz_viscous_LDDRK(NGLLX,NGLLZ,nspec))
-      rx_viscous_LDDRK(:,:,:) = 0.d0
-      rz_viscous_LDDRK(:,:,:) = 0.d0
-    endif
-
-    if (time_stepping_scheme == 3) then
-      allocate(rx_viscous_initial_rk(NGLLX,NGLLZ,nspec))
-      allocate(rz_viscous_initial_rk(NGLLX,NGLLZ,nspec))
-      allocate(rx_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
-      allocate(rz_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
-      rx_viscous_initial_rk(:,:,:) = 0.d0
-      rz_viscous_initial_rk(:,:,:) = 0.d0
-      rx_viscous_force_RK(:,:,:,:) = 0.d0
-      rz_viscous_force_RK(:,:,:,:) = 0.d0
-    endif
-
-    ! precompute Runge Kutta coefficients if viscous attenuation
-    ! viscous attenuation is implemented following the memory variable formulation of
-    ! J. M. Carcione Wave fields in real media: wave propagation in anisotropic,
-    ! anelastic and porous media, Elsevier, p. 304-305, 2007
-    theta_e = (sqrt(Q0_poroelastic**2+1.d0) +1.d0)/(2.d0*pi*freq0_poroelastic*Q0_poroelastic)
-    theta_s = (sqrt(Q0_poroelastic**2+1.d0) -1.d0)/(2.d0*pi*freq0_poroelastic*Q0_poroelastic)
-
-    thetainv = - 1.d0 / theta_s
-    alphaval = 1.d0 + deltat*thetainv + deltat**2*thetainv**2 / 2.d0 &
-                    + deltat**3*thetainv**3 / 6.d0 + deltat**4*thetainv**4 / 24.d0
-    betaval = deltat / 2.d0 + deltat**2*thetainv / 3.d0 + deltat**3*thetainv**2 / 8.d0 + deltat**4*thetainv**3 / 24.d0
-    gammaval = deltat / 2.d0 + deltat**2*thetainv / 6.d0 + deltat**3*thetainv**2 / 24.d0
-  endif
-
-  ! synchronizes all processes
-  call synchronize_all()
-
-  end subroutine prepare_timerun_attenuation
-
-!
-!-------------------------------------------------------------------------------------
-!
-
-  subroutine prepare_material_arrays()
-
-#ifdef USE_MPI
-  use mpi
-#endif
-
-  use constants, only: IMAIN,FOUR_THIRDS,TWO_THIRDS
-  use specfem_par
-
-  implicit none
-
-  ! local parameters
-  integer :: i,j,ispec,ier
-  ! for shifting of velocities if needed in the case of viscoelasticity
-  double precision :: vp,vs,rhol,mul,lambdal,kappal
-
-  ! sets new material properties
-  ! note: velocities might have been shifted by attenuation
-  if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Preparing material arrays'
-    call flush_IMAIN()
-  endif
-
-  ! allocates material arrays
-  allocate(kappastore(NGLLX,NGLLZ,nspec), &
-           mustore(NGLLX,NGLLZ,nspec), &
-           rhostore(NGLLX,NGLLZ,nspec), &
-           rho_vp(NGLLX,NGLLZ,nspec), &
-           rho_vs(NGLLX,NGLLZ,nspec),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating material arrays')
-
-  do ispec = 1,nspec
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-        if (assign_external_model) then
-          ! external model
-          rhol = rhoext(i,j,ispec)
-          vp = vpext(i,j,ispec)
-          vs = vsext(i,j,ispec)
-          ! determins mu and kappa
-          mul = rhol * vs * vs
-          if (AXISYM) then ! CHECK kappa
-            kappal = rhol * vp * vp - FOUR_THIRDS * mul
-          else
-            kappal = rhol * vp * vp - mul
-          endif
-        else
-          ! internal mesh
-          rhol = density(1,kmato(ispec))
-          lambdal = poroelastcoef(1,1,kmato(ispec))  ! lambdal_unrelaxed_elastic
-          mul = poroelastcoef(2,1,kmato(ispec)) ! mul_unrelaxed_elastic
-          if (AXISYM) then ! CHECK kappa
-            kappal = lambdal + TWO_THIRDS * mul
-            vp = sqrt((kappal + FOUR_THIRDS * mul)/rhol)
-          else
-            kappal = lambdal + mul
-            vp = sqrt((kappal + mul)/rhol)
-          endif
-        endif
-
-        ! stores moduli
-        rhostore(i,j,ispec) = rhol
-        mustore(i,j,ispec) = mul
-        kappastore(i,j,ispec) = kappal
-
-        ! stores density times vp and vs
-        vs = sqrt(mul/rhol)
-
-        rho_vp(i,j,ispec) = rhol * vp
-        rho_vs(i,j,ispec) = rhol * vs
-      enddo
-    enddo
-  enddo
-
-  end subroutine prepare_material_arrays
-
-!
-!-------------------------------------------------------------------------------------
-!
-  subroutine prepare_timerun_attenuation_with_PML()
-
-  use constants
-  use specfem_par
-
-  double precision, dimension(2*N_SLS) :: tauinvnu
-  double precision, dimension(2*N_SLS + 1) :: tauinvplusone
-  double precision :: qkappal,qmul
-  double precision :: d_x, d_z, K_x, K_z, alpha_x, alpha_z, beta_x, beta_z
-  double precision :: const_for_separation_two
-
-  integer :: i,j,ispec,i_sls,ispec_PML
-
-  const_for_separation_two = min_distance_between_CPML_parameter * 2.d0
-  do ispec = 1,nspec
-    ispec_PML = spec_to_PML(ispec)
-    if (ispec_is_PML(ispec)) then
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          if (.not. assign_external_model) then
-            qkappal = QKappa_attenuation(kmato(ispec))
-            qmul = Qmu_attenuation(kmato(ispec))
-          else
-            qkappal = QKappa_attenuationext(i,j,ispec)
-            qmul = Qmu_attenuationext(i,j,ispec)
-          endif
-          if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
-          K_x = K_x_store(i,j,ispec_PML)
-          d_x = d_x_store(i,j,ispec_PML)
-          alpha_x = alpha_x_store(i,j,ispec_PML)
-
-          K_z = K_z_store(i,j,ispec_PML)
-          d_z = d_z_store(i,j,ispec_PML)
-          alpha_z = alpha_z_store(i,j,ispec_PML)
-
-          if (ATTENUATION_VISCOELASTIC) then
-            if (region_CPML(ispec) == CPML_XZ) then
-              if (ispec_is_elastic(ispec)) then
-                do i_sls = 1,N_SLS
-                  tauinvnu(i_sls) = inv_tau_sigma_nu1(i,j,ispec,i_sls)
-                  tauinvnu(i_sls+N_SLS) = inv_tau_sigma_nu2(i,j,ispec,i_sls)
-                enddo
-
-                call tauinvnu_arange_from_lt_to_gt(2*N_SLS,tauinvnu)
-
-                do i_sls = 1,2*N_SLS
-                  if (abs(alpha_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                    alpha_x = tauinvnu(i_sls) + const_for_separation_two
-                  endif
-                  if (abs(alpha_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                    call stop_the_code('error in separation of alpha_x, tauinvnu')
-                  endif
-                enddo
-                do i_sls = 1,2*N_SLS
-                  tauinvplusone(i_sls) = tauinvnu(i_sls)
-                enddo
-                tauinvplusone(2*N_SLS + 1) = alpha_x
-
-                call tauinvnu_arange_from_lt_to_gt(2 * N_SLS + 1,tauinvplusone)
-
-                do i_sls = 1,2*N_SLS + 1
-                  if (abs(alpha_z - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
-                    alpha_z = tauinvplusone(i_sls) + const_for_separation_two
-                  endif
-                  if (abs(alpha_z - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
-                    call stop_the_code('error in separation of alpha_z, alpha_x,tauinvnu')
-                  endif
-                enddo
-
-                beta_z = alpha_z + d_z / K_z
-
-                do i_sls = 1,2*N_SLS + 1
-                  if (abs(beta_z - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
-                    beta_z = tauinvplusone(i_sls) + const_for_separation_two
-                  endif
-                  if (abs(beta_z - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
-                    call stop_the_code('error in separation of beta_z, alpha_x,tauinvnu')
-                  endif
-                enddo
-
-                do i_sls = 1,2*N_SLS
-                  tauinvplusone(i_sls) = tauinvnu(i_sls)
-                enddo
-                tauinvplusone(2*N_SLS + 1) = alpha_z
-
-                call tauinvnu_arange_from_lt_to_gt(2 * N_SLS + 1,tauinvplusone)
-                beta_x = alpha_x + d_x / K_x
-                do i_sls = 1,2*N_SLS + 1
-                  if (abs(beta_x - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
-                    beta_x = tauinvplusone(i_sls) + const_for_separation_two
-                  endif
-                  if (abs(beta_x - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
-                    call stop_the_code('error in separation of beta_x, alpha_z,tauinvnu')
-                  endif
-                enddo
-
-                d_x = (beta_x - alpha_x) * K_x
-                d_z = (beta_z - alpha_z) * K_z
-
-                d_x_store(i,j,ispec_PML) = d_x
-                alpha_x_store(i,j,ispec_PML) = alpha_x
-                d_z_store(i,j,ispec_PML) = d_z
-                alpha_z_store(i,j,ispec_PML) = alpha_z
-
-              endif
-            endif
-
-            if (region_CPML(ispec) == CPML_X_ONLY) then
-              do i_sls = 1,2*N_SLS
-                if (abs(alpha_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                  alpha_x = tauinvnu(i_sls) + const_for_separation_two
-                endif
-                if (abs(alpha_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                  call stop_the_code('error in separation of alpha_x, tauinvnu')
-                endif
-              enddo
-              beta_x = alpha_x + d_x / K_x
-              do i_sls = 1,2*N_SLS
-                if (abs(beta_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                  beta_x = tauinvnu(i_sls) + const_for_separation_two
-                endif
-                if (abs(beta_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                  call stop_the_code('error in separation of beta_x, tauinvnu')
-                endif
-              enddo
-
-              d_x = (beta_x - alpha_x) * K_x
-              d_x_store(i,j,ispec_PML) = d_x
-              alpha_x_store(i,j,ispec_PML) = alpha_x
-
-            endif
-
-            if (region_CPML(ispec) == CPML_Z_ONLY) then
-              do i_sls = 1,2*N_SLS
-                if (abs(alpha_z - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                  alpha_z = tauinvnu(i_sls) + const_for_separation_two
-                endif
-                if (abs(alpha_z - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                  call stop_the_code('error in separation of alpha_z, tauinvnu')
-                endif
-              enddo
-              beta_z = alpha_z + d_z / K_z
-              do i_sls = 1,2*N_SLS
-                if (abs(beta_z - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                  beta_z = tauinvnu(i_sls) + const_for_separation_two
-                endif
-                if (abs(beta_z - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                  call stop_the_code('error in separation of beta_z, tauinvnu')
-                endif
-              enddo
-
-              d_z = (beta_z - alpha_z) * K_z
-              d_z_store(i,j,ispec_PML) = d_z
-              alpha_z_store(i,j,ispec_PML) = alpha_z
-
-            endif
-          endif
-        enddo
-      enddo
-    endif
-  enddo
-
-  end subroutine prepare_timerun_attenuation_with_PML
-!
-!-------------------------------------------------------------------------------------
-!
-  subroutine tauinvnu_arange_from_lt_to_gt(siz,tauinvnu)
-
-  implicit none
-  integer, intent(in) :: siz
-  double precision, dimension(siz), intent(inout) :: tauinvnu
-
-  !local parameters
-  integer :: i,j
-  double precision :: temp
-
-  do i= 1,siz
-    do j= i+1,siz
-      if (tauinvnu(i) > tauinvnu(j)) then
-        temp = tauinvnu(i)
-        tauinvnu(i) = tauinvnu(j)
-        tauinvnu(j) =  temp
-      endif
-    enddo
-  enddo
-
-  end subroutine tauinvnu_arange_from_lt_to_gt
-!
-!-------------------------------------------------------------------------------------
-!
   subroutine prepare_timerun_no_backward_reconstruction()
 
   use constants
@@ -1980,13 +1324,16 @@
 
   !checks if anything to do
   if (.not. NO_BACKWARD_RECONSTRUCTION) then
+    ! dummy
     allocate(no_backward_acoustic_buffer(1),no_backward_displ_buffer(1,1),no_backward_accel_buffer(1,1))
     return
   endif
+
   !safety checks
-  if (time_stepping_scheme /= 1) call exit_MPI(myrank,'for NO_BACKWARD_RECONSTRUCTION, only Newmark scheme has implemented ')
-  if (UNDO_ATTENUATION_AND_OR_PML) call exit_MPI(myrank, &
-                                      'NO_BACKWARD_RECONSTRUCTION is not compatible with UNDO_ATTENUATION_AND_OR_PML')
+  if (time_stepping_scheme /= 1) &
+    call exit_MPI(myrank,'for NO_BACKWARD_RECONSTRUCTION, only Newmark scheme has implemented ')
+  if (UNDO_ATTENUATION_AND_OR_PML) &
+    call exit_MPI(myrank,'NO_BACKWARD_RECONSTRUCTION is not compatible with UNDO_ATTENUATION_AND_OR_PML')
 
   ! gets the number of frames to store/read in the NO BACKWARD RECONSTRUCTION
   ! database
@@ -2001,6 +1348,7 @@
     if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'Preparing NO_BACKWARD_RECONSTRUCTION :'
+      write(IMAIN,*) '  number of steps between compute kernels: ',NSTEP_BETWEEN_COMPUTE_KERNELS
       write(IMAIN,*) '  number of frames to save :',no_backward_nframes
       if (any_acoustic) then
         sizeval = dble(nglob) * dble(no_backward_nframes) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
@@ -2015,14 +1363,28 @@
       write(IMAIN,*)
       call flush_IMAIN()
     endif ! myrank
-  endif ! SAVE_FORWARD .or. SIMULATION_TYPE == 3
 
-  ! deallocates arrays that won't be used with this mode
-  if (SIMULATION_TYPE == 3) then
-    if (any_acoustic) deallocate(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,stat=ier)
-    if (any_elastic) deallocate(b_veloc_elastic,b_accel_elastic,stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'error deallocating b_accel_elastic etc')
-  endif
+    ! checks integer overflow
+    if (any_acoustic) then
+      !offset = CUSTOM_REAL * nglob * (no_backward_Nframes - no_backward_iframe) + 1
+      ! checks
+      if (dble(nglob) * dble(no_backward_Nframes - 1) > 2147483646.d0 / dble(CUSTOM_REAL) ) &
+        call exit_MPI(myrank,'Error no_backward buffer offset might exceed integer limit')
+    endif
+    if (any_elastic) then
+      if (APPROXIMATE_HESS_KL) then
+        !offset = 2 * CUSTOM_REAL * (NDIM*nglob) * (no_backward_Nframes - no_backward_iframe) + 1
+        ! checks
+        if (2.d0 * dble(NDIM) * dble(nglob) * dble(no_backward_Nframes - 1) > 2147483646.d0 / dble(CUSTOM_REAL) ) &
+          call exit_MPI(myrank,'Error no_backward buffer offset might exceed integer limit')
+      else
+        !offset = CUSTOM_REAL * (NDIM*nglob) * (no_backward_Nframes - no_backward_iframe) + 1
+        ! checks
+        if (dble(NDIM) * dble(nglob) * dble(no_backward_Nframes - 1) > 2147483646.d0 / dble(CUSTOM_REAL) ) &
+          call exit_MPI(myrank,'Error no_backward buffer offset might exceed integer limit')
+      endif
+    endif
+  endif ! SAVE_FORWARD .or. SIMULATION_TYPE == 3
 
   ! allocates buffers for I/O
   if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
@@ -2031,6 +1393,7 @@
     else
       allocate(no_backward_acoustic_buffer(1),stat=ier)
     endif
+
     if (any_elastic) then
       allocate(no_backward_displ_buffer(NDIM,nglob),stat=ier)
       if (APPROXIMATE_HESS_KL) then
@@ -2045,3 +1408,289 @@
   endif
 
   end subroutine prepare_timerun_no_backward_reconstruction
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_Stacey()
+
+  use constants, only: IEDGE1,IEDGE2,IEDGE3,IEDGE4,IMAIN
+  use specfem_par
+
+  implicit none
+
+  integer :: i,j,ispec,ispecabs,ier,iedge,num_all
+  real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D
+  logical :: has_abs_edge
+
+  ! sets up arrays for stacey boundary routines
+  if (STACEY_ABSORBING_CONDITIONS) then
+    ! gets total number of boundary faces/edges
+    call sum_all_i(num_abs_boundary_faces,num_all)
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'Preparing Stacey boundaries'
+      write(IMAIN,*) '  total number of absorbing boundary faces/edges: ',num_all
+      call flush_IMAIN()
+    endif
+
+    ! stacey boundaries
+    if (num_abs_boundary_faces > 0) then
+      allocate(abs_boundary_ij(2,NGLLX,num_abs_boundary_faces), &
+               abs_boundary_jacobian1Dw(NGLLX,num_abs_boundary_faces), &
+               abs_boundary_normal(NDIM,NGLLX,num_abs_boundary_faces),stat=ier)
+      if (ier /= 0) stop 'error allocating array abs_boundary_ij etc.'
+    else
+      ! dummy
+      allocate(abs_boundary_ij(1,1,1), &
+               abs_boundary_jacobian1Dw(1,1), &
+               abs_boundary_normal(1,1,1),stat=ier)
+      if (ier /= 0) stop 'error allocating array abs_boundary_ij etc.'
+    endif
+    abs_boundary_ij(:,:,:) = 0; abs_boundary_jacobian1Dw(:,:) = 0.0_CUSTOM_REAL
+    abs_boundary_normal(:,:,:) = 0.0_CUSTOM_REAL
+
+    ! needed for gpu boundary array storage
+    if (num_abs_boundary_faces > 0) then
+      allocate(edge_abs(num_abs_boundary_faces),stat=ier)
+      if (ier /= 0) stop 'error allocating array edge_abs etc.'
+    else
+      ! dummy
+      allocate(edge_abs(1),stat=ier)
+      if (ier /= 0) stop 'error allocating array edge_abs etc.'
+    endif
+    edge_abs(:) = 0
+
+    do ispecabs = 1,num_abs_boundary_faces
+      ispec = abs_boundary_ispec(ispecabs)
+
+      ! checks if edge has correct absorbing flags
+      has_abs_edge = .false.
+      do iedge = 1,4
+        if (codeabs(iedge,ispecabs)) then
+          if (has_abs_edge) then
+            ! boundary face has already been set, should not occur
+            print *,'Error: absorbing boundary element ',ispec,'has edge ',ispecabs, &
+                    ' with multiple flags l/r/bottom/top:',codeabs(:,ispecabs)
+            stop 'Invalid absorbing edge found'
+          else
+            has_abs_edge = .true.
+          endif
+        endif
+      enddo
+      ! must have at least one absorbing flag set
+      if (.not. has_abs_edge) then
+        print *,'Error: absorbing boundary element ',ispec,'has edge ',ispecabs, &
+                ' with multiple flags l/r/bottom/top:',codeabs(:,ispecabs)
+        stop 'Invalid absorbing edge with no flags found'
+      endif
+
+      !--- left absorbing boundary
+      if (codeabs(IEDGE4,ispecabs)) then
+        i = 1
+        do j = 1,NGLLZ
+          abs_boundary_ij(1,j,ispecabs) = i
+          abs_boundary_ij(2,j,ispecabs) = j
+
+          xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+          zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+          jacobian1D = sqrt(xgamma**2 + zgamma**2)
+
+          abs_boundary_normal(1,j,ispecabs) = - zgamma / jacobian1D
+          abs_boundary_normal(2,j,ispecabs) = + xgamma / jacobian1D
+
+          abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
+
+          edge_abs(ispecabs) = 4
+        enddo
+        ! note: for elastic elements, edges are looped over the full range, i.e. from 1 to NGLLX/NGLLY/NGLLZ.
+        !       for acoustic & poroelastic elements however, common points on coupling interfaces are removed
+        !       by looping only over ibegin_edge* to iend_edge* ranges.
+        !       here, we assign a value of NGLL* + 1 to indicate such duplicate points on edges.
+        !       this will avoid the need to check if the edge is in an acoustic/elastic/poroelastic element.
+        !
+        ! uses NGLLZ+1 to indicate points which duplicate contributions and can be left out
+        if (ispec_is_acoustic(ispec)) then
+          if (ibegin_edge4(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = NGLLZ+1
+          if (iend_edge4(ispecabs) == NGLLZ-1) abs_boundary_ij(2,NGLLZ,ispecabs) = NGLLZ+1
+        endif
+        if (ispec_is_poroelastic(ispec)) then
+          if (ibegin_edge4_poro(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = NGLLZ+1
+          if (iend_edge4_poro(ispecabs) == NGLLZ-1) abs_boundary_ij(2,NGLLZ,ispecabs) = NGLLZ+1
+        endif
+      endif
+
+      !--- right absorbing boundary
+      if (codeabs(IEDGE2,ispecabs)) then
+        i = NGLLX
+        do j = 1,NGLLZ
+          abs_boundary_ij(1,j,ispecabs) = i
+          abs_boundary_ij(2,j,ispecabs) = j
+
+          xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+          zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+          jacobian1D = sqrt(xgamma**2 + zgamma**2)
+
+          abs_boundary_normal(1,j,ispecabs) = + zgamma / jacobian1D
+          abs_boundary_normal(2,j,ispecabs) = - xgamma / jacobian1D
+
+          abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
+
+          edge_abs(ispecabs) = 2
+        enddo
+        ! uses NGLLZ+1 to indicate points which duplicate contributions and can be left out
+        if (ispec_is_acoustic(ispec)) then
+          if (ibegin_edge2(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = NGLLZ+1
+          if (iend_edge2(ispecabs) == NGLLZ-1) abs_boundary_ij(2,NGLLZ,ispecabs) = NGLLZ+1
+        endif
+        if (ispec_is_poroelastic(ispec)) then
+          if (ibegin_edge2_poro(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = NGLLZ+1
+          if (iend_edge2_poro(ispecabs) == NGLLZ-1) abs_boundary_ij(2,NGLLZ,ispecabs) = NGLLZ+1
+        endif
+      endif
+
+      !--- bottom absorbing boundary
+      if (codeabs(IEDGE1,ispecabs)) then
+        j = 1
+        do i = 1,NGLLX
+          abs_boundary_ij(1,i,ispecabs) = i
+          abs_boundary_ij(2,i,ispecabs) = j
+
+          xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+          zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+          jacobian1D = sqrt(xxi**2 + zxi**2)
+
+          abs_boundary_normal(1,i,ispecabs) = + zxi / jacobian1D
+          abs_boundary_normal(2,i,ispecabs) = - xxi / jacobian1D
+
+          abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
+
+          edge_abs(ispecabs) = 1
+        enddo
+        ! uses NGLLX+1 to indicate points which duplicate contributions and can be left out
+        if (ispec_is_acoustic(ispec)) then
+          if (ibegin_edge1(ispecabs) == 2) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
+          if (iend_edge1(ispecabs) == NGLLX-1) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
+        endif
+        if (ispec_is_poroelastic(ispec)) then
+          if (ibegin_edge1_poro(ispecabs) == 2) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
+          if (iend_edge1_poro(ispecabs) == NGLLX-1) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
+        endif
+        ! exclude duplicate points on corners (elements with left/right and bottom/top edge on boundary)
+        if (codeabs_corner(1,ispecabs)) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
+        if (codeabs_corner(2,ispecabs)) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
+      endif
+
+      !--- top absorbing boundary
+      if (codeabs(IEDGE3,ispecabs)) then
+        j = NGLLZ
+        do i = 1,NGLLX
+          abs_boundary_ij(1,i,ispecabs) = i
+          abs_boundary_ij(2,i,ispecabs) = j
+
+          xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+          zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+          jacobian1D = sqrt(xxi**2 + zxi**2)
+
+          abs_boundary_normal(1,i,ispecabs) = - zxi / jacobian1D
+          abs_boundary_normal(2,i,ispecabs) = + xxi / jacobian1D
+
+          abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
+
+          edge_abs(ispecabs) = 3
+        enddo
+        ! uses NGLLX+1 to indicate points which duplicate contributions and can be left out
+        if (ispec_is_acoustic(ispec)) then
+          if (ibegin_edge3(ispecabs) == 2) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
+          if (iend_edge3(ispecabs) == NGLLX-1) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
+        endif
+        if (ispec_is_poroelastic(ispec)) then
+          if (ibegin_edge3_poro(ispecabs) == 2) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
+          if (iend_edge3_poro(ispecabs) == NGLLX-1) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
+        endif
+        ! exclude duplicate points on corners (elements with left/right and bottom/top edge on boundary)
+        if (codeabs_corner(3,ispecabs)) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
+        if (codeabs_corner(4,ispecabs)) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
+      endif
+    enddo
+  else
+    ! dummy allocation
+    allocate(abs_boundary_ij(1,1,1), &
+             abs_boundary_jacobian1Dw(1,1), &
+             abs_boundary_normal(1,1,1), &
+             edge_abs(1),stat=ier)
+    if (ier /= 0) stop 'error allocating dummy array abs_boundary_ij etc.'
+  endif ! STACEY_ABSORBING_CONDITIONS
+
+  ! allocates arrays for backward field
+  if (anyabs .and. STACEY_ABSORBING_CONDITIONS .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) then
+    ! files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
+    ! elastic domains
+    if (any_elastic) then
+      allocate(b_absorb_elastic_left(NDIM,NGLLZ,nspec_left,NSTEP))
+      allocate(b_absorb_elastic_right(NDIM,NGLLZ,nspec_right,NSTEP))
+      allocate(b_absorb_elastic_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
+      allocate(b_absorb_elastic_top(NDIM,NGLLX,nspec_top,NSTEP))
+      b_absorb_elastic_left(:,:,:,:) = 0.0_CUSTOM_REAL; b_absorb_elastic_right(:,:,:,:) = 0.0_CUSTOM_REAL
+      b_absorb_elastic_bottom(:,:,:,:) = 0.0_CUSTOM_REAL; b_absorb_elastic_top(:,:,:,:) = 0.0_CUSTOM_REAL
+    endif
+    ! poroelastic domains
+    if (any_poroelastic) then
+      allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_left,NSTEP))
+      allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_right,NSTEP))
+      allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
+      allocate(b_absorb_poro_s_top(NDIM,NGLLX,nspec_top,NSTEP))
+      allocate(b_absorb_poro_w_left(NDIM,NGLLZ,nspec_left,NSTEP))
+      allocate(b_absorb_poro_w_right(NDIM,NGLLZ,nspec_right,NSTEP))
+      allocate(b_absorb_poro_w_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
+      allocate(b_absorb_poro_w_top(NDIM,NGLLX,nspec_top,NSTEP))
+      b_absorb_poro_s_left(:,:,:,:) = 0.0_CUSTOM_REAL; b_absorb_poro_s_right(:,:,:,:) = 0.0_CUSTOM_REAL
+      b_absorb_poro_s_bottom(:,:,:,:) = 0.0_CUSTOM_REAL; b_absorb_poro_s_top(:,:,:,:) = 0.0_CUSTOM_REAL
+      b_absorb_poro_w_left(:,:,:,:) = 0.0_CUSTOM_REAL; b_absorb_poro_w_right(:,:,:,:) = 0.0_CUSTOM_REAL
+      b_absorb_poro_w_bottom(:,:,:,:) = 0.0_CUSTOM_REAL; b_absorb_poro_w_top(:,:,:,:) = 0.0_CUSTOM_REAL
+    endif
+    ! acoustic domains
+    if (any_acoustic) then
+      allocate(b_absorb_acoustic_left(NGLLZ,nspec_left,NSTEP))
+      allocate(b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP))
+      allocate(b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP))
+      allocate(b_absorb_acoustic_top(NGLLX,nspec_top,NSTEP))
+      b_absorb_acoustic_left(:,:,:) = 0.0_CUSTOM_REAL; b_absorb_acoustic_right(:,:,:) = 0.0_CUSTOM_REAL
+      b_absorb_acoustic_bottom(:,:,:) = 0.0_CUSTOM_REAL; b_absorb_acoustic_top(:,:,:) = 0.0_CUSTOM_REAL
+    endif
+  else
+    ! dummy arrays
+    ! elastic domains
+    if (.not. allocated(b_absorb_elastic_left)) then
+      allocate(b_absorb_elastic_left(1,1,1,1))
+      allocate(b_absorb_elastic_right(1,1,1,1))
+      allocate(b_absorb_elastic_bottom(1,1,1,1))
+      allocate(b_absorb_elastic_top(1,1,1,1))
+    endif
+    ! poroelastic domains
+    if (.not. allocated(b_absorb_poro_s_left)) then
+      allocate(b_absorb_poro_s_left(1,1,1,1))
+      allocate(b_absorb_poro_s_right(1,1,1,1))
+      allocate(b_absorb_poro_s_bottom(1,1,1,1))
+      allocate(b_absorb_poro_s_top(1,1,1,1))
+      allocate(b_absorb_poro_w_left(1,1,1,1))
+      allocate(b_absorb_poro_w_right(1,1,1,1))
+      allocate(b_absorb_poro_w_bottom(1,1,1,1))
+      allocate(b_absorb_poro_w_top(1,1,1,1))
+    endif
+    ! acoustic domains
+    if (.not. allocated(b_absorb_acoustic_left)) then
+      allocate(b_absorb_acoustic_left(1,1,1))
+      allocate(b_absorb_acoustic_right(1,1,1))
+      allocate(b_absorb_acoustic_bottom(1,1,1))
+      allocate(b_absorb_acoustic_top(1,1,1))
+    endif
+  endif
+
+  ! done
+  call synchronize_all()
+
+  end subroutine prepare_timerun_Stacey

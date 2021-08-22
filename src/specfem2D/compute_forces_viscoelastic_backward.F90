@@ -36,20 +36,21 @@
 
   ! compute forces for the elastic elements
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
-    ONE,TWO,PI,TINYVAL,ALPHA_LDDRK,BETA_LDDRK
+    ONE,TWO,PI,TINYVAL,ALPHA_LDDRK,BETA_LDDRK,ALPHA_RK4,BETA_RK4
 
   use specfem_par, only: nglob,nspec,assign_external_model,P_SV, &
                          ATTENUATION_VISCOELASTIC,nspec_ATT,N_SLS, &
                          ibool,kmato,ispec_is_elastic, &
                          poroelastcoef,xix,xiz,gammax,gammaz, &
-                         jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
-                         ispec_is_anisotropic,anisotropy, &
+                         jacobian,rho_vpstore,mustore,rhostore, &
+                         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
+                         ispec_is_anisotropic,anisotropycoef, &
                          e1_LDDRK,e11_LDDRK,e13_LDDRK, &
                          e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                          inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,N_SLS, &
-                         deltat,coord, &
+                         DT,deltat,coord, &
                          time_stepping_scheme,i_stage,ispec_is_acoustic
 
   ! overlapping communication
@@ -99,7 +100,7 @@
 
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
-    lambdalplusmul_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,cpl,csl,rhol
+    lambdalplusmul_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,cpl,rhol
 
   ! for attenuation
   real(kind=CUSTOM_REAL) :: phinu1,phinu2,theta_n_u,theta_nsub1_u
@@ -154,14 +155,15 @@
             ! Shumin Wang, Robert Lee, and Fernando L. Teixeira,
             ! Anisotropic-medium PML for vector FETD with modified basis functions,
             ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
-            if (time_stepping_scheme == 1) then
+            select case(time_stepping_scheme)
+            case (1)
               ! Newmark
-              call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
+              call compute_coef_convolution(tauinvnu1,DT,coef0,coef1,coef2)
 
               e1(i,j,ispec,i_sls) = coef0 * e1(i,j,ispec,i_sls) + &
                                     phinu1 * (coef1 * theta_n_u + coef2 * theta_nsub1_u)
 
-              call compute_coef_convolution(tauinvnu2,deltat,coef0,coef1,coef2)
+              call compute_coef_convolution(tauinvnu2,DT,coef0,coef1,coef2)
 
               e11(i,j,ispec,i_sls) = coef0 * e11(i,j,ispec,i_sls) + &
                                      phinu2 * (coef1 * (dux_dxl_n(i,j,ispec)-theta_n_u/TWO) + &
@@ -172,7 +174,7 @@
                                                coef2 * (dux_dzl_nsub1(i,j,ispec) + duz_dxl_nsub1(i,j,ispec)))
 
             ! update e1, e11, e13 in ADE formation with fourth-order LDDRK scheme
-            else if (time_stepping_scheme == 2) then
+            case (2)
               ! LDDRK
               e1_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls) + &
                                           deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
@@ -189,54 +191,70 @@
               e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+BETA_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
 
             ! update e1, e11, e13 in ADE formation with classical fourth-order Runge-Kutta scheme
-            else if (time_stepping_scheme == 3) then
+            case (3)
               ! RK
-              e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
+              ! initial field
+              if (i_stage == 1) e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
+
+              ! intermediate fields
+              e1_force_RK(i,j,ispec,i_sls,i_stage) = theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1
 
               if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
-                if (i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
-                if (i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
-                if (i_stage == 3)weight_rk = 1._CUSTOM_REAL
-
-                if (i_stage == 1) e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
+                ! note: this prepare the fields for the next stage, i.e., used at istage+1
+                weight_rk = ALPHA_RK4(i_stage+1) * deltat
                 e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
               else if (i_stage == 4) then
-                e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
-                                      (e1_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,2) + &
-                                       2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,3) + e1_force_RK(i,j,ispec,i_sls,4))
+                ! final update
+                e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + deltat * &
+                                      (BETA_RK4(1) * e1_force_RK(i,j,ispec,i_sls,1) + &
+                                       BETA_RK4(2) * e1_force_RK(i,j,ispec,i_sls,2) + &
+                                       BETA_RK4(3) * e1_force_RK(i,j,ispec,i_sls,3) + &
+                                       BETA_RK4(4) * e1_force_RK(i,j,ispec,i_sls,4))
               endif
 
-              e11_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2 - &
-                                                                 e11(i,j,ispec,i_sls) * tauinvnu2)
+              ! initial field
+              if (i_stage == 1) e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
+
+              ! intermediate fields
+              e11_force_RK(i,j,ispec,i_sls,i_stage) = (dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2 - &
+                                                          e11(i,j,ispec,i_sls) * tauinvnu2
 
               if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
-                if (i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
-                if (i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
-                if (i_stage == 3)weight_rk = 1._CUSTOM_REAL
-
-                if (i_stage == 1) e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
+                ! note: this prepare the fields for the next stage, i.e., used at istage+1
+                weight_rk = ALPHA_RK4(i_stage+1) * deltat
                 e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
               else if (i_stage == 4) then
-                e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
-                                       (e11_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,2) + &
-                                        2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
+                ! final update
+                e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + deltat * &
+                                       (BETA_RK4(1) * e11_force_RK(i,j,ispec,i_sls,1) + &
+                                        BETA_RK4(2) * e11_force_RK(i,j,ispec,i_sls,2) + &
+                                        BETA_RK4(3) * e11_force_RK(i,j,ispec,i_sls,3) + &
+                                        BETA_RK4(4) * e11_force_RK(i,j,ispec,i_sls,4))
               endif
 
-              e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2 - &
-                                                                 e13(i,j,ispec,i_sls) * tauinvnu2)
-              if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
-                if (i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
-                if (i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
-                if (i_stage == 3)weight_rk = 1._CUSTOM_REAL
+              ! initial field
+              if (i_stage == 1) e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
 
-                if (i_stage == 1) e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
+              ! intermediate fields
+              e13_force_RK(i,j,ispec,i_sls,i_stage) = (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2 - &
+                                                            e13(i,j,ispec,i_sls) * tauinvnu2
+
+              if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
+                ! note: this prepare the fields for the next stage, i.e., used at istage+1
+                weight_rk = ALPHA_RK4(i_stage+1) * deltat
                 e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
               else if (i_stage == 4) then
-                e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
-                                       (e13_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,2) + &
-                                        2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
+                ! final update
+                e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + deltat * &
+                                       (BETA_RK4(1) * e13_force_RK(i,j,ispec,i_sls,1) + &
+                                        BETA_RK4(2) * e13_force_RK(i,j,ispec,i_sls,2) + &
+                                        BETA_RK4(3) * e13_force_RK(i,j,ispec,i_sls,3) + &
+                                        BETA_RK4(4) * e13_force_RK(i,j,ispec,i_sls,4))
               endif
-            endif
+            case default
+              call stop_the_code('Error time scheme not implemented yet in compute_forces_viscoelastic_backward.f90')
+            end select
+
           enddo
         enddo
         enddo
@@ -291,10 +309,9 @@
         do i = 1,NGLLX
           !--- if external medium, get elastic parameters of current grid point
           if (assign_external_model) then
-            cpl = vpext(i,j,ispec)
-            csl = vsext(i,j,ispec)
-            rhol = rhoext(i,j,ispec)
-            mul_unrelaxed_elastic = rhol*csl*csl
+            mul_unrelaxed_elastic = mustore(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
+            cpl = rho_vpstore(i,j,ispec)/rhol
             lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO*mul_unrelaxed_elastic
             lambdalplusmul_unrelaxed_elastic = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
             lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic
@@ -526,15 +543,15 @@
               c23 = c23ext(i,j,ispec)
               c25 = c25ext(i,j,ispec)
             else
-              c11 = anisotropy(1,kmato(ispec))
-              c13 = anisotropy(2,kmato(ispec))
-              c15 = anisotropy(3,kmato(ispec))
-              c33 = anisotropy(4,kmato(ispec))
-              c35 = anisotropy(5,kmato(ispec))
-              c55 = anisotropy(6,kmato(ispec))
-              c12 = anisotropy(7,kmato(ispec))
-              c23 = anisotropy(8,kmato(ispec))
-              c25 = anisotropy(9,kmato(ispec))
+              c11 = anisotropycoef(1,kmato(ispec))
+              c13 = anisotropycoef(2,kmato(ispec))
+              c15 = anisotropycoef(3,kmato(ispec))
+              c33 = anisotropycoef(4,kmato(ispec))
+              c35 = anisotropycoef(5,kmato(ispec))
+              c55 = anisotropycoef(6,kmato(ispec))
+              c12 = anisotropycoef(7,kmato(ispec))
+              c23 = anisotropycoef(8,kmato(ispec))
+              c25 = anisotropycoef(9,kmato(ispec))
             endif
 
             ! implement anisotropy in 2D

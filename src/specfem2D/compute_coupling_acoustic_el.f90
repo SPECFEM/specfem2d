@@ -43,7 +43,7 @@
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                          fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
-                         rmemory_fsb_displ_elastic,deltat, &
+                         rmemory_fsb_displ_elastic,DT,deltat, &
                          rmemory_fsb_displ_elastic_LDDRK,i_stage,time_stepping_scheme, &
                          nglob_acoustic,nglob_elastic,iglob_is_forced, &
                          ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_att
@@ -94,7 +94,7 @@
       ! PML elements
       ! overwrites displ_x and displ_z
       if (PML_BOUNDARY_CONDITIONS) then
-        if (ispec_is_PML(ispec_elastic) .and. nspec_PML > 0) then
+        if (nspec_PML > 0 .and. ispec_is_PML(ispec_elastic)) then
           ispec_PML = spec_to_PML(ispec_elastic)
           CPML_region_local = region_CPML(ispec_elastic)
           kappa_x = K_x_store(i,j,ispec_PML)
@@ -108,11 +108,11 @@
 
           if (CPML_region_local == CPML_X_ONLY) then
             !ZN needed to be change in case of viscoelastic medium
-            call lik_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+            call lik_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                            CPML_region_local,13,A8,A9,A10,bb_xz_1,bb_xz_2, &
                                            coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
           else if (CPML_region_local == CPML_Z_ONLY) then
-            call lik_parameter_computation(deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
+            call lik_parameter_computation(DT,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
                                            CPML_region_local,31,A8,A9,A10,bb_xz_1,bb_xz_2, &
                                            coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
 
@@ -120,14 +120,15 @@
             call stop_the_code('PML do not support a fluid-solid boundary in corner PML region')
           endif
 
-          if (time_stepping_scheme == 1) then
+          select case(time_stepping_scheme)
+          case (1)
             ! Newmark
             rmemory_fsb_displ_elastic(1,1,i,j,inum) = coef0_xz_1 * rmemory_fsb_displ_elastic(1,1,i,j,inum) + &
                    coef1_xz_1 * displ_elastic(1,iglob) + coef2_xz_1 * displ_elastic_old(1,iglob)
             rmemory_fsb_displ_elastic(1,2,i,j,inum) = coef0_xz_1 * rmemory_fsb_displ_elastic(1,2,i,j,inum) + &
                    coef1_xz_1 * displ_elastic(2,iglob) + coef2_xz_1 * displ_elastic_old(2,iglob)
 
-          else if (time_stepping_scheme == 2) then
+          case (2)
             ! LDDRK
             rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum) = &
                    ALPHA_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum) + &
@@ -140,7 +141,10 @@
                   deltat * ( - bb_xz_1 * rmemory_fsb_displ_elastic(1,2,i,j,inum) + displ_elastic(2,iglob) )
             rmemory_fsb_displ_elastic(1,2,i,j,inum) = rmemory_fsb_displ_elastic(1,2,i,j,inum) + &
                    BETA_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,2,i,j,inum)
-          endif
+
+          case default
+            call stop_the_code('PML for RK4 not implemented yet in compute_coupling_acoustic_el()')
+          end select
 
           displ_x = A8 * displ_elastic(1,iglob) + A9 * rmemory_fsb_displ_elastic(1,1,i,j,inum)
           displ_z = A8 * displ_elastic(2,iglob) + A9 * rmemory_fsb_displ_elastic(1,2,i,j,inum)
@@ -241,10 +245,12 @@
 
       ! compute dot product
       displ_n = displ_x*nx + displ_z*nz
+
 !! DK DK QUENTIN visco begin ici comme tu disais il faudrait coupler la composante tangentielle
 !! DK DK QUENTIN en plus de la composante normale je suppose
       if (.not. iglob_is_forced(iglob)) then
         potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+
         if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1 ) &
           dot_e1(iglob,:) = dot_e1(iglob,:) + weight*displ_n
       endif

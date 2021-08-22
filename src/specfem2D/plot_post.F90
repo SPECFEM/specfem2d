@@ -37,10 +37,6 @@
 ! PostScript display routine
 !
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN,NGLLX,NGLLZ,ARROW_ANGLE,ARROW_RATIO,CENTIM, &
     DISPLAY_PML_IN_DIFFERENT_COLOR,ICOLOR_FOR_PML_DISPLAY, &
     IEDGE1,IEDGE2,IEDGE3,IEDGE4, &
@@ -48,12 +44,14 @@
     ORIG_X,ORIG_Z,PI,RPERCENTX,RPERCENTZ,STABILITY_THRESHOLD, &
     DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT,OUTPUT_FILES
 
-  use specfem_par, only: coord,vpext,x_source,z_source,st_xval,st_zval,it,deltat,coorg,density, &
+  use specfem_par, only: coord,x_source,z_source,st_xval,st_zval,it,DT,coorg,density, &
                          AXISYM,is_on_the_axis,flagrange_GLJ, &
                          poroelastcoef,knods,kmato,ibool, &
-                         numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
+                         num_abs_boundary_faces,abs_boundary_ispec,codeabs,abs_boundary_type,anyabs, &
+                         nelem_acoustic_surface, acoustic_edges, &
                          nglob,nrec,NSOURCES, &
-                         assign_external_model,nelemabs,pointsdisp, &
+                         assign_external_model,rhostore,rho_vpstore, &
+                         pointsdisp, &
                          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
                          any_acoustic,any_poroelastic, &
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
@@ -61,14 +59,18 @@
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
                          ispec_is_poroelastic,myrank,NPROC
 
+  use shared_parameters, only: subsamp_postscript,imagetype_postscript,interpol, &
+    meshvect,modelvect, &
+    cutsnaps,sizemax_arrows, &
+    boundvect,plot_lowerleft_corner_only, &
+    US_LETTER
+
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
 
   ! movie images
   use specfem_par_movie, only: vector_field_display,simulation_title, &
     xinterp,zinterp,Uxinterp,Uzinterp,flagrange,shape2D_display, &
-    subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
-    cutsnaps,sizemax_arrows,boundvect,plot_lowerleft_corner_only, &
     vpImin,vpImax, &
     coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
     coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model, &
@@ -76,7 +78,7 @@
     coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
     coorg_send_ps_abs,coorg_recv_ps_abs, &
     coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
-    coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER
+    coorg_send_ps_vector_field,coorg_recv_ps_vector_field
 
   implicit none
 
@@ -134,7 +136,7 @@
   double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
   double precision :: dispmax_glob
 
-#ifndef USE_MPI
+#ifndef WITH_MPI
 ! this to avoid warnings by the compiler about unused variables in the case
 ! of a serial code, therefore use them once and do nothing: just set them to zero
   nspec_recv = 0
@@ -309,7 +311,7 @@
     write(24,*) '%'
 
     write(24,*) '24. CM 1.95 CM MV'
-    timeval = it*deltat
+    timeval = it*DT
     if (timeval >= 1.d-3 .and. timeval < 1000.d0) then
       write(24,600) usoffset,timeval
     else
@@ -409,7 +411,7 @@
 
             if (assign_external_model) then
 
-              x1 = (vpext(i,j,ispec)-vpImin) / (vpImax-vpImin)
+              x1 = (rho_vpstore(i,j,ispec)/rhostore(i,j,ispec) - vpImin) / (vpImax-vpImin)
 
             else
 
@@ -523,10 +525,10 @@
       enddo
     enddo
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
 
           call recv_singlei(nspec_recv, iproc, 42)
@@ -851,10 +853,10 @@
 
   enddo ! ispec
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (NPROC > 1) then
     if (myrank == 0) then
-      ! master collects
+      ! main collects
       do iproc = 1, NPROC-1
         call recv_singlei(nspec_recv,iproc,43)
 
@@ -995,8 +997,8 @@
     buffer_offset = 0
 
     if (anyabs) then
-      do inum = 1,nelemabs
-        ispec = numabs(inum)
+      do inum = 1,num_abs_boundary_faces
+        ispec = abs_boundary_ispec(inum)
 
         do iedge = 1,4
 
@@ -1033,13 +1035,13 @@
 
             if (myrank == 0) then
             ! draw the Stacey absorbing boundary line segment in different colors depending on its type
-              if (typeabs(inum) == IBOTTOM) then
+              if (abs_boundary_type(inum) == IBOTTOM) then
                 write(24,*) '0 1 0 RG'  ! green
-              else if (typeabs(inum) == IRIGHT) then
+              else if (abs_boundary_type(inum) == IRIGHT) then
                 write(24,*) '0 0 1 RG'  ! blue
-              else if (typeabs(inum) == ITOP) then
+              else if (abs_boundary_type(inum) == ITOP) then
                 write(24,*) '1 0.7529 0.7960 RG' ! pink
-              else if (typeabs(inum) == ILEFT) then
+              else if (abs_boundary_type(inum) == ILEFT) then
                 write(24,*) '1 0.6470 0 RG' ! orange
               else
                 call exit_MPI(myrank,'Wrong absorbing boundary code')
@@ -1051,7 +1053,7 @@
               coorg_send_ps_abs(2,buffer_offset) = z1
               coorg_send_ps_abs(3,buffer_offset) = x2
               coorg_send_ps_abs(4,buffer_offset) = z2
-              coorg_send_ps_abs(5,buffer_offset) = typeabs(inum)
+              coorg_send_ps_abs(5,buffer_offset) = abs_boundary_type(inum)
             endif
 
           endif ! of if (codeabs(iedge,inum))
@@ -1060,10 +1062,10 @@
       enddo
     endif ! anyabs
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
           call recv_singlei(nspec_recv,iproc, 44)
           if (nspec_recv > 0) then
@@ -1148,10 +1150,10 @@
     enddo
   endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (NPROC > 1) then
     if (myrank == 0) then
-      ! master collects
+      ! main collects
       do iproc = 1, NPROC-1
         call recv_singlei(nspec_recv, iproc, 44)
         if (nspec_recv > 0) then
@@ -1246,10 +1248,10 @@
 
     enddo
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
           call recv_singlei(nspec_recv, iproc, 45)
           if (nspec_recv > 0) then
@@ -1347,10 +1349,10 @@
 
     enddo
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
           call recv_singlei(nspec_recv, iproc, 45)
           if (nspec_recv > 0) then
@@ -1449,10 +1451,10 @@
 
     enddo
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
           call recv_singlei(nspec_recv, iproc, 45)
           if (nspec_recv > 0) then
@@ -1532,7 +1534,7 @@
     do ispec = 1,nspec
 
 ! interpolation on a uniform grid
-#ifdef USE_MPI
+#ifdef WITH_MPI
       if (myrank == 0 .and. mod(ispec,1000) == 0) &
         write(IMAIN,*) '  Interpolation uniform grid element ',ispec,' on processor core 0'
 #else
@@ -1650,9 +1652,9 @@
 
     enddo ! ispec
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (myrank == 0) then
-      ! master collects
+      ! main collects
       do iproc = 1, NPROC-1
         call recv_singlei(nspec_recv, iproc, 46)
         if (nspec_recv > 0) then
@@ -1782,9 +1784,9 @@
 
     enddo
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (myrank == 0) then
-      ! master collects
+      ! main collects
       do iproc = 1, NPROC-1
         call recv_singlei(nspec_recv, iproc, 47)
 

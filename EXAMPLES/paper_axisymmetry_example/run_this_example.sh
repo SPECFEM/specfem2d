@@ -31,12 +31,16 @@ cd ../../
 #./configure CC=icc FC=ifort MPIFC=mpif90 --with-mpi --enable-double-precision --with-scotch-dir=/home/cristini/CODES/scotch_6.0.0
 #./configure CC=icc FC=ifort --with-scotch-dir=/home/cristini/CODES/scotch_6.0.0 # Without MPI
 # make # > tmp.log
+
 cd $currentdir
 
-# Link executables
+# links executables
+mkdir -p bin
+cd bin/
 rm -f xmeshfem2D xspecfem2D
-ln -s ../../bin/xmeshfem2D
-ln -s ../../bin/xspecfem2D
+ln -s ../../../bin/xmeshfem2D
+ln -s ../../../bin/xspecfem2D
+cd ../
 
 # Store setup
 cp DATA/Par_file OUTPUT_FILES/
@@ -49,18 +53,18 @@ NPROC=`grep NPROC DATA/Par_file | cut -d = -f 2 | cut -d \# -f 1 | tr -d ' '`
 echo
 echo " Running mesher..."
 echo
-./xmeshfem2D
+./bin/xmeshfem2D
 
 if [ "$NPROC" -eq 1 ]; then # This is a serial simulation
   echo
   echo " Running solver..."
   echo
-  ./xspecfem2D
+  ./bin/xspecfem2D
 else # This is a MPI simulation
   echo
   echo " Running solver on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./xspecfem2D
+  mpirun -np $NPROC ./bin/xspecfem2D
 fi
 
 # Store output

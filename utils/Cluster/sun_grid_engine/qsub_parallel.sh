@@ -68,13 +68,14 @@ echo $CURRENT_DIR
 mkdir $JOB_NAME$JOB_ID
 mkdir $JOB_NAME$JOB_ID/OUTPUT_FILES
 mkdir $JOB_NAME$JOB_ID/DATA
+mkdir $JOB_NAME$JOB_ID/bin
 
 cd $JOB_NAME$JOB_ID
 
 mkdir ../OUTPUT_FILES$JOB_NAME$JOB_ID
 scp iplmas014.univ-pau.fr:$CURRENT_DIR/OUTPUT_FILES/Database* ../OUTPUT_FILES$JOB_NAME$JOB_ID/
 scp iplmas014.univ-pau.fr:$CURRENT_DIR/DATA/STATIONS ./DATA/
-scp iplmas014.univ-pau.fr:$CURRENT_DIR/xspecfem2D ./
+scp iplmas014.univ-pau.fr:$CURRENT_DIR/bin/xspecfem2D ./bin/
 scp iplmas014.univ-pau.fr:$CURRENT_DIR/clean_scratch_UPPA.sh ./
 
 PeHostfile2MachineFile $PE_HOSTFILE $USER $JOB_NAME $JOB_ID
@@ -89,7 +90,7 @@ rm ./OUTPUT_FILES/Database*
 cd /scratch/$USER/$JOB_NAME$JOB_ID
 
 
-LD_LIBRARY_PATH=/opt/openmpi-1.2.2/pgi64/lib /opt/openmpi-1.2.2/pgi64/bin/mpirun -np $NSLOTS ./xspecfem2D
+LD_LIBRARY_PATH=/opt/openmpi-1.2.2/pgi64/lib /opt/openmpi-1.2.2/pgi64/bin/mpirun -np $NSLOTS ./bin/xspecfem2D
 
 scp $host0.univ-pau.fr:/scratch/$USER/$JOB_NAME$JOB_ID/OUTPUT_FILES/* $CURRENT_DIR/OUTPUT_FILES/
 

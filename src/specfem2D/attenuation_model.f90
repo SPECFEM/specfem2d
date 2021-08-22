@@ -46,8 +46,8 @@
   double precision,intent(in) :: ATTENUATION_f0_REFERENCE
 
   integer,intent(in) :: N_SLS
-  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: inv_tau_sigma_nu1_sent,phi_nu1_sent
-  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: inv_tau_sigma_nu2_sent,phi_nu2_sent
+  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: inv_tau_sigma_nu1_sent,phi_nu1_sent  ! bulk attenuation (Qkappa)
+  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: inv_tau_sigma_nu2_sent,phi_nu2_sent  ! shear attenuation (Qmu)
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: tau_epsilon_nu1_sent,tau_epsilon_nu2_sent
   real(kind=CUSTOM_REAL),intent(out) :: Mu_nu1_sent,Mu_nu2_sent
 
@@ -153,9 +153,9 @@
 
   ! use the right formula with 1/N included
   phi_nu1_sent(:) = real((1.d0 - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
-                                                                           / sum(tau_epsilon_nu1_d/tau_sigma_nu1),kind=CUSTOM_REAL)
+                         / sum(tau_epsilon_nu1_d/tau_sigma_nu1),kind=CUSTOM_REAL)
   phi_nu2_sent(:) = real((1.d0 - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) &
-                                                                           / sum(tau_epsilon_nu2_d/tau_sigma_nu2),kind=CUSTOM_REAL)
+                         / sum(tau_epsilon_nu2_d/tau_sigma_nu2),kind=CUSTOM_REAL)
 
   Mu_nu1_sent = real(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS),kind=CUSTOM_REAL)
   Mu_nu2_sent = real(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS),kind=CUSTOM_REAL)
@@ -244,26 +244,61 @@
     kappa  = lambda + mu
   endif
 
+!daniel todo: check if we need first to shift moduli from reference frequency to center frequency,
+!             and then compute the unrelaxed moduli from the center (since tau values are computed around the center freq)
+!
+!
+! from 3D version: (see get_attenuation_model.f90 line 611)
+!  !--- compute central angular frequency of source (non dimensionalized)
+!  w_c_source = TWO_PI * f_c_source
+!
+!  !--- quantity by which to scale mu_0 to get mu
+!  ! this formula can be found for instance in
+!  ! Liu, H. P., Anderson, D. L. and Kanamori, H., Velocity dispersion due to
+!  ! anelasticity: implications for seismology and mantle composition,
+!  ! Geophys. J. R. Astron. Soc., vol. 47, pp. 41-58 (1976)
+!  ! and in Aki, K. and Richards, P. G., Quantitative seismology, theory and methods,
+!  ! W. H. Freeman, (1980), second edition, sections 5.5 and 5.5.2, eq. (5.81) p. 170
+!  factor_scale_mu0 = ONE + TWO * log(f_c_source / ATTENUATION_f0_REFERENCE ) / (PI * Q_val)
+!  ..
+!  !--- total factor by which to scale mu0 to get mu_unrelaxed
+!  scale_factor = factor_scale_mu * factor_scale_mu0
+!  ..
+!
+! note: f_c_source corresponds to the center of the logarithmic frequency band of the simulation.
+!       ATTENUATION_f0_REFERENCE is the reference frequency of the given velocities.
+!
+! here below, the code computes the unrelaxed moduli directly based on (kappa,mu)
+! given at the reference frequency ATTENUATION_f0_REFERENCE,
+! using the tau relaxation times computed for the frequency band of the simulation.
+!
+! thus, this omits the shift to the center frequency first.
+! this is probably still fine in case the reference and center freq's are close to each other.
+
   xtmp1_nu1 = ONE
   xtmp2_nu1 = ONE
   xtmp1_nu2 = ONE
   xtmp2_nu2 = ONE
 
   do i_sls = 1,N_SLS
+    ! shear attenuation
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls) - ONE
-     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2(i_sls) - ONE
-     xtmp1_nu2 = xtmp1_nu2 + xtmp_ak_nu2/N_SLS
-     xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + ONE/(TWO * PI * ATTENUATION_f0_REFERENCE / inv_tau_sigma_nu2(i_sls))**2)/N_SLS
+    xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2(i_sls) - ONE
+    xtmp1_nu2 = xtmp1_nu2 + xtmp_ak_nu2/N_SLS
+    xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + ONE/(TWO * PI * ATTENUATION_f0_REFERENCE / inv_tau_sigma_nu2(i_sls))**2)/N_SLS
 
+    ! bulk attenuation
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls) - ONE
-     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1(i_sls) - ONE
-     xtmp1_nu1 = xtmp1_nu1 + xtmp_ak_nu1/N_SLS
-     xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + ONE/(TWO * PI * ATTENUATION_f0_REFERENCE / inv_tau_sigma_nu1(i_sls))**2)/N_SLS
+    xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1(i_sls) - ONE
+    xtmp1_nu1 = xtmp1_nu1 + xtmp_ak_nu1/N_SLS
+    xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + ONE/(TWO * PI * ATTENUATION_f0_REFERENCE / inv_tau_sigma_nu1(i_sls))**2)/N_SLS
   enddo
 
+  ! shear attenuation
   factor_mu = xtmp1_nu2/xtmp2_nu2
   mu    = mu    * factor_mu
 
+  ! bulk attenuation
   factor_kappa = xtmp1_nu1/xtmp2_nu1
   kappa = kappa * factor_kappa
 

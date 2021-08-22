@@ -34,29 +34,33 @@
 ! Recompute 2D jacobian at a given point in a 4-node or 9-node element.
 ! Compute also the global coordinates of the point defined by: (xi,gamma,ispec).
 
-  subroutine recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec,ngnod,nspec,npgeo, &
-                      stop_if_negative_jacobian)
+  subroutine recompute_jacobian_with_negative_stop(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
+                                                   coorg,knods,ispec,ngnod,nspec,npgeo, &
+                                                   stop_if_negative_jacobian)
 
   use constants, only: NDIM,ZERO
 
   implicit none
 
-  integer ispec,ngnod,nspec,npgeo
-  double precision x,z,xix,xiz,gammax,gammaz
-  double precision xi,gamma,jacobian
+  integer,intent(in) :: ispec,ngnod,nspec,npgeo
+  double precision, intent(in) :: xi,gamma
+  double precision, intent(out) :: x,z
+  double precision, intent(out) :: xix,xiz,gammax,gammaz
+  double precision, intent(out) :: jacobian
 
-  integer knods(ngnod,nspec)
-  double precision coorg(NDIM,npgeo)
+  integer, intent(in) :: knods(ngnod,nspec)
+  double precision, intent(in) :: coorg(NDIM,npgeo)
 
+  logical, intent(in) :: stop_if_negative_jacobian
+
+  ! local parameters
 ! 2D shape functions and their derivatives at receiver
-  double precision shape2D(ngnod)
-  double precision dershape2D(NDIM,ngnod)
+  double precision :: shape2D(ngnod)
+  double precision :: dershape2D(NDIM,ngnod)
 
-  double precision xxi,zxi,xgamma,zgamma,xelm,zelm
+  double precision :: xxi,zxi,xgamma,zgamma,xelm,zelm
 
-  integer ia,nnum
-
-  logical stop_if_negative_jacobian
+  integer :: ia,nnum
 
 ! only one problematic element is output to OpenDX for now in case of elements with a negative Jacobian
   integer, parameter :: ntotspecAVS_DX = 1
@@ -154,5 +158,5 @@
   xiz = - xgamma / jacobian
   gammaz = xxi / jacobian
 
-  end subroutine recompute_jacobian
+  end subroutine recompute_jacobian_with_negative_stop
 

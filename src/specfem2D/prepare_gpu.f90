@@ -36,6 +36,7 @@
   use constants, only: IMAIN,APPROXIMATE_HESS_KL,USE_A_STRONG_FORMULATION_FOR_E1
   use specfem_par
   use specfem_par_gpu
+  use moving_sources_par, only: init_moving_sources_GPU
 
   implicit none
 
@@ -43,6 +44,8 @@
   real :: free_mb,used_mb,total_mb
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: cosrot_irecf, sinrot_irecf
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx,rmassz
+  ! PML
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: alphax_store_GPU,alphaz_store_GPU,betax_store_GPU,betaz_store_GPU
 
   ! checks if anything to do
   if (.not. GPU_MODE) return
@@ -55,17 +58,26 @@
   endif
 
   ! safety checks
-  if (any_elastic .and. (.not. P_SV)) call stop_the_code( &
-'Invalid GPU simulation, SH waves not implemented yet. Please use P_SV instead.')
-  if (PML_BOUNDARY_CONDITIONS ) call stop_the_code('PML not implemented on GPU mode. Please use Stacey instead.')
-  if (AXISYM) call stop_the_code('Axisym not implemented on GPU yet.')
-  if (NGLLX /= NGLLZ) call stop_the_code('GPU simulations require NGLLX == NGLLZ')
-  if ( (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. ATTENUATION_VISCOACOUSTIC) call stop_the_code( &
-    'GPU simulations require USE_A_STRONG_FORMULATION_FOR_E1 set to true')
-  if ( ATTENUATION_VISCOELASTIC .and. SIMULATION_TYPE == 3) call stop_the_code( &
-    'GPU mode do not support yet adjoint simulations with attenuation viscoelastic')
-  if ( (ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_VISCOELASTIC) .and. any_elastic .and. any_acoustic) call stop_the_code( &
-    'GPU mode do not support yet coupled fluid-solid simulations with attenuation')
+  if (AXISYM) &
+    call stop_the_code('Axisym not implemented on GPU yet.')
+  if (NGLLX /= NGLLZ) &
+    call stop_the_code('GPU simulations require NGLLX == NGLLZ')
+
+  if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1)) &
+    call stop_the_code('GPU simulations require USE_A_STRONG_FORMULATION_FOR_E1 set to true')
+
+  if (ATTENUATION_VISCOELASTIC .and. SIMULATION_TYPE == 3) &
+    call stop_the_code('GPU_MODE not supported yet adjoint simulations with attenuation viscoelastic')
+  if ((ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_VISCOELASTIC) .and. any_elastic .and. any_acoustic) &
+    call stop_the_code('GPU_MODE not supported yet coupled fluid-solid simulations with attenuation')
+
+  if (PML_BOUNDARY_CONDITIONS .and. any_elastic) &
+    call stop_the_code('PML on GPU not supported yet for elastic cases')
+  if (PML_BOUNDARY_CONDITIONS .and. ATTENUATION_VISCOACOUSTIC) &
+    call stop_the_code('PML on GPU not supported yet for viscoacoustic cases')
+  if (PML_BOUNDARY_CONDITIONS .and. SIMULATION_TYPE == 3 .and. (.not. NO_BACKWARD_RECONSTRUCTION) ) &
+    call stop_the_code('PML on GPU in adjoint mode only work using NO_BACKWARD_RECONSTRUCTION flag')
+
   ! initializes arrays
   call init_host_to_dev_variable()
 
@@ -75,30 +87,21 @@
     call stop_the_code('Error GPU simulation')
   endif
 
-!!!!!!!!!!! Parametres fournis
+  ! Input parameters :
 
-! ibool(i,j,ispec)                       : convertisseur numero du point GLL local (i,j) de l'element ispec => global (iglob)
-! ninterface                             : nombre d'interfaces de la partition locale avec les autres partitions
-! max_nibool_interfaces_ext_mesh         : nombre maximum de points GLL contenus sur une interface
-! nibool_interfaces_ext_mesh(i)          : nombre de points GLL contenus sur l'interface i
-! ibool_interfaces_ext_mesh(iGGL,i)      : numero global iglob du ieme point GLL (iGLL) de l'interface i
-! numabs                                 : tableau des elements spectraux situes en zone absorbante
-! abs_boundary_ij(i,j,ispecabs)          : coordonnee locale i de j eme point GLL de l'element absorbant ispecabs
-! abs_boundary_normal(i,j,ispecabs)      : i eme coordonnee du vecteur normal du j eme point GLL de l'element absorbant ispecabs
-! abs_boundary_jacobian1Dw(i,ispecabs)   : i eme jacobienne ponderee de l'element absorbant jspecabs
-! nelemabs                               : nombre d'elements absorbant
-! cote_abs(ispecabs)                     : numero du cote (1=b, 2=r, 3=t, 4=l ) auquel appartient l'element absorbant ispecabs
-! ib_left                                : correspondance entre le numero d'element absorbant global et son numero sur le cote
-! ispec_is_inner                         : booleen vrai si l'element est a l'interieur d'une partition
-! sourcearray_loc(i_src,dim,i,j)         : tableau de ponderation de l'intensite de la source pour chaque point GLL (i,j)
-!                                          de l'element spectral qui contient la source locale i_src
-! ispec_selected_source(i)               : numero d'element spectral contenant la source locale i
-! ispec_selected_rec_loc(i)              : numero d'element spectral du receveur local i
-! nrecloc                                : nombre de receveurs locaux
-! nspec_acoustic                         : nombre local d'elements spectraux acoustiques
-
-  ! prepares general fields on GPU
-  !! JC JC here we will need to add GPU support for the C-PML routines
+  ! ibool(i,j,ispec)                     : array that converts the index of GLL point (i,j) in elmt ispec
+  !                                        from local to global (iglob)
+  ! ninterface                           : Number of interfaces that the local partition share with other partitions
+  ! max_nibool_interfaces_ext_mesh       : Maximum number of GLL points at an interface
+  ! nibool_interfaces_ext_mesh(i)        : Number of GLL points in interface i
+  ! ibool_interfaces_ext_mesh(iGGL,i)    : Global index iglob of the ith GLL point (iGLL) of interface i
+  ! ispec_is_inner                       : Boolean array. True if the input element is into a partition
+  ! sourcearray_loc(i_src,dim,i,j)       : Array of weights containing source intensity at each GLL point (i,j) of the spectral
+  !                                        element containing the local source i_src
+  ! ispec_selected_source(i)             : Index of the spectral element containing local source i
+  ! ispec_selected_rec_loc(i)            : Index of the spectral element containing local receiver i
+  ! nrecloc                              : Number of local receivers
+  ! nspec_acoustic                       : Number of local acoustic spectral elements
 
   call prepare_constants_device(Mesh_pointer, &
                                 NGLLX, nspec, nglob, &
@@ -110,19 +113,7 @@
                                 hprime_xx,hprimewgll_xx, &
                                 wxgll, &
                                 STACEY_ABSORBING_CONDITIONS, &
-                                nspec_bottom, &
-                                nspec_left, &
-                                nspec_right, &
-                                nspec_top, &
-                                numabs, abs_boundary_ij, &
-                                abs_boundary_normal, &
-                                abs_boundary_jacobian1Dw, &
-                                nelemabs, &
-                                cote_abs, &
-                                ib_bottom, &
-                                ib_left, &
-                                ib_right, &
-                                ib_top, &
+                                PML_BOUNDARY_CONDITIONS, &
                                 ispec_is_inner, &
                                 nsources_local, &
                                 sourcearray_loc,source_time_function_loc, &
@@ -130,38 +121,38 @@
                                 ispec_selected_rec_loc, &
                                 nrecloc, &
                                 cosrot_irecf,sinrot_irecf, &
-                                SIMULATION_TYPE, &
+                                SIMULATION_TYPE,P_SV, &
                                 nspec_acoustic,nspec_elastic, &
+                                ispec_is_acoustic,ispec_is_elastic, &
                                 myrank,SAVE_FORWARD, &
                                 xir_store_loc, &
-                                gammar_store_loc)
+                                gammar_store_loc, &
+                                NSIGTYPE, seismotypeVec, &
+                                nlength_seismogram)
 
+  ! Input parameters :
 
-!!! Parametres fournis
-
-! rmass_inverse_acoustic                 : matrice acoustique inversee de taille nglob
-!                                          (nglob_acoustic = nglob s'il existe des elements acoustiques)
-! num_phase_ispec_acoustic               : max entre nb d'element spectraux acoustiques interieur et exterieur
-! phase_ispec_inner_acoustic(i,j)        : i eme element spectral acoustique interieur si j=2 exterieur si j=1
-! acoustic(i)                            : vrai si l'element spectral i est acoustique
-! nelem_acoustic_surface                 : nombre d'elements spectraux situes sur une surface libre acoustique
-! free_ac_ispec                          : numero d'element spectral du i eme element acoustique sur surface libre
-! free_surface_ij(i,j,ispec)             : i eme coordonnee du j eme point GLL de l'element spectral libre ispec
-! b_reclen_potential                     : place en octet prise par b_nelem_acoustic_surface * GLLX
-! any_elastic                            : vrai s'il existe des elements elastiques
-! num_fluid_solid_edges                  : nombre d'elements spectraux sur une frontiere elastique/acoustique
-! coupling_ac_el_ispec                   : tableau des elements spectraux frontiere ACOUSTIQUE
-! coupling_ac_el_ij                      : coordonnees locales des points GLL sur la frontiere elastique/acoustique
-! coupling_ac_el_normal(i,j,ispec)       : i eme coordonne de la normale au point GLL j de l'element frontiere ispec
-! coupling_ac_el_jacobian1Dw(i,ispec)    : jacobienne ponderee du i eme point GLL de l'element frontiere ispec
-
+  ! rmass_inverse_acoustic                 : Inverse of the acoustic mass matrix (size nglob)
+  !                                          (nglob_acoustic = nglob if it exists acoustic elements)
+  ! num_phase_ispec_acoustic               : Max between the number of inner acoustic spectral elements and outer
+  ! phase_ispec_inner_acoustic(i,j)        : ith acoustic spectral element. Inner if j=2 outer if j=1
+  ! acoustic(i)                            : True if spectral element i is acoustic
+  ! nelem_acoustic_surface                 : Number of spectral elements on an acoustic free surface
+  ! free_ac_ispec                          : Index of ith acoustic spectral element on free surfaces
+  ! free_surface_ij(i,j,ispec)             : ith coordinate of jth GLL point of the spectral element ispec located on a free surface
+  ! b_reclen_potential                     : Size in bytes taken by b_nelem_acoustic_surface * GLLX
+  ! any_elastic                            : True if it exists elastic elements in the mesh
+  ! num_fluid_solid_edges                  : Number of spectral elements on the elasto-acoustic border
+  ! coupling_ac_el_ispec                   : Array containing spectral element indices on the elasto-acoustic border
+  ! coupling_ac_el_ij                      : Local coordinates of GLL points on the elasto-acoustic border
+  ! coupling_ac_el_normal(i,j,ispec)       : ith coordinate of normal vector at GLL point j in border element ispec
+  ! coupling_ac_el_jacobian1Dw(i,ispec)    : Weighted jacobian matrix at ith GLL point in border element ispec
 
   ! prepares fields on GPU for acoustic simulations
   if (any_acoustic) then
     call prepare_fields_acoustic_device(Mesh_pointer, &
                                         rmass_inverse_acoustic,rhostore,kappastore, &
                                         num_phase_ispec_acoustic,phase_ispec_inner_acoustic, &
-                                        ispec_is_acoustic, &
                                         nelem_acoustic_surface, &
                                         free_ac_ispec,free_surface_ij, &
                                         any_elastic, num_fluid_solid_edges, &
@@ -180,16 +171,15 @@
     endif
   endif
 
-!!! Parametres fournis
+  ! Input parameters :
 
-! rmass_inverse_elastic          : matrice elastique inversee de taille nglob_acoustic
-!                                 (nglob_acoustic = nglob s'il existe des elements acoustiques)
-! num_phase_ispec_elastic        : max entre nb d'element spectraux elastiques interieur et exterieur
-! phase_ispec_inner_elastic(i,j) : i eme element spectral elastique interieur si j=2 exterieur si j=1
-! elastic(i)                     : vrai si l'element spectral i est elastique
+  ! rmass_inverse_elastic          : Inverse elastic mass matrix (size nglob_acoustic)
+  !                                  (nglob_acoustic = nglob if there are acoustic elements)
+  ! num_phase_ispec_elastic        : Max between the number of inner elastic spectral elements and outer
+  ! phase_ispec_inner_elastic(i,j) : ith elastic spectral element. Inner if j=2 outer if j=1
+  ! elastic(i)                     : True if spectral element i is elastic
 
   ! prepares fields on GPU for elastic simulations
-  !?!? JC JC here we will need to add GPU support for the new C-PML routines
   if (any_elastic) then
     ! temporary mass matrices
     allocate(rmassx(nglob_elastic),rmassz(nglob_elastic))
@@ -198,18 +188,14 @@
 
     call prepare_fields_elastic_device(Mesh_pointer, &
                                        rmassx,rmassz, &
-                                       rho_vp,rho_vs, &
                                        num_phase_ispec_elastic,phase_ispec_inner_elastic, &
-                                       ispec_is_elastic, &
-                                       nspec_left, &
-                                       nspec_right, &
-                                       nspec_top, &
-                                       nspec_bottom, &
-                                       ANY_ANISOTROPY, &
+                                       ispec_is_anisotropic, &
+                                       any_anisotropy, &
                                        c11store,c12store,c13store, &
                                        c15store,c23store, &
                                        c25store,c33store,c35store,c55store, &
-                                       ninterface_elastic,inum_interfaces_elastic,ATTENUATION_VISCOELASTIC, &
+                                       ninterface_elastic,inum_interfaces_elastic, &
+                                       ATTENUATION_VISCOELASTIC, &
                                        A_newmark_nu2,B_newmark_nu2,A_newmark_nu1,B_newmark_nu1)
 
 
@@ -223,6 +209,47 @@
 
     ! frees memory
     deallocate(rmassx,rmassz)
+  endif
+
+  if (PML_BOUNDARY_CONDITIONS) then
+    call prepare_PML_device(Mesh_pointer, &
+                            nspec_PML, &
+                            NSPEC_PML_X,NSPEC_PML_Z,NSPEC_PML_XZ, &
+                            spec_to_PML_GPU, &
+                            abs_normalized, &
+                            sngl(ALPHA_MAX_PML), &
+                            d0_max, &
+                            deltat, &
+                            alphax_store_GPU,alphaz_store_GPU, &
+                            betax_store_GPU,betaz_store_GPU, &
+                            PML_nglob_abs_acoustic,PML_abs_points_acoustic)
+  endif
+
+! abs_boundary_ispec                     : Array containing spectral element indices in absorbing areas
+! abs_boundary_ij(i,j,ispecabs)          : ith local coordinate of jth GLL point of the absorbing element ispecabs
+! abs_boundary_normal(i,j,ispecabs)      : ith coordinate of normal vector at GLL point j in absorbing element ispecabs
+! abs_boundary_jacobian1Dw(i,ispecabs)   : Weighted jacobian matrix at ith GLL point in absorbing element jspecabs
+! num_abs_boundary_faces                 : Number of absorbing elements
+! edge_abs(ispecabs)                     : Index of edge (1=bottom, 2=right, 3=top, 4=left) corresponding to absorbing elmt ispecabs
+! ib_left                                : Correpondance between the global absorbing element index and its index on the edge
+
+  if (STACEY_ABSORBING_CONDITIONS) then
+    call prepare_Stacey_device(Mesh_pointer, &
+                               any_acoustic,any_elastic, &
+                               rho_vpstore,rho_vsstore, &
+                               nspec_bottom, &
+                               nspec_left, &
+                               nspec_right, &
+                               nspec_top, &
+                               abs_boundary_ispec, abs_boundary_ij, &
+                               abs_boundary_normal, &
+                               abs_boundary_jacobian1Dw, &
+                               num_abs_boundary_faces, &
+                               edge_abs, &
+                               ib_bottom, &
+                               ib_left, &
+                               ib_right, &
+                               ib_top)
   endif
 
   ! prepares fields on GPU for poroelastic simulations
@@ -242,32 +269,19 @@
     call transfer_fields_ac_to_device(NGLOB_AB,potential_acoustic, &
                                       potential_dot_acoustic,potential_dot_dot_acoustic,Mesh_pointer)
 
-    if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) &
+    if (SIMULATION_TYPE == 3 .and. (.not. NO_BACKWARD_RECONSTRUCTION)) &
       call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
                                           b_potential_dot_acoustic,b_potential_dot_dot_acoustic,Mesh_pointer)
   endif
 
   ! puts elastic initial fields onto GPU
   if (any_elastic) then
-    ! prepares wavefields for transfering
-    allocate(tmp_displ_2D(NDIM,nglob_elastic), &
-             tmp_veloc_2D(NDIM,nglob_elastic), &
-             tmp_accel_2D(NDIM,nglob_elastic))
-
-    tmp_displ_2D(:,:) = displ_elastic(:,:)
-    tmp_veloc_2D(:,:) = veloc_elastic(:,:)
-    tmp_accel_2D(:,:) = accel_elastic(:,:)
-
     ! transfers forward fields to device with initial values
-    call transfer_fields_el_to_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
+    call transfer_fields_el_to_device(NDIM*NGLOB_AB,displ_elastic,veloc_elastic,accel_elastic,Mesh_pointer)
 
     if (SIMULATION_TYPE == 3) then
-      tmp_displ_2D(:,:) = b_displ_elastic(:,:)
-      tmp_veloc_2D(:,:) = b_veloc_elastic(:,:)
-      tmp_accel_2D(:,:) = b_accel_elastic(:,:)
-
       ! transfers backward fields to device with initial values
-      call transfer_b_fields_to_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
+      call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_elastic,b_veloc_elastic,b_accel_elastic,Mesh_pointer)
     endif
   endif
 
@@ -290,6 +304,20 @@
   allocate(buffer_recv_vector_gpu(2,max_nibool_interfaces_ext_mesh,ninterface))
   allocate(b_buffer_recv_vector_gpu(2,max_nibool_interfaces_ext_mesh,ninterface))
 
+  ! moving sources
+  if (SOURCE_IS_MOVING .and. SIMULATION_TYPE == 1) then
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) "  Initializing variables for moving sources ..."
+      call flush_IMAIN()
+    endif
+    call init_moving_sources_GPU()
+    if (myrank == 0) then
+      write(IMAIN,*) "  Done"
+      call flush_IMAIN()
+    endif
+  endif
+
   ! synchronizes processes
   call synchronize_all()
 
@@ -298,6 +326,8 @@
 
   ! outputs usage for main process
   if (myrank == 0) then
+    write(IMAIN,*) "Initialization done successfully"
+    write(IMAIN,*)
     call get_free_device_memory(free_mb,used_mb,total_mb)
 
     write(IMAIN,*)
@@ -310,6 +340,7 @@
 
   ! frees temporary arrays
   deallocate(cosrot_irecf,sinrot_irecf)
+  deallocate(alphax_store_GPU,alphaz_store_GPU,betax_store_GPU,betaz_store_GPU)
 
   ! synchronizes all processes
   call synchronize_all()
@@ -322,19 +353,21 @@
 
 ! helper routine for array initialization and time run setup
 
-  use constants, only: IMAIN,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IBOTTOM,IRIGHT,ITOP,ILEFT
+  use constants, only: IMAIN,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IBOTTOM,IRIGHT,ITOP, &
+                       ILEFT,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
 
   implicit none
 
   ! local parameters
-  integer :: i_spec_free, ipoint1D, i, j, k, ispec, ispecabs, i_source
+  integer :: i_spec_free,ipoint1D,i,j,ispec,i_source,i_source_local,ispec_PML,ielem
   integer :: ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic
-  integer :: ier,inum
+  integer :: inum
   real(kind=CUSTOM_REAL) :: zxi,xgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: xxi,zgamma
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_normalized_temp
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!! Initialisation variables pour routine prepare_constants_device
+!! Initialize variables for subroutine prepare_constants_device
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   ! user output
@@ -343,137 +376,102 @@
     call flush_IMAIN()
   endif
 
-  ! converts to CUSTOM_REAL
-  deltatf = sngl(deltat)
-  deltatover2f = sngl(deltatover2)
-  deltatsquareover2f = sngl(deltatsquareover2)
-
-  b_deltatf = sngl(b_deltat)
-  b_deltatover2f = sngl(b_deltatover2)
-  b_deltatsquareover2f = sngl(b_deltatsquareover2)
-
   NSPEC_AB = nspec
   NGLOB_AB = nglob
 
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '  number of MPI interfaces                        = ',ninterface
-    write(IMAIN,*) '  number of acoustic elements at free surface     = ',nelem_acoustic_surface
     call flush_IMAIN()
   endif
 
-  ! acoustic elements at free surface
-  allocate(free_ac_ispec(nelem_acoustic_surface))
-  if (nelem_acoustic_surface > 0) then
-    ! gets ispec indices for acoustic elements at free surface
-    free_ac_ispec(:) = acoustic_surface(1,:)
-  endif
+  ! PML
+  if (nspec_PML == 0) PML_BOUNDARY_CONDITIONS = .false.
 
-  ! checks
-  if (nelemabs < 0) then
-    if (myrank == 0) write(IMAIN,*) '  Warning: reading in negative nelemabs ',nelemabs,'...resetting to zero!'
-    nelemabs = 0
-  endif
-
-  allocate(abs_boundary_ij(2,NGLLX,nelemabs), &
-           abs_boundary_jacobian1Dw(NGLLX,nelemabs), &
-           abs_boundary_normal(NDIM,NGLLX,nelemabs), &
-           cote_abs(nelemabs),stat=ier)
-  if (ier /= 0 ) call stop_the_code('error allocating array abs_boundary_ispec etc.')
-
-  if (STACEY_ABSORBING_CONDITIONS) then
-
-    do ispecabs = 1,nelemabs
-      ispec = numabs(ispecabs)
-
-      !--- left absorbing boundary
-      if (codeabs(IEDGE4,ispecabs)) then
-        i = 1
-        do j = 1,NGLLZ
-          abs_boundary_ij(1,j,ispecabs) = i
-          abs_boundary_ij(2,j,ispecabs) = j
-
-          xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-          zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-          jacobian1D = sqrt(xgamma**2 + zgamma**2)
-
-          abs_boundary_normal(1,j,ispecabs) = - zgamma / jacobian1D
-          abs_boundary_normal(2,j,ispecabs) = + xgamma / jacobian1D
-
-          abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
-
-          cote_abs(ispecabs) = 4
-        enddo
-        if (ibegin_edge4(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = 6
-        if (iend_edge4(ispecabs) == 4) abs_boundary_ij(2,5,ispecabs) = 6
-
-      !--- right absorbing boundary
-      else if (codeabs(IEDGE2,ispecabs)) then
-        i = NGLLX
-        do j = 1,NGLLZ
-          abs_boundary_ij(1,j,ispecabs) = i
-          abs_boundary_ij(2,j,ispecabs) = j
-
-          xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-          zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-          jacobian1D = sqrt(xgamma**2 + zgamma**2)
-
-          abs_boundary_normal(1,j,ispecabs) = + zgamma / jacobian1D
-          abs_boundary_normal(2,j,ispecabs) = - xgamma / jacobian1D
-
-          abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
-
-          cote_abs(ispecabs) = 2
-        enddo
-        if (ibegin_edge2(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = 6
-        if (iend_edge2(ispecabs) == 4) abs_boundary_ij(2,5,ispecabs) = 6
-
-      !--- bottom absorbing boundary
-      else if (codeabs(IEDGE1,ispecabs)) then
-        j = 1
-        do i = 1,NGLLX
-          abs_boundary_ij(1,i,ispecabs) = i
-          abs_boundary_ij(2,i,ispecabs) = j
-
-          xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-          zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-          jacobian1D = sqrt(xxi**2 + zxi**2)
-
-          abs_boundary_normal(1,i,ispecabs) = + zxi / jacobian1D
-          abs_boundary_normal(2,i,ispecabs) = - xxi / jacobian1D
-
-          abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
-
-          cote_abs(ispecabs) = 1
-
-        enddo
-        if (ibegin_edge1(ispecabs) == 2 .or. codeabs_corner(1,ispecabs)) abs_boundary_ij(1,1,ispecabs) = 6
-        if (iend_edge1(ispecabs) == 4 .or. codeabs_corner(2,ispecabs)) abs_boundary_ij(1,5,ispecabs) = 6
-
-      !--- top absorbing boundary
-      else if (codeabs(IEDGE3,ispecabs)) then
-        j = NGLLZ
-        do i = 1,NGLLX
-          abs_boundary_ij(1,i,ispecabs) = i
-          abs_boundary_ij(2,i,ispecabs) = j
-
-          xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-          zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-          jacobian1D = sqrt(xxi**2 + zxi**2)
-
-          abs_boundary_normal(1,i,ispecabs) = - zxi / jacobian1D
-          abs_boundary_normal(2,i,ispecabs) = + xxi / jacobian1D
-
-          abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
-
-          cote_abs(ispecabs) = 3
-        enddo
-        if (ibegin_edge3(ispecabs) == 2 .or. codeabs_corner(3,ispecabs)) abs_boundary_ij(1,1,ispecabs) = 6
-        if (iend_edge3(ispecabs) == 4 .or. codeabs_corner(4,ispecabs)) abs_boundary_ij(1,5,ispecabs) = 6
-
+  if (PML_BOUNDARY_CONDITIONS) then
+    ! EB EB : We create spec_to_PML_GPU such that :
+    ! spec_to_PML_GPU(ispec) = 0 indicates the element is not in the PML
+    ! spec_to_PML_GPU(ispec) \in [1, NSPEC_PML_X] indicates the element is not in the region CPML_X_ONLY
+    ! spec_to_PML_GPU(ispec) \in [NSPEC_PML_X + 1, NSPEC_PML_X + NSPEC_PML_Z] indicates the element is in the region CPML_Z_ONLY
+    ! spec_to_PML_GPU(ispec) >  NSPEC_PML_X + NSPEC_PML_Z indicates the element is in the region CPML_XZ
+    ! Finally, spec_to_PML_GPU(ispec) = ielem, where ielem the local number of the element in the PML
+    allocate(spec_to_PML_GPU(nspec))
+    spec_to_PML_GPU(:) = 0
+    nspec_PML_X = 0
+    do ispec = 1,nspec
+      if (region_CPML(ispec) == CPML_X_ONLY ) then
+        nspec_PML_X = nspec_PML_X+1
+        spec_to_PML_GPU(ispec) = nspec_PML_X
       endif
     enddo
-  endif ! STACEY_ABSORBING_CONDITIONS
+    nspec_PML_Z = 0
+    do ispec = 1,nspec
+      if (region_CPML(ispec) == CPML_Z_ONLY ) then
+        nspec_PML_Z = nspec_PML_Z+1
+        spec_to_PML_GPU(ispec) = nspec_PML_X + nspec_PML_Z
+      endif
+    enddo
+    nspec_PML_XZ = 0
+    do ispec = 1,nspec
+      if (region_CPML(ispec) == CPML_XZ ) then
+        nspec_PML_XZ = nspec_PML_XZ+1
+        spec_to_PML_GPU(ispec) = nspec_PML_X + nspec_PML_Z + nspec_PML_XZ
+      endif
+    enddo
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  number of PML elements in this process slice    = ',nspec_PML
+      write(IMAIN,*) '      elements X only                             = ',nspec_PML_X
+      write(IMAIN,*) '      elements Z only                             = ',nspec_PML_Z
+      write(IMAIN,*) '      elements XZ                                 = ',nspec_PML_XZ
+      call flush_IMAIN()
+    endif
+
+    ! Safety check
+    if (nspec_PML_X + nspec_PML_Z + nspec_PML_XZ /= nspec_PML) then
+      print *,'Error: rank ',myrank,' has invalid number of PML elements ',nspec_PML, &
+              ' X ',nspec_PML_X,'Z ',nspec_PML_Z, 'XZ', nspec_PML_XZ
+      stop 'Error with the number of PML elements in GPU mode'
+    endif
+
+    ! EB EB : We reorganize the arrays abs_normalized and abs_normalized2 that
+    ! don't have the correct dimension and new local element numbering
+    allocate(abs_normalized_temp(NGLLX,NGLLZ,NSPEC))
+    abs_normalized_temp(:,:,:) = abs_normalized(:,:,:)
+    deallocate(abs_normalized)
+    allocate(abs_normalized(NGLLX,NGLLZ,NSPEC_PML))
+    do ispec = 1,nspec
+      if (spec_to_PML_GPU(ispec) > 0) abs_normalized(:,:,spec_to_PML_GPU(ispec)) = abs_normalized_temp(:,:,ispec)
+    enddo
+    deallocate(abs_normalized_temp)
+
+    allocate(alphax_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ),alphaz_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ), &
+             betax_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ),betaz_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ))
+    alphax_store_GPU(:,:,:) = 0.0_CUSTOM_REAL
+    alphaz_store_GPU(:,:,:) = 0.0_CUSTOM_REAL
+    betax_store_GPU(:,:,:) = 0.0_CUSTOM_REAL
+    betaz_store_GPU(:,:,:) = 0.0_CUSTOM_REAL
+    do ispec = 1,nspec
+      if (region_CPML(ispec) == CPML_XZ) then
+        ispec_PML = spec_to_PML(ispec)
+        ! element index in range [1,NSPEC_PML_XZ]
+        ielem = spec_to_PML_GPU(ispec)-(nspec_PML_X + nspec_PML_Z)
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+            alphax_store_GPU(i,j,ielem) = sngl(alpha_x_store(i,j,ispec_PML))
+            alphaz_store_GPU(i,j,ielem) = sngl(alpha_z_store(i,j,ispec_PML))
+            betax_store_GPU(i,j,ielem) = sngl(alpha_x_store(i,j,ispec_PML) + d_x_store(i,j,ispec_PML))
+            betaz_store_GPU(i,j,ielem) = sngl(alpha_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML))
+           enddo
+         enddo
+      endif
+    enddo
+  else
+    ! dummy allocations
+    allocate(spec_to_PML_GPU(1))
+    allocate(alphax_store_GPU(1,1,1),alphaz_store_GPU(1,1,1), &
+             betax_store_GPU(1,1,1),betaz_store_GPU(1,1,1))
+  endif ! PML_BOUNDARY_CONDITIONS
 
   ! sources
   ! counts sources in this process slice
@@ -486,36 +484,40 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  number of sources                               = ',NSOURCES
+    write(IMAIN,*) '  total number of sources                         = ',NSOURCES
     write(IMAIN,*) '  number of sources in this process slice         = ',nsources_local
     call flush_IMAIN()
   endif
 
-  allocate(source_time_function_loc(nsources_local,NSTEP))
-  allocate(ispec_selected_source_loc(nsources_local))
-  j = 0
-  do i = 1, NSOURCES
-    if (myrank == islice_selected_source(i)) then
-      if (j > nsources_local) call stop_the_code('Error with the number of local sources')
-      j = j + 1
-      source_time_function_loc(j,:) = source_time_function(i,:,1)
-      ispec_selected_source_loc(j)  = ispec_selected_source(i)
-    endif
-  enddo
-
+  ! creates arrays to hold only local source entries
   if (nsources_local > 0) then
-    allocate(sourcearray_loc(nsources_local,NDIM,NGLLX,NGLLX))
+    allocate(sourcearray_loc(NDIM,NGLLX,NGLLX,nsources_local))
+    allocate(source_time_function_loc(nsources_local,NSTEP))
+    allocate(ispec_selected_source_loc(nsources_local))
   else
+    ! dummy
     allocate(sourcearray_loc(1,1,1,1))
+    allocate(source_time_function_loc(1,1))
+    allocate(ispec_selected_source_loc(1))
   endif
+  source_time_function_loc(:,:) = 0.0_CUSTOM_REAL
+  ispec_selected_source_loc(:) = 1
+  sourcearray_loc(:,:,:,:) = 0.0_CUSTOM_REAL
 
-  k = 0
-  do i_source = 1,NSOURCES
+  i_source_local = 0
+  do i_source = 1, NSOURCES
     if (myrank == islice_selected_source(i_source)) then
       ! source belongs to this process
-      k = k + 1
-      sourcearray_loc(k,:,:,:) = sourcearrays(i_source,:,:,:)
-      sourcearray_loc(k,:,:,:) = sourcearrays(i_source,:,:,:)
+      i_source_local = i_source_local + 1
+      if (i_source_local > nsources_local) stop 'Error with the number of local sources'
+      ! stores local sources infos
+      source_time_function_loc(i_source_local,:) = source_time_function(i_source,:,1)
+      ispec_selected_source_loc(i_source_local)  = ispec_selected_source(i_source)
+      if (P_SV) then
+        sourcearray_loc(:,:,:,i_source_local) = sourcearrays(:,:,:,i_source)
+      else
+        sourcearray_loc(1,:,:,i_source_local) = sourcearrays(1,:,:,i_source) ! only single component for SH
+      endif
     endif
   enddo
 
@@ -535,44 +537,62 @@
   enddo
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!! Init pour prepare acoustique
+!!!!!!! Init to prepare acoustics
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  ! acoustic elements at free surface
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of acoustic elements at free surface     = ',nelem_acoustic_surface
+    call flush_IMAIN()
+  endif
+  allocate(free_ac_ispec(nelem_acoustic_surface))
+  if (nelem_acoustic_surface > 0) then
+    ! gets ispec indices for acoustic elements at free surface
+    free_ac_ispec(:) = acoustic_surface(1,:)
+  endif
 
   ! free surface
   allocate(free_surface_ij(2,NGLLX,nelem_acoustic_surface))
-
+  free_surface_ij(:,:,:) = 0
   do i_spec_free = 1, nelem_acoustic_surface
     if (acoustic_surface(2,i_spec_free) == acoustic_surface(3,i_spec_free)) then
-      do j =1,NGLLX
+      do j = 1,NGLLX
         free_surface_ij(1,j,i_spec_free) = acoustic_surface(2,i_spec_free)
       enddo
     else
-      j=1
+      j = 1
       do i = acoustic_surface(2,i_spec_free), acoustic_surface(3,i_spec_free)
         free_surface_ij(1,j,i_spec_free) = i
-        j=j+1
+        j = j+1
       enddo
     endif
 
     if (acoustic_surface(4,i_spec_free) == acoustic_surface(5,i_spec_free)) then
-      do j =1,NGLLX
+      do j = 1,NGLLX
         free_surface_ij(2,j,i_spec_free) = acoustic_surface(4,i_spec_free)
       enddo
     else
-      j=1
+      j = 1
       do i = acoustic_surface(4,i_spec_free), acoustic_surface(5,i_spec_free)
         free_surface_ij(2,j,i_spec_free) = i
-        j=j+1
+        j = j+1
       enddo
     endif
   enddo
 
   ! coupling surfaces for acoustic-elastic domains
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of coupled fluid-solid edges             = ',num_fluid_solid_edges
+    call flush_IMAIN()
+  endif
   allocate(coupling_ac_el_ispec(num_fluid_solid_edges))
   allocate(coupling_ac_el_ij(2,NGLLX,num_fluid_solid_edges))
   allocate(coupling_ac_el_normal(2,NGLLX,num_fluid_solid_edges))
   allocate(coupling_ac_el_jacobian1Dw(NGLLX,num_fluid_solid_edges))
-
+  coupling_ac_el_ispec(:) = 0
+  coupling_ac_el_ij(:,:,:) = 0
+  coupling_ac_el_normal(:,:,:) = 0.0_CUSTOM_REAL
+  coupling_ac_el_jacobian1Dw(:,:) = 0.00_CUSTOM_REAL
   do inum = 1,num_fluid_solid_edges
     ! get the edge of the acoustic element
     ispec_acoustic = fluid_solid_acoustic_ispec(inum)
@@ -628,84 +648,15 @@
     enddo
   enddo
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!! Initialisation parametres pour simulation elastique
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-  ! anisotropy
-  ANY_ANISOTROPY = .false.
-  do ispec = 1, nspec
-    if (ispec_is_anisotropic(ispec) ) ANY_ANISOTROPY = .true.
-  enddo
-
-  if (ANY_ANISOTROPY) then
-    ! user output
-    if (myrank == 0) write(IMAIN,*) '  setting up anisotropic arrays'
-
-    allocate(c11store(NGLLX,NGLLZ,NSPEC))
-    allocate(c13store(NGLLX,NGLLZ,NSPEC))
-    allocate(c15store(NGLLX,NGLLZ,NSPEC))
-    allocate(c33store(NGLLX,NGLLZ,NSPEC))
-    allocate(c35store(NGLLX,NGLLZ,NSPEC))
-    allocate(c55store(NGLLX,NGLLZ,NSPEC))
-    allocate(c12store(NGLLX,NGLLZ,NSPEC))
-    allocate(c23store(NGLLX,NGLLZ,NSPEC))
-    allocate(c25store(NGLLX,NGLLZ,NSPEC))
-
-    if (assign_external_model) then
-      do ispec = 1,nspec
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            c11store(i,j,ispec) = c11ext(i,j,ispec)
-            c13store(i,j,ispec) = c13ext(i,j,ispec)
-            c15store(i,j,ispec) = c15ext(i,j,ispec)
-            c33store(i,j,ispec) = c33ext(i,j,ispec)
-            c35store(i,j,ispec) = c35ext(i,j,ispec)
-            c55store(i,j,ispec) = c55ext(i,j,ispec)
-            c12store(i,j,ispec) = c12ext(i,j,ispec)
-            c23store(i,j,ispec) = c23ext(i,j,ispec)
-            c25store(i,j,ispec) = c25ext(i,j,ispec)
-          enddo
-       enddo
-      enddo
-    else
-      do ispec = 1,nspec
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            c11store(i,j,ispec) = sngl(anisotropy(1,kmato(ispec)))
-            c13store(i,j,ispec) = sngl(anisotropy(2,kmato(ispec)))
-            c15store(i,j,ispec) = sngl(anisotropy(3,kmato(ispec)))
-            c33store(i,j,ispec) = sngl(anisotropy(4,kmato(ispec)))
-            c35store(i,j,ispec) = sngl(anisotropy(5,kmato(ispec)))
-            c55store(i,j,ispec) = sngl(anisotropy(6,kmato(ispec)))
-            c12store(i,j,ispec) = sngl(anisotropy(7,kmato(ispec)))
-            c23store(i,j,ispec) = sngl(anisotropy(8,kmato(ispec)))
-            c25store(i,j,ispec) = sngl(anisotropy(9,kmato(ispec)))
-          enddo
-        enddo
-      enddo
-    endif
-  else
-    ! dummy allocations
-    allocate(c11store(1,1,1))
-    allocate(c13store(1,1,1))
-    allocate(c15store(1,1,1))
-    allocate(c33store(1,1,1))
-    allocate(c35store(1,1,1))
-    allocate(c55store(1,1,1))
-    allocate(c12store(1,1,1))
-    allocate(c23store(1,1,1))
-    allocate(c25store(1,1,1))
-  endif
-
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  initialization done successfully'
+    write(IMAIN,*)
+    write(IMAIN,*) '  init_host_to_dev_variable done successfully'
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
   end subroutine init_host_to_dev_variable
 
-!----------------------------------------------------------------------
-
   end subroutine prepare_GPU
+

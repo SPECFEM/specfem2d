@@ -8,7 +8,7 @@
 #             run in directory root SPECFEM2D/
 #
 
-$outfile = "src/cuda/specfem2D_gpu_cuda_method_stubs.c";
+$outfile = "src/gpu/specfem2D_gpu_cuda_method_stubs.c";
 
 
 open(IOUT,"> _____temp_tutu_____");
@@ -70,7 +70,7 @@ print IOUT "$header\n";
 
 $success = 0;
 
-@objects = `ls src/cuda/*.cu`;
+@objects = `ls src/gpu/*.cu`;
 
 foreach $name (@objects) {
   chop $name;

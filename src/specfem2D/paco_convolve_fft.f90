@@ -73,21 +73,33 @@
 ! NSTEP==1, FLAG==0 (flags: interior=0, left= 1, right= 2, bottom=3)
 !
 
-  do j = 1,N
-    select case (label)
-    case (1,4)
+  select case (label)
+  case (1,4)
+    ! Ricker
+    do j = 1,N
       FUN = ric(j,tp,ts,dt)
-    case (2)
+      CR(j) = CMPLX(FUN,0.0d0)
+    enddo
+
+  case (2)
+    ! first derivative Ricker
+    do j = 1,N
       FUN = deric(j,tp,ts,dt)
-    case (3)
+      CR(j) = CMPLX(FUN,0.0d0)
+    enddo
+
+  case (3)
+    ! second derivative Ricker
+    do j = 1,N
       FUN = de2ric(j,tp,ts,dt)
-    case default
-      call stop_the_code('Invalid label in paco_convolve_fft')
-    end select
+      CR(j) = CMPLX(FUN,0.0d0)
+    enddo
 
-    CR(j) = CMPLX(FUN,0.0d0)
-  enddo
+  case default
+    call stop_the_code('Invalid label in paco_convolve_fft')
+  end select
 
+  ! forward FFT
   call fourier_transform(N,CR,-1.0d0)
 
   RAIZ = SQRT(AN)
@@ -136,17 +148,17 @@
   call fourier_transform(N,CY,1.0d0)
 
   if (label == 1 .or. label == 3 .or. (label == 2 .and. NSTEP == 1)) then
-! coefficients to take time steps needed (t=0: first time step)
-     mult = 1
-     delay = 0
+    ! coefficients to take time steps needed (t=0: first time step)
+    mult = 1
+    delay = 0
   else if (label == 2 .and. NSTEP > 1) then
-! coefficients to take time steps needed (t=i*deltat+1/2: one step on two starting at 1/2)
-     mult = 2
-     delay = 0
+    ! coefficients to take time steps needed (t=i*DT+1/2: one step on two starting at 1/2)
+    mult = 2
+    delay = 0
   else if (label == 4) then
-! coefficients to take time steps needed (t=i*deltat+1: one step on two starting at 1)
-     mult = 2
-     delay = 1
+    ! coefficients to take time steps needed (t=i*DT+1: one step on two starting at 1)
+    mult = 2
+    delay = 1
   endif
 
   do J = 1,NSTEP

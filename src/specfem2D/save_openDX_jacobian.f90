@@ -118,9 +118,9 @@
         endif
         gamma = zigll(j)
 
-        call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
-                        jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
-                        .false.)
+        call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl, &
+                                                   coorg,knods,ispec,ngnod,nspec,npgeo, &
+                                                   .false.)
 
         if (jacobianl <= ZERO) found_a_problem_in_this_element = .true.
       enddo

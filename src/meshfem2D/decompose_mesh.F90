@@ -34,7 +34,7 @@
 
   subroutine decompose_mesh()
 
-  use constants, only: IMAIN,MAX_NEIGHBORS,NCORNERS,MAX_NSIZE_SHARED,ADD_A_SMALL_CRACK_IN_THE_MEDIUM
+  use constants, only: IMAIN,MAX_NEIGHBORS,NCORNERS,MAX_NSIZE_SHARED,ADD_A_SMALL_CRACK_IN_THE_MEDIUM,myrank
 
   use shared_parameters, only: NPROC,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
     ngnod,nbmodels,num_material,partitioning_method,phi_read
@@ -49,6 +49,12 @@
 
   ! local parameters
   integer :: i, iproc, ier
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  decomposing mesh using NPROC = ',NPROC
+    call flush_IMAIN()
+  endif
 
   ! allocates and initializes partitioning of elements
   allocate(part(0:nelmnts-1),stat=ier)
@@ -65,6 +71,12 @@
   endif
 
   ! construction of the graph
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Graph construction:'
+    call flush_IMAIN()
+  endif
 
   ! if ngnod == 9, we work on a subarray of elements that represents the elements with four nodes (four corners) only
   ! because the adjacency of the mesh elements can be entirely determined from the knowledge of the four corners only
@@ -91,8 +103,14 @@
       call mesh2dual_ncommonnodes(elmnts,1,xadj_g,adjncy_g)
     endif
   endif
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  graph adjacency done'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
-
+  ! partitions
   if (NPROC == 1) then
     part(:) = 0 ! single process has rank 0
   else
@@ -106,9 +124,13 @@
     select case (partitioning_method)
     case(1)
       ! analytical
-      write(IMAIN,*)
-      write(IMAIN,*) 'Partitioning method: analytical'
-      write(IMAIN,*)
+      if (myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) 'Partitioning method: analytical'
+        write(IMAIN,*)
+        call flush_IMAIN()
+      endif
+
       do iproc = 0, NPROC-2
         part(iproc*floor(real(nelmnts)/real(NPROC)):(iproc+1)*floor(real(nelmnts)/real(NPROC))-1) = iproc
       enddo
@@ -116,22 +138,36 @@
 
     case(2)
       ! METIS
-      write(IMAIN,*)
-      write(IMAIN,*) 'Partitioning method: METIS'
-      write(IMAIN,*)
+      if (myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) 'Partitioning method: METIS'
+        write(IMAIN,*)
+        call flush_IMAIN()
+      endif
+
       call metis_partitioning()
 
     case(3)
       ! SCOTCH
-      write(IMAIN,*)
-      write(IMAIN,*) 'Partitioning method: SCOTCH'
-      write(IMAIN,*)
+      if (myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) 'Partitioning method: SCOTCH'
+        write(IMAIN,*)
+        call flush_IMAIN()
+      endif
+
       call scotch_partitioning()
 
     case default
       call stop_the_code('Error invalid partitioning method value! must be 1, 2 or 3, please check your Par_file...')
     end select
 
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'Coupled interfaces:'
+    call flush_IMAIN()
   endif
 
   ! fluid-solid edges: coupled elements are transferred to the same partition
@@ -174,26 +210,39 @@
     endif
   endif
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Local numbering:'
+    write(IMAIN,*) '  NPROC: ', NPROC
+    write(IMAIN,*) '  number of elements: ',nelmnts
+    call flush_IMAIN()
+  endif
+
   ! local number of each element for each partition
-  call Construct_glob2loc_elmnts(NPROC)
+  call construct_glob2loc_elmnts(NPROC)
 
   if (ngnod == 9) then
     if (allocated(nnodes_elmnts) ) deallocate(nnodes_elmnts)
     if (allocated(nodes_elmnts) ) deallocate(nodes_elmnts)
+
     allocate(nnodes_elmnts(0:nnodes-1))
     allocate(nodes_elmnts(0:MAX_NSIZE_SHARED*nnodes-1))
+
     nnodes_elmnts(:) = 0
     nodes_elmnts(:) = 0
     do i = 0, ngnod*nelmnts-1
-      nodes_elmnts(elmnts(i)*MAX_NSIZE_SHARED+nnodes_elmnts(elmnts(i))) = i/ngnod
+      nodes_elmnts(elmnts(i)*MAX_NSIZE_SHARED + nnodes_elmnts(elmnts(i))) = i/ngnod
       nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
     enddo
   else
     if (NPROC < 2) then
       if (.not. allocated(nnodes_elmnts) ) allocate(nnodes_elmnts(0:nnodes-1))
       if (.not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:MAX_NSIZE_SHARED*nnodes-1))
+
       nnodes_elmnts(:) = 0
       nodes_elmnts(:) = 0
+
       do i = 0, ngnod*nelmnts-1
         nodes_elmnts(elmnts(i)*MAX_NSIZE_SHARED+nnodes_elmnts(elmnts(i))) = i/ngnod
         nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
@@ -220,6 +269,14 @@
      ninterfaces=0
      allocate(my_interfaces(0:ninterfaces-1))
      allocate(my_nb_interfaces(0:ninterfaces-1))
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'decompose mesh all done'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   end subroutine decompose_mesh

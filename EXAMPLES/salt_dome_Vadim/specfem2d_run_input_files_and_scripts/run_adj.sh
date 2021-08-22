@@ -5,15 +5,14 @@
 module load intel/13.0
 module load openmpi/intel/1.6.3
 module list
+
 ulimit -s unlimited
 echo ${OAR_NODEFILE}
 
 SEM=/home/vmonteil/progs/specfem2d/bin/
 
-
 MPIRUN=mpirun
 OPTION_MPI=" -np 48  -machinefile "${OAR_NODEFILE}" -bysocket -bind-to-core"
-
 
 declare -i i n
 

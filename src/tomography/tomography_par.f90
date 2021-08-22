@@ -33,9 +33,9 @@
 
 module tomography_par
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,IIN,IOUT,FOUR_THIRDS,GAUSSALPHA,GAUSSBETA
-
-  use shared_parameters, only: myrank
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ, &
+    IIN,IOUT,FOUR_THIRDS,GAUSSALPHA,GAUSSBETA, &
+    myrank
 
   implicit none
 

@@ -33,14 +33,10 @@
 
   subroutine write_color_image_snaphot(plot_b_wavefield_only)
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN,NGLLX,NGLLZ,REMOVE_PMLS_FROM_JPEG_IMAGES
 
   use specfem_par, only: myrank,nspec,it,NPROC, &
-                        assign_external_model,ibool,kmato,density,rhoext,P_SV, &
+                        assign_external_model,ibool,kmato,density,rhostore,P_SV, &
                         potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
                         displ_elastic,veloc_elastic,accel_elastic, &
                         displs_poroelastic,velocs_poroelastic,accels_poroelastic, &
@@ -52,12 +48,14 @@
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
 
+  use shared_parameters, only: imagetype_JPEG
+
   use specfem_par_movie, only: vector_field_display,image_color_data,iglob_image_color, &
-    imagetype_JPEG,nb_pixel_loc, &
+    nb_pixel_loc, &
     NX_IMAGE_color,NZ_IMAGE_color, &
     num_pixel_loc
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   use specfem_par_movie, only: data_pixel_recv,data_pixel_send,nb_pixel_per_proc,num_pixel_recv
 #endif
 
@@ -80,7 +78,6 @@
   do i_field = 1, n_fields
 
   if (myrank == 0) then
-    write(IMAIN,*)
     write(IMAIN,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color,' for time step ',it
     call flush_IMAIN()
   endif
@@ -136,7 +133,7 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           if (assign_external_model) then
-            rhol = rhoext(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
           else
             rhol = density(1,kmato(ispec))
           endif
@@ -156,7 +153,7 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           if (assign_external_model) then
-            rhol = rhoext(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
           else
             rhol = density(1,kmato(ispec))
           endif
@@ -252,7 +249,7 @@
   enddo
 
   ! assembling array image_color_data on process zero for color output
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (NPROC > 1) then
     if (myrank == 0) then
       do iproc = 1, NPROC-1
@@ -334,7 +331,13 @@
   endif
   call synchronize_all()
 
-enddo !loop over wavefields (forward and adjoint if necessary)
+  enddo !loop over wavefields (forward and adjoint if necessary)
+
+  ! output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   end subroutine write_color_image_snaphot
 

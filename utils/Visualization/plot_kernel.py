@@ -1,5 +1,20 @@
 #!/usr/bin/env python
-
+# SPECFEM2D
+#
+# script plots kernels and saves image as PNG-file
+#
+# usage:
+#   ./plot_kernel.py file [1 == show figure / 0 == just plot file]
+#
+# for example:
+#   ./plot_kernel.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat 1
+#
+#
+# requirements:
+#   - numpy
+#   - matplotlib
+#
+from __future__ import print_function
 import os.path
 import sys
 import numpy as np
@@ -15,16 +30,16 @@ def grid(x, y, z, resX=100, resY=100):
     """
     Converts 3 column data to matplotlib grid
     """
-    from matplotlib.mlab import griddata
-    #from scipy.interpolate import griddata
+    #griddata deprecated since matplotlib 3.1: from matplotlib.mlab import griddata
+    from scipy.interpolate import griddata
 
     xi = np.linspace(min(x), max(x), resX)
     yi = np.linspace(min(y), max(y), resY)
 
     # mlab version
-    Z = griddata(x, y, z, xi, yi, interp='linear')
+    #Z = griddata(x, y, z, xi, yi, interp='linear')
     # scipy version
-    #Z = griddata((x, y), z, (xi[None,:], yi[:,None]), method='cubic')
+    Z = griddata((x, y), z, (xi[None,:], yi[:,None]), method='cubic')
 
     X, Y = np.meshgrid(xi, yi)
     return X, Y, Z
@@ -33,22 +48,29 @@ def plot_kernels(filename,show=False):
     """
     plots ASCII kernel file
     """
-    print "plotting kernel file: ",filename
-    print ""
+    print("plotting kernel file: ",filename)
+    print("")
 
     data = np.loadtxt(filename)
 
     # checks data
     if data.ndim != 2:
-        print "Error: wrong data dimension for kernel file",data.ndim
+        print("Error: wrong data dimension for kernel file",data.ndim)
         sys.tracebacklimit=0
         raise Exception("Invalid data dimension")
 
+    # number of columns
+    num_col = len(data[1,:])
+    # number of kernels
+    num_kernels = num_col - 2
+    # number of points
+    num_p = len(data[:,1])
+
     # checks array
-    if len(data[1,:]) != 5:
-        print "data shape  : ",data.shape
-        print "data lengths: ",len(data[:,1]),len(data[1,:])
-        print "Error: wrong data format for kernel file",data.shape
+    if num_kernels != 2 and num_kernels != 3:
+        print("data shape  : ",data.shape)
+        print("data lengths: ",len(data[:,1]),len(data[1,:]))
+        print("Error: wrong data format for kernel file",data.shape)
         sys.tracebacklimit=0
         raise Exception("Invalid data format")
 
@@ -56,49 +78,85 @@ def plot_kernels(filename,show=False):
     x = data[:,0]
     y = data[:,1]
 
-    print "dimensions:"
-    print "  x-range min/max = %f / %f" % (x.min(), x.max())
-    print "  y-range min/max = %f / %f" % (y.min(), y.max())
-    print ""
+    print("dimensions:")
+    print("  x-range min/max = %f / %f" % (x.min(), x.max()))
+    print("  y-range min/max = %f / %f" % (y.min(), y.max()))
+    print("")
 
-    z1 = data[:,2] # e.g. rho
-    z2 = data[:,3] # e.g. alpha
-    z3 = data[:,4] # e.g. beta
+    z1 = np.zeros(num_p,dtype='float')
+    z2 = np.zeros(num_p,dtype='float')
+    z3 = np.zeros(num_p,dtype='float')
+
+    if num_kernels == 2:
+        z1 = data[:,2] # e.g. rho
+        z2 = data[:,3] # e.g. bulk_c
+    else:
+        z1 = data[:,2] # e.g. rho
+        z2 = data[:,3] # e.g. alpha
+        z3 = data[:,4] # e.g. beta
 
     # names like
-    #   rhop_alpha_beta_kernel.dat
+    #   proc000000_rhop_c_kernel.dat
     # or
     #   proc000000_rhop_alpha_beta_kernel.dat
+    # or
+    #   rhop_alpha_beta_kernel.dat
     name = os.path.basename(file)
 
     name_kernels = str.split(name,"_")
-    if len(name_kernels) == 4:
-        kernel1 = 'K_' + name_kernels[0] # rhop
-        kernel2 = 'K_' + name_kernels[1] # alpha
-        kernel3 = 'K_' + name_kernels[2] # beta
-    elif len(name_kernels) == 5:
-        kernel1 = 'K_' + name_kernels[1]
-        kernel2 = 'K_' + name_kernels[2]
-        kernel3 = 'K_' + name_kernels[3]
+    num_k = len(name_kernels)
+    istart = 0
+    if "proc" in name_kernels[0]:
+        istart = 1
+        num_k = num_k - 1
+    if "kernel.dat" in name_kernels[len(name_kernels)-1]:
+        num_k = num_k - 1
+
+    # check
+    if num_k != num_kernels:
+        print("warning: name has ",num_k,",but file columns provide ",num_kernels,"kernels")
+
+    if num_k == 2:
+        # rhop_c
+        kernel1 = 'K_' + name_kernels[istart] # rhop
+        kernel2 = 'K_' + name_kernels[istart+1] # c
+        kernel3 = 'K_zero'
+    elif num_k == 3:
+        # rhop_alpha_beta
+        kernel1 = 'K_' + name_kernels[istart] # rhop
+        kernel2 = 'K_' + name_kernels[istart+1] # alpha
+        kernel3 = 'K_' + name_kernels[istart+2] # beta
     else:
         kernel1 = 'K_1'
         kernel2 = 'K_2'
         kernel3 = 'K_3'
 
-    print "statistics:"
-    print "  %12s : min/max = %e / %e" % (kernel1,z1.min(),z1.max())
-    print "  %12s : min/max = %e / %e" % (kernel2,z2.min(),z2.max())
-    print "  %12s : min/max = %e / %e" % (kernel3,z3.min(),z3.max())
-    print ""
+    print("statistics:")
+    print("  %12s : min/max = %e / %e" % (kernel1,z1.min(),z1.max()))
+    print("  %12s : min/max = %e / %e" % (kernel2,z2.min(),z2.max()))
+    if num_kernels == 3:
+        print("  %12s : min/max = %e / %e" % (kernel3,z3.min(),z3.max()))
+    print("")
 
     total_max = abs(np.concatenate((z1,z2,z3))).max()
-    print "  data max = ",total_max
-    print ""
+    print("  data max = ",total_max)
+    print("")
 
-    total_max = 1.e-8
+    # limit size
+    if total_max < 1.e-8:
+        total_max = 1.0 * 10**(int(np.log10(total_max))-1)  # example: 2.73e-11 limits to 1.e-11
+    else:
+        total_max = 1.e-8
+    print("plot: color scale max = ",total_max)
+    print("")
 
-    # setup figure (with 3 subplots)
-    fig, axes = plt.subplots(nrows=3, ncols=1)
+    # setup figure
+    if num_kernels == 2:
+        # with 2 subplots
+        fig, axes = plt.subplots(nrows=2, ncols=1)
+    else:
+        # with 3 subplots
+        fig, axes = plt.subplots(nrows=3, ncols=1)
 
     for i,ax in enumerate(axes.flat,start=1):
         # top
@@ -137,16 +195,16 @@ def plot_kernels(filename,show=False):
     outfile = dir + "/" + name_without_ending + ".png"
     fig.savefig(outfile, format="png")
 
-    print "*****"
-    print "plotted file: ",outfile
-    print "*****"
-    print ""
+    print("*****")
+    print("plotted file: ",outfile)
+    print("*****")
+    print("")
 
 
 def usage():
-    print "usage: ./plot_kernel.py file [1 == show figure / 0 == just plot file]"
-    print "   where"
-    print "       file - ASCII kernel file, e.g. OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat"
+    print("usage: ./plot_kernel.py file [1 == show figure / 0 == just plot file]")
+    print("   where")
+    print("       file - ASCII kernel file, e.g. OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat")
 
 if __name__ == '__main__':
     # gets arguments

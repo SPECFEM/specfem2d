@@ -55,22 +55,24 @@ if [ "$1" == "1" ]; then
   echo
 
   # creates adjoint sources
-  rm -rf xadj_seismogram
-  $FC $my_file -o xadj_seismogram
+  rm -rf bin/xadj_seismogram
+  $FC $my_file -o bin/xadj_seismogram
 
   echo
   echo "running adjoint source creation"
   echo
-  ./xadj_seismogram
+  ./bin/xadj_seismogram
 else
   # links executable
+  cd bin/
   rm -f xadj_seismogram
-  ln -s ../../bin/xadj_seismogram
+  ln -s ../../../bin/xadj_seismogram
+  cd ../
 
   echo
   echo "running adjoint source creation"
   echo
-  ./xadj_seismogram 95.0 130.0  AA.S0001  2
+  ./bin/xadj_seismogram 95.0 130.0  AA.S0001  2
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi

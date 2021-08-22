@@ -10,6 +10,7 @@ type "python PathTo/SPECFEM2D/UTILS/ProcessJpgFiles.py"
 
 @author: Cristini Paul, Laboratoire de Mecanique et d'Acoustique, CNRS, Marseille, France
 """
+from __future__ import print_function
 from os import listdir
 from shutil import copy
 from os.path import exists
@@ -52,4 +53,4 @@ if __name__=='__main__':
          if exists('img1.jpg'): ConvertImage000(ListFich)
          if  exists('image0000005.jpg'): ConvertImage(ListFich)
      else:
-        print 'Nothing to do !'
+        print('Nothing to do !')

@@ -33,13 +33,16 @@
 
   subroutine prepare_wavefields()
 
-  use constants, only: IMAIN,APPROXIMATE_HESS_KL
+  use constants, only: IMAIN,APPROXIMATE_HESS_KL,USE_ENFORCE_FIELDS
   use specfem_par
 
   implicit none
 
   ! local parameters
-  integer :: nglob_acoustic_b,nglob_elastic_b,nglob_poroelastic_b
+  integer :: b_nglob_acoustic,b_nglob_elastic,b_nglob_poroelastic
+  integer :: b_nspec_acoustic,b_nspec_elastic
+
+
   integer :: ier
 
   ! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
@@ -48,6 +51,131 @@
     write(IMAIN,*) 'Preparing array allocations'
     call flush_IMAIN()
   endif
+
+! note: allocating fields does not yet map the arrays onto memory.
+!       only when we first assign values to the arrays, the actually memory addresses get determined.
+!
+!       therefore, changing the order here could potentially change how near the next "neighbor" field address gets located,
+!       which in turn could have an effect on data access/movement and thus code performance.
+
+  !
+  ! acoustic domains
+  !
+  if (ACOUSTIC_SIMULATION) then
+    if (myrank == 0) then
+      write(IMAIN,*) '  arrays for acoustic domains'
+      call flush_IMAIN()
+    endif
+  endif
+
+  ! potential, its first and second derivative, and inverse of the mass matrix for acoustic elements
+  if (any_acoustic) then
+    nglob_acoustic = nglob
+  else
+    ! dummy allocate unused arrays with fictitious size
+    nglob_acoustic = 1
+  endif
+
+  allocate(potential_acoustic(nglob_acoustic), &
+           potential_dot_acoustic(nglob_acoustic), &
+           potential_dot_dot_acoustic(nglob_acoustic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating acoustic wavefield arrays')
+  potential_acoustic(:) = 0._CUSTOM_REAL; potential_dot_acoustic(:) = 0._CUSTOM_REAL;
+  potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+
+  ! PML
+  allocate(potential_acoustic_old(nglob_acoustic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating potential_acoustic_old array')
+  potential_acoustic_old(:) = 0._CUSTOM_REAL
+
+  allocate(rmass_inverse_acoustic(nglob_acoustic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating rmass_inverse_acoustic array')
+  rmass_inverse_acoustic(:) = 0._CUSTOM_REAL
+
+  ! intermediate fields
+  ! LDDRK
+  if (time_stepping_scheme == 2) then
+    allocate(potential_acoustic_LDDRK(nglob_acoustic), &
+             potential_dot_acoustic_LDDRK(nglob_acoustic), &
+             potential_dot_acoustic_temp(nglob_acoustic),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating acoustic LDDRK arrays')
+    potential_acoustic_LDDRK(:) = 0._CUSTOM_REAL; potential_dot_acoustic_LDDRK(:) = 0._CUSTOM_REAL
+    potential_dot_acoustic_temp(:) = 0._CUSTOM_REAL
+  endif
+
+  ! RK4
+  if (time_stepping_scheme == 3) then
+    allocate(potential_acoustic_init_rk(nglob_acoustic), &
+             potential_dot_acoustic_init_rk(nglob_acoustic), &
+             potential_dot_dot_acoustic_rk(nglob_acoustic,stage_time_scheme), &
+             potential_dot_acoustic_rk(nglob_acoustic,stage_time_scheme),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating acoustic RK arrays')
+    potential_acoustic_init_rk(:) = 0._CUSTOM_REAL; potential_dot_acoustic_init_rk(:) = 0._CUSTOM_REAL
+    potential_dot_dot_acoustic_rk(:,:) = 0._CUSTOM_REAL; potential_dot_acoustic_rk(:,:) = 0._CUSTOM_REAL
+  endif
+
+!! DK DK March 2018: this was missing in Quentin Brissaud's new variational formulation for viscoacoustic media; I added it
+  if (ATTENUATION_VISCOACOUSTIC) then
+    allocate(rmass_inverse_e1(nglob_acoustic,N_SLS),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating rmass_inverse_e1 arrays')
+  else
+    allocate(rmass_inverse_e1(1,1))
+  endif
+  rmass_inverse_e1(:,:) = 0.0_CUSTOM_REAL
+
+  if (SIMULATION_TYPE == 3 .and. any_acoustic) then
+    b_nglob_acoustic = nglob
+    b_nspec_acoustic = nspec
+  else
+    ! dummy array allocations
+    ! allocates unused arrays with fictitious size
+    b_nglob_acoustic = 1
+    b_nspec_acoustic = 1
+  endif
+  allocate(b_potential_acoustic(b_nglob_acoustic), &
+           b_potential_dot_acoustic(b_nglob_acoustic), &
+           b_potential_dot_dot_acoustic(b_nglob_acoustic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating acoustic backward wavefield arrays')
+  b_potential_acoustic(:) = 0._CUSTOM_REAL; b_potential_dot_acoustic(:) = 0._CUSTOM_REAL
+  b_potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+
+  ! PML
+  allocate(b_potential_acoustic_old(b_nglob_acoustic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating b_potential_acoustic_old arrays')
+  b_potential_acoustic_old(:) = 0._CUSTOM_REAL
+
+  allocate(b_displ_ac(2,b_nglob_acoustic), &
+           b_accel_ac(2,b_nglob_acoustic), &
+           accel_ac(2,b_nglob_acoustic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating b_displ_ac arrays')
+  b_accel_ac(:,:) = 0.0_CUSTOM_REAL; b_accel_ac(:,:) = 0.0_CUSTOM_REAL; accel_ac(:,:) = 0.0_CUSTOM_REAL
+
+  ! coupling for SIMULATION_TYPE == 3
+  allocate(potential_acoustic_adj_coupling(b_nglob_acoustic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating potential_acoustic_adj_coupling array')
+  potential_acoustic_adj_coupling(:) = 0.0_CUSTOM_REAL
+
+  ! kernels
+  ! on global points
+  allocate(rhol_ac_global(b_nglob_acoustic), &
+           kappal_ac_global(b_nglob_acoustic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating rhol_ac_global arrays')
+  rhol_ac_global(:) = 0.0_CUSTOM_REAL; kappal_ac_global(:) = 0.0_CUSTOM_REAL
+
+  ! on local points
+  allocate(rho_ac_kl(NGLLX,NGLLZ,b_nspec_acoustic), &
+           kappa_ac_kl(NGLLX,NGLLZ,b_nspec_acoustic), &
+           rhop_ac_kl(NGLLX,NGLLZ,b_nspec_acoustic), &
+           alpha_ac_kl(NGLLX,NGLLZ,b_nspec_acoustic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating rho_ac_kl arrays')
+  rho_ac_kl(:,:,:) = 0.0_CUSTOM_REAL; kappa_ac_kl(:,:,:) = 0.0_CUSTOM_REAL
+  rhop_ac_kl(:,:,:) = 0.0_CUSTOM_REAL; alpha_ac_kl(:,:,:) = 0.0_CUSTOM_REAL
+
+  ! for APPROXIMATE_HESS_KL
+  allocate(rhorho_ac_Hessian_final2(NGLLX,NGLLZ,b_nspec_acoustic), &
+           rhorho_ac_Hessian_final1(NGLLX,NGLLZ,b_nspec_acoustic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating rhorho_ac_Hessian_final arrays')
+  rhorho_ac_Hessian_final1(:,:,:) = 0.0_CUSTOM_REAL; rhorho_ac_Hessian_final2(:,:,:) = 0.0_CUSTOM_REAL
 
   !
   ! elastic domains
@@ -72,82 +200,107 @@
            veloc_elastic(NDIM,nglob_elastic), &
            accel_elastic(NDIM,nglob_elastic),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating elastic wavefield arrays')
+  displ_elastic(:,:) = 0.0_CUSTOM_REAL; veloc_elastic(:,:) = 0.0_CUSTOM_REAL; accel_elastic(:,:) = 0.0_CUSTOM_REAL
 
   ! PML
   allocate(displ_elastic_old(NDIM,nglob_elastic),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating old elastic wavefield arrays')
-
-  if (SIMULATION_TYPE == 3) then
-    if (coupled_acoustic_elastic) then
-      allocate(accel_elastic_adj_coupling(NDIM,nglob_elastic))
-    endif
-  endif
+  displ_elastic_old(:,:) = 0.0_CUSTOM_REAL
 
   allocate(rmass_inverse_elastic(NDIM,nglob_elastic),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating elastic mass matrix array')
+  rmass_inverse_elastic(:,:) = 0.0_CUSTOM_REAL
 
+  ! intermediate wavefields
+  ! LDDRK
   if (time_stepping_scheme == 2) then
     allocate(displ_elastic_LDDRK(NDIM,nglob_elastic), &
              veloc_elastic_LDDRK(NDIM,nglob_elastic), &
              veloc_elastic_LDDRK_temp(NDIM,nglob_elastic),stat=ier)
     if (ier /= 0) call stop_the_code('Error allocating elastic LDDRK wavefield arrays')
+    displ_elastic_LDDRK(:,:) = 0.0_CUSTOM_REAL; veloc_elastic_LDDRK(:,:) = 0.0_CUSTOM_REAL
+    veloc_elastic_LDDRK_temp(:,:) = 0.0_CUSTOM_REAL
   endif
 
+  ! RK4
   if (time_stepping_scheme == 3) then
     allocate(accel_elastic_rk(NDIM,nglob_elastic,stage_time_scheme), &
              veloc_elastic_rk(NDIM,nglob_elastic,stage_time_scheme), &
              veloc_elastic_initial_rk(NDIM,nglob_elastic), &
              displ_elastic_initial_rk(NDIM,nglob_elastic),stat=ier)
     if (ier /= 0) call stop_the_code('Error allocating elastic RK wavefield arrays')
+    accel_elastic_rk(:,:,:) = 0.0_CUSTOM_REAL; veloc_elastic_rk(:,:,:) = 0.0_CUSTOM_REAL
+    veloc_elastic_initial_rk(:,:) = 0.0_CUSTOM_REAL; displ_elastic_initial_rk(:,:) = 0.0_CUSTOM_REAL
   endif
 
   ! extra array if adjoint and kernels calculation
   if (SIMULATION_TYPE == 3 .and. any_elastic) then
-    nglob_elastic_b = nglob
-    nspec_elastic_b = nspec
+    b_nglob_elastic = nglob
+    b_nspec_elastic = nspec
   else
     ! dummy allocations
-    nglob_elastic_b = 1
-    nspec_elastic_b = 1
+    b_nglob_elastic = 1
+    b_nspec_elastic = 1
   endif
 
-  allocate(b_displ_elastic(NDIM,nglob_elastic_b), &
-           b_veloc_elastic(NDIM,nglob_elastic_b), &
-           b_accel_elastic(NDIM,nglob_elastic_b),stat=ier)
+  allocate(b_displ_elastic(NDIM,b_nglob_elastic), &
+           b_veloc_elastic(NDIM,b_nglob_elastic), &
+           b_accel_elastic(NDIM,b_nglob_elastic),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating elastic backward wavefield arrays')
+  b_displ_elastic(:,:) = 0.0_CUSTOM_REAL; b_veloc_elastic(:,:) = 0.0_CUSTOM_REAL; b_accel_elastic(:,:) = 0.0_CUSTOM_REAL
 
-  allocate(b_displ_elastic_old(NDIM,nglob_elastic_b))
+  allocate(b_displ_elastic_old(NDIM,b_nglob_elastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating b_displ_elastic_old array')
+  b_displ_elastic_old(:,:) = 0.0_CUSTOM_REAL
+
+  ! for SIMULATION_TYPE == 3 and coupled_acoustic_elastic
+  allocate(accel_elastic_adj_coupling(NDIM,b_nglob_elastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating accel_elastic_adj_coupling array')
+  accel_elastic_adj_coupling(:,:) = 0.0_CUSTOM_REAL
 
   ! kernels
   ! on global nodes
-  allocate(rho_k(nglob_elastic_b))
-  allocate(mu_k(nglob_elastic_b))
-  allocate(kappa_k(nglob_elastic_b))
-  allocate(c11_k(nglob_elastic_b))
-  allocate(c13_k(nglob_elastic_b))
-  allocate(c15_k(nglob_elastic_b))
-  allocate(c33_k(nglob_elastic_b))
-  allocate(c35_k(nglob_elastic_b))
-  allocate(c55_k(nglob_elastic_b))
+  allocate(rho_k(b_nglob_elastic), &
+           mu_k(b_nglob_elastic), &
+           kappa_k(b_nglob_elastic), &
+           c11_k(b_nglob_elastic), &
+           c13_k(b_nglob_elastic), &
+           c15_k(b_nglob_elastic), &
+           c33_k(b_nglob_elastic), &
+           c35_k(b_nglob_elastic), &
+           c55_k(b_nglob_elastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating elastic kernel arrays')
+  rho_k(:) = 0.0_CUSTOM_REAL; mu_k(:) = 0.0_CUSTOM_REAL; kappa_k(:) = 0.0_CUSTOM_REAL
+  c11_k(:) = 0.0_CUSTOM_REAL; c13_k(:) = 0.0_CUSTOM_REAL; c15_k(:) = 0.0_CUSTOM_REAL
+  c33_k(:) = 0.0_CUSTOM_REAL; c35_k(:) = 0.0_CUSTOM_REAL; c55_k(:) = 0.0_CUSTOM_REAL
+
   ! on local nodes
-  allocate(rho_kl(NGLLX,NGLLZ,nspec_elastic_b))
-  allocate(mu_kl(NGLLX,NGLLZ,nspec_elastic_b))
-  allocate(kappa_kl(NGLLX,NGLLZ,nspec_elastic_b))
-  allocate(rhop_kl(NGLLX,NGLLZ,nspec_elastic_b))
-  allocate(alpha_kl(NGLLX,NGLLZ,nspec_elastic_b))
-  allocate(beta_kl(NGLLX,NGLLZ,nspec_elastic_b))
-  allocate(bulk_c_kl(NGLLX,NGLLZ,nspec_elastic_b))
-  allocate(bulk_beta_kl(NGLLX,NGLLZ,nspec_elastic_b))
-  allocate(c11_kl(NGLLX,NGLLZ,nspec_elastic_b))
-  allocate(c13_kl(NGLLX,NGLLZ,nspec_elastic_b))
-  allocate(c15_kl(NGLLX,NGLLZ,nspec_elastic_b))
-  allocate(c33_kl(NGLLX,NGLLZ,nspec_elastic_b))
-  allocate(c35_kl(NGLLX,NGLLZ,nspec_elastic_b))
-  allocate(c55_kl(NGLLX,NGLLZ,nspec_elastic_b))
-  if (APPROXIMATE_HESS_KL) then
-    allocate(rhorho_el_Hessian_final2(NGLLX,NGLLZ,nspec_elastic_b))
-    allocate(rhorho_el_Hessian_final1(NGLLX,NGLLZ,nspec_elastic_b))
-  endif
+  allocate(rho_kl(NGLLX,NGLLZ,b_nspec_elastic), &
+           mu_kl(NGLLX,NGLLZ,b_nspec_elastic), &
+           kappa_kl(NGLLX,NGLLZ,b_nspec_elastic), &
+           rhop_kl(NGLLX,NGLLZ,b_nspec_elastic), &
+           alpha_kl(NGLLX,NGLLZ,b_nspec_elastic), &
+           beta_kl(NGLLX,NGLLZ,b_nspec_elastic), &
+           bulk_c_kl(NGLLX,NGLLZ,b_nspec_elastic), &
+           bulk_beta_kl(NGLLX,NGLLZ,b_nspec_elastic), &
+           c11_kl(NGLLX,NGLLZ,b_nspec_elastic), &
+           c13_kl(NGLLX,NGLLZ,b_nspec_elastic), &
+           c15_kl(NGLLX,NGLLZ,b_nspec_elastic), &
+           c33_kl(NGLLX,NGLLZ,b_nspec_elastic), &
+           c35_kl(NGLLX,NGLLZ,b_nspec_elastic), &
+           c55_kl(NGLLX,NGLLZ,b_nspec_elastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating elastic nspec kernel arrays')
+  rho_kl(:,:,:) = 0.0_CUSTOM_REAL; mu_kl(:,:,:) = 0.0_CUSTOM_REAL; kappa_kl(:,:,:) = 0.0_CUSTOM_REAL
+  rhop_kl(:,:,:) = 0.0_CUSTOM_REAL; alpha_kl(:,:,:) = 0.0_CUSTOM_REAL; beta_kl(:,:,:) = 0.0_CUSTOM_REAL
+  bulk_c_kl(:,:,:) = 0.0_CUSTOM_REAL; bulk_beta_kl(:,:,:) = 0.0_CUSTOM_REAL
+  c11_kl(:,:,:) = 0.0_CUSTOM_REAL; c13_kl(:,:,:) = 0.0_CUSTOM_REAL; c15_kl(:,:,:) = 0.0_CUSTOM_REAL
+  c33_kl(:,:,:) = 0.0_CUSTOM_REAL; c35_kl(:,:,:) = 0.0_CUSTOM_REAL; c55_kl(:,:,:) = 0.0_CUSTOM_REAL
+
+  ! for APPROXIMATE_HESS_KL
+  allocate(rhorho_el_Hessian_final2(NGLLX,NGLLZ,b_nspec_elastic), &
+           rhorho_el_Hessian_final1(NGLLX,NGLLZ,b_nspec_elastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating elastic Hessian kernel arrays')
+  rhorho_el_Hessian_final1(:,:,:) = 0.0_CUSTOM_REAL; rhorho_el_Hessian_final2(:,:,:) = 0.0_CUSTOM_REAL
 
   !
   ! poro-elastic domains
@@ -166,299 +319,188 @@
     ! dummy allocate unused arrays with fictitious size
     nglob_poroelastic = 1
   endif
-  allocate(displs_poroelastic(NDIM,nglob_poroelastic))
-  allocate(displs_poroelastic_old(NDIM,nglob_poroelastic))
-  allocate(velocs_poroelastic(NDIM,nglob_poroelastic))
-  allocate(accels_poroelastic(NDIM,nglob_poroelastic))
-  if (SIMULATION_TYPE == 3) then
-    allocate(accels_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
-  endif
-  allocate(rmass_s_inverse_poroelastic(nglob_poroelastic))
+  allocate(displs_poroelastic(NDIM,nglob_poroelastic), &
+           velocs_poroelastic(NDIM,nglob_poroelastic), &
+           accels_poroelastic(NDIM,nglob_poroelastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating poroelastic wavefield arrays')
+  displs_poroelastic(:,:) = 0._CUSTOM_REAL; velocs_poroelastic(:,:) = 0._CUSTOM_REAL; accels_poroelastic(:,:) = 0._CUSTOM_REAL
 
-  allocate(displw_poroelastic(NDIM,nglob_poroelastic))
-  allocate(velocw_poroelastic(NDIM,nglob_poroelastic))
-  allocate(accelw_poroelastic(NDIM,nglob_poroelastic))
-  if (SIMULATION_TYPE == 3) then
-    allocate(accelw_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
-  endif
-  allocate(rmass_w_inverse_poroelastic(nglob_poroelastic))
+  ! PML
+  allocate(displs_poroelastic_old(NDIM,nglob_poroelastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating displs_poroelastic_old array')
+  displs_poroelastic_old(:,:) = 0._CUSTOM_REAL
 
+  allocate(displw_poroelastic(NDIM,nglob_poroelastic), &
+           velocw_poroelastic(NDIM,nglob_poroelastic), &
+           accelw_poroelastic(NDIM,nglob_poroelastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating poroelastic fluid wavefield arrays')
+  displw_poroelastic(:,:) = 0._CUSTOM_REAL; velocw_poroelastic(:,:) = 0._CUSTOM_REAL; accelw_poroelastic(:,:) = 0._CUSTOM_REAL
+
+  allocate(rmass_s_inverse_poroelastic(nglob_poroelastic), &
+           rmass_w_inverse_poroelastic(nglob_poroelastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating poroelastic mass arrays')
+  rmass_s_inverse_poroelastic(:) = 0._CUSTOM_REAL
+  rmass_w_inverse_poroelastic(:) = 0._CUSTOM_REAL
+
+  ! intermediate fields
+  ! LDDRK
   if (time_stepping_scheme == 2) then
-    allocate(displs_poroelastic_LDDRK(NDIM,nglob_poroelastic))
-    allocate(velocs_poroelastic_LDDRK(NDIM,nglob_poroelastic))
-    allocate(displw_poroelastic_LDDRK(NDIM,nglob_poroelastic))
-    allocate(velocw_poroelastic_LDDRK(NDIM,nglob_poroelastic))
+    allocate(displs_poroelastic_LDDRK(NDIM,nglob_poroelastic), &
+             velocs_poroelastic_LDDRK(NDIM,nglob_poroelastic), &
+             displw_poroelastic_LDDRK(NDIM,nglob_poroelastic), &
+             velocw_poroelastic_LDDRK(NDIM,nglob_poroelastic),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating poroelastic LDDRK arrays')
+    displs_poroelastic_LDDRK(:,:) = 0._CUSTOM_REAL; velocs_poroelastic_LDDRK(:,:) = 0._CUSTOM_REAL
+    displw_poroelastic_LDDRK(:,:) = 0._CUSTOM_REAL; velocw_poroelastic_LDDRK(:,:) = 0._CUSTOM_REAL
   endif
 
+  ! RK4
   if (time_stepping_scheme == 3) then
-    allocate(accels_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
-    allocate(velocs_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
-    allocate(accelw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
-    allocate(velocw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
-    allocate(displs_poroelastic_initial_rk(NDIM,nglob_poroelastic))
-    allocate(velocs_poroelastic_initial_rk(NDIM,nglob_poroelastic))
-    allocate(displw_poroelastic_initial_rk(NDIM,nglob_poroelastic))
-    allocate(velocw_poroelastic_initial_rk(NDIM,nglob_poroelastic))
+    allocate(accels_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme), &
+             velocs_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme), &
+             accelw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme), &
+             velocw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme), &
+             displs_poroelastic_initial_rk(NDIM,nglob_poroelastic), &
+             velocs_poroelastic_initial_rk(NDIM,nglob_poroelastic), &
+             displw_poroelastic_initial_rk(NDIM,nglob_poroelastic), &
+             velocw_poroelastic_initial_rk(NDIM,nglob_poroelastic),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating poroelastic RK arrays')
+    accels_poroelastic_rk(:,:,:) = 0._CUSTOM_REAL; velocs_poroelastic_rk(:,:,:) = 0._CUSTOM_REAL
+    accelw_poroelastic_rk(:,:,:) = 0._CUSTOM_REAL; velocw_poroelastic_rk(:,:,:) = 0._CUSTOM_REAL
+    velocs_poroelastic_initial_rk(:,:) = 0._CUSTOM_REAL; displs_poroelastic_initial_rk(:,:) = 0._CUSTOM_REAL
+    velocw_poroelastic_initial_rk(:,:) = 0._CUSTOM_REAL; displw_poroelastic_initial_rk(:,:) = 0._CUSTOM_REAL
   endif
 
   ! extra array if adjoint and kernels calculation
   if (SIMULATION_TYPE == 3 .and. any_poroelastic) then
-    nglob_poroelastic_b = nglob
-    nspec_poroelastic_b = nspec
+    b_nglob_poroelastic = nglob
+    b_nspec_poroelastic = nspec
   else
     ! dummy allocations
-    nglob_poroelastic_b = 1
-    nspec_poroelastic_b = 1
+    b_nglob_poroelastic = 1
+    b_nspec_poroelastic = 1
   endif
-  allocate(b_displs_poroelastic(NDIM,nglob_poroelastic_b))
-  allocate(b_velocs_poroelastic(NDIM,nglob_poroelastic_b))
-  allocate(b_accels_poroelastic(NDIM,nglob_poroelastic_b))
-  allocate(b_displw_poroelastic(NDIM,nglob_poroelastic_b))
-  allocate(b_velocw_poroelastic(NDIM,nglob_poroelastic_b))
-  allocate(b_accelw_poroelastic(NDIM,nglob_poroelastic_b))
-  ! strain
-  allocate(epsilondev_s(4,NGLLX,NGLLZ,nspec_poroelastic_b), &
-           epsilondev_w(4,NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(b_epsilondev_s(4,NGLLX,NGLLZ,nspec_poroelastic_b), &
-           b_epsilondev_w(4,NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(b_displs_poroelastic(NDIM,b_nglob_poroelastic), &
+           b_velocs_poroelastic(NDIM,b_nglob_poroelastic), &
+           b_accels_poroelastic(NDIM,b_nglob_poroelastic), &
+           b_displw_poroelastic(NDIM,b_nglob_poroelastic), &
+           b_velocw_poroelastic(NDIM,b_nglob_poroelastic), &
+           b_accelw_poroelastic(NDIM,b_nglob_poroelastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating poroelastic backward wavefield arrays')
+  b_displs_poroelastic(:,:) = 0.0_CUSTOM_REAL; b_velocs_poroelastic(:,:) = 0.0_CUSTOM_REAL
+  b_accels_poroelastic(:,:) = 0.0_CUSTOM_REAL
+  b_displw_poroelastic(:,:) = 0.0_CUSTOM_REAL; b_velocw_poroelastic(:,:) = 0.0_CUSTOM_REAL
+  b_accelw_poroelastic(:,:) = 0.0_CUSTOM_REAL
+
+  ! coupling when SIMULATION_TYPE == 3
+  allocate(accels_poroelastic_adj_coupling(NDIM,b_nglob_poroelastic), &
+           accelw_poroelastic_adj_coupling(NDIM,b_nglob_poroelastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating accels_poroelastic_adj_coupling arrays')
+  accels_poroelastic_adj_coupling(:,:) = 0.0_CUSTOM_REAL; accelw_poroelastic_adj_coupling(:,:) = 0.0_CUSTOM_REAL
+
+  ! strain for kernel simulations
+  allocate(epsilondev_s(4,NGLLX,NGLLZ,b_nspec_poroelastic), &
+           epsilondev_w(4,NGLLX,NGLLZ,b_nspec_poroelastic), &
+           b_epsilondev_s(4,NGLLX,NGLLZ,b_nspec_poroelastic), &
+           b_epsilondev_w(4,NGLLX,NGLLZ,b_nspec_poroelastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating epsilondev_s arrays')
+  epsilondev_s(:,:,:,:) = 0.0_CUSTOM_REAL; epsilondev_w(:,:,:,:) = 0.0_CUSTOM_REAL
+  b_epsilondev_s(:,:,:,:) = 0.0_CUSTOM_REAL; b_epsilondev_w(:,:,:,:) = 0.0_CUSTOM_REAL
+
   ! kernels
   ! on global nodes
-  allocate(rhot_k(nglob_poroelastic_b))
-  allocate(rhof_k(nglob_poroelastic_b))
-  allocate(sm_k(nglob_poroelastic_b))
-  allocate(eta_k(nglob_poroelastic_b))
-  allocate(mufr_k(nglob_poroelastic_b))
-  allocate(B_k(nglob_poroelastic_b))
-  allocate(C_k(nglob_poroelastic_b))
-  allocate(M_k(nglob_poroelastic_b))
+  allocate(rhot_k(b_nglob_poroelastic), &
+           rhof_k(b_nglob_poroelastic), &
+           sm_k(b_nglob_poroelastic), &
+           eta_k(b_nglob_poroelastic), &
+           mufr_k(b_nglob_poroelastic), &
+           B_k(b_nglob_poroelastic), &
+           C_k(b_nglob_poroelastic), &
+           M_k(b_nglob_poroelastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating rhot_k kernel arrays')
+  rhot_k(:) = 0.0_CUSTOM_REAL; rhof_k(:) = 0.0_CUSTOM_REAL
+  sm_k(:) = 0.0_CUSTOM_REAL; eta_k(:) = 0.0_CUSTOM_REAL
+  mufr_k(:) = 0.0_CUSTOM_REAL; B_k(:) = 0.0_CUSTOM_REAL
+  C_k(:) = 0.0_CUSTOM_REAL; M_k(:) = 0.0_CUSTOM_REAL
+
   ! on local nodes
-  allocate(rhot_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(rhof_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(sm_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(eta_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(mufr_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(B_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(C_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(M_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(rhot_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           rhof_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           sm_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           eta_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           mufr_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           B_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           C_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           M_kl(NGLLX,NGLLZ,b_nspec_poroelastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating rhot_kl kernel arrays')
+  rhot_kl(:,:,:) = 0.0_CUSTOM_REAL; rhof_kl(:,:,:) = 0.0_CUSTOM_REAL
+  sm_kl(:,:,:) = 0.0_CUSTOM_REAL; eta_kl(:,:,:) = 0.0_CUSTOM_REAL
+  mufr_kl(:,:,:) = 0.0_CUSTOM_REAL; B_kl(:,:,:) = 0.0_CUSTOM_REAL
+  C_kl(:,:,:) = 0.0_CUSTOM_REAL; M_kl(:,:,:) = 0.0_CUSTOM_REAL
 
-  allocate(phi_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(phib_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(mufrb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(phi_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           phib_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           mufrb_kl(NGLLX,NGLLZ,b_nspec_poroelastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating phi_kl kernel arrays')
+  phi_kl(:,:,:) = 0.0_CUSTOM_REAL; phib_kl(:,:,:) = 0.0_CUSTOM_REAL; mufrb_kl(:,:,:) = 0.0_CUSTOM_REAL
 
-  allocate(rhob_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(rhobb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(rhofb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(rhofbb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(rhob_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           rhobb_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           rhofb_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           rhofbb_kl(NGLLX,NGLLZ,b_nspec_poroelastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating rhob_kl kernel arrays')
+  rhob_kl(:,:,:) = 0.0_CUSTOM_REAL; rhobb_kl(:,:,:) = 0.0_CUSTOM_REAL
+  rhofb_kl(:,:,:) = 0.0_CUSTOM_REAL; rhofbb_kl(:,:,:) = 0.0_CUSTOM_REAL
 
-  allocate(cpI_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(cpII_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-  allocate(cs_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-
-  allocate(ratio_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(cpI_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           cpII_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           cs_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
+           ratio_kl(NGLLX,NGLLZ,b_nspec_poroelastic),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating cpI_kl kernel arrays')
+  cpI_kl(:,:,:) = 0.0_CUSTOM_REAL; cpII_kl(:,:,:) = 0.0_CUSTOM_REAL
+  cs_kl(:,:,:) = 0.0_CUSTOM_REAL; ratio_kl(:,:,:) = 0.0_CUSTOM_REAL
 
   if (COMPUTE_INTEGRATED_ENERGY_FIELD) then
-    allocate(total_integrated_energy_field(nspec),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating total_integrated_energy_field array')
-    total_integrated_energy_field(:) = 0._CUSTOM_REAL
-    allocate(max_total_energy_field(nspec),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating max_total_energy_field array')
+    allocate(total_integrated_energy_field(nspec), &
+             max_total_energy_field(nspec), &
+             total_effective_duration_field(nspec), &
+             integrated_kinetic_energy_field(nspec), &
+             max_kinetic_energy_field(nspec), &
+             integrated_potential_energy_field(nspec), &
+             max_potential_energy_field(nspec), &
+             kinetic_effective_duration_field(nspec), &
+             potential_effective_duration_field(nspec),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating total_integrated_energy_field arrays')
+    total_integrated_energy_field(:) = 0._CUSTOM_REAL; total_effective_duration_field(:) = 0._CUSTOM_REAL
+    integrated_kinetic_energy_field(:) = 0._CUSTOM_REAL; integrated_potential_energy_field(:) = 0._CUSTOM_REAL
+    kinetic_effective_duration_field(:) = 0._CUSTOM_REAL; potential_effective_duration_field(:) = 0._CUSTOM_REAL
     max_total_energy_field(:) = 0._CUSTOM_REAL
-    allocate(total_effective_duration_field(nspec),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating total_effective_duration_field array')
-    total_effective_duration_field(:) = 0._CUSTOM_REAL
-    allocate(integrated_kinetic_energy_field(nspec),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating integrated_kinetic_energy_field array')
-    integrated_kinetic_energy_field(:) = 0._CUSTOM_REAL
-    allocate(max_kinetic_energy_field(nspec),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating max_kinetic_energy_field array')
     max_kinetic_energy_field(:) = 0._CUSTOM_REAL
-    allocate(integrated_potential_energy_field(nspec),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating integrated_potential_energy_field array')
-    integrated_potential_energy_field(:) = 0._CUSTOM_REAL
-    allocate(max_potential_energy_field(nspec),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating max_potential_energy_field array')
     max_potential_energy_field(:) = 0._CUSTOM_REAL
-    allocate(kinetic_effective_duration_field(nspec),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating kinetic_effective_duration_field array')
-    kinetic_effective_duration_field(:) = 0._CUSTOM_REAL
-    allocate(potential_effective_duration_field(nspec),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating potential_effective_duration_field array')
-    potential_effective_duration_field(:) = 0._CUSTOM_REAL
-  endif
-  !
-  ! acoustic domains
-  !
-  if (ACOUSTIC_SIMULATION) then
-    if (myrank == 0) then
-      write(IMAIN,*) '  arrays for acoustic domains'
-      call flush_IMAIN()
-    endif
-  endif
-
-  ! potential, its first and second derivative, and inverse of the mass matrix for acoustic elements
-  if (any_acoustic) then
-    nglob_acoustic = nglob
-  else
-    ! dummy allocate unused arrays with fictitious size
-    nglob_acoustic = 1
-  endif
-
-  allocate(potential_acoustic(nglob_acoustic))
-  allocate(potential_acoustic_old(nglob_acoustic))
-  if (SIMULATION_TYPE == 3) then
-    allocate(potential_acoustic_adj_coupling(nglob_acoustic))
-  endif
-
-  allocate(potential_dot_acoustic(nglob_acoustic))
-  allocate(potential_dot_dot_acoustic(nglob_acoustic))
-
-  if (time_stepping_scheme == 2) then
-    allocate(potential_acoustic_LDDRK(nglob_acoustic))
-    allocate(potential_dot_acoustic_LDDRK(nglob_acoustic))
-    allocate(potential_dot_acoustic_temp(nglob_acoustic))
-  endif
-
-  if (time_stepping_scheme == 3) then
-    allocate(potential_acoustic_init_rk(nglob_acoustic))
-    allocate(potential_dot_acoustic_init_rk(nglob_acoustic))
-    allocate(potential_dot_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
-    allocate(potential_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
-  endif
-
-  allocate(rmass_inverse_acoustic(nglob_acoustic))
-!! DK DK March 2018: this was missing in Quentin Brissaud's new variational formulation for viscoacoustic media; I added it
-  if (ATTENUATION_VISCOACOUSTIC) then
-    allocate(rmass_inverse_e1(nglob_acoustic,N_SLS))
-  else
-    allocate(rmass_inverse_e1(1,1))
-  endif
-
-  if (SIMULATION_TYPE == 3 .and. any_acoustic) then
-    nglob_acoustic_b = nglob
-    nspec_acoustic_b = nspec
-  else
-    ! dummy array allocations
-    ! allocates unused arrays with fictitious size
-    nglob_acoustic_b = 1
-    nspec_acoustic_b = 1
-  endif
-  allocate(b_potential_acoustic(nglob_acoustic_b))
-  allocate(b_potential_acoustic_old(nglob_acoustic_b))
-  allocate(b_potential_dot_acoustic(nglob_acoustic_b))
-  allocate(b_potential_dot_dot_acoustic(nglob_acoustic_b))
-  allocate(b_displ_ac(2,nglob_acoustic_b))
-  allocate(b_accel_ac(2,nglob_acoustic_b))
-  allocate(accel_ac(2,nglob_acoustic_b))
-  ! kernels
-  ! on global points
-  allocate(rhol_ac_global(nglob_acoustic_b))
-  allocate(kappal_ac_global(nglob_acoustic_b))
-  ! on local points
-  allocate(rho_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
-  allocate(kappa_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
-  allocate(rhop_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
-  allocate(alpha_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
-  if (APPROXIMATE_HESS_KL) then
-    allocate(rhorho_ac_Hessian_final2(NGLLX,NGLLZ,nspec_acoustic_b))
-    allocate(rhorho_ac_Hessian_final1(NGLLX,NGLLZ,nspec_acoustic_b))
   endif
 
   ! iglob_is_forced array is used when USE_ENFORCE_FIELDS is .true. (it says if a GLL point is forced or not)
-  allocate(iglob_is_forced(nglob))
-  allocate(acoustic_iglob_is_forced(nglob))
-  allocate(elastic_iglob_is_forced(nglob))
-  allocate(modeAmplitude(nglob_acoustic))
+  ! needs full array since we have it checked in if-statements
+  allocate(iglob_is_forced(nglob),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating iglob_is_forced array')
   iglob_is_forced(:) = .false.
+
+  ! following arrays are only fully accessed when option USE_ENFORCE_FIELDS is .true.
+  if (USE_ENFORCE_FIELDS) then
+    allocate(acoustic_iglob_is_forced(nglob), &
+             elastic_iglob_is_forced(nglob), &
+             modeAmplitude(nglob_acoustic),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating forced arrays')
+  else
+    ! dummy
+    allocate(acoustic_iglob_is_forced(1),elastic_iglob_is_forced(1),modeAmplitude(1))
+  endif
   acoustic_iglob_is_forced(:) = .false.
   elastic_iglob_is_forced(:) = .false.
   modeAmplitude(:) = 0.0d0
 
   ! synchronizes all processes
   call synchronize_all()
-
-  ! initializes wavefields
-  if (myrank == 0) then
-    write(IMAIN,*) '  wavefield initialization'
-    call flush_IMAIN()
-  endif
-
-  ! initialize arrays to zero
-  displ_elastic(:,:) = 0._CUSTOM_REAL
-  displ_elastic_old(:,:) = 0._CUSTOM_REAL
-  veloc_elastic(:,:) = 0._CUSTOM_REAL
-  accel_elastic(:,:) = 0._CUSTOM_REAL
-
-  if (SIMULATION_TYPE == 3 .and. any_elastic) then
-    b_displ_elastic_old(:,:) = 0._CUSTOM_REAL
-    b_displ_elastic(:,:) = 0._CUSTOM_REAL
-    b_veloc_elastic(:,:) = 0._CUSTOM_REAL
-    b_accel_elastic(:,:) = 0._CUSTOM_REAL
-  endif
-
-  if (time_stepping_scheme == 2) then
-    displ_elastic_LDDRK(:,:) = 0._CUSTOM_REAL
-    veloc_elastic_LDDRK(:,:) = 0._CUSTOM_REAL
-    veloc_elastic_LDDRK_temp(:,:) = 0._CUSTOM_REAL
-  endif
-
-  if (time_stepping_scheme == 3) then
-    accel_elastic_rk(:,:,:) = 0._CUSTOM_REAL
-    veloc_elastic_rk(:,:,:) = 0._CUSTOM_REAL
-    veloc_elastic_initial_rk(:,:) = 0._CUSTOM_REAL
-    displ_elastic_initial_rk(:,:) = 0._CUSTOM_REAL
-  endif
-
-  displs_poroelastic(:,:) = 0._CUSTOM_REAL
-  displs_poroelastic_old(:,:) = 0._CUSTOM_REAL
-  velocs_poroelastic(:,:) = 0._CUSTOM_REAL
-  accels_poroelastic(:,:) = 0._CUSTOM_REAL
-  displw_poroelastic(:,:) = 0._CUSTOM_REAL
-  velocw_poroelastic(:,:) = 0._CUSTOM_REAL
-  accelw_poroelastic(:,:) = 0._CUSTOM_REAL
-
-  if (time_stepping_scheme == 2) then
-    displs_poroelastic_LDDRK(:,:) = 0._CUSTOM_REAL
-    velocs_poroelastic_LDDRK(:,:) = 0._CUSTOM_REAL
-    displw_poroelastic_LDDRK(:,:) = 0._CUSTOM_REAL
-    velocw_poroelastic_LDDRK(:,:) = 0._CUSTOM_REAL
-  endif
-
-  if (time_stepping_scheme == 3) then
-    accels_poroelastic_rk(:,:,:) = 0._CUSTOM_REAL
-    velocs_poroelastic_rk(:,:,:) = 0._CUSTOM_REAL
-
-    accelw_poroelastic_rk(:,:,:) = 0._CUSTOM_REAL
-    velocw_poroelastic_rk(:,:,:) = 0._CUSTOM_REAL
-
-    velocs_poroelastic_initial_rk(:,:) = 0._CUSTOM_REAL
-    displs_poroelastic_initial_rk(:,:) = 0._CUSTOM_REAL
-
-    velocw_poroelastic_initial_rk(:,:) = 0._CUSTOM_REAL
-    displw_poroelastic_initial_rk(:,:) = 0._CUSTOM_REAL
-  endif
-
-  potential_acoustic(:) = 0._CUSTOM_REAL
-  potential_acoustic_old(:) = 0._CUSTOM_REAL
-  potential_dot_acoustic(:) = 0._CUSTOM_REAL
-  potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
-
-  b_potential_acoustic(:) = 0._CUSTOM_REAL
-  b_potential_acoustic_old(:) = 0._CUSTOM_REAL
-  b_potential_dot_acoustic(:) = 0._CUSTOM_REAL
-  b_potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
-
-  if (time_stepping_scheme == 2) then
-    potential_acoustic_LDDRK(:) = 0._CUSTOM_REAL
-    potential_dot_acoustic_LDDRK(:) = 0._CUSTOM_REAL
-    potential_dot_acoustic_temp(:) = 0._CUSTOM_REAL
-  endif
-
-  if (time_stepping_scheme == 3) then
-    potential_acoustic_init_rk(:) = 0._CUSTOM_REAL
-    potential_dot_acoustic_init_rk(:) = 0._CUSTOM_REAL
-    potential_dot_dot_acoustic_rk(:,:) = 0._CUSTOM_REAL
-    potential_dot_acoustic_rk(:,:) = 0._CUSTOM_REAL
-  endif
 
   ! user output
   if (myrank == 0) then

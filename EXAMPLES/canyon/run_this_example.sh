@@ -17,24 +17,18 @@ echo "   setting up example..."
 echo
 
 mkdir -p OUTPUT_FILES
-mkdir -p DATA
-
-# sets up local DATA/ directory
-cd DATA/
-ln -s ../Par_file_canyon Par_file
-ln -s ../SOURCE_canyon SOURCE
-ln -s ../mesh mesh
-cd ../
-
 # cleans output files
 rm -rf OUTPUT_FILES/*
 
 cd $currentdir
 
 # links executables
+mkdir -p bin
+cd bin/
 rm -f xmeshfem2D xspecfem2D
-ln -s ../../bin/xmeshfem2D
-ln -s ../../bin/xspecfem2D
+ln -s ../../../bin/xmeshfem2D
+ln -s ../../../bin/xspecfem2D
+cd ../
 
 # stores setup
 cp DATA/Par_file OUTPUT_FILES/
@@ -44,13 +38,17 @@ cp DATA/SOURCE OUTPUT_FILES/
 echo
 echo "  running the mesher..."
 echo
-./xmeshfem2D
+./bin/xmeshfem2D
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # runs simulation
 echo
 echo "  running the solver..."
 echo
-./xspecfem2D
+./bin/xspecfem2D
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # stores output
 cp DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES

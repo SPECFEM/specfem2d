@@ -35,7 +35,7 @@
 
 ! check the mesh, stability and number of points per wavelength
 
-  use constants, only: IMAIN,HUGEVAL,TINYVAL,ZERO
+  use constants, only: IMAIN,HUGEVAL,TINYVAL,ZERO,myrank
   use specfem_par
   use specfem_par_movie
 
@@ -175,7 +175,8 @@
 
       ! computes velocities
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                      tort,rho_s,rho_f,eta_f,perm_xx, &
+                                      f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIloc = sqrt(cpIsquare)
       cpIIloc = sqrt(cpIIsquare)
@@ -206,9 +207,10 @@
       do i = 1,NGLLX
         !--- if heterogeneous formulation with external velocity model
         if (assign_external_model) then
-          cpIloc = vpext(i,j,ispec)
-          csloc = vsext(i,j,ispec)
-          denst = rhoext(i,j,ispec)
+          mu = mustore(i,j,ispec)
+          denst = rhostore(i,j,ispec)
+          cpIloc = rho_vpstore(i,j,ispec)/denst
+          csloc = sqrt(mu/denst)
         endif
 
         !--- compute min and max of velocity and density models
@@ -356,6 +358,9 @@
   pmax = pmax_glob
   dt_suggested = dt_suggested_glob
 
+  ! mesh resolved minimum period
+  mesh_T_min = pmax_glob
+
   ! sets if any slice has fluid histogram
   call any_all_l(any_fluid_histo,any_fluid_histo_glob)
 
@@ -459,7 +464,7 @@
     endif
   endif
 
-  ! master sends to all others
+  ! main sends to all others
   call bcast_all_singledp(lambdaPmin_in_fluid_histo)
   call bcast_all_singledp(lambdaPmax_in_fluid_histo)
   call bcast_all_singledp(lambdaSmin_histo)
@@ -477,7 +482,6 @@
     call check_grid_create_histogram(any_fluid_histo_glob,lambdaPmin_in_fluid_histo,lambdaPmax_in_fluid_histo, &
                                          lambdaSmin_histo,lambdaSmax_histo,f0max)
   endif
-
 
   ! creates a PostScript file with stability condition
   if (output_postscript_snapshot) then
@@ -497,11 +501,7 @@
 
 ! create statistics about mesh sampling (number of points per wavelength)
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
-  use constants, only: IMAIN,HUGEVAL,TINYVAL,ZERO,OUTPUT_FILES
+  use constants, only: IMAIN,HUGEVAL,TINYVAL,ZERO,OUTPUT_FILES,myrank
   use specfem_par
   use specfem_par_movie
 
@@ -591,7 +591,8 @@
 
         ! computes velocities
         call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-               tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                        tort,rho_s,rho_f,eta_f,perm_xx, &
+                                        f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
         cpIloc = sqrt(cpIsquare)
         cpIIloc = sqrt(cpIIsquare)
@@ -615,8 +616,10 @@
 
           !--- if heterogeneous formulation with external velocity model
           if (assign_external_model) then
-            cpIloc = vpext(i,j,ispec)
-            csloc = vsext(i,j,ispec)
+            mu = mustore(i,j,ispec)
+            denst = rhostore(i,j,ispec)
+            cpIloc = rho_vpstore(i,j,ispec)/denst
+            csloc = sqrt(mu/denst)
           endif
 
           vpImin_local = min(vpImin_local,cpIloc)
@@ -685,11 +688,7 @@
 
     enddo
 
-#ifdef USE_MPI
     call sum_all_1Darray_i(classes_wavelength, classes_wavelength_all, NCLASSES)
-#else
-    classes_wavelength_all(:) = classes_wavelength(:)
-#endif
 
     ! gets total for all slices
     call sum_all_i(nspec,nspec_all)
@@ -851,12 +850,8 @@
 
   subroutine check_grid_create_postscript(courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaSmin,lambdaSmax)
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN,TINYVAL,HUGEVAL,DISPLAY_SUBSET_OPTION,NSPEC_DISPLAY_SUBSET, &
-    RPERCENTX,RPERCENTZ,ORIG_X,ORIG_Z,CENTIM,THRESHOLD_POSTSCRIPT,OUTPUT_FILES
+    RPERCENTX,RPERCENTZ,ORIG_X,ORIG_Z,CENTIM,THRESHOLD_POSTSCRIPT,OUTPUT_FILES,myrank
   use specfem_par
   use specfem_par_movie
 
@@ -895,7 +890,7 @@
   double precision :: x1,z1,x2,z2,ratio_page,xmin,zmin
 
   double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer  :: icol
 #endif
 
@@ -1180,7 +1175,8 @@
 
       ! computes velocities
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-           tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                      tort,rho_s,rho_f,eta_f,perm_xx, &
+                                      f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIloc = sqrt(cpIsquare)
     else
@@ -1199,8 +1195,8 @@
 
         !--- if heterogeneous formulation with external velocity model
         if (assign_external_model) then
-          cpIloc = vpext(i,j,ispec)
-          denst = rhoext(i,j,ispec)
+          denst = rhostore(i,j,ispec)
+          cpIloc = rho_vpstore(i,j,ispec)/denst
         endif
 
         vpImax_local = max(vpImax_local,cpIloc)
@@ -1244,7 +1240,7 @@
 
   enddo ! end of loop on all the spectral elements
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (myrank == 0) then
 
     do iproc = 1, NPROC-1
@@ -1522,7 +1518,8 @@
 
       ! computes velocities
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-               tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                      tort,rho_s,rho_f,eta_f,perm_xx, &
+                                      f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIloc = sqrt(cpIsquare)
       csloc = sqrt(cssquare)
@@ -1544,9 +1541,10 @@
       do i = 1,NGLLX
 !--- if heterogeneous formulation with external velocity model
         if (assign_external_model) then
-          cpIloc = vpext(i,j,ispec)
-          csloc = vsext(i,j,ispec)
-          denst = rhoext(i,j,ispec)
+          mu = mustore(i,j,ispec)
+          denst = rhostore(i,j,ispec)
+          cpIloc = rho_vpstore(i,j,ispec)/denst
+          csloc = sqrt(mu/denst)
         endif
 
         vpImax_local = max(vpImax_local,cpIloc)
@@ -1647,7 +1645,7 @@
 
   enddo ! end of loop on all the spectral elements
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (myrank == 0) then
     do iproc = 1, NPROC-1
       call recv_singlei(nspec_recv,iproc,42)
@@ -1898,7 +1896,7 @@
     if ((vpImax-vpImin)/vpImin > 0.02d0) then
       if (assign_external_model) then
         ! use lower-left corner
-        x1 = (vpext(1,1,ispec)-vpImin) / (vpImax-vpImin)
+        x1 = (rho_vpstore(1,1,ispec)/rhostore(1,1,ispec) - vpImin) / (vpImax-vpImin)
       else
         if (ispec_is_poroelastic(ispec)) then
           ! gets poroelastic material
@@ -1913,7 +1911,8 @@
 
           ! computes velocities
           call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                   tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                          tort,rho_s,rho_f,eta_f,perm_xx, &
+                                          f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
           cpIloc = sqrt(cpIsquare)
         else
@@ -1945,7 +1944,7 @@
 
   enddo ! end of loop on all the spectral elements
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (myrank == 0) then
     do iproc = 1, NPROC-1
       call recv_singlei(nspec_recv, iproc, 42)
@@ -2196,7 +2195,7 @@
 
   enddo ! end of loop on all the spectral elements
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (myrank == 0) then
     do iproc = 1, NPROC-1
       ! use a different color for each material set

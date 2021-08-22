@@ -35,9 +35,9 @@
 
   use constants, only: TINYVAL
 
-  use specfem_par, only: any_acoustic,any_elastic,any_poroelastic, &
+  use specfem_par, only: any_acoustic,any_elastic,any_poroelastic,any_anisotropy, &
     ispec_is_anisotropic,ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic, &
-    nspec,porosity,anisotropy,kmato
+    nspec,porosity,anisotropycoef,kmato
 
   implicit none
 
@@ -48,6 +48,7 @@
   any_acoustic = .false.
   any_elastic = .false.
   any_poroelastic = .false.
+  any_anisotropy = .false.
 
   ispec_is_acoustic(:) = .false.
   ispec_is_anisotropic(:) = .false.
@@ -67,8 +68,9 @@
       ! assume elastic domain
       ispec_is_elastic(ispec) = .true.
       any_elastic = .true.
-      if (any(anisotropy(:,kmato(ispec)) /= 0)) then
+      if (any(anisotropycoef(:,kmato(ispec)) /= 0)) then
         ispec_is_anisotropic(ispec) = .true.
+        any_anisotropy = .true.
       endif
 
     else
@@ -91,18 +93,21 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_simulation_domains_from_external_models()
+  subroutine get_simulation_domains_from_external_models(vsext,nspec_ext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext)
 
   use constants, only: TINYVAL,NGLLX,NGLLZ,CUSTOM_REAL
 
-  use specfem_par, only: any_acoustic,any_elastic,any_poroelastic, &
+  use specfem_par, only: any_acoustic,any_elastic,any_poroelastic,any_anisotropy, &
     ispec_is_anisotropic,ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic, &
     nspec,myrank,P_SV,MODEL
 
-  ! external model parameters
-  use specfem_par, only: vsext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext
-
   implicit none
+
+  ! external model parameters
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLZ,nspec) :: vsext
+
+  integer :: nspec_ext
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLZ,nspec_ext) :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext
 
   ! local parameters
   integer :: ispec,i,j
@@ -113,6 +118,7 @@
   any_acoustic = .false.
   any_elastic = .false.
   any_poroelastic = .false.
+  any_anisotropy = .false.
 
   ispec_is_acoustic(:) = .false.
   ispec_is_anisotropic(:) = .false.
@@ -243,17 +249,21 @@
   ! acoustic
   ! number of acoustic elements in this partition
   nspec_acoustic = count(ispec_is_acoustic(:))
-  if (nspec_acoustic > 0 ) any_acoustic = .true.
+  if (nspec_acoustic > 0) any_acoustic = .true.
 
   ! elastic
   ! number of elastic elements in this partition
   nspec_elastic = count(ispec_is_elastic(:))
-  if (nspec_elastic > 0 ) any_elastic = .true.
+  if (nspec_elastic > 0) any_elastic = .true.
 
   ! poroelastic
   ! number of elastic elements in this partition
   nspec_poroelastic = count(ispec_is_poroelastic(:))
-  if (nspec_poroelastic > 0 ) any_poroelastic = .true.
+  if (nspec_poroelastic > 0) any_poroelastic = .true.
+
+  ! aniso
+  nspec_aniso = count(ispec_is_anisotropic(:))
+  if (nspec_aniso > 0) any_anisotropy = .true.
 
   end subroutine get_simulation_domain_counts
 

@@ -24,12 +24,13 @@ echo $CURRENT_DIR
 mkdir $JOB_NAME$JOB_ID
 mkdir $JOB_NAME$JOB_ID/OUTPUT_FILES
 mkdir $JOB_NAME$JOB_ID/DATA
+mkdir $JOB_NAME$JOB_ID/bin
 
 cd $JOB_NAME$JOB_ID
 
 scp iplmas014.univ-pau.fr:$CURRENT_DIR/OUTPUT_FILES/Database* ./OUTPUT_FILES/
 scp iplmas014.univ-pau.fr:$CURRENT_DIR/DATA/STATIONS ./DATA/
-scp iplmas014.univ-pau.fr:$CURRENT_DIR/xspecfem2D ./
+scp iplmas014.univ-pau.fr:$CURRENT_DIR/bin/xspecfem2D ./bin/
 
 cp -r ../$JOB_NAME$JOB_ID /scratch/$USER/
 
@@ -41,7 +42,7 @@ rm ./OUTPUT_FILES/Database*
 
 cd /scratch/$USER/$JOB_NAME$JOB_ID
 
-./xspecfem2D
+./bin/xspecfem2D
 
 cp /scratch/$USER/$JOB_NAME$JOB_ID/OUTPUT_FILES/* $CURRENT_DIR/OUTPUT_FILES/
 
