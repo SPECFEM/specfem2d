@@ -39,7 +39,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL,IMAIN,IN_DATA_FILES,IIN,MAX_STRING_LEN
 
   use specfem_par, only: nspec,ibool,ispec_is_elastic,ispec_is_anisotropic, &
-    coord,kmato,MODEL,myrank,setup_with_binary_database
+    coord,kmato,MODEL,myrank,setup_with_binary_database, density,poroelastcoef
 
   ! external model parameters
   use specfem_par, only: &
@@ -193,6 +193,21 @@
       QKappa_attenuationext(:,:,:) = 9999.d0
       Qmu_attenuationext(:,:,:) = 9999.d0
     endif
+    
+    !ZZD This is important for FWI. 
+    do ispec = 1,nspec
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        !! ABAB Do not forget these 3 lines otherwise PML may not work
+        !!! TODO check that
+        density(1,kmato(ispec)) = rhoext(i,j,ispec)
+        poroelastcoef(3,1,kmato(ispec)) = rhoext(i,j,ispec) * vpext(i,j,ispec)*vpext(i,j,ispec)
+        poroelastcoef(2,1,kmato(ispec)) = rhoext(i,j,ispec) * vsext(i,j,ispec)*vsext(i,j,ispec)
+        !! ABAB Do not forget these 3 lines otherwise PML may not work !! TODO
+        !check that
+      enddo
+    enddo
+  enddo
 
   case ('binary_voigt')
     ! Voigt model
