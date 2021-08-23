@@ -174,7 +174,7 @@ jobs:
     parameters:
       TESTFLAGS: '--with-mpi'
       CUDA: false
-      BUILD: false
+      BUILD: true
   - template: .azure-pipelines/test-template.yml
     parameters:
       workingDirectory: EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
