@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# checks if anything to do
+echo "run checks: $RUN_CHECKS"
+if [ "$RUN_CHECKS" == "0" ]; then
+  echo "  no run checks required, exiting..."
+  exit 0
+else
+  echo "  run checks required, start installing..."
+fi
+echo
+
 # fortran/openMPI compiler
 sudo apt-get install -y gfortran libgomp1 openmpi-bin libopenmpi-dev
 echo
@@ -119,6 +129,26 @@ if [ "$CUDA" == "true" ]; then
   export PATH=${CUDA_HOME}/bin:${PATH}
   echo ""
   nvcc --version
+  echo ""
+
+  ## OpenCL additionals
+  if [ "$OPENCL" == "true" ]; then
+    echo "OpenCL installation"
+    #echo "dpkg toolkit:"
+    #dpkg -l | grep toolkit
+    #echo ""
+    #echo "dpkg opencl:"
+    #dpkg -l | grep opencl
+    #echo ""
+    #echo "apt-cache opencl:"
+    #apt-cache search opencl
+    # possible packages for OpenCL:
+    #sudo apt-get install -y --no-install-recommends cuda-toolkit-${CUDA_APT}
+    #sudo apt-get install opencl-headers
+    # for ppc64 architecture: to be able to compile/link OpenCL version
+    sudo apt-get install nvidia-opencl-dev
+    echo ""
+  fi
 else
   export CUDA_HOME=""
 fi
@@ -131,9 +161,10 @@ echo "export CUDA_HOME=${CUDA_HOME}" >> $HOME/.tmprc
 # to avoid mpi issues on travis
 # see: https://github.com/open-mpi/ompi/issues/1393#issuecomment-187980473
 #      https://github.com/open-mpi/ompi/issues/4948
-echo "export export OMPI_MCA_btl_vader_single_copy_mechanism=none" >> $HOME/.tmprc
-echo "export export OMPI_MCA_btl=^openib" >> $HOME/.tmprc
+echo "export OMPI_MCA_btl_vader_single_copy_mechanism=none" >> $HOME/.tmprc
+echo "export OMPI_MCA_btl=^openib" >> $HOME/.tmprc
 
+echo ""
 echo "exports:"
 export
 echo ""
