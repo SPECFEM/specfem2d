@@ -203,10 +203,6 @@
     call stop_the_code('PML boundary conditions not implemented for poroelastic simulations yet')
   endif
 
-  if (PML_BOUNDARY_CONDITIONS .and. any_elastic .and. (.not. P_SV)) then
-    call stop_the_code('PML boundary conditions not implemented for SH simulations yet')
-  endif
-
   ! checks material domains
   do ispec = 1,nspec
     ! checks if at least one domain is set
