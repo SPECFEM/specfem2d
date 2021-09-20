@@ -73,8 +73,9 @@
           do j = 1,NGLLZ
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(1,i,j,i_source) * stf_used
-              accel_elastic(2,iglob) = accel_elastic(2,iglob) + sourcearrays(2,i,j,i_source) * stf_used
+              ! 2D: x-component uses array(1,..) and z-component (2,..)
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(1,i,j,i_source) * stf_used  ! x-direction
+              accel_elastic(2,iglob) = accel_elastic(2,iglob) + sourcearrays(2,i,j,i_source) * stf_used  ! z-direction
             enddo
           enddo
         else
@@ -82,9 +83,8 @@
           do j = 1,NGLLZ
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
-
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(1,i,j,i_source) * stf_used
-
+              ! 2D: y-component uses array(1,..)
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(1,i,j,i_source) * stf_used  ! y-direction
             enddo
           enddo
         endif

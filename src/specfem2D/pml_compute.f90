@@ -44,16 +44,43 @@
   double precision :: bb,coef0,coef1,coef2,temp
   double precision :: DT
 
+  ! recursive convolution coefficients
+  !
+  ! see Xie et al. (2014), second-order recursive scheme given by eq. (60)
+  !                        and also appendix D, eq. (D6a) and (D6b) for p = 0
+  !
+  ! coefficients needed for the recursive scheme are:
+  !    coef0 = exp(-b delta_t)
+  !          = exp(- 1/2 b delta_t) * exp(- 1/2 b delta_t)
+  !
+  !    coef1 = 1/b (1 - exp( - 1/2 b delta_t)                             -> see also factor xi_0^(n+1) in eq. D6b
+  !
+  !    coef2 = 1/b (1 - exp( - 1/2 b delta_t) exp(- 1/2 b delta_t)
+  !          = coef1 * exp(- 1/2 b delta_t)                               -> see also factor xi_0^n in eq. D6a
+  !
+  ! helper variables
   temp = exp(- 0.5d0 * bb * DT)
 
   coef0 = temp*temp
 
   if (abs(bb) > 1d-5) then
+    ! second-order convolution scheme coefficients
     coef1 = (1.d0 - temp) / bb
     coef2 = coef1 * temp
+
+    ! first-order scheme
+    !coef1 = (1.d0 - coef0) / bb
+    !coef2 = 0.d0
   else
+    ! approximation for small beta
     coef1 = 0.5d0 * DT
     coef2 = coef1
+
+    ! Taylor expansion to third-order
+    !coef1 = 0.5d0 * DT + &
+    !        (- 1.d0/8.d0 * deltatpow2 * bb + 1.d0/48.d0 * DT**3 * bb**2 - 1.d0/384.d0 * DT**4 * bb**3)
+    !coef2 = 0.5d0 * DT + &
+    !        (- 3.d0/8.d0 * deltatpow2 * bb + 7.d0/48.d0 * DT**3 * bb**2 - 5.d0/128.d0 * DT**4 * bb**3)
   endif
 
   end subroutine compute_coef_convolution
@@ -131,9 +158,11 @@
     A_2 = bar_A_2
   endif
 
+  ! gets recursive convolution coefficients
+  ! alpha coefficients
   bb_1 = alpha_x
   call compute_coef_convolution(bb_1,DT,coef0_1,coef1_1,coef2_1)
-
+  ! beta coefficients
   bb_2 = beta_z
   call compute_coef_convolution(bb_2,DT,coef0_2,coef1_2,coef2_2)
 

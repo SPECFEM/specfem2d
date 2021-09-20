@@ -334,12 +334,25 @@
             ! Not AXISYM
             if (P_SV) then
               ! P_SV case
+              ! 2D plane strain assumption:
+              !   strain eps_yy == eps_xy == eps_zy == 0 (infinite medium in y-direction
+              ! leads to:
+              !   T_xx = (lambda + 2 mu) eps_xx + lambda eps_zz
+              !   T_zz = (lambda + 2 mu) eps_zz + lambda eps_xx
+              !   T_xz = T_zx = mu 2 eps_zx = mu (duz_dx + dux_dz)
               sigma_xx = lambdaplus2mu_unrelaxed_elastic * dux_dxl(i,j) + lambdal_unrelaxed_elastic * duz_dzl(i,j)
               sigma_zz = lambdaplus2mu_unrelaxed_elastic * duz_dzl(i,j) + lambdal_unrelaxed_elastic * dux_dxl(i,j)
               sigma_xz = mul_unrelaxed_elastic * (duz_dxl(i,j) + dux_dzl(i,j))
               sigma_zx = sigma_xz
             else
               ! SH-case
+              ! displacement only in y-direction:
+              !   ignores u_x and u_z, \partial_y == 0 (no derivatives in y-direction)
+              ! leads to:
+              !   T_xy = T_yx = mu 2 eps_yx = mu (duy_dx + dux_dy) = mu duy_dx     (sets dux_dy == 0)
+              !   T_zy = T_yz = mu 2 eps_yz = mu (duy_dz + duz_dy) = mu duy_dz     (sets duz_dy == 0)
+              ! instead of new variable names, we use the same variables from the P-SV case,
+              ! but here dux_dxl == duy_dxl and dux_dzl == duy_dzl
               sigma_xy = mul_unrelaxed_elastic * dux_dxl(i,j)
               sigma_zy = mul_unrelaxed_elastic * dux_dzl(i,j)
             endif
@@ -416,13 +429,36 @@
             ! not AXISYM
             if (P_SV) then
               ! P_SV case
+              ! P_SV case
+              ! 2D plane strain assumption:
+              !   strain eps_yy == eps_xy == eps_zy == 0 (infinite medium in y-direction
+              ! leads to:
+              !   T_xx = c11 eps_xx + c13 eps_zz + c15 2 eps_zx
+              !   T_zz = c13 eps_xx + c33 eps_zz + c35 2 eps_zx
+              !   T_xz = c15 eps_xx + c35 eps_zz + c55 2 eps_zx
+              ! using the Voigt notation: T_i = sum_j=1^6 C_ij eps_j
+              !                           T_1 = T_xx,  T_2 = T_yy,  T_3 = T_zz
+              !                           T_3 = T_yz,  T_4 = T_xz,  T_6 = T_xy
+              !                           and same for strain eps_1 = eps_xx, ..
+              !
+              ! the out-of-plane stress T_yy = c12 eps_xx + c23 eps_zz + c25 2 eps_zx is not computed
+              ! as it is not used any further
               sigma_xx = c11*dux_dxl(i,j) + c13*duz_dzl(i,j) + c15*(duz_dxl(i,j) + dux_dzl(i,j))
               sigma_zz = c13*dux_dxl(i,j) + c33*duz_dzl(i,j) + c35*(duz_dxl(i,j) + dux_dzl(i,j))
               sigma_xz = c15*dux_dxl(i,j) + c35*duz_dzl(i,j) + c55*(duz_dxl(i,j) + dux_dzl(i,j))
               sigma_zx = sigma_xz
             else
               ! SH-case
-              ! note: uses c55 == mu in both directions, thus still isotropic for SH case
+              ! displacement only in y-direction:
+              !   ignores u_x and u_z, \partial_y == 0 (no derivatives in y-direction)
+              ! leads to:
+              !   T_xy = T_yx = c66 2 eps_yx = c66 (duy_dx + dux_dy) = c66 duy_dx     (sets dux_dy == 0)
+              !   T_zy = T_yz = c44 2 eps_yz = c44 (duy_dz + duz_dy) = c44 duy_dz     (sets duz_dy == 0)
+              ! instead of new variable names, we use the same variables from the P-SV case,
+              ! but here dux_dxl == duy_dxl and dux_dzl == duy_dzl
+              !
+              ! note: since c44 and c66 are not given in the Par_file input,
+              !       uses c55 == mu in both directions, thus still isotropic for SH case
               sigma_xy = c55 * dux_dxl(i,j)
               sigma_zy = c55 * dux_dzl(i,j)
             endif
