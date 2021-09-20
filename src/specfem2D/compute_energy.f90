@@ -54,6 +54,7 @@
 
   ! saves kinetic, potential and total energy for this time step in external file
   if (myrank == 0) then
+    ! format: #time  #E_kin(kinetic energy)  #E_pot(potential energy)  #E_tot(total energy)
     write(IOUT_ENERGY,*) real(dble(it-1)*DT - t0,4),real(kinetic_energy_total,4), &
                          real(potential_energy_total,4),real(kinetic_energy_total + potential_energy_total,4)
   endif

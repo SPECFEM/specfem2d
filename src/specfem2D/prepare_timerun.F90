@@ -155,7 +155,33 @@
   endif
 
   ! open the file in which we will store the energy curve
-  if (OUTPUT_ENERGY .and. myrank == 0) open(unit=IOUT_ENERGY,file=trim(OUTPUT_FILES)//'energy.dat',status='unknown',action='write')
+  if (OUTPUT_ENERGY) then
+    if (myrank == 0) then
+      open(unit=IOUT_ENERGY,file=trim(OUTPUT_FILES)//'energy.dat',status='unknown',action='write')
+      ! file header
+      write(IOUT_ENERGY,"('# Energy')")
+      write(IOUT_ENERGY,"('#')")
+      write(IOUT_ENERGY,"('# simulation setup: ')")
+      if (ACOUSTIC_SIMULATION) then
+        write(IOUT_ENERGY,"('#   using    acoustic wavefield')")
+      endif
+      if (ELASTIC_SIMULATION) then
+        if (P_SV) then
+          write(IOUT_ENERGY,"('#   using     elastic wavefield  -  P-SV waves')")
+        else
+          write(IOUT_ENERGY,"('#   using     elastic wavefield  -  SH waves')")
+        endif
+      endif
+      if (POROELASTIC_SIMULATION) then
+        write(IOUT_ENERGY,"('#   using poroelastic wavefield')")
+      endif
+      write(IOUT_ENERGY,"('#')")
+      write(IOUT_ENERGY,"('#   NTSTEP_BETWEEN_OUTPUT_ENERGY : ',i7)") NTSTEP_BETWEEN_OUTPUT_ENERGY
+      write(IOUT_ENERGY,"('#')")
+      write(IOUT_ENERGY,"('# format:')")
+      write(IOUT_ENERGY,"('#time  #E_kin(kinetic energy)  #E_pot(potential energy)  #E_tot(total energy)')")
+    endif
+  endif
 
   ! synchronizes all processes
   call synchronize_all()
