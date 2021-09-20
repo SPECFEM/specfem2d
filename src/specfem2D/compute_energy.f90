@@ -70,7 +70,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM,ZERO,TWO
 
-  use specfem_par, only: AXISYM,is_on_the_axis,myrank,nspec,kinetic_energy,potential_energy, &
+  use specfem_par, only: AXISYM,is_on_the_axis,nspec,kinetic_energy,potential_energy, &
                          ibool,hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz,jacobian,wxgll,wzgll, &
                          mustore,rho_vpstore,rhostore, &
                          poroelastcoef,density,kmato,assign_external_model, &
@@ -129,26 +129,21 @@
     endif
   endif
 
-!! DK DK March 2018: restored this initialization that someone had removed for some reason, thus making the calculation wrong
-!! DK DK March 2018: please do *NOT* remove it
+  ! initialization
+  ! please do *NOT* remove it
   kinetic_energy = 0._CUSTOM_REAL
   potential_energy = 0._CUSTOM_REAL
 
   ! loop over spectral elements
   do ispec = 1,nspec
 
-!! DK DK March 2018: only compute energy in the main domain, not in the PMLs, in which it is not physical
+    ! only compute energy in the main domain, not in the PMLs, in which it is not physical
     if (ispec_is_PML(ispec)) cycle
 
     !---
     !--- elastic spectral element
     !---
     if (ispec_is_elastic(ispec)) then
-
-      ! checks wave type
-      if (.not. P_SV) then
-        call exit_MPI(myrank,'output energy for SH waves not implemented yet')
-      endif
 
       ! get relaxed elastic parameters of current spectral element
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
@@ -179,8 +174,8 @@
 
           ! first double loop over GLL points to compute and store gradients
           ! we can merge the two loops because NGLLX == NGLLZ
-
           if (AXISYM) then
+            ! axisymmetric case
             if (is_on_the_axis(ispec)) then
               do k = 1,NGLJ
                 dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
@@ -193,6 +188,7 @@
               enddo
             endif
           else
+            ! default, non-axisymmetric case
             do k = 1,NGLLX
               dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
               duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
@@ -217,18 +213,62 @@
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-          ! compute kinetic energy ! TODO ABAB This integral over space should be adapted for axisym geometries if needed
-          kinetic_energy = kinetic_energy  &
-              + rhol * (veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) &
-              *wxgll(i)*wzgll(j)*jacobianl / TWO
+          ! elastic medium
+          ! kinetic energy:
+          !   E_kin = 1/2 * m * v**2
+          !           -> 1/2 * rho * (v_x**2 + v_z**2) * w_i * w_j * J_ij
+          !
+          ! potential energy:
+          !   E_pot = 1/2 * stress * strain
+          !         = 1/2 * ( T_xx * eps_xx
+          !                 + T_zz * eps_zz
+          !                 + 2 T_xz * eps_xz)                  (since T_xz == T_zx and eps_xz == eps_zx)
+          !         = 1/2 * ( [(lambda + 2 mu) eps_xx + lambda eps_zz] * eps_xx
+          !                 + [(lambda + 2 mu) eps_zz + lambda eps_xx] * eps_zz
+          !                 + 2 [mu 2 eps_xz] * eps_xz  )       (note: eps_xz = 1/2 (duz_dx + dux_dz))
+          !         = 1/2 * ( (lambda + 2 mu)*dux_dx * dux_dx
+          !                 + (lambda + 2 mu)*duz_dx * duz_dz
+          !                 + 2 lambda * dux_dx * duz_dz
+          !                 + 2 mu * (dux_dz + duz_dx) * 1/2 (dux_dz + duz_dx) )
+          !
+          if (P_SV) then
+            ! P-SV waves
+            ! compute kinetic energy
+            ! TODO ABAB This integral over space should be adapted for axisym geometries if needed
+            kinetic_energy = kinetic_energy  &
+                + rhol * (veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) &
+                * wxgll(i) * wzgll(j) * jacobianl / TWO
 
-          ! compute potential energy ! TODO ABAB This integral over space should be adapted for axisym geometries if needed
-          potential_energy = potential_energy &
-              + (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
-              + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
-              + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
-              + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2)*wxgll(i)*wzgll(j)*jacobianl / TWO
+            ! compute potential energy
+            ! TODO ABAB This integral over space should be adapted for axisym geometries if needed
+            potential_energy = potential_energy &
+                + ( lambdaplus2mu_unrelaxed_elastic * dux_dxl**2 &
+                  + lambdaplus2mu_unrelaxed_elastic * duz_dzl**2 &
+                  + TWO*lambdal_unrelaxed_elastic * dux_dxl*duz_dzl &
+                  + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2 ) &
+                * wxgll(i) * wzgll(j) * jacobianl / TWO
+          else
+            ! SH-waves
+            ! compute kinetic energy
+            ! note: only component array(1,..) is non-zero for SH waves and corresponds to y-direction displacement
+            kinetic_energy = kinetic_energy  &
+                + rhol * (veloc_elastic(1,ibool(i,j,ispec))**2 ) &
+                * wxgll(i) * wzgll(j) * jacobianl / TWO
 
+            ! compute potential energy
+            ! note: T_xy = T_yx = mu 2 eps_yx = mu (duy_dx + dux_dy) = mu duy_dx     (sets dux_dy == 0)
+            !       T_zy = T_yz = mu 2 eps_yz = mu (duy_dz + duz_dy) = mu duy_dz
+            !
+            !      -> E_pot = 1/2 * stress * strain
+            !               = 1/2 * (T_yx * eps_yx + T_yz * eps_yz)
+            !               = 1/2 * (mu duy_dx * 1/2 duy_dx + mu duy_dz * 1/2 duy_dz)
+            !               = 1/2 * (mu (duy_dx**2 + duy_dz**2) / 2 )
+            !
+            ! reuses variable names from P-SV case, here: dux_dx == duy_dx and dux_dz == duy_dz
+            potential_energy = potential_energy &
+                + ( mul_unrelaxed_elastic * (dux_dxl**2 + dux_dzl**2) / TWO )&
+                * wxgll(i) * wzgll(j) * jacobianl / TWO
+          endif
         enddo
       enddo
 
@@ -593,7 +633,8 @@
                          poroelastcoef,mustore,rho_vpstore,rhostore, &
                          density,kmato,assign_external_model,jacobian, &
                          hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz, &
-                         GPU_MODE,any_acoustic,any_elastic,any_poroelastic
+                         GPU_MODE,any_acoustic,any_elastic,any_poroelastic, &
+                         P_SV
 
   ! wavefields
   use specfem_par, only: displ_elastic,veloc_elastic,accel_elastic, &
@@ -678,6 +719,7 @@
       ! first double loop over GLL points to compute and store gradients
       ! we can merge the two loops because NGLLX == NGLLZ
       if (AXISYM) then
+        ! axisymmetric case
         if (is_on_the_axis(ispec)) then
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
@@ -690,6 +732,7 @@
           enddo
         endif
       else
+        ! default, non-axisymmetric case
         do k = 1,NGLLX
           dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
           duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
@@ -715,32 +758,65 @@
 
       ! compute total integrated energy
       ! We record just one point per element (i=2, j=2)
-      integrated_kinetic_energy_field(ispec) = integrated_kinetic_energy_field(ispec)  &
-          +  rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * deltat * 0.5_CUSTOM_REAL
 
-      if (max_kinetic_energy_field(ispec) <&
-            rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * 0.5_CUSTOM_REAL) then
-        max_kinetic_energy_field(ispec) = &
-            rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * 0.5_CUSTOM_REAL
+      ! kinetic energy
+      if (P_SV) then
+        ! P-SV waves
+        integrated_kinetic_energy_field(ispec) = integrated_kinetic_energy_field(ispec)  &
+            +  rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * deltat * 0.5_CUSTOM_REAL
+
+        ! maximum value
+        if (max_kinetic_energy_field(ispec) <&
+              rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * 0.5_CUSTOM_REAL) then
+          max_kinetic_energy_field(ispec) = &
+              rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * 0.5_CUSTOM_REAL
+        endif
+      else
+        ! SH waves
+        integrated_kinetic_energy_field(ispec) = integrated_kinetic_energy_field(ispec)  &
+            +  rhol*(veloc_elastic(1,ibool(i,j,ispec))**2) * deltat * 0.5_CUSTOM_REAL
+
+        ! maximum value
+        if (max_kinetic_energy_field(ispec) <&
+              rhol*(veloc_elastic(1,ibool(i,j,ispec))**2) * 0.5_CUSTOM_REAL) then
+          max_kinetic_energy_field(ispec) = &
+              rhol*(veloc_elastic(1,ibool(i,j,ispec))**2) * 0.5_CUSTOM_REAL
+        endif
       endif
 
+      ! maximum E_kin
       if (max_kinetic_energy_field(ispec) > ZERO) then
         kinetic_effective_duration_field(ispec) = TWO*integrated_kinetic_energy_field(ispec)/max_kinetic_energy_field(ispec)
       endif
 
-      integrated_potential_energy_field(ispec) = integrated_potential_energy_field(ispec) &
-              + (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
+      ! potential energy
+      if (P_SV) then
+        ! P-SV waves
+        integrated_potential_energy_field(ispec) = integrated_potential_energy_field(ispec) &
+                + (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
+                + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
+                + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
+                + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) * deltat * 0.5_CUSTOM_REAL
+
+        ! maximum value
+        if (max_potential_energy_field(ispec) < (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
               + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
               + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
-              + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) * deltat * 0.5_CUSTOM_REAL
-      if (max_potential_energy_field(ispec) < (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
+              + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO) then
+          max_potential_energy_field(ispec) = (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
             + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
             + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
-            + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO) then
-        max_potential_energy_field(ispec) = (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
-          + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
-          + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
-          + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO
+            + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO
+        endif
+      else
+        ! SH waves
+        integrated_potential_energy_field(ispec) = integrated_potential_energy_field(ispec) &
+                + (mul_unrelaxed_elastic * (dux_dxl**2 + dux_dzl**2) / TWO ) * deltat * 0.5_CUSTOM_REAL
+
+        ! maximum value
+        if (max_potential_energy_field(ispec) < (mul_unrelaxed_elastic * (dux_dxl**2 + dux_dzl**2) / TWO ) / TWO ) then
+          max_potential_energy_field(ispec) = (mul_unrelaxed_elastic * (dux_dxl**2 + dux_dzl**2) / TWO ) / TWO
+        endif
       endif
 
       if (max_potential_energy_field(ispec) > ZERO) then
@@ -748,16 +824,27 @@
                                                     max_potential_energy_field(ispec)
       endif
 
-      if (max_total_energy_field(ispec) < (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
-            + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
-            + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
-            + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO + &
-            rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) / TWO) then
-        max_total_energy_field(ispec) = (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
-            + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
-            + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
-            + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO + &
-            rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) / TWO
+      ! maximum total energy
+      if (P_SV) then
+        ! P-SV waves
+        if (max_total_energy_field(ispec) < (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
+              + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
+              + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
+              + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO + &
+              rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) / TWO) then
+          max_total_energy_field(ispec) = (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
+              + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
+              + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
+              + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO + &
+              rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) / TWO
+        endif
+      else
+        ! SH waves
+        if (max_total_energy_field(ispec) < (mul_unrelaxed_elastic * (dux_dxl**2 + dux_dzl**2) / TWO ) / TWO + &
+                rhol*(veloc_elastic(1,ibool(i,j,ispec))**2) / TWO) then
+            max_total_energy_field(ispec) = (mul_unrelaxed_elastic * (dux_dxl**2 + dux_dzl**2) / TWO ) / TWO + &
+                rhol*(veloc_elastic(1,ibool(i,j,ispec))**2) / TWO
+        endif
       endif
 
     !---
