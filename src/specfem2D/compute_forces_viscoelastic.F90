@@ -507,6 +507,45 @@
         endif ! ATTENUATION_VISCOELASTIC
 
         if (PML_BOUNDARY_CONDITIONS) then
+          ! note: P-SV waves implement the PML equations:
+          !         rho F^{-1}[-omega^2 s_x s_z] * u_x = d/dx{ (lambda+2mu) F^{-1}[s_z/s_x] * dux_dx + lambda duz_dz }
+          !                                            + d/dz{ mu duz_dx + mu F^{-1}[s_x/s_z] * dux_dz }
+          !         rho F^{-1}[-omega^2 s_x s_z] * u_z = d/dx{ mu F^{-1}[s_z/s_x] * duz_dx + mu dux_dz }
+          !                                            + d/dz{ lambda dux_dx + (lambda+2mu) F^{-1}[s_x/s_z] * duz_dz }
+          !       with F^{-1} being the inverse Fourier transform and '*' being convolution.
+          !
+          !       given the above expressions, we can write the stress components as
+          !           sigma_xx = (lambda+2mu) F^{-1}[s_z/s_x] * dux_dx + lambda duz_dz
+          !           sigma_zx = mu duz_dx + mu F^{-1}[s_x/s_z] * dux_dz
+          !
+          !           sigma_zz = (lambda+2mu) F^{-1}[s_x/s_z] * duz_dz + lambda dux_dx
+          !           sigma_xz = mu F^{-1}[s_z/s_x] * duz_dx + mu dux_dz
+          !
+          !       note that the stress becomes non-symmetric.
+          !       -> see Xie et al. (2014), appendix B, eq. (B6a) and (B6b), where component y == z here
+          !
+          !       SH waves implement the PML equation:
+          !         rho F^{-1}[-omega**2 s_x s_z] * u_y = d/dx{ mu F^{-1}[s_z/s_x] * duy_dx }
+          !                                             + d/dz{ mu F^{-1}[s_x/s_z] * duy_dz }
+          !            with F^{-1} being the inverse Fourier transform.
+          !
+          !       for SH-waves, we only have F^{-1}[..] expressions for the stress components.
+          !       these get computed by using the modified dux_dxl,dux_dzl,.. terms.
+
+          !       given that PML_dux_dxl,PML_dux_dzl,.. arrays store the original, unmodified dux_dx,dux_dz,.. strain values,
+          !       there are no such expressions for the stress components in the SH-wave case.
+          !
+          !       terms without an F^{-1}[..] expression still appear in the P-SV case, thus need to be added
+          !       together with the PML-modified terms dux_dxl,dux_dzl,.. in those cases.
+          !
+          !       -> see in pml_compute_memory_variables_elastic() how the dux_dxl,dux_dzl,.. terms are modified
+          !          using the recursive convolutional scheme with memory variables rmemory_dux_dz,.. arrays
+          !
+          !       thus, for the SH-case we already computed: sigma_xy = mul_unrelaxed_elastic * dux_dxl(i,j)
+          !                                                  sigma_zy = mul_unrelaxed_elastic * dux_dzl(i,j)
+          !       based on the convolutional dux_dxl,.. expressions, and therefore won't need to add anything here.
+          !       plus, SH-waves ignore attenuation and the PML rotation cases.
+          !
           if (ATTENUATION_VISCOELASTIC) then
             if (ispec_is_PML(ispec)) then
                if (qkappal < 9998.999d0 .and. qmul < 9998.999d0) then
@@ -558,13 +597,23 @@
                 sigma_zx = ct*st*sigma_xx_prime - st**2*sigma_xz_prime + ct**2*sigma_zx_prime - ct*st*sigma_zz_prime
                 sigma_zz = st**2*sigma_xx_prime + ct*st*sigma_xz_prime + ct*st*sigma_zx_prime + ct**2*sigma_zz_prime
               else
+                ! stress components:
+                !   sigma_xx = (lambda+2mu) F^{-1}[s_z/s_x] * dux_dx + lambda duz_dz
+                !   sigma_zz = (lambda+2mu) F^{-1}[s_x/s_z] * duz_dz + lambda dux_dx
+                !
+                !   sigma_zx = mu duz_dx + mu F^{-1}[s_x/s_z] * dux_dz
+                !            = mu ( duz_dx + F^{-1}[s_x/s_z] * dux_dz)
+                !   sigma_xz = mu F^{-1}[s_z/s_x] * duz_dx + mu dux_dz
+                !            = mu ( dux_dz + F^{-1}[s_z/s_x] * duz_dx )
+                !
+                ! note that PML_dux_dxl,PML_dux_dzl,.. arrays contain the original, unmodified dux_dx,dux_dz,.. strain values.
+                !
                 sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl(i,j) + lambdal_unrelaxed_elastic*PML_duz_dzl(i,j)
                 sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl(i,j) + lambdal_unrelaxed_elastic*PML_dux_dxl(i,j)
                 sigma_zx = mul_unrelaxed_elastic * (PML_duz_dxl(i,j) + dux_dzl(i,j))
                 sigma_xz = mul_unrelaxed_elastic * (PML_dux_dzl(i,j) + duz_dxl(i,j))
               endif
             endif
-
           endif ! ATTENUATION
         endif ! PML_BOUNDARY_CONDITION
 
