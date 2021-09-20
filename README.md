@@ -31,7 +31,8 @@ and check the output files in `./OUTPUT_FILES/`
 ## Development
 
 [![Actions Status](https://github.com/geodynamics/specfem2d/workflows/CI/badge.svg)](https://github.com/geodynamics/specfem2d/actions)
-[![Build Status](https://travis-ci.com/geodynamics/specfem2d.svg?branch=devel)](https://travis-ci.com/geodynamics/specfem2d)
+[![Travis Status](https://app.travis-ci.com/geodynamics/specfem2d.svg?branch=devel)](https://app.travis-ci.com/geodynamics/specfem2d)
+[![Azure Status](https://dev.azure.com/danielpeter22/SPECFEM2D/_apis/build/status/geodynamics.specfem2d?branchName=devel)](https://dev.azure.com/danielpeter22/SPECFEM2D/_build/latest?definitionId=6&branchName=devel)
 [![codecov](https://codecov.io/gh/geodynamics/specfem2d/branch/devel/graph/badge.svg)](https://codecov.io/gh/geodynamics/specfem2d)
 [![Documentation Status](https://readthedocs.org/projects/specfem2d/badge/?version=latest)](https://specfem2d.readthedocs.io/en/latest/?badge=latest)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
