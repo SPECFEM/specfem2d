@@ -40,11 +40,13 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
     ZERO,ONE,TWO,TWO_THIRDS,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: AXISYM,nglob,num_abs_boundary_faces,it,any_elastic, &
-                         assign_external_model,ibool,kmato, &
+  use specfem_par, only: nglob,num_abs_boundary_faces,it,any_elastic, &
+                         ibool, &
                          abs_boundary_ispec,ispec_is_elastic, &
-                         codeabs,codeabs_corner,density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-                         rho_vpstore,rho_vsstore,wxgll,wzgll,P_SV, &
+                         codeabs,codeabs_corner, &
+                         xix,xiz,gammax,gammaz,jacobian, &
+                         rho_vpstore,rho_vsstore,rhostore,mustore, &
+                         wxgll,wzgll,P_SV, &
                          SIMULATION_TYPE,SAVE_FORWARD, &
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top, &
@@ -71,11 +73,11 @@
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob
   real(kind=CUSTOM_REAL) :: weight,xxi,zxi,xgamma,zgamma,jacobian1D
-  real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz
+  real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,tx,ty,tz
 
   ! material properties of the elastic medium
-  real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
-    lambdaplus2mu_unrelaxed_elastic,kappal,cpl,csl,rhol
+  real(kind=CUSTOM_REAL) :: rho_vp,rho_vs ! cpl,csl
+  real(kind=CUSTOM_REAL) :: rhol,cpl,mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
 
   ! for analytical initial plane wave for Bielak's conditions
   double precision :: veloc_horiz,veloc_vert,dxUx,dzUx,dxUz,dzUz,traction_x_t0,traction_z_t0
@@ -96,24 +98,6 @@
 
     ! only for elastic elements, skip others
     if (.not. ispec_is_elastic(ispec) ) cycle
-
-    ! get elastic parameters of current spectral element
-    lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-    mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-
-    lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO * mul_unrelaxed_elastic
-
-    rhol  = density(1,kmato(ispec))
-
-    if (AXISYM) then ! CHECK kappa
-      kappal  = lambdal_unrelaxed_elastic + TWO_THIRDS*mul_unrelaxed_elastic
-      cpl = sqrt((kappal + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol) ! CHECK kappa
-    else
-      kappal  = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
-      cpl = sqrt((kappal + mul_unrelaxed_elastic)/rhol) ! CHECK kappa
-    endif
-
-    csl = sqrt(mul_unrelaxed_elastic/rhol)
 
     !--- left absorbing boundary
     if (codeabs(IEDGE4,ispecabs)) then
@@ -136,6 +120,14 @@
                                            anglesource(1), anglesource_refl, &
                                            c_inc, c_refl, time_offset,f0_source(1))
 
+            ! get elastic parameters of current grid point
+            mul_unrelaxed_elastic = mustore(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
+            cpl = rho_vpstore(i,j,ispec)/rhol
+
+            lambdal_unrelaxed_elastic = rhol*cpl*cpl - 2._CUSTOM_REAL * mul_unrelaxed_elastic
+            lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
+
             traction_x_t0 = lambdaplus2mu_unrelaxed_elastic * dxUx + lambdal_unrelaxed_elastic * dzUz
             traction_z_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
           else
@@ -147,14 +139,8 @@
           endif
         endif
 
-        ! external velocity model
-        if (assign_external_model) then
-          rho_vp = rho_vpstore(i,j,ispec)
-          rho_vs = rho_vsstore(i,j,ispec)
-        else
-          rho_vp = rhol*cpl
-          rho_vs = rhol*csl
-        endif
+        rho_vp = rho_vpstore(i,j,ispec)
+        rho_vs = rho_vsstore(i,j,ispec)
 
         ! normal pointing left
         xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
@@ -229,6 +215,9 @@
 !            derivx = (dux_dxl * unit_tx + dux_dzl * unit_tz) * unit_tx
 !            derivz = (duz_dxl * unit_tx + duz_dzl * unit_tz) * unit_tz
 !
+!            csl = vsstore(i,j,ispec)
+!            cpl = vpstore(i,j,ispec)
+!
 !            tx = tx + rho_vs *( 2._CUSTOM_REAL * csl - cpl) * derivx
 !            tz = tz + rho_vs *( 2._CUSTOM_REAL * csl - cpl) * derivz
 !          endif
@@ -284,6 +273,14 @@
                                            anglesource(1), anglesource_refl, &
                                            c_inc, c_refl, time_offset,f0_source(1))
 
+            ! get elastic parameters of current grid point
+            mul_unrelaxed_elastic = mustore(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
+            cpl = rho_vpstore(i,j,ispec)/rhol
+
+            lambdal_unrelaxed_elastic = rhol*cpl*cpl - 2._CUSTOM_REAL * mul_unrelaxed_elastic
+            lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
+
             traction_x_t0 = lambdaplus2mu_unrelaxed_elastic * dxUx + lambdal_unrelaxed_elastic * dzUz
             traction_z_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
           else
@@ -295,14 +292,8 @@
           endif
         endif
 
-        ! external velocity model
-        if (assign_external_model) then
-          rho_vp = rho_vpstore(i,j,ispec)
-          rho_vs = rho_vsstore(i,j,ispec)
-        else
-          rho_vp = rhol*cpl
-          rho_vs = rhol*csl
-        endif
+        rho_vp = rho_vpstore(i,j,ispec)
+        rho_vs = rho_vsstore(i,j,ispec)
 
         ! normal pointing right
         xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
@@ -369,6 +360,14 @@
                                            anglesource(1), anglesource_refl, &
                                            c_inc, c_refl, time_offset,f0_source(1))
 
+            ! get elastic parameters of current grid point
+            mul_unrelaxed_elastic = mustore(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
+            cpl = rho_vpstore(i,j,ispec)/rhol
+
+            lambdal_unrelaxed_elastic = rhol*cpl*cpl - 2._CUSTOM_REAL * mul_unrelaxed_elastic
+            lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
+
             traction_x_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
             traction_z_t0 = lambdal_unrelaxed_elastic * dxUx + lambdaplus2mu_unrelaxed_elastic * dzUz
           else
@@ -380,14 +379,8 @@
           endif
         endif
 
-        ! external velocity model
-        if (assign_external_model) then
-          rho_vp = rho_vpstore(i,j,ispec)
-          rho_vs = rho_vsstore(i,j,ispec)
-        else
-          rho_vp = rhol*cpl
-          rho_vs = rhol*csl
-        endif
+        rho_vp = rho_vpstore(i,j,ispec)
+        rho_vs = rho_vsstore(i,j,ispec)
 
         xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
         zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -463,18 +456,20 @@
                                          anglesource(1), anglesource_refl, &
                                          c_inc, c_refl, time_offset,f0_source(1))
 
+          ! get elastic parameters of current grid point
+          mul_unrelaxed_elastic = mustore(i,j,ispec)
+          rhol = rhostore(i,j,ispec)
+          cpl = rho_vpstore(i,j,ispec)/rhol
+
+          lambdal_unrelaxed_elastic = rhol*cpl*cpl - 2._CUSTOM_REAL * mul_unrelaxed_elastic
+          lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
+
           traction_x_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
           traction_z_t0 = lambdal_unrelaxed_elastic * dxUx + lambdaplus2mu_unrelaxed_elastic * dzUz
         endif
 
-        ! external velocity model
-        if (assign_external_model) then
-          rho_vp = rho_vpstore(i,j,ispec)
-          rho_vs = rho_vsstore(i,j,ispec)
-        else
-          rho_vp = rhol*cpl
-          rho_vs = rhol*csl
-        endif
+        rho_vp = rho_vpstore(i,j,ispec)
+        rho_vs = rho_vsstore(i,j,ispec)
 
         xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
         zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)

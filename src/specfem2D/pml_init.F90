@@ -554,7 +554,7 @@
 
   use specfem_par, only: vx_source, vz_source, f0_source,ispec_is_elastic,ispec_is_acoustic, &
                          NSOURCES,ispec_selected_source, &
-                         nspec,kmato,density,poroelastcoef,ibool,coord,islice_selected_source,myrank, SOURCE_IS_MOVING
+                         nspec,rho_vpstore,rhostore,ibool,coord,islice_selected_source,myrank, SOURCE_IS_MOVING
 ! PML arrays and variables
   use specfem_par, only: ispec_is_PML,spec_to_PML,region_CPML,PML_PARAMETER_ADJUSTMENT, &
                          K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
@@ -585,7 +585,6 @@
 
 ! material properties of the elastic medium
   integer i,j,ispec,iglob,ispec_PML,i_source
-  double precision :: lambdalplus2mul_relaxed,rhol
   double precision :: d_x, d_z, K_x, K_z, alpha_x, alpha_z, beta_x, beta_z
 ! define an alias for y and z variable names (which are the same)
   double precision :: d0_z_bottom_acoustic, d0_x_right_acoustic, d0_z_top_acoustic, d0_x_left_acoustic
@@ -600,7 +599,7 @@
                       thickness_PML_z_top,thickness_PML_x_left
 
   double precision :: xmin, xmax, zmin, zmax, xorigin, zorigin, xval, zval
-  double precision :: vpmax_acoustic, vpmax_elastic, vpmax
+  double precision :: vpmax_acoustic, vpmax_elastic, vpmax, vp
   double precision :: xoriginleft, xoriginright, zorigintop, zoriginbottom
 
   integer :: NSOURCES_glob
@@ -758,24 +757,24 @@
   zorigintop = zmax-thickness_PML_z_top
 
   ! compute d0 from Inria report section 6.1 http://hal.inria.fr/docs/00/07/32/19/PDF/RR-3471.pdf
+
+  ! determins maximum vp
   vpmax_acoustic = 0.0d0
   vpmax_elastic = 0.0d0
   do ispec = 1,nspec
     if (ispec_is_PML(ispec)) then
-      if (ispec_is_acoustic(ispec)) then
-        ! From read_materials.f90 we know, in acoustic region
-        ! lambdalplus2mul_relaxed = kappal  = poroelastcoef(3,1,kmato(ispec)) = rhol * vp_acoustic * vp_acoustic
-        lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
-        rhol = density(1,kmato(ispec))
-        vpmax_acoustic = max(vpmax_acoustic,sqrt(lambdalplus2mul_relaxed/rhol))
-      else if (ispec_is_elastic(ispec)) then
-        ! get relaxed elastic parameters of current spectral element
-        lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
-        rhol = density(1,kmato(ispec))
-        vpmax_elastic = max(vpmax_elastic,sqrt(lambdalplus2mul_relaxed/rhol))
-      else
-        call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
-      endif
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          vp = rho_vpstore(i,j,ispec) / rhostore(i,j,ispec)
+          if (ispec_is_acoustic(ispec)) then
+            vpmax_acoustic = max(vpmax_acoustic,vp)
+          else if (ispec_is_elastic(ispec)) then
+            vpmax_elastic = max(vpmax_elastic,vp)
+          else
+            call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
+          endif
+        enddo
+      enddo
     endif
   enddo
 

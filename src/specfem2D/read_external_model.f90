@@ -63,16 +63,31 @@
 
   ! note: we read in external models once the basic mesh with its geometry and GLL points has been setup.
   !       External models define new velocity/material parameters which need to be defined on all GLL points.
-  if (myrank == 0) write(IMAIN,*) '  model: ',trim(MODEL)
+  if (myrank == 0) then
+    write(IMAIN,*) '  model selected             : ',trim(MODEL)
+    write(IMAIN,*) '  setup with binary database : ',setup_with_binary_database
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   select case (trim(MODEL))
   case ('legacy')
     ! old model format
     write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_model_velocity.dat_input'
-    if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_model_velocity.dat_input'
 
-    open(unit=IIN,file=inputname,status='old',action='read',iostat=ier)
-    if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_model_velocity.dat_input file.')
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  reading external files: rank ',myrank,' reads ',trim(inputname)
+      call flush_IMAIN()
+    endif
+
+    ! opens file
+    open(unit=IIN,file=trim(inputname),status='old',action='read',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error rank ',myrank,' opening file: ',trim(inputname)
+      print *,'Please check if the file exists...'
+      call stop_the_code('Error opening DATA/proc*****_model_velocity.dat_input file.')
+    endif
 
     do ispec = 1,nspec
       do j = 1,NGLLZ
@@ -82,7 +97,17 @@
           do while (read_next_line)
             ! format: #unused #unused #unused #rho #vp #vs
             read(IIN,'(a256)',iostat=ier) line
-            if (ier /= 0) call stop_the_code('Error reading file model_velocity.dat_input')
+
+            ! debug
+            !print *,'debug: i,j,ispec',i,j,ispec,' error ',ier,' line ****',trim(line),'****'
+
+            ! checks
+            if (ier /= 0) then
+              print *,'Error rank ',myrank,' reading line for i,j,ispec: ',i,j,ispec,'out of',nspec
+              print *,'Error previous line ****',trim(line),'****'
+              print *
+              call stop_the_code('Error reading file model_velocity.dat_input')
+            endif
 
             ! left adjust
             line = adjustl(line)
@@ -359,7 +384,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  done'
+    write(IMAIN,*) '  done reading external model'
     write(IMAIN,*)
     call flush_IMAIN()
   endif

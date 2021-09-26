@@ -40,9 +40,9 @@
     ZERO,ONE,TWO,TWO_THIRDS
 
   use specfem_par, only: nglob, &
-                         assign_external_model,ibool,kmato,ispec_is_acoustic, &
-                         density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-                         kappastore,rhostore, &
+                         ibool,ispec_is_acoustic, &
+                         xix,xiz,gammax,gammaz,jacobian, &
+                         rhostore, &
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj
@@ -70,7 +70,7 @@
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
   ! material properties of the acoustic medium
-  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,rhol
+  real(kind=CUSTOM_REAL) :: rhol
 
   integer :: num_elements,ispec_p
 
@@ -90,28 +90,34 @@
     ! acoustic spectral element
     if (.not. ispec_is_acoustic(ispec)) cycle
 
-    rhol = density(1,kmato(ispec))
-
     ! first double loop over GLL points to compute and store gradients
     do j = 1,NGLLZ
       do i = 1,NGLLX
         ! derivative along x and along z
-        dux_dxi = 0._CUSTOM_REAL; dux_dgamma = 0._CUSTOM_REAL
+        dux_dxi = 0._CUSTOM_REAL
+        dux_dgamma = 0._CUSTOM_REAL
 
-        ! first double loop over GLL points to compute and store gradients
         ! we can merge the two loops because NGLLX == NGLLZ
-        do k = 1,NGLLX
-          if (AXISYM) then
-            if (is_on_the_axis(ispec)) then
+        if (AXISYM) then
+          ! axisymmetric case
+          if (is_on_the_axis(ispec)) then
+            do k = 1,NGLLX
               dux_dxi = dux_dxi + b_potential_acoustic(ibool(k,j,ispec)) * hprimeBar_xx(i,k)
-            else
-              dux_dxi = dux_dxi + b_potential_acoustic(ibool(k,j,ispec)) * hprime_xx(i,k)
-            endif
+              dux_dgamma = dux_dgamma + b_potential_acoustic(ibool(i,k,ispec)) * hprime_zz(j,k)
+            enddo
           else
-            dux_dxi = dux_dxi + b_potential_acoustic(ibool(k,j,ispec)) * hprime_xx(i,k)
+            do k = 1,NGLLX
+              dux_dxi = dux_dxi + b_potential_acoustic(ibool(k,j,ispec)) * hprime_xx(i,k)
+              dux_dgamma = dux_dgamma + b_potential_acoustic(ibool(i,k,ispec)) * hprime_zz(j,k)
+            enddo
           endif
-          dux_dgamma = dux_dgamma + b_potential_acoustic(ibool(i,k,ispec)) * hprime_zz(j,k)
-        enddo
+        else
+          ! default, non-axisymmetric case
+          do k = 1,NGLLX
+            dux_dxi = dux_dxi + b_potential_acoustic(ibool(k,j,ispec)) * hprime_xx(i,k)
+            dux_dgamma = dux_dgamma + b_potential_acoustic(ibool(i,k,ispec)) * hprime_zz(j,k)
+          enddo
+        endif
 
         xixl = xix(i,j,ispec)
         xizl = xiz(i,j,ispec)
@@ -126,12 +132,9 @@
           dux_dxl = ZERO
         endif
 
+        ! gets density
+        rhol = rhostore(i,j,ispec)
         jacobianl = jacobian(i,j,ispec)
-
-        ! if external density model
-        if (assign_external_model) then
-          rhol = rhostore(i,j,ispec)
-        endif
 
         if (AXISYM) then
           if (is_on_the_axis(ispec) .and. i == 1) then
@@ -158,37 +161,16 @@
       enddo
     enddo
 
-    ! first double loop over GLL points to compute and store gradients
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-        iglob = ibool(i,j,ispec)
-        if (assign_external_model) then
-          rhol = rhostore(i,j,ispec)
-          !assuming that in fluid(acoustic) part input cpl is defined by sqrt(kappal/rhol), &
-          !which is not the same as in cpl input in elastic part
-          kappal = kappastore(i,j,ispec)
-        else
-          lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-          mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-          if (AXISYM) then ! CHECK kappa
-            kappal  = lambdal_relaxed + TWO_THIRDS * mul_relaxed
-          else
-            kappal  = lambdal_relaxed + mul_relaxed
-          endif
-          rhol = density(1,kmato(ispec))
-        endif
-
-      enddo
-    enddo
-!
-! second double-loop over GLL to compute all the terms
-!
+    !
+    ! second double-loop over GLL to compute all the terms
+    !
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         ! along x direction and z direction
         ! and assemble the contributions
         if (AXISYM) then
+          ! axisymmetric case
           if (is_on_the_axis(ispec)) then
             do k = 1,NGLLX
               b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
@@ -201,6 +183,7 @@
             enddo
           endif
         else
+          ! default, non-axisymmetric case
           do k = 1,NGLLX
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
                       (tempx1(k,j) * hprimewgll_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))

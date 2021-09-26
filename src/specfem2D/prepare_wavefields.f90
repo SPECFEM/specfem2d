@@ -144,25 +144,12 @@
   if (ier /= 0) call stop_the_code('Error allocating b_potential_acoustic_old arrays')
   b_potential_acoustic_old(:) = 0._CUSTOM_REAL
 
-  allocate(b_displ_ac(2,b_nglob_acoustic), &
-           b_accel_ac(2,b_nglob_acoustic), &
-           accel_ac(2,b_nglob_acoustic),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating b_displ_ac arrays')
-  b_accel_ac(:,:) = 0.0_CUSTOM_REAL; b_accel_ac(:,:) = 0.0_CUSTOM_REAL; accel_ac(:,:) = 0.0_CUSTOM_REAL
-
   ! coupling for SIMULATION_TYPE == 3
   allocate(potential_acoustic_adj_coupling(b_nglob_acoustic),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating potential_acoustic_adj_coupling array')
   potential_acoustic_adj_coupling(:) = 0.0_CUSTOM_REAL
 
-  ! kernels
-  ! on global points
-  allocate(rhol_ac_global(b_nglob_acoustic), &
-           kappal_ac_global(b_nglob_acoustic),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating rhol_ac_global arrays')
-  rhol_ac_global(:) = 0.0_CUSTOM_REAL; kappal_ac_global(:) = 0.0_CUSTOM_REAL
-
-  ! on local points
+  ! acoustic kernels
   allocate(rho_ac_kl(NGLLX,NGLLZ,b_nspec_acoustic), &
            kappa_ac_kl(NGLLX,NGLLZ,b_nspec_acoustic), &
            rhop_ac_kl(NGLLX,NGLLZ,b_nspec_acoustic), &

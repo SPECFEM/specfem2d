@@ -147,7 +147,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,NDIM
 
-  use specfem_par, only: AXISYM,is_on_the_axis,hprimeBar_xx,rhostore,density,assign_external_model,kmato
+  use specfem_par, only: AXISYM,is_on_the_axis,hprimeBar_xx,rhostore
 
 ! compute gradient for attenuation
 
@@ -233,13 +233,13 @@
           gammaxl = gammax(i,j,ispec)
           gammazl = gammaz(i,j,ispec)
 
-! derivatives of the potential
+          ! derivatives of the potential
           dux_dxl(i,j,ispec) = dux_dxi*xixl + dux_dgamma*gammaxl
           duz_dzl(i,j,ispec) = duz_dxi*xizl + duz_dgamma*gammazl
 
-          rhol = density(1,kmato(ispec))
-          if (assign_external_model) rhol = rhostore(i,j,ispec)
-! discontinuous displacement vector
+          rhol = rhostore(i,j,ispec)
+
+          ! discontinuous displacement vector
           displ(1,i,j,ispec) = dux_dxl(i,j,ispec) / rhol
           displ(2,i,j,ispec) = duz_dzl(i,j,ispec) / rhol
 

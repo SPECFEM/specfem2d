@@ -251,11 +251,11 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,HALF,TWO
 
-  use specfem_par, only: nspec,ispec_is_acoustic,ibool,kappal_ac_global,rhol_ac_global, &
-                         poroelastcoef,density,kmato,assign_external_model,rhostore,kappastore,deltat, &
+  use specfem_par, only: nspec,ispec_is_acoustic,ibool, &
+                         rhostore,kappastore,deltat, &
                          hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
                          potential_acoustic,b_potential_acoustic,potential_dot_dot_acoustic, &
-                         accel_ac,b_displ_ac,NSTEP_BETWEEN_COMPUTE_KERNELS, &
+                         NSTEP_BETWEEN_COMPUTE_KERNELS, &
                          rho_ac_kl,kappa_ac_kl,rhop_ac_kl,alpha_ac_kl,GPU_MODE
 
   use specfem_par_gpu, only: Mesh_pointer
@@ -265,33 +265,34 @@
   !local variables
   integer :: i,j,k,ispec,iglob
   real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,b_tempx1l,b_tempx2l
+  real(kind=CUSTOM_REAL) :: rhol,kappal
+  real(kind=CUSTOM_REAL) :: b_displ_loc(2),accel_loc(2)
   double precision :: xixl,xizl,gammaxl,gammazl
 
   if (.not. GPU_MODE) then
     ! kernels on CPU
     do ispec = 1, nspec
+      ! acoustic kernels
       if (ispec_is_acoustic(ispec)) then
         do j = 1, NGLLZ
           do i = 1, NGLLX
             iglob = ibool(i,j,ispec)
-            if (assign_external_model) then
-              kappal_ac_global(iglob) = kappastore(i,j,ispec)
-              rhol_ac_global(iglob)   = rhostore(i,j,ispec)
-            else
-              ! daniel todo: please check... kappa here might be used different,
-              !              poroelastcoef(3,..) is usually defined as lambda + 2 mu
-              kappal_ac_global(iglob) = poroelastcoef(3,1,kmato(ispec))
-              rhol_ac_global(iglob) = density(1,kmato(ispec))
-            endif
+
+            rhol = rhostore(i,j,ispec)
+            kappal = kappastore(i,j,ispec)
 
             ! calcul the displacement by computing the gradient of potential / rho
             ! and calcul the acceleration by computing the gradient of potential_dot_dot / rho
+            !
+            ! note: we use the displ potential_acoustic for the adjoint wavefield, and not the accel potential_dot_dot_acoustic,
+            !       to match the rho-kernel expressions from Luo et al. (2013)
             tempx1l = ZERO
             tempx2l = ZERO
             b_tempx1l = ZERO
             b_tempx2l = ZERO
-          !  bb_tempx1l = ZERO
-          !  bb_tempx2l = ZERO
+
+            !  bb_tempx1l = ZERO
+            !  bb_tempx2l = ZERO
             do k = 1,NGLLX
               ! derivative along x
               !tempx1l = tempx1l + potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
@@ -309,39 +310,40 @@
             gammazl = gammaz(i,j,ispec)
 
             ! derivatives of potential
-            accel_ac(1,iglob) = (tempx1l*xixl + tempx2l*gammaxl) / rhol_ac_global(iglob)
-            accel_ac(2,iglob) = (tempx1l*xizl + tempx2l*gammazl) / rhol_ac_global(iglob)
-            b_displ_ac(1,iglob) = (b_tempx1l*xixl + b_tempx2l*gammaxl) / rhol_ac_global(iglob)
-            b_displ_ac(2,iglob) = (b_tempx1l*xizl + b_tempx2l*gammazl) / rhol_ac_global(iglob)
-          enddo !i = 1, NGLLX
-        enddo !j = 1, NGLLZ
-      endif
-    enddo
+            ! warning : the variable is named accel_loc but it is displ that is computed
+            accel_loc(1) = (tempx1l*xixl + tempx2l*gammaxl) / rhol
+            accel_loc(2) = (tempx1l*xizl + tempx2l*gammazl) / rhol
 
-    do ispec = 1,nspec
-      if (ispec_is_acoustic(ispec)) then
-        do j = 1, NGLLZ
-          do i = 1, NGLLX
-            iglob = ibool(i,j,ispec)
+            b_displ_loc(1) = (b_tempx1l*xixl + b_tempx2l*gammaxl) / rhol
+            b_displ_loc(2) = (b_tempx1l*xizl + b_tempx2l*gammazl) / rhol
+
+            ! acoustic kernel integration
             ! YANGL
             !!!! old expression (from elastic kernels)
-            !!!rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) - rhol_ac_global(iglob)  * &
-            !!!      dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
-            !!!kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) - kappal_ac_global(iglob) * &
-            !!!      potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * &
-            !!!      b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob)&
+            !!!rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) - rhol  * &
+            !!!      dot_product(accel_loc(:),b_displ_loc(:)) * deltat
+            !!!kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) - kappal * &
+            !!!      potential_dot_dot_acoustic(iglob) / kappal * &
+            !!!      b_potential_dot_dot_acoustic(iglob) / kappal
             !!!      * deltat
-            !!!! new expression (from PDE-constrained optimization, coupling terms changed as well)
-            rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + rhol_ac_global(iglob) * &
-                                   dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * &
-                                   (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
-                                   !warning : the variable is named accel_ac but it is displ_ac that is computed
-            kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) + kappal_ac_global(iglob) * &
-                                     potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * &
-                                     b_potential_acoustic(iglob)/kappal_ac_global(iglob) * &
-                                     (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
-            ! YANGL
+
+            ! new expression (from PDE-constrained optimization, coupling terms changed as well)
+
+            ! density kernel
+            rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) &
+                                 + rhol * dot_product(accel_loc(:),b_displ_loc(:)) &
+                                        * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
+
+            ! kappa (bulk modulus) kernel
+            kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) &
+                                   + kappal * potential_dot_dot_acoustic(iglob) / kappal &
+                                            * b_potential_acoustic(iglob) / kappal &
+                                            * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
+
+            ! rho prime kernel
             rhop_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + kappa_ac_kl(i,j,ispec)
+
+            ! alpha kernel
             alpha_ac_kl(i,j,ispec) = TWO *  kappa_ac_kl(i,j,ispec)
           enddo
         enddo
@@ -366,7 +368,7 @@
   use constants, only: CUSTOM_REAL,FOUR_THIRDS,NGLLX,NGLLZ,TWO,HALF
 
   use specfem_par, only: nglob,nspec,ispec_is_poroelastic,ibool,deltat, &
-                         kmato,permeability, &
+                         phistore,tortstore,kappaarraystore,mufr_store,rhoarraystore,permstore,etastore, &
                          accels_poroelastic,accelw_poroelastic,velocw_poroelastic, &
                          b_displs_poroelastic,b_displw_poroelastic, &
                          epsilondev_s,b_epsilondev_s, &
@@ -387,15 +389,14 @@
   real(kind=CUSTOM_REAL) :: dwxx,dwzz,b_dwxx,b_dwzz
 
   ! to evaluate cpI, cpII, and cs, and rI (poroelastic medium)
-  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
+  double precision :: phi,tort,kappa_s,kappa_f,kappa_fr,mu_fr
+  double precision :: rho_s,rho_f,rho_bar,eta_f
   double precision :: D_biot,H_biot,C_biot,M_biot
   double precision :: B_biot
   double precision :: perm_xx
   double precision :: afactor,bfactor,cfactor
   double precision :: gamma1,gamma2,gamma3,gamma4
   double precision :: cpIsquare,cpIIsquare,cssquare
-
-  integer :: material
 
   ! safety check
   if (GPU_MODE) call stop_the_code('Error poroelastic kernels not implemented on GPUs yet')
@@ -421,40 +422,49 @@
   do ispec = 1, nspec
     if (ispec_is_poroelastic(ispec)) then
 
-      ! gets poroelastic material
-      call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
-
-      ! Biot coefficients for the input phi
-      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
-
-      B_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr
-
-      ! permeability
-      material = kmato(ispec)
-      perm_xx = permeability(1,material)
-
-      ! Approximated velocities (no viscous dissipation)
-      afactor = rho_bar - phi/tort*rho_f
-      bfactor = H_biot + phi*rho_bar/(tort*rho_f)*M_biot - TWO*phi/tort*C_biot
-      cfactor = phi/(tort*rho_f)*(H_biot*M_biot - C_biot*C_biot)
-
-      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-      cpIIsquare = (bfactor - sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-      cssquare = mu_fr/afactor
-
-      ! Approximated ratio r = amplitude "w" field/amplitude "s" field (no viscous dissipation)
-      ! used later for wavespeed kernels calculation, which are presently implemented for inviscid case,
-      ! contrary to primary and density-normalized kernels, which are consistent with viscous fluid case.
-      gamma1 = H_biot - phi/tort*C_biot
-      gamma2 = C_biot - phi/tort*M_biot
-      gamma3 = phi/tort*( M_biot*(afactor/rho_f + phi/tort) - C_biot)
-      gamma4 = phi/tort*( C_biot*(afactor/rho_f + phi/tort) - H_biot)
-
-      ratio = HALF*(gamma1 - gamma3)/gamma4 + HALF*sqrt((gamma1-gamma3)**2/gamma4**2 + 4.d0 * gamma2/gamma4)
-
       do j = 1, NGLLZ
         do i = 1, NGLLX
           iglob = ibool(i,j,ispec)
+
+          ! gets poroelastic material
+          phi = phistore(i,j,ispec)
+          tort = tortstore(i,j,ispec)
+          kappa_s = kappaarraystore(1,i,j,ispec)
+          kappa_f = kappaarraystore(2,i,j,ispec)
+          kappa_fr = kappaarraystore(3,i,j,ispec)
+          mu_fr = mufr_store(i,j,ispec)
+
+          ! Biot coefficients for the input phi
+          call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
+          B_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr
+
+          ! permeability
+          perm_xx = permstore(1,i,j,ispec)
+          eta_f = etastore(i,j,ispec)
+
+          rho_s = rhoarraystore(1,i,j,ispec)
+          rho_f = rhoarraystore(2,i,j,ispec)
+          rho_bar = (1.d0 - phi)*rho_s + phi * rho_f
+
+          ! Approximated velocities (no viscous dissipation)
+          afactor = rho_bar - phi/tort*rho_f
+          bfactor = H_biot + phi*rho_bar/(tort*rho_f)*M_biot - TWO*phi/tort*C_biot
+          cfactor = phi/(tort*rho_f)*(H_biot*M_biot - C_biot*C_biot)
+
+          cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+          cpIIsquare = (bfactor - sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+          cssquare = mu_fr/afactor
+
+          ! Approximated ratio r = amplitude "w" field/amplitude "s" field (no viscous dissipation)
+          ! used later for wavespeed kernels calculation, which are presently implemented for inviscid case,
+          ! contrary to primary and density-normalized kernels, which are consistent with viscous fluid case.
+          gamma1 = H_biot - phi/tort*C_biot
+          gamma2 = C_biot - phi/tort*M_biot
+          gamma3 = phi/tort*( M_biot*(afactor/rho_f + phi/tort) - C_biot)
+          gamma4 = phi/tort*( C_biot*(afactor/rho_f + phi/tort) - H_biot)
+
+          ratio = HALF*(gamma1 - gamma3)/gamma4 + HALF*sqrt((gamma1-gamma3)**2/gamma4**2 + 4.d0 * gamma2/gamma4)
 
           rhot_kl(i,j,ispec) = rhot_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * rho_bar * rhot_k(iglob)
           rhof_kl(i,j,ispec) = rhof_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * rho_f * rhof_k(iglob)
@@ -646,11 +656,14 @@
 
   subroutine compute_kernels_Hessian()
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,APPROXIMATE_HESS_KL
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,APPROXIMATE_HESS_KL
 
   use specfem_par, only: nglob,nspec,ibool,ispec_is_acoustic,ispec_is_elastic, &
+                         rhostore, &
+                         hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
                          any_elastic,any_acoustic, &
-                         accel_elastic,b_accel_elastic,accel_ac,b_accel_ac, &
+                         accel_elastic,b_accel_elastic, &
+                         potential_acoustic,b_potential_acoustic, &
                          rhorho_el_Hessian_final1,rhorho_el_Hessian_final2, &
                          rhorho_ac_Hessian_final1,rhorho_ac_Hessian_final2, &
                          deltat,GPU_MODE,NSTEP_BETWEEN_COMPUTE_KERNELS
@@ -661,7 +674,12 @@
 
   !local variables
   real(kind=CUSTOM_REAL), dimension(nglob) :: rhorho_el_Hessian_temp1, rhorho_el_Hessian_temp2
-  integer :: i,j,ispec,iglob
+  real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,b_tempx1l,b_tempx2l
+  real(kind=CUSTOM_REAL) :: rhol
+  real(kind=CUSTOM_REAL) :: b_accel_loc(2),accel_loc(2)
+  double precision :: xixl,xizl,gammaxl,gammazl
+
+  integer :: i,j,k,ispec,iglob
 
   ! checks if anything to do
   if (.not. APPROXIMATE_HESS_KL) return
@@ -702,12 +720,62 @@
           do j = 1, NGLLZ
             do i = 1, NGLLX
               iglob = ibool(i,j,ispec)
-              rhorho_ac_Hessian_final1(i,j,ispec) = rhorho_ac_Hessian_final1(i,j,ispec) + &
-                                                    dot_product(accel_ac(:,iglob),accel_ac(:,iglob)) * &
-                                                    (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
-              rhorho_ac_Hessian_final2(i,j,ispec) = rhorho_ac_Hessian_final2(i,j,ispec) + &
-                                                    dot_product(accel_ac(:,iglob),b_accel_ac(:,iglob)) * &
-                                                    (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
+
+              ! there are 2 different ways to compute an approximate Hessian,
+              ! either using the potentials directly or accelerations - check which one is better...
+
+              ! way 1:
+              ! expressions using potentials
+              !rhorho_ac_Hessian_final1(i,j,ispec) = rhorho_ac_Hessian_final1(i,j,ispec) &
+              !                                    + potential_dot_dot_acoustic(iglob) * potential_dot_dot_acoustic(iglob) &
+              !                                      * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
+              !
+              !rhorho_ac_Hessian_final2(i,j,ispec) = rhorho_ac_Hessian_final2(i,j,ispec) &
+              !                                    + potential_dot_dot_acoustic(iglob) * b_potential_dot_dot_acoustic(iglob) &
+              !                                      * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
+
+              ! way 2:
+              ! expressions using accelerations
+              ! acceleration is defined as the gradient of potential_dot_dot / rho
+              !
+              ! note: we also use the displ potential for the adjoint wavefield, and not the accel potential_dot_dot,
+              ! similar to the rho-kernel expressions from Luo et al. (2013)
+              rhol = rhostore(i,j,ispec)
+
+              tempx1l = ZERO
+              tempx2l = ZERO
+              b_tempx1l = ZERO
+              b_tempx2l = ZERO
+              do k = 1,NGLLX  ! merging loops NGLLX == NGLLZ
+                ! derivative along x
+                tempx1l = tempx1l + potential_acoustic(ibool(k,j,ispec)) * hprime_xx(i,k)
+                b_tempx1l = b_tempx1l + b_potential_acoustic(ibool(k,j,ispec)) * hprime_xx(i,k)
+                ! derivative along z
+                tempx2l = tempx2l + potential_acoustic(ibool(i,k,ispec)) * hprime_zz(j,k)
+                b_tempx2l = b_tempx2l + b_potential_acoustic(ibool(i,k,ispec)) * hprime_zz(j,k)
+              enddo
+
+              xixl = xix(i,j,ispec)
+              xizl = xiz(i,j,ispec)
+              gammaxl = gammax(i,j,ispec)
+              gammazl = gammaz(i,j,ispec)
+
+              ! derivatives of potential
+              ! warning : the variable is named accel_loc but it is displ that is computed
+              accel_loc(1) = (tempx1l*xixl + tempx2l*gammaxl) / rhol
+              accel_loc(2) = (tempx1l*xizl + tempx2l*gammazl) / rhol
+
+              b_accel_loc(1) = (b_tempx1l*xixl + b_tempx2l*gammaxl) / rhol
+              b_accel_loc(2) = (b_tempx1l*xizl + b_tempx2l*gammazl) / rhol
+
+              ! expressions using acceleration = 1/rho grad(potential_dot_dot_acoustic)
+              rhorho_ac_Hessian_final1(i,j,ispec) = rhorho_ac_Hessian_final1(i,j,ispec) &
+                                                  + dot_product(accel_loc(:),accel_loc(:)) &
+                                                    * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
+
+              rhorho_ac_Hessian_final2(i,j,ispec) = rhorho_ac_Hessian_final2(i,j,ispec) &
+                                                  + dot_product(accel_loc(:),b_accel_loc(:)) &
+                                                    * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
             enddo
           enddo
         endif

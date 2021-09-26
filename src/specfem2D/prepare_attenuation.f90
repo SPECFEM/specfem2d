@@ -43,7 +43,7 @@
   integer :: i,j,ispec,n,ier
 
   ! for shifting of velocities if needed in the case of viscoelasticity
-  double precision :: vp,vs,rhol,mul,lambdal,kappal
+  double precision :: vp,vs,rhol,mul,kappal
   double precision :: qkappal,qmul
 
   ! attenuation factors
@@ -52,8 +52,6 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent, &
                                                        phi_nu1_sent,phi_nu2_sent
   real(kind=CUSTOM_REAL), dimension(N_SLS) ::  phinu,tauinvnu,temp,coef
-  ! attenuation shift
-  logical, dimension(:), allocatable :: already_shifted_velocity
 
   ! attenuation
   ! user output
@@ -262,16 +260,6 @@
   e1_force_rk_acous(:,:,:) = 0._CUSTOM_REAL
 
   ! attenuation arrays
-  if (.not. assign_external_model) then
-    allocate(already_shifted_velocity(numat),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating attenuation Qkappa,Qmu,.. arrays')
-    already_shifted_velocity(:) = .false.
-  else
-    ! dummy
-    allocate(already_shifted_velocity(1),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating attenuation Qkappa,Qmu,.. arrays')
-  endif
-
   allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
            inv_tau_sigma_nu2(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
            phi_nu1(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
@@ -338,8 +326,8 @@
     ! user output
     if (myrank == 0) then
       write(IMAIN,*) 'Preparing attenuation in viscoelastic or viscoacoustic parts of the model:'
-      write(IMAIN,*) '  using external model for Qkappa and Qmu: ',assign_external_model
       write(IMAIN,*) '  reading velocity at f0                 : ',READ_VELOCITIES_AT_f0
+      write(IMAIN,*)
       write(IMAIN,*) '  using an attenuation reference frequency of ',ATTENUATION_f0_REFERENCE,'Hz'
       write(IMAIN,*)
       call flush_IMAIN()
@@ -348,40 +336,21 @@
     ! define the attenuation quality factors.
     do ispec = 1,nspec
 
-      ! get values for internal meshes
-      if (.not. assign_external_model) then
-        ! bulk attenuation
-        qkappal = QKappa_attenuationcoef(kmato(ispec))
-        ! shear attenuation
-        qmul = Qmu_attenuationcoef(kmato(ispec))
-
-        ! if no attenuation in that elastic element
-        if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
-
-        ! determines attenuation factors
-        call attenuation_model(qkappal,qmul,ATTENUATION_f0_REFERENCE,N_SLS, &
-                               tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
-                               tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
-      endif
-
       do j = 1,NGLLZ
         do i = 1,NGLLX
+          ! determines relaxation factors
+          ! bulk attenuation
+          qkappal = qkappa_attenuation_store(i,j,ispec)
+          ! shear attenuation
+          qmul = qmu_attenuation_store(i,j,ispec)
 
-          ! get values for external meshes
-          if (assign_external_model) then
-            ! bulk attenuation
-            qkappal = QKappa_attenuationext(i,j,ispec)
-            ! shear attenuation
-            qmul = Qmu_attenuationext(i,j,ispec)
+          ! if no attenuation in that elastic element
+          if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
 
-            ! if no attenuation in that elastic element
-            if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
-
-            ! determines attenuation factors
-            call attenuation_model(qkappal,qmul,ATTENUATION_f0_REFERENCE,N_SLS, &
-                                   tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
-                                   tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
-          endif
+          ! determines attenuation factors
+          call attenuation_model(qkappal,qmul,ATTENUATION_f0_REFERENCE,N_SLS, &
+                                 tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
+                                 tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
 
           ! stores attenuation values
           ! bulk attenuation (Qkappa)
@@ -441,90 +410,42 @@
               enddo
             endif
 
-            if (assign_external_model) then
-              ! external mesh model
-              rhol = dble(rhostore(i,j,ispec))
-              vp = dble(rho_vpstore(i,j,ispec)/rhol)
-              vs = dble(rho_vsstore(i,j,ispec)/rhol)
+            ! shifts velocity model
+            rhol = dble(rhostore(i,j,ispec))
+            vp = dble(rho_vpstore(i,j,ispec)/rhol)
+            vs = dble(rho_vsstore(i,j,ispec)/rhol)
 
-              ! shifts vp and vs (according to f0 and attenuation band)
-              call shift_velocities_from_f0(vp,vs,rhol, &
-                                            ATTENUATION_f0_REFERENCE,N_SLS, &
-                                            tau_epsilon_nu1_sent,tau_epsilon_nu2_sent, &
-                                            inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
+            ! shifts vp and vs (according to f0 and attenuation band)
+            call shift_velocities_from_f0(vp,vs,rhol, &
+                                          ATTENUATION_f0_REFERENCE,N_SLS, &
+                                          tau_epsilon_nu1_sent,tau_epsilon_nu2_sent, &
+                                          inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
 
-              ! stores shifted values
-              ! determines mu and kappa
-              mul = rhol * vs * vs
-              if (AXISYM) then ! CHECK kappa
-                kappal = rhol * vp * vp - FOUR_THIRDS * mul
-              else
-                kappal = rhol * vp * vp - mul
-              endif
-              ! to compare:
-              !lambdal = rhol * vp*vp - TWO * mul
-              !if (AXISYM) then ! CHECK kappa
-              !  kappal = lambdal + TWO_THIRDS * mul
-              !  vp = sqrt((kappal + FOUR_THIRDS * mul)/rhol)
-              !else
-              !  kappal = lambdal + mul
-              !  vp = sqrt((kappal + mul)/rhol)
-              !endif
-
-              ! stores unrelaxed moduli
-              mustore(i,j,ispec) = mul
-              kappastore(i,j,ispec) = kappal
-
-              ! stores density times vp and vs
-              rho_vpstore(i,j,ispec) = rhol * vp
-              rho_vsstore(i,j,ispec) = rhol * vs
-
+            ! stores shifted values
+            ! determines mu and kappa
+            mul = rhol * vs * vs
+            if (AXISYM) then ! CHECK kappa
+              kappal = rhol * vp * vp - FOUR_THIRDS * mul
             else
-              ! internal mesh
-              n = kmato(ispec)
-
-              rhol = density(1,n)
-              lambdal = poroelastcoef(1,1,n)
-              mul = poroelastcoef(2,1,n)
-
-              if (.not. already_shifted_velocity(n)) then
-                vp = sqrt((lambdal + TWO * mul) / rhol)
-                vs = sqrt(mul/rhol)
-
-                ! shifts vp and vs
-                call shift_velocities_from_f0(vp,vs,rhol, &
-                                              ATTENUATION_f0_REFERENCE,N_SLS, &
-                                              tau_epsilon_nu1_sent,tau_epsilon_nu2_sent, &
-                                              inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
-
-                ! stores shifted mu,lambda
-                mul = rhol * vs*vs
-                lambdal = rhol * vp*vp - TWO * mul
-
-                poroelastcoef(1,1,n) = lambdal
-                poroelastcoef(2,1,n) = mul
-                poroelastcoef(3,1,n) = lambdal + TWO * mul
-
-                already_shifted_velocity(n) = .true.
-              endif
-
-              ! stores material arrays
-              if (AXISYM) then ! CHECK kappa
-                kappal = lambdal + TWO_THIRDS * mul
-                vp = sqrt((kappal + FOUR_THIRDS * mul)/rhol)
-              else
-                kappal = lambdal + mul
-                vp = sqrt((kappal + mul)/rhol)
-              endif
-              ! stores unrelaxed moduli
-              mustore(i,j,ispec) = mul
-              kappastore(i,j,ispec) = kappal
-              ! stores density times vp and vs
-              vs = sqrt(mul/rhol)
-              rho_vpstore(i,j,ispec) = rhol * vp
-              rho_vsstore(i,j,ispec) = rhol * vs
+              kappal = rhol * vp * vp - mul
             endif
+            ! to compare:
+            !lambdal = rhol * vp*vp - TWO * mul
+            !if (AXISYM) then ! CHECK kappa
+            !  kappal = lambdal + TWO_THIRDS * mul
+            !  vp = sqrt((kappal + FOUR_THIRDS * mul)/rhol)
+            !else
+            !  kappal = lambdal + mul
+            !  vp = sqrt((kappal + mul)/rhol)
+            !endif
 
+            ! stores unrelaxed moduli
+            mustore(i,j,ispec) = mul
+            kappastore(i,j,ispec) = kappal
+
+            ! stores density times vp and vs
+            rho_vpstore(i,j,ispec) = rhol * vp
+            rho_vsstore(i,j,ispec) = rhol * vs
           endif
         enddo
       enddo
@@ -534,9 +455,6 @@
     if (PML_BOUNDARY_CONDITIONS) call prepare_attenuation_with_PML()
 
   endif ! of if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC)
-
-  ! free memory
-  deallocate(already_shifted_velocity)
 
   ! allocate memory variables for viscous attenuation (poroelastic media)
   if (ATTENUATION_PORO_FLUID_PART) then
@@ -598,10 +516,9 @@
   use constants, only: NGLLX,NGLLZ,IMAIN,myrank, &
     CPML_X_ONLY,CPML_XZ,CPML_Z_ONLY
 
-  use specfem_par, only: N_SLS,assign_external_model,ATTENUATION_VISCOELASTIC, &
-    ispec_is_elastic,nspec,kmato, &
-    QKappa_attenuationcoef,QKappa_attenuationext, &
-    Qmu_attenuationcoef,Qmu_attenuationext, &
+  use specfem_par, only: N_SLS,ATTENUATION_VISCOELASTIC, &
+    ispec_is_elastic,nspec, &
+    qmu_attenuation_store,qkappa_attenuation_store, &
     inv_tau_sigma_nu1,inv_tau_sigma_nu2
 
   ! PML
@@ -637,13 +554,9 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           ! kappa & mu
-          if (.not. assign_external_model) then
-            qkappal = QKappa_attenuationcoef(kmato(ispec))
-            qmul = Qmu_attenuationcoef(kmato(ispec))
-          else
-            qkappal = QKappa_attenuationext(i,j,ispec)
-            qmul = Qmu_attenuationext(i,j,ispec)
-          endif
+          qkappal = qkappa_attenuation_store(i,j,ispec)
+          qmul = qmu_attenuation_store(i,j,ispec)
+
           ! checks if anything to do; values of Q == 9999. mean no attenuation
           if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
 

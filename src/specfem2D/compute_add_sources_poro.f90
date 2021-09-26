@@ -40,7 +40,7 @@
   use specfem_par, only: ispec_is_poroelastic,nglob_poroelastic, &
                          NSOURCES,source_time_function,sourcearrays, &
                          islice_selected_source,ispec_selected_source, &
-                         ibool,porosity,tortuosity,density,kmato
+                         ibool,phistore,tortstore,rhoarraystore
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: accels_poroelastic,accelw_poroelastic
@@ -52,7 +52,6 @@
   double precision :: phi,tort,rho_s,rho_f,rho_bar
   real(kind=CUSTOM_REAL) :: fac_s,fac_w
   real(kind=CUSTOM_REAL) :: stf_used
-  integer :: material
 
   do i_source = 1,NSOURCES
 
@@ -65,17 +64,6 @@
       ! source element is poroelastic
       if (ispec_is_poroelastic(ispec)) then
 
-        material = kmato(ispec)
-        phi = porosity(material)
-        tort = tortuosity(material)
-        rho_s = density(1,material)
-        rho_f = density(2,material)
-
-        rho_bar = (1.d0 - phi)*rho_s + phi*rho_f
-
-        fac_s = real((1.d0 - phi/tort),kind=CUSTOM_REAL)
-        fac_w = real((1.d0 - rho_f/rho_bar),kind=CUSTOM_REAL)
-
         ! source time function
         stf_used = source_time_function(i_source,it,i_stage)
 
@@ -85,6 +73,18 @@
         do j = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec)
+
+            ! poroelastic material
+            phi = phistore(i,j,ispec)
+            tort = tortstore(i,j,ispec)
+
+            rho_s = rhoarraystore(1,i,j,ispec)
+            rho_f = rhoarraystore(2,i,j,ispec)
+
+            rho_bar = (1.d0 - phi)*rho_s + phi*rho_f
+
+            fac_s = real((1.d0 - phi/tort),kind=CUSTOM_REAL)
+            fac_w = real((1.d0 - rho_f/rho_bar),kind=CUSTOM_REAL)
 
             ! solid contribution
             accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + &
@@ -116,7 +116,7 @@
   use specfem_par, only: nrecloc,NSTEP,it, &
                          ispec_is_poroelastic,ispec_selected_rec_loc, &
                          ibool,initialfield,SIMULATION_TYPE, &
-                         kmato,porosity,density, &
+                         phistore,rhoarraystore, &
                          accels_poroelastic,accelw_poroelastic, &
                          source_adjoint,xir_store_loc,gammar_store_loc
 
@@ -138,16 +138,17 @@
 
     if (ispec_is_poroelastic(ispec)) then
 
-      phi = porosity(kmato(ispec))
-      rho_s = density(1,kmato(ispec))
-      rho_f = density(2,kmato(ispec))
-
-      rho_bar = (1.d0 - phi)*rho_s + phi*rho_f
-
       ! add source array
       do j = 1,NGLLZ
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
+
+          ! poroelastic material
+          phi = phistore(i,j,ispec)
+          rho_s = rhoarraystore(1,i,j,ispec)
+          rho_f = rhoarraystore(2,i,j,ispec)
+
+          rho_bar = (1.d0 - phi)*rho_s + phi*rho_f
 
           ! solid contribution
           accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + real(xir_store_loc(irec_local,i)*&

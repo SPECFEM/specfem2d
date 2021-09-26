@@ -36,22 +36,21 @@
 !  builds the global mass matrix
 
   use constants, only: IMAIN,CUSTOM_REAL,NGLLX,NGLLZ,ONE,TWO,TWO_THIRDS,FOUR_THIRDS, &
-    CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ, &
-    IEDGE1,IEDGE2,IEDGE3,IEDGE4
+                       CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ, &
+                       IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: myrank,any_elastic,any_acoustic,any_poroelastic, &
-    rmass_inverse_elastic, &
-    rmass_inverse_acoustic,rmass_inverse_e1,ATTENUATION_VISCOACOUSTIC,phi_nu1,N_SLS, &
-    time_stepping_scheme,rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic, &
-    nspec,ibool,kmato,wxgll,wzgll,jacobian, &
-    ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
-    assign_external_model, &
-    density,poroelastcoef,porosity,tortuosity, &
-    rhostore,mustore,kappastore, &
-    deltatover2, &
-    gammaz, &
-    AXISYM,is_on_the_axis,coord,wxglj,xiglj, &
-    time_stepping_scheme,STACEY_ABSORBING_CONDITIONS
+                         rmass_inverse_elastic, &
+                         rmass_inverse_acoustic,rmass_inverse_e1,ATTENUATION_VISCOACOUSTIC,phi_nu1,N_SLS, &
+                         time_stepping_scheme,rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic, &
+                         nspec,ibool,wxgll,wzgll,jacobian, &
+                         ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
+                         phistore,tortstore,rhoarraystore, &
+                         rhostore,kappastore, &
+                         deltatover2, &
+                         gammaz, &
+                         AXISYM,is_on_the_axis,coord,wxglj,xiglj, &
+                         time_stepping_scheme,STACEY_ABSORBING_CONDITIONS
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML,region_CPML,spec_to_PML, &
@@ -66,7 +65,7 @@
   real(kind=CUSTOM_REAL) :: xxi
   real(kind=CUSTOM_REAL) :: phinu1
 
-  double precision :: rhol,mul,kappal_relaxed,mu_relaxed,lambda_relaxed
+  double precision :: rhol,kappal_relaxed
   double precision :: rho_s,rho_f,rho_bar,phi,tort
 
   integer :: ispec_PML
@@ -100,22 +99,9 @@
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
 
-        ! if external density model (elastic or acoustic)
-        if (assign_external_model) then
-          rhol = rhostore(i,j,ispec)
-          mul = mustore(i,j,ispec)
-          kappal_relaxed = kappastore(i,j,ispec)
-        else
-          rhol = density(1,kmato(ispec))
-          lambda_relaxed = poroelastcoef(1,1,kmato(ispec))
-          mu_relaxed = poroelastcoef(2,1,kmato(ispec))
-
-          if (AXISYM) then ! CHECK kappa
-            kappal_relaxed = lambda_relaxed + TWO_THIRDS * mu_relaxed
-          else
-            kappal_relaxed = lambda_relaxed + mu_relaxed
-          endif
-        endif
+        ! gets density model (elastic or acoustic)
+        rhol = rhostore(i,j,ispec)
+        kappal_relaxed = kappastore(i,j,ispec)
 
         if (ispec_is_poroelastic(ispec)) then
           ! material is poroelastic
@@ -126,10 +112,12 @@
             if (ispec_is_PML(ispec)) call stop_the_code('PML not implemented yet for poroelastic case')
           endif
 
-          rho_s = density(1,kmato(ispec))
-          rho_f = density(2,kmato(ispec))
-          phi = porosity(kmato(ispec))
-          tort = tortuosity(kmato(ispec))
+          phi = phistore(i,j,ispec)
+          tort = tortstore(i,j,ispec)
+
+          rho_s = rhoarraystore(1,i,j,ispec)
+          rho_f = rhoarraystore(2,i,j,ispec)
+
           rho_bar = (1.d0-phi)*rho_s + phi*rho_f
 
           ! for the solid mass matrix
@@ -482,25 +470,22 @@
   subroutine invert_mass_matrix_init_Stacey()
 
   use constants, only: IMAIN,CUSTOM_REAL,NGLLX,NGLLZ,ONE,TWO,TWO_THIRDS,FOUR_THIRDS, &
-    IEDGE1,IEDGE2,IEDGE3,IEDGE4
+                       IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: myrank,any_elastic,any_acoustic, &
-    rmass_inverse_elastic, &
-    rmass_inverse_acoustic, &
-    time_stepping_scheme, &
-    ibool,kmato,wxgll,wzgll,jacobian, &
-    ispec_is_elastic,ispec_is_acoustic, &
-    assign_external_model, &
-    density,poroelastcoef, &
-    rho_vpstore,rho_vsstore, &
-    num_abs_boundary_faces,abs_boundary_ispec, &
-    deltatover2, &
-    codeabs,codeabs_corner, &
-    ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
-    ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
-    xix,xiz,gammaz,gammax, &
-    AXISYM, &
-    time_stepping_scheme,P_SV,STACEY_ABSORBING_CONDITIONS
+                         rmass_inverse_elastic, &
+                         rmass_inverse_acoustic, &
+                         time_stepping_scheme, &
+                         ibool,wxgll,wzgll,jacobian, &
+                         ispec_is_elastic,ispec_is_acoustic, &
+                         rho_vpstore,rho_vsstore, &
+                         num_abs_boundary_faces,abs_boundary_ispec, &
+                         deltatover2, &
+                         codeabs,codeabs_corner, &
+                         ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
+                         ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
+                         xix,xiz,gammaz,gammax, &
+                         time_stepping_scheme,P_SV,STACEY_ABSORBING_CONDITIONS
 
   implicit none
 
@@ -508,12 +493,9 @@
   integer :: ispecabs,ibegin,iend,jbegin,jend,ispec,i,j,iglob
 
   ! material properties of the elastic medium
-  real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
-  real(kind=CUSTOM_REAL) :: cpl,csl
-  real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz, &
+  real(kind=CUSTOM_REAL) :: rho_vp,rho_vs
+  real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,tx,ty,tz, &
                             weight,xxi,zxi,xgamma,zgamma,jacobian1D
-
-  double precision :: rhol,kappal_relaxed,mu_relaxed,lambda_relaxed
 
   ! check if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
@@ -534,36 +516,14 @@
 
       if (ispec_is_elastic(ispec)) then
 
-        ! get elastic parameters of current spectral element
-        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-        mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-
-        rhol  = density(1,kmato(ispec))
-
-        if (AXISYM) then ! CHECK kappa
-          kappal_relaxed  = lambdal_unrelaxed_elastic + TWO_THIRDS*mul_unrelaxed_elastic
-          cpl = sqrt((kappal_relaxed + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol)
-        else
-          kappal_relaxed  = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
-          cpl = sqrt((kappal_relaxed + mul_unrelaxed_elastic)/rhol)
-        endif
-
-        csl = sqrt(mul_unrelaxed_elastic/rhol)
-
         !--- left absorbing boundary
         if (codeabs(IEDGE4,ispecabs)) then
           i = 1
           do j = 1,NGLLZ
             iglob = ibool(i,j,ispec)
 
-            ! external velocity model
-            if (assign_external_model) then
-              rho_vp = rho_vpstore(i,j,ispec)
-              rho_vs = rho_vsstore(i,j,ispec)
-            else
-              rho_vp = rhol*cpl
-              rho_vs = rhol*csl
-            endif
+            rho_vp = rho_vpstore(i,j,ispec)
+            rho_vs = rho_vsstore(i,j,ispec)
 
             xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
             zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
@@ -606,14 +566,8 @@
             ! for analytical initial plane wave for Bielak's conditions
             ! left or right edge, horizontal normal vector
 
-            ! external velocity model
-            if (assign_external_model) then
-              rho_vp = rho_vpstore(i,j,ispec)
-              rho_vs = rho_vsstore(i,j,ispec)
-            else
-              rho_vp = rhol*cpl
-              rho_vs = rhol*csl
-            endif
+            rho_vp = rho_vpstore(i,j,ispec)
+            rho_vs = rho_vsstore(i,j,ispec)
 
             xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
             zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
@@ -657,14 +611,8 @@
 
             iglob = ibool(i,j,ispec)
 
-            ! external velocity model
-            if (assign_external_model) then
-              rho_vp = rho_vpstore(i,j,ispec)
-              rho_vs = rho_vsstore(i,j,ispec)
-            else
-              rho_vp = rhol*cpl
-              rho_vs = rhol*csl
-            endif
+            rho_vp = rho_vpstore(i,j,ispec)
+            rho_vs = rho_vsstore(i,j,ispec)
 
             xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
             zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -708,14 +656,8 @@
 
             iglob = ibool(i,j,ispec)
 
-            ! external velocity model
-            if (assign_external_model) then
-              rho_vp = rho_vpstore(i,j,ispec)
-              rho_vs = rho_vsstore(i,j,ispec)
-            else
-              rho_vp = rhol*cpl
-              rho_vs = rhol*csl
-            endif
+            rho_vp = rho_vpstore(i,j,ispec)
+            rho_vs = rho_vsstore(i,j,ispec)
 
             xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
             zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -762,19 +704,6 @@
       ! Sommerfeld condition if acoustic
       if (ispec_is_acoustic(ispec)) then
 
-        ! get elastic parameters of current spectral element
-        lambda_relaxed = poroelastcoef(1,1,kmato(ispec))
-        mu_relaxed = poroelastcoef(2,1,kmato(ispec))
-
-        if (AXISYM) then ! CHECK kappa
-          kappal_relaxed  = lambda_relaxed + TWO_THIRDS*mu_relaxed
-        else
-          kappal_relaxed  = lambda_relaxed + mu_relaxed
-        endif
-
-        rhol = density(1,kmato(ispec))
-        cpl = sqrt(kappal_relaxed/rhol)
-
         !--- left absorbing boundary
         if (codeabs(IEDGE4,ispecabs)) then
           i = 1
@@ -782,12 +711,7 @@
           jend = iend_edge4(ispecabs)
           do j = jbegin,jend
             iglob = ibool(i,j,ispec)
-            ! external velocity model
-            if (assign_external_model) then
-              rho_vp = rho_vpstore(i,j,ispec)
-            else
-              rho_vp = rhol*cpl
-            endif
+            rho_vp = rho_vpstore(i,j,ispec)
 
             xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
             zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
@@ -805,12 +729,8 @@
           jend = iend_edge2(ispecabs)
           do j = jbegin,jend
             iglob = ibool(i,j,ispec)
-            ! external velocity model
-            if (assign_external_model) then
-              rho_vp = rho_vpstore(i,j,ispec)
-            else
-              rho_vp = rhol*cpl
-            endif
+            rho_vp = rho_vpstore(i,j,ispec)
+
             xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
             zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -830,12 +750,8 @@
           if (codeabs_corner(2,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
-            ! external velocity model
-            if (assign_external_model) then
-              rho_vp = rho_vpstore(i,j,ispec)
-            else
-              rho_vp = rhol*cpl
-            endif
+            rho_vp = rho_vpstore(i,j,ispec)
+
             xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
             zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
             jacobian1D = sqrt(xxi**2 + zxi**2)
@@ -855,12 +771,8 @@
           if (codeabs_corner(4,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
-            ! external velocity model
-            if (assign_external_model) then
-              rho_vp = rho_vpstore(i,j,ispec)
-            else
-              rho_vp = rhol*cpl
-            endif
+            rho_vp = rho_vpstore(i,j,ispec)
+
             xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
             zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
             jacobian1D = sqrt(xxi**2 + zxi**2)

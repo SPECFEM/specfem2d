@@ -48,8 +48,7 @@
                          rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
                          C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, mufrb_kl, &
                          rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl, &
-                         GPU_MODE,AXISYM, &
-                         density,poroelastcoef,kmato,assign_external_model, &
+                         GPU_MODE, &
                          rhostore,mustore,kappastore, &
                          ispec_is_elastic, &
                          deltat,NSTEP_BETWEEN_COMPUTE_KERNELS
@@ -61,7 +60,7 @@
   ! local parameters
   integer :: i, j, ispec, iglob
   double precision :: xx, zz
-  real(kind=CUSTOM_REAL) :: rhol,mul,kappal,lambdal
+  real(kind=CUSTOM_REAL) :: rhol,mul,kappal
 
   ! user output
   if (myrank == 0) then
@@ -88,26 +87,9 @@
             !
             !       this should probably be corrected to have again the moduli at the (initial) reference frequency
             !       for calculating the kernel values below...
-            if (assign_external_model) then
-              rhol = rhostore(i,j,ispec)
-              mul = mustore(i,j,ispec)
-              kappal = kappastore(i,j,ispec)
-            else
-              rhol = density(1,kmato(ispec))
-              lambdal = poroelastcoef(1,1,kmato(ispec))
-              mul = poroelastcoef(2,1,kmato(ispec))
-              !!if (AXISYM) then ! ABAB !!
-              !!Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
-              !  kappal = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS * mul
-              !!else
-              !!  kappal = poroelastcoef(3,1,kmato(ispec)) - mul
-              !!endif
-              if (AXISYM) then ! CHECK kappa
-                kappal = lambdal + TWO_THIRDS * mul
-              else
-                kappal = lambdal + mul
-              endif
-            endif
+            rhol = rhostore(i,j,ispec)
+            mul = mustore(i,j,ispec)
+            kappal = kappastore(i,j,ispec)
 
             ! for parameterization (rho,mu,kappa): "primary" kernels
             ! density kernel

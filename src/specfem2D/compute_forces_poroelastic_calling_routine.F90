@@ -63,8 +63,8 @@
 
       ! Stacey absorbing boundary
       if (anyabs) then
-        call compute_stacey_poro_fluid(f0_source(1))
-        call compute_stacey_poro_solid(f0_source(1))
+        call compute_stacey_poro_fluid()
+        call compute_stacey_poro_solid()
       endif
 
       ! add coupling with the acoustic side

@@ -86,9 +86,10 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,TWO,NDIM
 
   use specfem_par, only: N_SLS,nglob,ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
-    ispec_is_anisotropic,kmato,poroelastcoef,assign_external_model,rho_vpstore,mustore,rhostore, &
+    ispec_is_anisotropic,rho_vpstore,mustore,rhostore, &
+    c11store,c12store,c13store,c15store,c23store,c25store,c33store,c35store, &
+    phistore,kappaarraystore,mufr_store, &
     ATTENUATION_VISCOELASTIC,AXISYM,is_on_the_axis, &
-    anisotropycoef,c11ext,c12ext,c13ext,c15ext,c23ext,c25ext,c33ext,c35ext, &
     hprimebar_xx,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,jacobian,ibool,coord,e1,e11,USE_TRICK_FOR_BETTER_PRESSURE
 
   implicit none
@@ -106,8 +107,7 @@
   real(kind=CUSTOM_REAL) :: sigma_yy !! ,sigmap
   real(kind=CUSTOM_REAL) :: sigma_thetatheta
   ! material properties of the elastic medium
-  real(kind=CUSTOM_REAL) :: denst
-  real(kind=CUSTOM_REAL) :: cpl
+  real(kind=CUSTOM_REAL) :: cpl,rhol
   real(kind=CUSTOM_REAL) :: mu_G,lambdal_G,lambdalplus2mul_G
 
   ! for anisotropy
@@ -115,7 +115,7 @@
   ! Jacobian matrix and determinant
   double precision :: xixl,xizl,gammaxl,gammazl
   ! to evaluate cpI, cpII, and cs, and rI (poroelastic medium)
-  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
+  double precision :: phi,kappa_s,kappa_f,kappa_fr,mu_fr
   double precision :: D_biot,H_biot,C_biot,M_biot
   double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
   double precision :: sigma_xx,sigma_zz
@@ -159,23 +159,15 @@
 
   if (ispec_is_elastic(ispec)) then
     ! elastic element
-
-    ! get relaxed elastic parameters of current spectral element
-    lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-    mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-    lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec))
-
     do j = 1,NGLLZ
       do i = 1,NGLLX
+        ! get elastic parameters of current grid point
+        mul_unrelaxed_elastic = mustore(i,j,ispec)
+        rhol = rhostore(i,j,ispec)
+        cpl = rho_vpstore(i,j,ispec) / rhol
 
-        !--- if external medium, get elastic parameters of current grid point
-        if (assign_external_model) then
-          mul_unrelaxed_elastic = mustore(i,j,ispec)
-          denst = rhostore(i,j,ispec)
-          cpl = rho_vpstore(i,j,ispec)/denst
-          lambdal_unrelaxed_elastic = denst*cpl*cpl - TWO*mul_unrelaxed_elastic
-          lambdaplus2mu_unrelaxed_elastic = denst*cpl*cpl
-        endif
+        lambdal_unrelaxed_elastic = rhol * cpl * cpl - TWO * mul_unrelaxed_elastic
+        lambdaplus2mu_unrelaxed_elastic = rhol * cpl * cpl
 
         ! derivative along x and along z
         dux_dxi = ZERO
@@ -226,8 +218,7 @@
           duz_dxl = 0.d0
         endif
 
-! compute diagonal components of the stress tensor (include attenuation or anisotropy if needed)
-
+        ! compute diagonal components of the stress tensor (include attenuation or anisotropy if needed)
         if (ATTENUATION_VISCOELASTIC) then
 
 ! attenuation is implemented following the memory variable formulation of
@@ -373,27 +364,15 @@
 
         ! full anisotropy
         if (ispec_is_anisotropic(ispec)) then
-          if (assign_external_model) then
-            c11 = c11ext(i,j,ispec)
-            c15 = c15ext(i,j,ispec)
-            c13 = c13ext(i,j,ispec)
-            c33 = c33ext(i,j,ispec)
-            c35 = c35ext(i,j,ispec)
-            ! c55 = c55ext(i,j,ispec) ! not needed
-            c12 = c12ext(i,j,ispec)
-            c23 = c23ext(i,j,ispec)
-            c25 = c25ext(i,j,ispec)
-          else
-            c11 = anisotropycoef(1,kmato(ispec))
-            c13 = anisotropycoef(2,kmato(ispec))
-            c15 = anisotropycoef(3,kmato(ispec))
-            c33 = anisotropycoef(4,kmato(ispec))
-            c35 = anisotropycoef(5,kmato(ispec))
-            ! c55 = anisotropycoef(6,kmato(ispec)) ! not needed
-            c12 = anisotropycoef(7,kmato(ispec))
-            c23 = anisotropycoef(8,kmato(ispec))
-            c25 = anisotropycoef(9,kmato(ispec))
-          endif
+          c11 = c11store(i,j,ispec)
+          c15 = c15store(i,j,ispec)
+          c13 = c13store(i,j,ispec)
+          c33 = c33store(i,j,ispec)
+          c35 = c35store(i,j,ispec)
+          ! c55 = c55store(i,j,ispec) ! not needed
+          c12 = c12store(i,j,ispec)
+          c23 = c23store(i,j,ispec)
+          c25 = c25store(i,j,ispec)
 
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
@@ -421,26 +400,8 @@
 
   else if (ispec_is_poroelastic(ispec)) then
     ! poro-elastic element
-
-    lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-    mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-
-    ! get poroelastic parameters of current spectral element
-    call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
-
-    ! Biot coefficients for the input phi
-    call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
-
-    ! where T = G:grad u_s + C div w I
-    ! and T_f = C div u_s I + M div w I
-    ! we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
-    mu_G = mu_fr
-    lambdal_G = H_biot - TWO*mu_fr
-    lambdalplus2mul_G = lambdal_G + TWO*mu_G
-
     do j = 1,NGLLZ
       do i = 1,NGLLX
-
         ! derivative along x and along z
         dux_dxi = ZERO
         duz_dxi = ZERO
@@ -480,8 +441,31 @@
         dwx_dxl = dwx_dxi*xixl + dwx_dgamma*gammaxl
         dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
 
-! compute diagonal components of the stress tensor (include attenuation if needed)
+        ! get poroelastic parameters of current spectral element
+        phi = phistore(i,j,ispec)
+        kappa_s = kappaarraystore(1,i,j,ispec)
+        kappa_f = kappaarraystore(2,i,j,ispec)
+        kappa_fr = kappaarraystore(3,i,j,ispec)
+        mu_fr = mufr_store(i,j,ispec)
 
+        ! Biot coefficients for the input phi
+        call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
+        ! where T = G:grad u_s + C div w I
+        ! and T_f = C div u_s I + M div w I
+        ! we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
+        mu_G = mu_fr
+        lambdal_G = H_biot - TWO*mu_fr
+        lambdalplus2mul_G = lambdal_G + TWO*mu_G
+
+        ! get corresponding elastic parameters of current grid point
+        mul_unrelaxed_elastic = mustore(i,j,ispec)
+        rhol = rhostore(i,j,ispec)
+        cpl = rho_vpstore(i,j,ispec) / rhol         ! equals cpI
+
+        lambdal_unrelaxed_elastic = rhol * cpl * cpl - TWO * mul_unrelaxed_elastic
+
+        ! compute diagonal components of the stress tensor (include attenuation if needed)
         if (ATTENUATION_VISCOELASTIC) then
 
 ! attenuation is implemented following the memory variable formulation of

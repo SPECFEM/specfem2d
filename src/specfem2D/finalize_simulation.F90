@@ -115,7 +115,6 @@
   if (.not. NO_BACKWARD_RECONSTRUCTION) then
     deallocate(b_potential_dot_acoustic,b_potential_dot_dot_acoustic)
   endif
-  deallocate(b_displ_ac,b_accel_ac,accel_ac)
 
   ! noise
   if (allocated(noise_sourcearray)) deallocate(noise_sourcearray)

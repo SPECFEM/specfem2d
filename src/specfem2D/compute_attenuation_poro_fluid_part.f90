@@ -37,7 +37,7 @@
 
   use constants, only: ZERO,NGLLX,NGLLZ,ALPHA_LDDRK,BETA_LDDRK,ALPHA_RK4,BETA_RK4
 
-  use specfem_par, only: nspec,ispec_is_poroelastic,poroelastcoef,kmato,permeability,ibool, &
+  use specfem_par, only: nspec,ispec_is_poroelastic,etastore,permstore,ibool, &
                          velocw_poroelastic,time_stepping_scheme,deltat,i_stage,time_stepping_scheme, &
                          rx_viscous,rz_viscous,viscox,viscoz, &
                          rx_viscous_force_RK,rx_viscous_initial_rk,rz_viscous_force_RK,rz_viscous_initial_rk, &
@@ -51,7 +51,7 @@
   double precision :: eta_f,permlxx,permlxz,permlzz,detk,invpermlxx,invpermlxz,invpermlzz, &
                       Sn,Snp1,weight_rk
   double precision, dimension(3) :: bl_unrelaxed_elastic
-  double precision, dimension(NGLLX,NGLLZ) :: viscox_loc,viscoz_loc
+  double precision :: viscox_loc,viscoz_loc
 
   ! checks if anything to do
   if (.not. ATTENUATION_PORO_FLUID_PART) return
@@ -62,36 +62,36 @@
     ! only for poroelastic elements
     if (.not. ispec_is_poroelastic(ispec)) cycle
 
-    ! fluid viscosity
-    eta_f = poroelastcoef(2,2,kmato(ispec))
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        ! fluid viscosity
+        eta_f = etastore(i,j,ispec)
 
-    ! only if viscous
-    if (eta_f > 0.d0) then
-      permlxx = permeability(1,kmato(ispec))
-      permlxz = permeability(2,kmato(ispec))
-      permlzz = permeability(3,kmato(ispec))
+        ! only if viscous
+        if (eta_f > 0.d0) then
+          permlxx = permstore(1,i,j,ispec)
+          permlxz = permstore(2,i,j,ispec)
+          permlzz = permstore(3,i,j,ispec)
 
-      ! calcul of the inverse of k
-      detk = permlxx * permlzz - permlxz * permlxz
-      if (detk /= ZERO) then
-        invpermlxx = permlzz/detk
-        invpermlxz = -permlxz/detk
-        invpermlzz = permlxx/detk
-      else
-        call stop_the_code('Permeability matrix is not invertible')
-      endif
+          ! calcul of the inverse of k
+          detk = permlxx * permlzz - permlxz * permlxz
+          if (detk /= ZERO) then
+            invpermlxx = permlzz/detk
+            invpermlxz = -permlxz/detk
+            invpermlzz = permlxx/detk
+          else
+            call stop_the_code('Permeability matrix is not invertible')
+          endif
 
-      ! relaxed viscous coef
-      bl_unrelaxed_elastic(1) = eta_f*invpermlxx
-      bl_unrelaxed_elastic(2) = eta_f*invpermlxz
-      bl_unrelaxed_elastic(3) = eta_f*invpermlzz
+          ! relaxed viscous coef
+          bl_unrelaxed_elastic(1) = eta_f*invpermlxx
+          bl_unrelaxed_elastic(2) = eta_f*invpermlxz
+          bl_unrelaxed_elastic(3) = eta_f*invpermlzz
 
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
-          viscox_loc(i,j) = velocw_poroelastic(1,iglob) * bl_unrelaxed_elastic(1) + &
+          viscox_loc = velocw_poroelastic(1,iglob) * bl_unrelaxed_elastic(1) + &
                             velocw_poroelastic(2,iglob) * bl_unrelaxed_elastic(2)
-          viscoz_loc(i,j) = velocw_poroelastic(1,iglob) * bl_unrelaxed_elastic(2) + &
+          viscoz_loc = velocw_poroelastic(1,iglob) * bl_unrelaxed_elastic(2) + &
                             velocw_poroelastic(2,iglob) * bl_unrelaxed_elastic(3)
 
           ! time stepping
@@ -100,12 +100,12 @@
             ! Newmark
             ! evolution rx_viscous
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
-            Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscox_loc(i,j)
+            Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscox_loc
             rx_viscous(i,j,ispec) = alphaval * rx_viscous(i,j,ispec) + betaval * Sn + gammaval * Snp1
 
             ! evolution rz_viscous
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
-            Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscoz_loc(i,j)
+            Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscoz_loc
             rz_viscous(i,j,ispec) = alphaval * rz_viscous(i,j,ispec) + betaval * Sn + gammaval * Snp1
 
           case (2)
@@ -169,17 +169,16 @@
           case default
             call stop_the_code('Time stepping scheme not implemented yet for poro_fluid attenuation')
           end select
-        enddo
+
+          if (time_stepping_scheme == 1) then
+            ! Newmark
+            ! save visco for Runge-Kutta scheme when used together with Newmark
+            viscox(i,j,ispec) = viscox_loc
+            viscoz(i,j,ispec) = viscoz_loc
+          endif
+        endif ! eta_f
       enddo
-
-      if (time_stepping_scheme == 1) then
-        ! Newmark
-        ! save visco for Runge-Kutta scheme when used together with Newmark
-        viscox(:,:,ispec) = viscox_loc(:,:)
-        viscoz(:,:,ispec) = viscoz_loc(:,:)
-      endif
-
-    endif  ! viscous element
+    enddo
 
   enddo   ! end of spectral element loop
 

@@ -36,14 +36,14 @@
   use constants, only: IMAIN,NGLLX,NGLLZ,REMOVE_PMLS_FROM_JPEG_IMAGES
 
   use specfem_par, only: myrank,nspec,it,NPROC, &
-                        assign_external_model,ibool,kmato,density,rhostore,P_SV, &
-                        potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
-                        displ_elastic,veloc_elastic,accel_elastic, &
-                        displs_poroelastic,velocs_poroelastic,accels_poroelastic, &
-                        b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
-                        b_displ_elastic,b_veloc_elastic,b_accel_elastic, &
-                        b_displs_poroelastic,b_velocs_poroelastic,b_accels_poroelastic,SIMULATION_TYPE, &
-                        UNDO_ATTENUATION_AND_OR_PML,NO_BACKWARD_RECONSTRUCTION
+                         ibool,rhostore,P_SV, &
+                         potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
+                         displ_elastic,veloc_elastic,accel_elastic, &
+                         displs_poroelastic,velocs_poroelastic,accels_poroelastic, &
+                         b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
+                         b_displ_elastic,b_veloc_elastic,b_accel_elastic, &
+                         b_displs_poroelastic,b_velocs_poroelastic,b_accels_poroelastic,SIMULATION_TYPE, &
+                         UNDO_ATTENUATION_AND_OR_PML,NO_BACKWARD_RECONSTRUCTION
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
@@ -132,12 +132,9 @@
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          if (assign_external_model) then
-            rhol = rhostore(i,j,ispec)
-          else
-            rhol = density(1,kmato(ispec))
-          endif
+          rhol = rhostore(i,j,ispec)
           iglob = ibool(i,j,ispec)
+
           vector_field_display(1,iglob) = sqrt(rhol) * vector_field_display(1,iglob)
           vector_field_display(2,iglob) = sqrt(rhol) * vector_field_display(2,iglob)
         enddo
@@ -152,12 +149,9 @@
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          if (assign_external_model) then
-            rhol = rhostore(i,j,ispec)
-          else
-            rhol = density(1,kmato(ispec))
-          endif
+          rhol = rhostore(i,j,ispec)
           iglob = ibool(i,j,ispec)
+
           vector_field_display(1,iglob) = sqrt(rhol) * vector_field_display(1,iglob)
           vector_field_display(2,iglob) = sqrt(rhol) * vector_field_display(2,iglob)
         enddo

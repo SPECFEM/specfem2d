@@ -41,8 +41,8 @@
     USE_A_STRONG_FORMULATION_FOR_E1
 
   use specfem_par, only: nglob,nspec_ATT_ac, &
-                         assign_external_model,ibool,kmato,ispec_is_acoustic, &
-                         density,rhostore, &
+                         ibool,ispec_is_acoustic, &
+                         rhostore, &
                          xix,xiz,gammax,gammaz,jacobian, &
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -113,11 +113,13 @@
     if (.not. ispec_is_acoustic(ispec)) cycle
 
     ! gets local potential for element
-    rhol = density(1,kmato(ispec))
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         potential_elem(i,j) = potential_acoustic(iglob)
+
+        ! density model
+        rhol = rhostore(i,j,ispec)
 
         ! stores local array for element xi/gamma/jacobian (for better performance)
         deriv(1,i,j) = xix(i,j,ispec)
@@ -125,17 +127,12 @@
         deriv(3,i,j) = gammax(i,j,ispec)
         deriv(4,i,j) = gammaz(i,j,ispec)
         deriv(5,i,j) = jacobian(i,j,ispec)
-        ! if external density model
-        if (assign_external_model) then
-          rhol = rhostore(i,j,ispec)
-        endif
         deriv(6,i,j) = jacobian(i,j,ispec) / rhol
 
         if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. time_stepping_scheme > 1) then
           deriv_e1(1,i,j,:) = phi_nu1(i,j,ispec,:)
           deriv_e1(2,i,j,:) = inv_tau_sigma_nu1(i,j,ispec,:)
         endif
-
       enddo
     enddo
 

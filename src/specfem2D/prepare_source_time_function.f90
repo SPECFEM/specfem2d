@@ -138,18 +138,16 @@
   do i_source = 1,NSOURCES
 
     ! The following lines could be needed to set absolute amplitudes.
-    ! In this case variables rho_vpstore,density,poroelastcoef,assign_external_model,ispec_selected_source,kmato
-    ! and double precision :: rho, cp logical :: already_done = .false. need to be introduced
+    !
+    ! use specfem_par, only: rho_vpstore,rhostore,ispec_selected_source
+    ! double precision :: rho, cp
+    ! logical :: already_done = .false. need to be introduced
     !    if (myrank == islice_selected_source(i_source)) then
     !      if (AXISYM) then
     !        if (.not. already_done) then
-    !          if (  assign_external_model ) then
-    !            cp = rho_vpstore(0,0,ispec_selected_source(i_source))/rhostore(0,0,ispec_selected_source(i_source))
-    !            TODO (above): We must interpolate to find the exact cp value at source location
-    !          else
-    !            rho = density(1,kmato(ispec_selected_source(i_source)))
-    !            cp = sqrt(poroelastcoef(3,1,kmato(ispec_selected_source(i_source)))/rho)
-    !          endif
+    !          cp = rho_vpstore(0,0,ispec_selected_source(i_source)) / rhostore(0,0,ispec_selected_source(i_source))
+    !          TODO (above): We must interpolate to find the exact cp value at source location
+    !
     !          factor(i_source) = - factor(i_source)*2.0d0*cp**2*0.45d-5 !0.225d-5
     !          if (time_function_type (i_source) == 7)  factor(i_source) = factor(i_source) * 222066.1d0 !444132.2d0
     !          already_done = .true.

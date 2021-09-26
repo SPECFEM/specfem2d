@@ -289,26 +289,19 @@
 
   use constants, only: NGLLX,NGLLZ,HALF,TWO,IMAIN
 
-  use specfem_par, only: nglob,nspec,ispec_is_elastic,ispec_is_poroelastic,ibool,kmato, &
-    density,poroelastcoef,NPROC,myrank,assign_external_model,rho_vpstore,rhostore
+  use specfem_par, only: nglob,nspec,ispec_is_elastic,ispec_is_poroelastic,ibool, &
+                         NPROC,myrank,rho_vpstore,rhostore
 
   use shared_parameters, only: DRAW_WATER_IN_BLUE
 
   use specfem_par_movie, only: image_color_vp_display,iglob_image_color, &
-    NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc,num_pixel_loc
+                               NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc,num_pixel_loc
 
   implicit none
 
   ! local parameters
   double precision :: vp_of_the_model
   double precision, dimension(:), allocatable :: vp_display
-  double precision :: rhol,mul_relaxed,lambdal_relaxed
-
-  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
-  double precision :: D_biot,H_biot,C_biot,M_biot
-
-  double precision :: afactor,bfactor,cfactor
-  double precision :: cpIsquare
 
   integer  :: i,j,k,ispec
 #ifdef WITH_MPI
@@ -331,43 +324,12 @@
   allocate(vp_display(nglob))
 
   do ispec = 1,nspec
-
-    if (ispec_is_poroelastic(ispec)) then
-      !get parameters of current spectral element
-      call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
-
-      ! Biot coefficients for the input phi
-      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
-
-      ! Approximated velocities (no viscous dissipation)
-      afactor = rho_bar - phi/tort*rho_f
-      bfactor = H_biot + phi*rho_bar/(tort*rho_f)*M_biot - TWO*phi/tort*C_biot
-      cfactor = phi/(tort*rho_f)*(H_biot*M_biot - C_biot*C_biot)
-
-      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          vp_display(ibool(i,j,ispec)) = sqrt(cpIsquare)
-        enddo
+    ! vp velocity
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        vp_display(ibool(i,j,ispec)) = rho_vpstore(i,j,ispec) / rhostore(i,j,ispec)
       enddo
-
-    else
-      ! get relaxed elastic parameters of current spectral element
-      rhol = density(1,kmato(ispec))
-      lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-      mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          !--- if external medium, get elastic parameters of current grid point
-          if (assign_external_model) then
-            vp_display(ibool(i,j,ispec)) = rho_vpstore(i,j,ispec)/rhostore(i,j,ispec)
-          else
-            vp_display(ibool(i,j,ispec)) = sqrt((lambdal_relaxed + 2.d0*mul_relaxed) / rhol)
-          endif
-        enddo
-      enddo
-    endif ! of if (ispec_is_poroelastic(ispec)) then
+    enddo
 
 ! now display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
 ! or in the case of offshore oil industry experiments.
@@ -378,18 +340,12 @@
     if (DRAW_WATER_IN_BLUE .and. .not. ispec_is_elastic(ispec) .and. .not. ispec_is_poroelastic(ispec)) then
       do j = 1,NGLLZ
         do i = 1,NGLLX
+          ! get elastic parameters of current grid point
+          vp_of_the_model = rho_vpstore(i,j,ispec) / rhostore(i,j,ispec)
 
-          !--- if external medium, get elastic parameters of current grid point
-          if (assign_external_model) then
-            vp_of_the_model = rho_vpstore(i,j,ispec)/rhostore(i,j,ispec)
-          else
-            vp_of_the_model = sqrt((lambdal_relaxed + 2.d0*mul_relaxed) / rhol)
-          endif
-
-! test that water is indeed water and not an acoustic version of a sediment for instance
-! thus check that Vp is the typical Vp of water
+          ! test that water is indeed water and not an acoustic version of a sediment for instance
+          ! thus check that Vp is the typical Vp of water
           if (abs(vp_of_the_model - 1480.d0) <= 50.d0) vp_display(ibool(i,j,ispec)) = -1
-
         enddo
       enddo
     endif

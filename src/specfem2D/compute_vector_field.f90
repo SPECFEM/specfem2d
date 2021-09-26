@@ -37,8 +37,9 @@
 ! and combine with existing velocity vector field in elastic elements
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+
   use specfem_par, only: nspec,ibool, &
-    nglob_acoustic,nglob_elastic,nglob_poroelastic
+                         nglob_acoustic,nglob_elastic,nglob_poroelastic
 
   use specfem_par_movie, only: vector_field_display
 
@@ -80,12 +81,12 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
   use specfem_par, only: nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-    assign_external_model,density,kmato,rhostore, &
-    hprimeBar_xx,hprime_xx,hprime_zz, &
-    xix,xiz,gammax,gammaz,ibool, &
-    ispec_is_elastic,ispec_is_poroelastic,ispec_is_acoustic, &
-    AXISYM,is_on_the_axis, &
-    P_SV
+                         rhostore, &
+                         hprimeBar_xx,hprime_xx,hprime_zz, &
+                         xix,xiz,gammax,gammaz,ibool, &
+                         ispec_is_elastic,ispec_is_poroelastic,ispec_is_acoustic, &
+                         AXISYM,is_on_the_axis, &
+                         P_SV
 
   implicit none
 
@@ -143,7 +144,10 @@
 
     ! compute gradient of potential to calculate vector if acoustic element
     ! we then need to divide by density because the potential is a potential of (density * displacement)
-    rhol = density(1,kmato(ispec))
+    !
+    ! definition of potential uses: displacement u = 1/rho * grad(chi)
+    !
+    ! here, we compute 1/rho * grad(chi)
 
     ! double loop over GLL points to compute and store gradients
     do j = 1,NGLLZ
@@ -187,7 +191,7 @@
         gammaxl = gammax(i,j,ispec)
         gammazl = gammaz(i,j,ispec)
 
-        if (assign_external_model) rhol = rhostore(i,j,ispec)
+        rhol = rhostore(i,j,ispec)
 
         ! derivatives of potential
         vector_field_element(1,i,j) = real((tempx1l*xixl + tempx2l*gammaxl) / rhol,kind=CUSTOM_REAL) ! u_x = 1/rho dChi/dx

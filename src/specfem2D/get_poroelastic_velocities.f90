@@ -236,11 +236,19 @@
 
   ! solid properties
   mu_s = poroelastcoef(2,1,material)
+
+  ! kappa solid
+  ! note: in read_materials() routine, poroelastcoef(3,1,..) stores lambdaplus2mu_s.
+  !       to retrieve kappa_s this should be consistent in how lambdaplus2mu_s was calculated.
+  !       see read_materials(): lambdaplus2mu_s = kappa_s + FOUR_THIRDS*mu_s
+  !
   !if (AXISYM) then ! ABAB !! Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
     kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS * mu_s
   !else
   !kappa_s = poroelastcoef(3,1,material) - mu_s
   !endif
+
+
   rho_s = density(1,material)
 
   ! fluid properties
@@ -250,11 +258,18 @@
 
   ! frame properties
   mu_fr = poroelastcoef(2,3,material)
+
+  ! kappa frame
+  ! note: in read_materials() routine, poroelastcoef(3,3,..) stores lambdaplus2mu_fr.
+  !       to retrieve kappa_fr this should be consistent in how lambdaplus2mu_fr was calculated.
+  !       see read_materials(): lambdaplus2mu_fr = kappa_fr + FOUR_THIRDS*mu_fr
+  !
   !if (AXISYM) then ! ABAB !! Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
     kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS * mu_fr
   !else
   !  kappa_fr = poroelastcoef(3,3,material) - mu_fr
   !endif
+
   ! rho bar
   rho_bar =  (1.d0 - phi) * rho_s + phi * rho_f
 
@@ -275,13 +290,29 @@
   double precision,intent(out) :: D_biot,H_biot,C_biot,M_biot
 
   ! Biot coefficients for the input phi
+  ! coefficient D
   D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
+
+  ! coefficient H
+  ! in 3D:
+  ! H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + kappal_fr + 4.0/3.0 * mul_fr
+  !
   !if (AXISYM) then ! ABAB !! Warning !! This is possibly false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
-    H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
+    H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS * mu_fr
   !else
   !  H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + mu_fr
   !endif
+
+  ! coefficient B
+  ! in 3D:
+  ! B_biot = H_biot - 4.0/3.0 * mu_fr
+  !        = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr
+  ! only used in compute_kernels(), will be calculated there...
+
+  ! coefficient C
   C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
+
+  ! coefficient M
   M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
 
   end subroutine get_poroelastic_Biot_coeff

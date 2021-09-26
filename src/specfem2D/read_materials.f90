@@ -114,6 +114,7 @@
     !---- elastic (cs /= 0) and acoustic (cs = 0)
     if (indic == 1) then
       ! isotropic elastic/acoustic material
+
       ! line format:
       ! #model_number  #1 #(val0)rho #(val1)Vp #(val2)Vs #(val3)0 #(val4)0 #(val5)QKappa #(val6)Qmu  0 0 0 0 0 0
       density_mat(1) = val0
@@ -156,6 +157,7 @@
     !---- anisotropic material, c11, c13, c33 and c44 given in Pascal
     else if (indic == 2) then
       ! anisotropic elastic material
+
       ! line format:
       ! #model_number  #2 #(val0)rho #(val1)c11 #(val2)c13 #(val3)c15 #(val4)c33 #(val5)c35 #(val6)c55 #(val7)c12  ..
       !       ..          #(val8)c23 #(val9)c25 #(val10)c22 #(val11)QKappa #(val12)Qmu
@@ -220,6 +222,7 @@
     !---- poroelastic (0 < phi < 1)
     else if (indic == 3) then
       ! poroelastic material
+
       ! line format:
       ! #model_number  #3 #(val0)rhos #(val1)rhof #(val2)phi #(val3)c #(val4)kxx #(val5)kxz #(val6)kzz #(val7)Ks ..
       !                .. #(val8)Kf #(val9)Kfr #(val10)etaf #(val11)mufr #(val12)Qmu
@@ -295,6 +298,7 @@
 
     else if (indic <= 0) then
       ! external, tomo material (material properties will be assigned later)
+
       ! line format:
       !  #model_number #-1 #(val0)0 #(val1)0 #(val2)A  0 0 0 0 0 0 0 0 0 0
       assign_external_model = .true.
@@ -311,6 +315,7 @@
     !
     if (indic == 1) then
       ! isotropic elastic/acoustic material
+
       density(1,n) = density_mat(1)
 
       poroelastcoef(1,1,n) = lambda
@@ -329,6 +334,7 @@
 
     else if (indic == 2) then
       ! anisotropic elastic material
+
       density(1,n) = density_mat(1)
 
       ! dummy poroelastcoef values, trick to avoid floating invalid
@@ -355,6 +361,7 @@
 
     else if (indic == 3) then
       ! poroelastic material
+
       density(1,n) = density_mat(1)
       density(2,n) = density_mat(2)
 
@@ -406,6 +413,7 @@
       ! user output
       if (indic == 1) then
         ! elastic/acoustic
+
         ! material can be acoustic (fluid) or elastic (solid)
         if (poroelastcoef(2,1,n) > TINYVAL) then
           ! elastic
@@ -425,6 +433,7 @@
 
       else if (indic == 2) then
         ! elastic (anisotropic)
+
         if (AXISYM) then
           write(IMAIN,450) n,density_mat(1),c11,c13,c15,c33,c35,c55,c12,c23,c25,c22,Qkappa,Qmu
         else
@@ -433,6 +442,7 @@
 
       else if (indic == 3) then
         ! material is poroelastic (solid/fluid)
+
         write(IMAIN,500) n,sqrt(cpIsquare),sqrt(cpIIsquare),sqrt(cssquare)
         write(IMAIN,600) density_mat(1),poisson_s,lambda_s,mu_s,kappa_s,young_s
         if (poisson_s < 0.d0) then
@@ -449,7 +459,10 @@
         write(IMAIN,900) D_biot,H_biot,C_biot,M_biot,w_c
 
       else if (indic <= 0) then
+        ! external, tomo material
+
         write(IMAIN,1000) n
+
       endif
 
       write(IMAIN,*)

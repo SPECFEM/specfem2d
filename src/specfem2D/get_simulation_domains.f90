@@ -144,6 +144,8 @@
           ispec_is_elastic(ispec) = .true.
         endif
 
+        ! note: no external poroelastic model yet defined
+
         if ( trim(MODEL) == 'external' .or. trim(MODEL) == 'tomo' .or. trim(MODEL) == 'binary_voigt' ) then
 
           ! sets element type

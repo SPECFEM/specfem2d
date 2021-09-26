@@ -74,7 +74,7 @@
   use specfem_par, only: AXISYM,is_on_the_axis,nspec,kinetic_energy,potential_energy, &
                          ibool,hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz,jacobian,wxgll,wzgll, &
                          mustore,rho_vpstore,rhostore, &
-                         poroelastcoef,density,kmato,assign_external_model, &
+                         phistore,tortstore,kappaarraystore,mufr_store,rhoarraystore, &
                          ispec_is_poroelastic,ispec_is_elastic, &
                          P_SV,ispec_is_PML, &
                          GPU_MODE,any_acoustic,any_elastic,any_poroelastic
@@ -90,14 +90,15 @@
 
 ! local variables
   integer :: i,j,k,ispec
-  real(kind=CUSTOM_REAL) :: cpl,kappal
+  real(kind=CUSTOM_REAL) :: cpl
   real(kind=CUSTOM_REAL) :: mu_G,lambdal_G,lambdalplus2mul_G
 
   ! Jacobian matrix and determinant
   double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
   double precision :: rhol
   ! to evaluate cpI, cpII, and cs, and rI (poroelastic medium)
-  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
+  double precision :: phi,tort,mu_fr,kappa_s,kappa_f,kappa_fr
+  double precision :: rho_s,rho_f,rho_bar
   double precision :: D_biot,H_biot,C_biot,M_biot
   double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
 
@@ -146,25 +147,16 @@
     !---
     if (ispec_is_elastic(ispec)) then
 
-      ! get relaxed elastic parameters of current spectral element
-      lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-      mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-      lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec))
-
-      rhol  = density(1,kmato(ispec))
-
       ! double loop over GLL points
       do j = 1,NGLLZ
         do i = 1,NGLLX
+          ! get elastic parameters of current grid point
+          mul_unrelaxed_elastic = mustore(i,j,ispec)
+          rhol = rhostore(i,j,ispec)
+          cpl = rho_vpstore(i,j,ispec) / rhol
 
-          !--- if external medium, get elastic parameters of current grid point
-          if (assign_external_model) then
-            mul_unrelaxed_elastic = mustore(i,j,ispec)
-            rhol = rhostore(i,j,ispec)
-            cpl = rho_vpstore(i,j,ispec)/rhol
-            lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO*mul_unrelaxed_elastic
-            lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic
-          endif
+          lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO * mul_unrelaxed_elastic
+          lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO * mul_unrelaxed_elastic
 
           ! derivative along x and along z
           dux_dxi = 0._CUSTOM_REAL
@@ -281,24 +273,9 @@
       ! get unrelaxed elastic parameters of current spectral element
       !for now replaced by solid, fluid, and frame parameters of current spectral element
 
-      ! gets poroelastic material
-      call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
-
-      ! Biot coefficients for the input phi
-      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
-
-      !The RHS has the form : div T -phi/c div T_f + phi/ceta_fk^-1.partial t w
-      !where T = G:grad u_s + C div w I
-      !and T_f = C div u_s I + M div w I
-      !we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
-      mu_G = mu_fr
-      lambdal_G = H_biot - TWO*mu_fr
-      lambdalplus2mul_G = lambdal_G + TWO*mu_G
-
       ! first double loop over GLL points to compute and store gradients
       do j = 1,NGLLZ
         do i = 1,NGLLX
-
           ! derivative along x and along z
           dux_dxi = ZERO
           duz_dxi = ZERO
@@ -345,6 +322,29 @@
 
           dwz_dxl = dwz_dxi*xixl + dwz_dgamma*gammaxl
           dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
+
+          ! gets poroelastic material
+          phi = phistore(i,j,ispec)
+          tort = tortstore(i,j,ispec)
+          kappa_s = kappaarraystore(1,i,j,ispec)
+          kappa_f = kappaarraystore(2,i,j,ispec)
+          kappa_fr = kappaarraystore(3,i,j,ispec)
+          mu_fr = mufr_store(i,j,ispec)
+
+          ! Biot coefficients for the input phi
+          call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
+          !The RHS has the form : div T -phi/c div T_f + phi/ceta_fk^-1.partial t w
+          !where T = G:grad u_s + C div w I
+          !and T_f = C div u_s I + M div w I
+          !we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
+          mu_G = mu_fr
+          lambdal_G = H_biot - TWO*mu_fr
+          lambdalplus2mul_G = lambdal_G + TWO*mu_G
+
+          rho_s = rhoarraystore(1,i,j,ispec)
+          rho_f = rhoarraystore(2,i,j,ispec)
+          rho_bar = (1.d0 - phi)*rho_s + phi * rho_f
 
           ! compute potential energy
           potential_energy = potential_energy &
@@ -397,23 +397,12 @@
       ! compute velocity vector field in this element
       call compute_vector_one_element(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
 
-      ! get velocity and density in current spectral element
-      if (.not. assign_external_model) then
-        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-        rhol  = density(1,kmato(ispec))
-        kappal  = lambdal_unrelaxed_elastic
-        cpl = sqrt(kappal/rhol)
-      endif
-
       ! double loop over GLL points
       do j = 1,NGLLZ
         do i = 1,NGLLX
-
-          !--- if external medium, get density of current grid point
-          if (assign_external_model) then
-            rhol = rhostore(i,j,ispec)
-            cpl = rho_vpstore(i,j,ispec)/rhol
-          endif
+          ! get elastic parameters of current grid point
+          rhol = rhostore(i,j,ispec)
+          cpl = rho_vpstore(i,j,ispec)/rhol
 
           jacobianl = jacobian(i,j,ispec)
 
@@ -424,7 +413,6 @@
           ! compute potential energy
           potential_energy = potential_energy &
               + (pressure_element(i,j)**2)*wxgll(i)*wzgll(j)*jacobianl / (TWO * rhol * cpl**2)
-
         enddo
       enddo
 
@@ -458,7 +446,7 @@
   character(len=MAX_STRING_LEN)  :: filename
 
   !! ABAB Uncomment to write the velocity profile in acoustic part
-  !real(kind=CUSTOM_REAL) :: cpl,kappal
+  !real(kind=CUSTOM_REAL) :: cpl
   !double precision :: rhol
   !double precision :: lambdal_unrelaxed_elastic
   !! ABAB
@@ -596,16 +584,8 @@
   !    ! loop over spectral elements
   !    do ispec = 1,nspec
   !      if (ispec_is_acoustic(ispec)) then
-  !        ! get density of current spectral element
-  !        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-  !        rhol  = density(1,kmato(ispec))
-  !        kappal = lambdal_unrelaxed_elastic
-  !        cpl = sqrt(kappal/rhol)
-  !
-  !        !--- if external medium, get density of current grid point
-  !        if (assign_external_model) then
-  !          cpl = rho_vpstore(2,2,ispec)/rhostore(2,2,ispec)
-  !        endif
+  !        ! get density of current grid point
+  !        cpl = rho_vpstore(2,2,ispec)/rhostore(2,2,ispec)
   !        iglob = ibool(2,2,ispec)
   !        write(IIN,*) real(coord(2,iglob),4),cpl
   !      endif
@@ -631,8 +611,8 @@
                          integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
                          potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
                          total_effective_duration_field, &
-                         poroelastcoef,mustore,rho_vpstore,rhostore, &
-                         density,kmato,assign_external_model,jacobian, &
+                         mustore,rho_vpstore,rhostore, &
+                         jacobian, &
                          hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz, &
                          GPU_MODE,any_acoustic,any_elastic,any_poroelastic, &
                          P_SV
@@ -694,21 +674,13 @@
     !---
     if (ispec_is_elastic(ispec)) then
 
-      ! get relaxed elastic parameters of current spectral element
-      lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-      mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-      lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec))
+      ! get elastic parameters of current grid point
+      mul_unrelaxed_elastic = mustore(i,j,ispec)
+      rhol = rhostore(i,j,ispec)
+      cpl = rho_vpstore(i,j,ispec)/rhol
 
-      rhol  = density(1,kmato(ispec))
-
-      !--- if external medium, get elastic parameters of current grid point
-      if (assign_external_model) then
-        mul_unrelaxed_elastic = mustore(i,j,ispec)
-        rhol = rhostore(i,j,ispec)
-        cpl = rho_vpstore(i,j,ispec)/rhol
-        lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO*mul_unrelaxed_elastic
-        lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic
-      endif
+      lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO * mul_unrelaxed_elastic
+      lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO * mul_unrelaxed_elastic
 
       ! derivative along x and along z
       dux_dxi = 0._CUSTOM_REAL
@@ -868,15 +840,9 @@
       call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic, &
                                         potential_dot_dot_acoustic,potential_acoustic)
 
-      !--- if external medium, get density of current grid point
-      if (assign_external_model) then
-        rhol = rhostore(i,j,ispec)
-        cpl = rho_vpstore(i,j,ispec)/rhol
-      else
-        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-        rhol  = density(1,kmato(ispec))
-        cpl = sqrt(lambdal_unrelaxed_elastic/rhol) !lambdal_unrelaxed_elastic = kappal
-      endif
+      ! get density of current grid point
+      rhol = rhostore(i,j,ispec)
+      cpl = rho_vpstore(i,j,ispec) / rhol
 
       jacobianl = jacobian(i,j,ispec)
 

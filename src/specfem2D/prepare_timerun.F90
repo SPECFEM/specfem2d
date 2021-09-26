@@ -50,8 +50,8 @@
 
   ! reads binary database for setup
   if (setup_with_binary_database == 2) then
-    ! updates external model properties in case
-    call setup_mesh_external_models()
+    ! updates external model and material properties in case
+    call setup_mesh_material_properties()
 
     ! updates source/receivers
     call read_sources_receivers()
@@ -1200,9 +1200,8 @@
 
   use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT,TWO_THIRDS,OUTPUT_FILES
 
-  use specfem_par, only: myrank,AXISYM,NSTEP,nglob,nspec,ibool,coord, &
+  use specfem_par, only: myrank,NSTEP,nglob,nspec,ibool,coord, &
                          rhostore,rho_vpstore,rho_vsstore, &
-                         density,poroelastcoef,kmato,assign_external_model, &
                          NOISE_TOMOGRAPHY
 
   use specfem_par_noise
@@ -1272,43 +1271,20 @@
     close(504)
 
     ! write out velocity model
-    if (assign_external_model) then
-      open(unit=504,file=trim(OUTPUT_FILES)//'model_rho_vp_vs',status='unknown',action='write')
-      do ispec = 1, nspec
-        do j = 1, NGLLZ
-          do i = 1, NGLLX
-            iglob = ibool(i,j,ispec)
-            rhol = dble(rhostore(i,j,ispec))
-            vs = dble(rho_vsstore(i,j,ispec)/rhol)
-            vp = dble(rho_vpstore(i,j,ispec)/rhol)
+    open(unit=504,file=trim(OUTPUT_FILES)//'model_rho_vp_vs',status='unknown',action='write')
+    do ispec = 1, nspec
+      do j = 1, NGLLZ
+        do i = 1, NGLLX
+          iglob = ibool(i,j,ispec)
+          rhol = dble(rhostore(i,j,ispec))
+          vs = dble(rho_vsstore(i,j,ispec)/rhol)
+          vp = dble(rho_vpstore(i,j,ispec)/rhol)
 
-            write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') coord(1,iglob), coord(2,iglob), rhol, vp, vs
-          enddo
+          write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') coord(1,iglob), coord(2,iglob), rhol, vp, vs
         enddo
       enddo
-      close(504)
-    else
-      open(unit=504,file=trim(OUTPUT_FILES)//'model_rho_kappa_mu',status='unknown',action='write')
-      do ispec = 1, nspec
-        do j = 1, NGLLZ
-          do i = 1, NGLLX
-            iglob = ibool(i,j,ispec)
-            if (AXISYM) then ! CHECK kappa
-              write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
-                coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
-                poroelastcoef(1,1,kmato(ispec)) + TWO_THIRDS * poroelastcoef(2,1,kmato(ispec)), &
-                poroelastcoef(2,1,kmato(ispec))
-            else
-              write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
-                coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
-                poroelastcoef(1,1,kmato(ispec)) + poroelastcoef(2,1,kmato(ispec)), &
-                poroelastcoef(2,1,kmato(ispec))
-            endif
-          enddo
-        enddo
-      enddo
-      close(504)
-    endif
+    enddo
+    close(504)
 
   else if (NOISE_TOMOGRAPHY == 2) then
     call create_mask_noise()

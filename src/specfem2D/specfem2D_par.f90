@@ -68,9 +68,6 @@ module specfem_par
 
   ! external models
   logical :: assign_external_model
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: QKappa_attenuationext,Qmu_attenuationext
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: c11ext,c12ext,c13ext,c15ext,c22ext,c23ext,c25ext, &
-                                                           c33ext,c35ext,c55ext
 
   integer :: nspec_ATT_el,nspec_ATT_ac,nglob_att
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
@@ -97,10 +94,17 @@ module specfem_par
   ! anisotropic
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: c11store,c12store,c13store,c15store,c22store,c23store,c25store, &
                                                            c33store,c35store,c55store
+
   ! useful additional rho*vp and rho*vs arrays for getting vp,vs and absorbing boundary terms
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_vpstore,rho_vsstore
+
   ! attenuation
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: qkappa_attenuation_store,qmu_attenuation_store
+
+  ! poroelasticity
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: phistore,tortstore,etastore,mufr_store
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: vpIIstore
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rhoarraystore,kappaarraystore,permstore
 
   ! resolution
   double precision :: mesh_T_min
@@ -417,9 +421,10 @@ module specfem_par
 
   logical, dimension(:), allocatable :: ispec_is_elastic
 
-  logical :: any_anisotropy
+  ! anisotropy
   integer :: nspec_aniso
 
+  logical :: any_anisotropy
   logical :: all_anisotropic
   logical, dimension(:), allocatable :: ispec_is_anisotropic
 
@@ -591,8 +596,6 @@ module specfem_par
   ! for kernel computation
   integer :: tomo_material
 
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_ac,b_displ_ac,b_accel_ac
-
   ! elastic domain kernels
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_kl, mu_kl, kappa_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mu_k, kappa_k,rho_k
@@ -605,7 +608,6 @@ module specfem_par
 
   ! acoustic domain kernels
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_ac_kl, kappa_ac_kl
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_ac_global, kappal_ac_global
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhop_ac_kl, alpha_ac_kl
 
   double precision, dimension(:,:,:),allocatable:: rho_local,vp_local,vs_local

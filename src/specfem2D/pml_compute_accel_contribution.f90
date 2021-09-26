@@ -49,7 +49,7 @@
     NGLJ,TWO_THIRDS
 
   use specfem_par, only: time_stepping_scheme,i_stage,it,DT,deltat, &
-                         assign_external_model,rhostore,kappastore,density,poroelastcoef,kmato, &
+                         kappastore, &
                          ibool,jacobian, &
                          wxgll,wzgll, &
                          rmemory_potential_acoustic,rmemory_potential_acoustic_LDDRK, &
@@ -80,8 +80,7 @@
   double precision :: A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
 
   ! material properties of the acoustic medium
-  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,rhol
-  real(kind=CUSTOM_REAL) :: fac
+  real(kind=CUSTOM_REAL) :: kappal,fac
 
   ! checks if anything to do in this slice
   if (nspec_PML == 0) return
@@ -106,6 +105,13 @@
 
   do j = 1,NGLLZ
     do i = 1,NGLLX
+      iglob = ibool(i,j,ispec)
+
+      ! material properties
+      ! assuming that in fluid(acoustic) part input cpl is defined by sqrt(kappal/rhol), &
+      ! which is not the same as in cpl input in elastic part
+      kappal = kappastore(i,j,ispec)
+      fac = jacobian(i,j,ispec) / kappal
 
       kappa_x = K_x_store(i,j,ispec_PML)
       kappa_z = K_z_store(i,j,ispec_PML)
@@ -123,8 +129,6 @@
       call l_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                    CPML_region_local,A0,A1,A2,A3,A4, &
                                    bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
-
-      iglob = ibool(i,j,ispec)
 
       select case (time_stepping_scheme)
       case (1)
@@ -152,25 +156,6 @@
       case default
         call stop_the_code('PML for RK4 not implement yet in pml_compute_accel_contribution_acoustic()')
       end select
-
-      ! material properties
-      if (assign_external_model) then
-        rhol = rhostore(i,j,ispec)
-        !assuming that in fluid(acoustic) part input cpl is defined by sqrt(kappal/rhol), &
-        !which is not the same as in cpl input in elastic part
-        kappal = kappastore(i,j,ispec)
-      else
-        rhol = density(1,kmato(ispec))
-        lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-        mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-        if (AXISYM) then ! CHECK kappa
-          kappal  = lambdal_relaxed + TWO_THIRDS * mul_relaxed
-        else
-          kappal  = lambdal_relaxed + mul_relaxed
-        endif
-      endif
-
-      fac = jacobian(i,j,ispec) / kappal
 
       if (AXISYM) then
         if (is_on_the_axis(ispec)) then
@@ -208,7 +193,7 @@
                        CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
   use specfem_par, only: time_stepping_scheme,i_stage,DT,deltat, &
-                         assign_external_model,rhostore,density,kmato, &
+                         rhostore, &
                          ibool,jacobian,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,coord,wxglj, &
                          rmemory_displ_elastic,rmemory_displ_elastic_LDDRK
@@ -237,7 +222,7 @@
   double precision :: A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
 
   ! material properties of the acoustic medium
-  real(kind=CUSTOM_REAL) :: rhol
+  real(kind=CUSTOM_REAL) :: rhol,fac
 
   ! checks if anything to do in this slice
   if (nspec_PML == 0) return
@@ -254,6 +239,10 @@
     do i = 1,NGLLX
 
       iglob = ibool(i,j,ispec)
+
+      ! material properties
+      rhol = rhostore(i,j,ispec)
+      fac = rhol * jacobian(i,j,ispec)
 
       kappa_x = K_x_store(i,j,ispec_PML)
       kappa_z = K_z_store(i,j,ispec_PML)
@@ -313,34 +302,28 @@
         call stop_the_code('Time stepping scheme not implemented yet for PML accel contribution')
       end select
 
-      if (assign_external_model) then
-        rhol = rhostore(i,j,ispec)
-      else
-        rhol = density(1,kmato(ispec))
-      endif
-
       if (AXISYM) then
         if (is_on_the_axis(ispec)) then
-          accel_elastic_PML(1,i,j) = wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*r_xiplus1(i,j) * &
+          accel_elastic_PML(1,i,j) = wxglj(i) * wzgll(j) * fac * r_xiplus1(i,j) * &
                ( A1 * veloc_elastic(1,iglob) + A2 * dummy_loc(1,i,j) + &
                  A3 * rmemory_displ_elastic(1,1,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,1,i,j,ispec_PML))
-          accel_elastic_PML(2,i,j) = wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*r_xiplus1(i,j) * &
+          accel_elastic_PML(2,i,j) = wxglj(i) * wzgll(j) * fac * r_xiplus1(i,j) * &
                ( A1 * veloc_elastic(2,iglob) + A2 * dummy_loc(2,i,j) + &
                  A3 * rmemory_displ_elastic(1,2,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,2,i,j,ispec_PML))
         else
-          accel_elastic_PML(1,i,j) = wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*coord(1,ibool(i,j,ispec))* &
+          accel_elastic_PML(1,i,j) = wxgll(i) * wzgll(j) * fac * coord(1,ibool(i,j,ispec)) * &
                ( A1 * veloc_elastic(1,iglob) + A2 * dummy_loc(1,i,j) + &
                  A3 * rmemory_displ_elastic(1,1,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,1,i,j,ispec_PML))
-          accel_elastic_PML(2,i,j) = wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*coord(1,ibool(i,j,ispec))* &
+          accel_elastic_PML(2,i,j) = wxgll(i) * wzgll(j) * fac * coord(1,ibool(i,j,ispec)) * &
                ( A1 * veloc_elastic(2,iglob) + A2 * dummy_loc(2,i,j) + &
                  A3 * rmemory_displ_elastic(1,2,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,2,i,j,ispec_PML))
         endif
       else
         ! default
-        accel_elastic_PML(1,i,j) = wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
+        accel_elastic_PML(1,i,j) = wxgll(i) * wzgll(j) * fac * &
               ( A1 * veloc_elastic(1,iglob) + A2 * dummy_loc(1,i,j) + &
                 A3 * rmemory_displ_elastic(1,1,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,1,i,j,ispec_PML))
-        accel_elastic_PML(2,i,j) = wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
+        accel_elastic_PML(2,i,j) = wxgll(i) * wzgll(j) * fac * &
               ( A1 * veloc_elastic(2,iglob) + A2 * dummy_loc(2,i,j) + &
                 A3 * rmemory_displ_elastic(1,2,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,2,i,j,ispec_PML))
       endif

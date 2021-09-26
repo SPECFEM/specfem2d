@@ -44,7 +44,7 @@
   integer :: i,ispec,j,iglob
   integer :: ier
   real(kind=4),dimension(:,:,:),allocatable :: rho_save, vp_save, vs_save, kappa_save, x_save, z_save, Qkappa_save,Qmu_save
-  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,rhol
+  double precision :: rhol
   character(len=MAX_STRING_LEN) :: inputname,outputname
 
   ! user output
@@ -81,6 +81,7 @@
   if (ATTENUATION_VISCOELASTIC) then
     if (ATTENUATION_VISCOACOUSTIC) &
       call exit_MPI(myrank,'Not possible yet to save model with both acoustic and elastic attenuation')
+
     allocate(Qkappa_save(NGLLX,NGLLZ,nspec),Qmu_save(NGLLX,NGLLZ,nspec),stat=ier)
     if (ier /= 0) call exit_MPI(myrank, 'error allocating save model arrays 08')
   endif
@@ -88,36 +89,23 @@
   do ispec= 1,nspec
     do j = 1,NGLLZ
       do i = 1,NGLLX
-        rho_save(i,j,ispec) = density(1,kmato(ispec))
-        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-        mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-        if (AXISYM) then ! CHECK kappa
-          kappa_save(i,j,ispec) = lambdal_unrelaxed_elastic + TWO_THIRDS * mul_unrelaxed_elastic
-          vp_save(i,j,ispec) = sqrt((kappa_save(i,j,ispec) + FOUR_THIRDS *mul_unrelaxed_elastic)/density(1,kmato(ispec)))
-        else
-          kappa_save(i,j,ispec) = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
-          vp_save(i,j,ispec) = sqrt((kappa_save(i,j,ispec) + mul_unrelaxed_elastic)/density(1,kmato(ispec)))
-        endif
-
-        vs_save(i,j,ispec) = sqrt(mul_unrelaxed_elastic/rho_save(i,j,ispec))
-
-        if (assign_external_model) then
-          rhol = rhostore(i,j,ispec)
-          vp_save(i,j,ispec) = rho_vpstore(i,j,ispec)/rhol
-          vs_save(i,j,ispec) = rho_vsstore(i,j,ispec)/rhol
-          rho_save(i,j,ispec) = rhol
-        endif
+        rhol = rhostore(i,j,ispec)
+        vp_save(i,j,ispec) = rho_vpstore(i,j,ispec) / rhol
+        vs_save(i,j,ispec) = rho_vsstore(i,j,ispec) / rhol
+        rho_save(i,j,ispec) = rhol
 
         iglob = ibool(i,j,ispec)
         x_save(i,j,ispec) = coord(1,iglob)
         z_save(i,j,ispec) = coord(2,iglob)
+
         ! attenuation arrays
         if (ATTENUATION_VISCOACOUSTIC) then
-          Qkappa_save(i,j,ispec) = QKappa_attenuationcoef(kmato(ispec))
+          Qkappa_save(i,j,ispec) = qkappa_attenuation_store(i,j,ispec)
         endif
+
         if (ATTENUATION_VISCOELASTIC) then
-          Qkappa_save(i,j,ispec) = QKappa_attenuationcoef(kmato(ispec))
-          Qmu_save(i,j,ispec) = Qmu_attenuationcoef(kmato(ispec))
+          Qkappa_save(i,j,ispec) = qkappa_attenuation_store(i,j,ispec)
+          Qmu_save(i,j,ispec) = qmu_attenuation_store(i,j,ispec)
         endif
       enddo
     enddo
@@ -164,21 +152,25 @@
     if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_rho.bin')
     write(172) rho_save
     close(172)
+
     write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_vp.bin'
     open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_vp.bin')
     write(172) vp_save
     close(172)
+
     write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_vs.bin'
     open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_vs.bin')
     write(172) vs_save
     close(172)
+
     write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_x.bin'
     open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_x.bin')
     write(172) x_save
     close(172)
+
     write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_z.bin'
     open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_z.bin')
