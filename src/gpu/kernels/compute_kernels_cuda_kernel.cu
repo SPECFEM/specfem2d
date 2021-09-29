@@ -37,50 +37,164 @@
 __global__ void compute_kernels_cudakernel(const int* ispec_is_elastic,
                                            const int p_sv,
                                            const int* d_ibool,
+                                           realw* displ,
                                            realw* accel,
                                            realw* b_displ,
                                            realw* rho_kl,
                                            realw* mu_kl,
                                            realw* kappa_kl,
                                            int NSPEC_AB,
-                                           realw* dsxx,
-                                           realw* dsxz,
-                                           realw* dszz,
-                                           realw* b_dsxx,
-                                           realw* b_dsxz,
-                                           realw* b_dszz) {
+                                           realw* d_hprime_xx,
+                                           realw* d_xix,realw* d_xiz,
+                                           realw* d_gammax,realw* d_gammaz) {
 
   int ispec = blockIdx.x + blockIdx.y*gridDim.x;
   int ij = threadIdx.x;
 
+  // local and global indices
+  int ij_ispec = ij + NGLL2*ispec;
+  int ij_ispec_padded = ij + NGLL2_PADDED*ispec;
+  int iglob;
+
+  int offset1,offset3;
+  realw hp1,hp3;
+
+  realw xixl,xizl;
+  realw gammaxl,gammazl;
+
+  realw duxdxl,duxdzl;
+  realw duzdxl,duzdzl;
+
+  realw b_duxdxl,b_duxdzl;
+  realw b_duzdxl,b_duzdzl;
+
+  realw dsxx,dszz,dsxz;
+  realw b_dsxx,b_dszz,b_dsxz;
+
+  // shared memory between all threads within this block
+  __shared__ realw field_displ[2*NGLL2];
+  __shared__ realw field_b_displ[2*NGLL2];
+
+  int active = 0;
+
+  // computing the gradient of displ and accel
+
   // handles case when there is 1 extra block (due to rectangular grid)
   if (ispec < NSPEC_AB) {
-
     // elastic elements only
     if (ispec_is_elastic[ispec]) {
-      int iglob = d_ibool[ij + NGLL2_PADDED*ispec] - 1 ;
-      int ij_ispec = ij + NGLL2*ispec;
+      active = 1;
 
-      realw prod = (dsxx[iglob] + dszz[iglob]) * (b_dsxx[iglob] + b_dszz[iglob]);
+      // global index
+      iglob = d_ibool[ij_ispec_padded] - 1;
 
-      // isotropic kernels:
-      // density kernel
-      rho_kl[ij_ispec] += (accel[2*iglob]*b_displ[2*iglob] + accel[2*iglob+1]*b_displ[2*iglob+1]);
+      // copy field values
+      field_displ[2*ij] = displ[2*iglob];
+      field_displ[2*ij+1] = displ[2*iglob+1];
 
-      if (p_sv){
-        // P_SV case
-        // shear modulus kernel
-        mu_kl[ij_ispec] += dsxx[iglob] * b_dsxx[iglob] + dszz[iglob] * b_dszz[iglob] +
-                            2.0f * dsxz[iglob] * b_dsxz[iglob] - prod/3.0f;
+      field_b_displ[2*ij] = b_displ[2*iglob];
+      field_b_displ[2*ij+1] = b_displ[2*iglob+1];
+    }
+  }
 
-        // bulk modulus kernel
-        kappa_kl[ij_ispec] += prod;
-      }else{
-        // SH-case (membrane) waves
-        mu_kl[ij_ispec] += dsxx[iglob] * b_dsxx[iglob] + dsxz[iglob] * b_dsxz[iglob]; // dux_dxl * b_dux_dxl + dux_dzl * b_dux_dzl
-        // zero kappa kernel
-        //kappa_kl[ij_ispec] = 0.f;
-      }
+  // synchronizes threads
+  __syncthreads();
+
+  if (active) {
+    int J = (ij/NGLLX);
+    int I = (ij-J*NGLLX);
+
+    // derivative along xi
+    realw tempx1l = 0.f;
+    realw tempz1l = 0.f;
+
+    realw b_tempx1l = 0.f;
+    realw b_tempz1l = 0.f;
+
+    for(int l=0; l<NGLLX;l++){
+      hp1 = d_hprime_xx[l*NGLLX+I];
+      offset1 = J*NGLLX+l;
+
+      tempx1l += field_displ[2*offset1] * hp1;
+      tempz1l += field_displ[2*offset1+1] * hp1;
+
+      b_tempx1l += field_b_displ[2*offset1] * hp1;
+      b_tempz1l += field_b_displ[2*offset1+1] * hp1;
+    }
+
+    // derivative along gamma
+    realw tempx3l = 0.f;
+    realw tempz3l = 0.f;
+
+    realw b_tempx3l = 0.f;
+    realw b_tempz3l = 0.f;
+
+    for(int l=0; l<NGLLX;l++){
+      // assumes hprime_xx == hprime_zz
+      hp3 = d_hprime_xx[l*NGLLX+J];
+      offset3 = l*NGLLX+I;
+
+      tempx3l += field_displ[2*offset3] * hp3;
+      tempz3l += field_displ[2*offset3+1] * hp3;
+
+      b_tempx3l += field_b_displ[2*offset3] * hp3;
+      b_tempz3l += field_b_displ[2*offset3+1] * hp3;
+    }
+
+    xixl = d_xix[ij_ispec_padded];
+    xizl = d_xiz[ij_ispec_padded];
+    gammaxl = d_gammax[ij_ispec_padded];
+    gammazl = d_gammaz[ij_ispec_padded];
+
+    // derivatives of ux and uz with respect to x and z
+    duxdxl = xixl*tempx1l + gammaxl*tempx3l;
+    duxdzl = xizl*tempx1l + gammazl*tempx3l;
+
+    duzdxl = xixl*tempz1l + gammaxl*tempz3l;
+    duzdzl = xizl*tempz1l + gammazl*tempz3l;
+
+    b_duxdxl = xixl*b_tempx1l + gammaxl*b_tempx3l;
+    b_duxdzl = xizl*b_tempx1l + gammazl*b_tempx3l;
+
+    b_duzdxl = xixl*b_tempz1l + gammaxl*b_tempz3l;
+    b_duzdzl = xizl*b_tempz1l + gammazl*b_tempz3l;
+
+    // strain components
+    dsxx = duxdxl;
+    b_dsxx = b_duxdxl;
+
+    dszz = duzdzl;
+    b_dszz = b_duzdzl;
+
+    if (p_sv){
+      // P_SV case
+      dsxz = 0.5f * (duzdxl + duxdzl);
+      b_dsxz = 0.5f * (b_duzdxl + b_duxdzl);
+    }else{
+      // SH-case
+      dsxz = duxdzl;
+      b_dsxz = b_duxdzl;
+    }
+
+    // isotropic kernels:
+    // density kernel
+    rho_kl[ij_ispec] += (accel[2*iglob]*b_displ[2*iglob] + accel[2*iglob+1]*b_displ[2*iglob+1]);
+
+    if (p_sv){
+      // P_SV case
+      realw prod = (dsxx + dszz) * (b_dsxx + b_dszz);
+
+      // shear modulus kernel
+      mu_kl[ij_ispec] += dsxx * b_dsxx + dszz * b_dszz +
+                          2.0f * dsxz * b_dsxz - prod/3.0f;
+
+      // bulk modulus kernel
+      kappa_kl[ij_ispec] += prod;
+    }else{
+      // SH-case (membrane) waves
+      mu_kl[ij_ispec] += dsxx * b_dsxx + dsxz * b_dsxz; // dux_dxl * b_dux_dxl + dux_dzl * b_dux_dzl
+      // zero kappa kernel
+      //kappa_kl[ij_ispec] = 0.f;
     }
   }
 }

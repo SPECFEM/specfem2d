@@ -62,17 +62,16 @@ void FC_FUNC_(compute_kernels_elastic_cuda,
   compute_kernels_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ispec_is_elastic,
                                                                     mp->p_sv,
                                                                     mp->d_ibool,
-                                                                    mp->d_accel, mp->d_b_displ,
+                                                                    mp->d_displ,
+                                                                    mp->d_accel,
+                                                                    mp->d_b_displ,
                                                                     mp->d_rho_kl,
                                                                     mp->d_mu_kl,
                                                                     mp->d_kappa_kl,
                                                                     mp->NSPEC_AB,
-                                                                    mp->d_dsxx,
-                                                                    mp->d_dsxz,
-                                                                    mp->d_dszz,
-                                                                    mp->d_b_dsxx,
-                                                                    mp->d_b_dsxz,
-                                                                    mp->d_b_dszz);
+                                                                    mp->d_hprime_xx,
+                                                                    mp->d_xix,mp->d_xiz,
+                                                                    mp->d_gammax,mp->d_gammaz);
 
   GPU_ERROR_CHECKING ("compute_kernels_elastic_cuda");
 }
@@ -112,6 +111,7 @@ TRACE("compute_kernels_acoustic_cuda");
                                                                          mp->d_hprime_xx,
                                                                          mp->d_xix,mp->d_xiz,
                                                                          mp->d_gammax,mp->d_gammaz,
+                                                                         mp->d_potential_acoustic,
                                                                          mp->d_potential_dot_dot_acoustic,
                                                                          mp->d_b_potential_acoustic,
                                                                          mp->d_rho_ac_kl,

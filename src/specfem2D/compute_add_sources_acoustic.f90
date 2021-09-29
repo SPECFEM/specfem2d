@@ -256,6 +256,7 @@
   !local variables
   integer :: irec_local,i,j,iglob,ispec
   integer :: it_tmp
+  real(kind=CUSTOM_REAL) :: stf
 
   ! time step index
   it_tmp = NSTEP - it + 1
@@ -275,10 +276,16 @@
           !ZN be careful, the following line is newly added, thus when doing a comparison
           !ZN of the new code with the old code, you will have a big difference if you
           !ZN do not adjust the amplitude of the adjoint source
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-                                              real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
-                                              source_adjoint(irec_local,it_tmp,1),kind=CUSTOM_REAL) &
-                                              / kappastore(i,j,ispec)
+
+          ! beware, for acoustic medium, a pressure source would be taking the negative
+          ! and divide by Kappa of the fluid;
+          ! this would have to be done when constructing the adjoint source.
+          !
+          ! the idea is to have e.g. a pressure source, where all 3 components would be the same
+          stf = xir_store_loc(irec_local,i) * gammar_store_loc(irec_local,j) * source_adjoint(irec_local,it_tmp,1) &
+                / kappastore(i,j,ispec)
+
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - stf
         enddo
       enddo
     endif ! if element acoustic

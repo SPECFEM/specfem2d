@@ -94,9 +94,6 @@ TRACE("Kernel_2");
                                                                       mp->d_c11store,mp->d_c12store,mp->d_c13store,
                                                                       mp->d_c15store,mp->d_c23store,mp->d_c25store,
                                                                       mp->d_c33store,mp->d_c35store,mp->d_c55store,
-                                                                      mp->d_dsxx,
-                                                                      mp->d_dsxz,
-                                                                      mp->d_dszz,
                                                                       mp->d_A_newmark_mu,
                                                                       mp->d_B_newmark_mu,
                                                                       mp->d_A_newmark_kappa,
@@ -176,9 +173,6 @@ TRACE("Kernel_2");
                                                                       mp->d_muv,
                                                                       mp->simulation_type,
                                                                       mp->p_sv,
-                                                                      mp->d_dsxx,
-                                                                      mp->d_dsxz,
-                                                                      mp->d_dszz,
                                                                       mp->d_A_newmark_mu,
                                                                       mp->d_B_newmark_mu,
                                                                       mp->d_A_newmark_kappa,
@@ -208,10 +202,7 @@ TRACE("Kernel_2");
                                                                         mp->d_kappav,
                                                                         mp->d_muv,
                                                                         mp->simulation_type,
-                                                                        mp->p_sv,
-                                                                        mp->d_dsxx,
-                                                                        mp->d_dsxz,
-                                                                        mp->d_dszz);
+                                                                        mp->p_sv);
 
     }
     // backward/reconstructed wavefield
@@ -233,10 +224,7 @@ TRACE("Kernel_2");
                                                                          mp->d_kappav,
                                                                          mp->d_muv,
                                                                          mp->simulation_type,
-                                                                         mp->p_sv,
-                                                                         mp->d_b_dsxx,
-                                                                         mp->d_b_dsxz,
-                                                                         mp->d_b_dszz);
+                                                                         mp->p_sv);
     }
   } // ANISOTROPY
 

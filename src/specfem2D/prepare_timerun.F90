@@ -847,14 +847,10 @@
   subroutine prepare_timerun_kernels()
 
 
-  use constants, only: IMAIN,APPROXIMATE_HESS_KL,OUTPUT_FILES
+  use constants, only: IMAIN,APPROXIMATE_HESS_KL
   use specfem_par
 
   implicit none
-
-  ! local parameters
-  integer :: ier
-  character(len=MAX_STRING_LEN) :: outputname
 
   ! checks if anything to do
   if (SIMULATION_TYPE /= 3) return
@@ -865,97 +861,10 @@
     call flush_IMAIN()
   endif
 
-  ! Allocates sensitivity kernel arrays
+  ! initalizes sensitivity kernel arrays
   ! elastic domains
   if (any_elastic) then
-
-    if (save_ASCII_kernels) then
-      ! ascii format
-      if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then ! anisotropic
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_cijkl_kernel.dat'
-        open(unit = 97, file=trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
-        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-      else
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
-        open(unit = 97, file = trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
-        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
-        open(unit = 98, file = trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
-        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-      endif
-    else
-      ! binary format
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kernel.bin'
-      open(unit = 204, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-      if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then ! anisotropic
-         write(outputname,'(a,i6.6,a)')'proc',myrank,'_c11_kernel.bin'
-         open(unit = 205,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c13_kernel.bin'
-         open(unit = 206,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c15_kernel.bin'
-         open(unit = 207,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c33_kernel.bin'
-         open(unit = 208,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c35_kernel.bin'
-         open(unit = 209,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c55_kernel.bin'
-         open(unit = 210,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-      else
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_kernel.bin'
-        open(unit = 205, file =trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_kernel.bin'
-        open(unit = 206, file =trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_kernel.bin'
-        open(unit = 207, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_alpha_kernel.bin'
-        open(unit = 208, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_beta_kernel.bin'
-        open(unit = 209, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_c_kernel.bin'
-        open(unit = 210,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_beta_kernel.bin'
-        open(unit = 211,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-        if (APPROXIMATE_HESS_KL) then
-          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian1_kernel.bin'
-          open(unit =214,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-          if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian2_kernel.bin'
-          open(unit=215,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-          if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-        endif
-      endif
-
-    endif
-
+    ! initializes
     rho_kl(:,:,:) = 0._CUSTOM_REAL
     mu_kl(:,:,:) = 0._CUSTOM_REAL
     kappa_kl(:,:,:) = 0._CUSTOM_REAL
@@ -974,40 +883,11 @@
 
   ! poro-elastic domains
   if (any_poroelastic) then
-
+    ! safety checks
     if (.not. save_ASCII_kernels) call stop_the_code('poroelastic simulations must use save_ASCII_kernels')
+    if (GPU_MODE) call stop_the_code('poroelastic kernel output not implemented on GPUs yet')
 
-    ! Primary kernels
-    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_B_C_kernel.dat'
-    open(unit = 144, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_M_rho_rhof_kernel.dat'
-    open(unit = 155, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_m_eta_kernel.dat'
-    open(unit = 16, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-    ! Wavespeed kernels
-    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_cpI_cpII_cs_kernel.dat'
-    open(unit = 20, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhobb_rhofbb_ratio_kernel.dat'
-    open(unit = 21, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_phib_eta_kernel.dat'
-    open(unit = 22, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-    ! Density normalized kernels
-    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mub_Bb_Cb_kernel.dat'
-    open(unit = 17, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Mb_rhob_rhofb_kernel.dat'
-    open(unit = 18, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mb_etab_kernel.dat'
-    open(unit = 19, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
+    ! initializes
     rhot_kl(:,:,:) = 0._CUSTOM_REAL
     rhof_kl(:,:,:) = 0._CUSTOM_REAL
     eta_kl(:,:,:) = 0._CUSTOM_REAL
@@ -1033,46 +913,7 @@
 
   ! acoustic domains
   if (any_acoustic) then
-
-    if (save_ASCII_kernels) then
-      ! ascii format
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_kernel.dat'
-      open(unit = 95, file = trim(OUTPUT_FILES)//outputname,status ='unknown',iostat=ier)
-      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_c_kernel.dat'
-      open(unit = 96, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-    else
-      ! binary format
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_acoustic_kernel.bin'
-      open(unit = 200, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_acoustic_kernel.bin'
-      open(unit = 201, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_acoustic_kernel.bin'
-      open(unit = 202, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c_acoustic_kernel.bin'
-      open(unit = 203, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-      if (APPROXIMATE_HESS_KL) then
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian1_acoustic_kernel.bin'
-        open(unit=212,file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian2_acoustic_kernel.bin'
-        open(unit=213,file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
-      endif
-    endif
-
+    ! initializes
     rho_ac_kl(:,:,:) = 0._CUSTOM_REAL
     kappa_ac_kl(:,:,:) = 0._CUSTOM_REAL
 

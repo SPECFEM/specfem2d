@@ -767,15 +767,6 @@ void FC_FUNC_(prepare_fields_elastic_adj_dev,
   print_CUDA_error_if_any(cudaMemset(mp->d_mu_kl,0,size*sizeof(realw)),5216);
   print_CUDA_error_if_any(cudaMemset(mp->d_kappa_kl,0,size*sizeof(realw)),5217);
 
-  // helper arrays size [NGLOB]
-  size = mp->NGLOB_AB;
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_dsxx),size*sizeof(realw)),5218);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_dsxz),size*sizeof(realw)),5219);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_dszz),size*sizeof(realw)),5220);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_dsxx),size*sizeof(realw)),5221);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_dsxz),size*sizeof(realw)),5222);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_dszz),size*sizeof(realw)),5223);
-
   // approximate hessian kernel
   if (*APPROXIMATE_HESS_KL) {
     // debug
@@ -1325,12 +1316,6 @@ TRACE("prepare_cleanup_device");
       cudaFree(mp->d_rho_kl);
       cudaFree(mp->d_mu_kl);
       cudaFree(mp->d_kappa_kl);
-      cudaFree(mp->d_b_dsxx);
-      cudaFree(mp->d_b_dsxz);
-      cudaFree(mp->d_b_dszz);
-      cudaFree(mp->d_dsxx);
-      cudaFree(mp->d_dsxz);
-      cudaFree(mp->d_dszz);
       if (*APPROXIMATE_HESS_KL ) cudaFree(mp->d_hess_el_kl);
     }
 

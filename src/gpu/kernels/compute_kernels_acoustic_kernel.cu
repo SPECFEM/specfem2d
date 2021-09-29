@@ -41,6 +41,7 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
                                                 realw* d_hprime_xx,
                                                 realw* d_xix,realw* d_xiz,
                                                 realw* d_gammax,realw* d_gammaz,
+                                                realw* potential_acoustic,
                                                 realw* potential_dot_dot_acoustic,
                                                 realw* b_potential_acoustic,
                                                 realw* rho_ac_kl,
@@ -62,6 +63,12 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
 
   int active = 0;
 
+  // calcul the displacement by computing the gradient of potential / rho
+  // and calcul the acceleration by computing the gradient of potential_dot_dot / rho
+  //
+  // note: we use the displ potential_acoustic for the adjoint wavefield, and not the accel potential_dot_dot_acoustic,
+  //       to match the rho-kernel expressions from Luo et al. (2013)
+
   // handles case when there is 1 extra block (due to rectangular grid)
   if (ispec < NSPEC_AB) {
     // acoustic elements only
@@ -71,7 +78,8 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
       // copy field values
       iglob = d_ibool[ij_ispec_padded] - 1;
       scalar_field_displ[ij] = b_potential_acoustic[iglob];
-      scalar_field_accel[ij] = potential_dot_dot_acoustic[iglob];
+      // old: scalar_field_accel[ij] = potential_dot_dot_acoustic[iglob];
+      scalar_field_accel[ij] = potential_acoustic[iglob];
     }
   }
 
@@ -97,6 +105,17 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
                             d_hprime_xx,
                             d_xix,d_xiz,d_gammax,d_gammaz,
                             rhol);
+
+    // acoustic kernel integration
+    // old expression (from elastic kernels)
+    //rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) - rhol  * &
+    //      dot_product(accel_loc(:),b_displ_loc(:)) * deltat
+    //kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) - kappal * &
+    //      potential_dot_dot_acoustic(iglob) / kappal * &
+    //      b_potential_dot_dot_acoustic(iglob) / kappal
+    //      * deltat
+
+    // new expression (from PDE-constrained optimization, coupling terms changed as well)
 
     // density kernel
     rho_ac_kl[ij_ispec] +=  rhol * (accel_elm[0]*b_displ_elm[0] + accel_elm[1]*b_displ_elm[1] ) * deltat;

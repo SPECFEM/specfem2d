@@ -80,17 +80,17 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,HALF,TWO,FOUR_THIRDS
 
-  use specfem_par, only: ispec_is_elastic,rho_k, & ! AXISYM,
-                         rho_kl,mu_kl,kappa_kl, &
-                         nglob,nspec,ibool,accel_elastic,b_displ_elastic, &
+  use specfem_par, only: ispec_is_elastic, & ! AXISYM,
+                         nspec,ibool,accel_elastic,b_displ_elastic, &
                          P_SV,displ_elastic, &
-                         mu_k,kappa_k,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
+                         ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
                          GPU_MODE
 
   use specfem_par_gpu, only: Mesh_pointer
 
-  use specfem_par, only: deltat,c11_k,c13_k,c15_k,c33_k,c35_k,c55_k,ispec_is_anisotropic, &
-                         rho_kl,c11_kl,c13_kl,c15_kl,c33_kl,c35_kl,c55_kl
+  use specfem_par, only: deltat,ispec_is_anisotropic, &
+                         rho_kl,mu_kl,kappa_kl, &
+                         c11_kl,c13_kl,c15_kl,c33_kl,c35_kl,c55_kl
 
   implicit none
 
@@ -102,7 +102,8 @@
   real(kind=CUSTOM_REAL) :: b_dux_dxl,b_duz_dxl,b_dux_dzl,b_duz_dzl
   real(kind=CUSTOM_REAL) :: dsxx,dsxz,dszz
   real(kind=CUSTOM_REAL) :: b_dsxx,b_dsxz,b_dszz
-
+  real(kind=CUSTOM_REAL) :: rho_k_loc,kappa_k_loc,mu_k_loc
+  real(kind=CUSTOM_REAL) :: c11_k_loc,c13_k_loc,c15_k_loc,c33_k_loc,c35_k_loc,c55_k_loc
   ! Jacobian matrix and determinant
   double precision :: xixl,xizl,gammaxl,gammazl
 
@@ -110,13 +111,17 @@
   if (.not. GPU_MODE) then
     ! updates kernels on CPU
     do ispec = 1,nspec
-      if (ispec_is_elastic(ispec)) then
-        do j = 1,NGLLZ; do i = 1,NGLLX
+      ! only elastic elements
+      if (.not. ispec_is_elastic(ispec)) cycle
+
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
           ! derivative along x and along z
           dux_dxi = 0._CUSTOM_REAL
           duz_dxi = 0._CUSTOM_REAL
           dux_dgamma = 0._CUSTOM_REAL
           duz_dgamma = 0._CUSTOM_REAL
+
           b_dux_dxi = 0._CUSTOM_REAL
           b_duz_dxi = 0._CUSTOM_REAL
           b_dux_dgamma = 0._CUSTOM_REAL
@@ -129,7 +134,6 @@
             duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
             dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
             duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-
 
             b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
             b_duz_dxi = b_duz_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
@@ -150,11 +154,8 @@
 
           b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
           b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
-
           b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
           b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
-
-          iglob = ibool(i,j,ispec)
 
           ! isotropic kernel contributions
           if (P_SV) then
@@ -167,70 +168,54 @@
             b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
             b_dszz =  b_duz_dzl
 
-            kappa_k(iglob) = (dsxx + dszz) *  (b_dsxx + b_dszz)
-            mu_k(iglob) = dsxx * b_dsxx + dszz * b_dszz + &
-                          2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k(iglob)
+            kappa_k_loc = (dsxx + dszz) *  (b_dsxx + b_dszz)
+            mu_k_loc = dsxx * b_dsxx + dszz * b_dszz + &
+                          2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k_loc
           else
             ! SH (membrane) waves
-            mu_k(iglob) = dux_dxl * b_dux_dxl + dux_dzl * b_dux_dzl
+            mu_k_loc = dux_dxl * b_dux_dxl + dux_dzl * b_dux_dzl
+            kappa_k_loc = 0.0_CUSTOM_REAL
           endif
+
+
+          ! adding contributions to sensitivity kernel values (on local basis (i,j,ispec))
+          iglob = ibool(i,j,ispec)
+          rho_k_loc =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) + accel_elastic(2,iglob)*b_displ_elastic(2,iglob)
+
+          ! note: we will add the minus sign to the kernels when multiplying with the material properties
+          !       at the end of the time looping in save_adjoint_kernels.f90
+
+          ! isotropic kernels
+          ! for parameterization (rho,mu,kappa): "primary" kernels
+          ! density kernel
+          rho_kl(i,j,ispec) = rho_kl(i,j,ispec) + rho_k_loc
+          ! shear modulus kernel
+          mu_kl(i,j,ispec) =  mu_kl(i,j,ispec) +  mu_k_loc
+          ! bulk modulus kernel
+          kappa_kl(i,j,ispec) = kappa_kl(i,j,ispec) +  kappa_k_loc
 
           ! Voigt kernels, e.g., see Sieminski, 2007a,b
           if (ispec_is_anisotropic(ispec)) then
-            c11_k(iglob) = dux_dxl*b_dux_dxl
-            c13_k(iglob) = dux_dxl*b_duz_dzl + duz_dzl*b_dux_dxl
-            c15_k(iglob) = 2*(dux_dxl*HALF*(b_dux_dzl+b_duz_dxl)+&
+            c11_k_loc = dux_dxl*b_dux_dxl
+            c13_k_loc = dux_dxl*b_duz_dzl + duz_dzl*b_dux_dxl
+            c15_k_loc = 2*(dux_dxl*HALF*(b_dux_dzl+b_duz_dxl)+&
                            HALF*(dux_dzl+duz_dxl)*b_dux_dxl)
-            c33_k(iglob) = duz_dzl*b_duz_dzl
-            c35_k(iglob) = 2*(duz_dzl*HALF*(b_dux_dzl+b_duz_dxl)+&
+            c33_k_loc = duz_dzl*b_duz_dzl
+            c35_k_loc = 2*(duz_dzl*HALF*(b_dux_dzl+b_duz_dxl)+&
                            HALF*(dux_dzl+duz_dxl)*b_duz_dzl)
-            c55_k(iglob) = 4*HALF*(dux_dzl+duz_dxl)*HALF*(b_dux_dzl+b_duz_dxl)
+            c55_k_loc = 4*HALF*(dux_dzl+duz_dxl)*HALF*(b_dux_dzl+b_duz_dxl)
+
+            ! "primary" kernels
+            !rho_kl(i,j,ispec) = rho_kl(i,j,ispec) + rho_k_loc  ! taken from above
+            c11_kl(i,j,ispec) = c11_kl(i,j,ispec) + c11_k_loc
+            c13_kl(i,j,ispec) = c13_kl(i,j,ispec) + c13_k_loc
+            c15_kl(i,j,ispec) = c15_kl(i,j,ispec) + c15_k_loc
+            c33_kl(i,j,ispec) = c33_kl(i,j,ispec) + c33_k_loc
+            c35_kl(i,j,ispec) = c35_kl(i,j,ispec) + c35_k_loc
+            c55_kl(i,j,ispec) = c55_kl(i,j,ispec) + c55_k_loc
           endif
-        enddo; enddo
-      endif
-    enddo
-
-    do iglob = 1,nglob
-      rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) + accel_elastic(2,iglob)*b_displ_elastic(2,iglob)
-    enddo
-
-    ! adding contributions to sensitivity kernel values (on local basis (i,j,ispec))
-    do ispec = 1, nspec
-      if (ispec_is_elastic(ispec)) then
-        ! note: we will add the minus sign to the kernels when multiplying with the material properties
-        !       at the end of the time looping in save_adjoint_kernels.f90
-
-        ! isotropic kernels
-        do j = 1, NGLLZ
-          do i = 1, NGLLX
-            iglob = ibool(i,j,ispec)
-            ! for parameterization (rho,mu,kappa): "primary" kernels
-            ! density kernel
-            rho_kl(i,j,ispec) = rho_kl(i,j,ispec) + rho_k(iglob)
-            ! shear modulus kernel
-            mu_kl(i,j,ispec) =  mu_kl(i,j,ispec) +  mu_k(iglob)
-            ! bulk modulus kernel
-            kappa_kl(i,j,ispec) = kappa_kl(i,j,ispec) +  kappa_k(iglob)
-          enddo
         enddo
-
-        ! Voigt kernels, e.g., see Sieminski, 2007a,b
-        if (ispec_is_anisotropic(ispec)) then
-          do j = 1, NGLLZ
-            do i = 1, NGLLX
-              iglob = ibool(i,j,ispec)
-              ! "primary" kernels
-              !rho_kl(i,j,ispec) = rho_kl(i,j,ispec) + rho_k(iglob)  ! taken from above
-              c11_kl(i,j,ispec) = c11_kl(i,j,ispec) + c11_k(iglob)
-              c13_kl(i,j,ispec) = c13_kl(i,j,ispec) + c13_k(iglob)
-              c15_kl(i,j,ispec) = c15_kl(i,j,ispec) + c15_k(iglob)
-              c33_kl(i,j,ispec) = c33_kl(i,j,ispec) + c33_k(iglob)
-              c35_kl(i,j,ispec) = c35_kl(i,j,ispec) + c35_k(iglob)
-              c55_kl(i,j,ispec) = c55_kl(i,j,ispec) + c55_k(iglob)
-            enddo
-          enddo
-        endif
-      endif
+      enddo
     enddo
 
   else
@@ -367,15 +352,14 @@
 
   use constants, only: CUSTOM_REAL,FOUR_THIRDS,NGLLX,NGLLZ,TWO,HALF
 
-  use specfem_par, only: nglob,nspec,ispec_is_poroelastic,ibool,deltat, &
+  use specfem_par, only: nspec,ispec_is_poroelastic,ibool,deltat, &
                          phistore,tortstore,kappaarraystore,mufr_store,rhoarraystore,permstore,etastore, &
                          accels_poroelastic,accelw_poroelastic,velocw_poroelastic, &
                          b_displs_poroelastic,b_displw_poroelastic, &
                          epsilondev_s,b_epsilondev_s, &
                          epsilondev_w,b_epsilondev_w, &
-                         rhot_k,rhof_k,sm_k,eta_k,B_k,C_k, &
-                         rhot_kl,rhof_kl,sm_kl,eta_kl,B_kl,C_kl,M_kl,M_k, &
-                         mufr_kl,mufr_k,rhob_kl,rhofb_kl, &
+                         rhot_kl,rhof_kl,sm_kl,eta_kl,B_kl,C_kl,M_kl, &
+                         mufr_kl,rhob_kl,rhofb_kl, &
                          mufrb_kl,phi_kl,rhobb_kl,rhofbb_kl,phib_kl,cpI_kl,cpII_kl,cs_kl,ratio_kl, &
                          GPU_MODE,NSTEP_BETWEEN_COMPUTE_KERNELS
   implicit none
@@ -387,6 +371,7 @@
   real(kind=CUSTOM_REAL) :: dsxx,dsxz,dszz,dszx_xz
   real(kind=CUSTOM_REAL) :: b_dsxx,b_dsxz,b_dszz,b_dszx_xz
   real(kind=CUSTOM_REAL) :: dwxx,dwzz,b_dwxx,b_dwzz
+  real(kind=CUSTOM_REAL) :: rhot_k_loc,rhof_k_loc,sm_k_loc,eta_k_loc,B_k_loc,C_k_loc,M_k_loc,mufr_k_loc
 
   ! to evaluate cpI, cpII, and cs, and rI (poroelastic medium)
   double precision :: phi,tort,kappa_s,kappa_f,kappa_fr,mu_fr
@@ -401,251 +386,249 @@
   ! safety check
   if (GPU_MODE) call stop_the_code('Error poroelastic kernels not implemented on GPUs yet')
 
-  ! kernel contributions on global nodes
-  do iglob = 1,nglob
-    rhot_k(iglob) = accels_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
-                    accels_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob)
-
-    rhof_k(iglob) = accelw_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
-                    accelw_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob) + &
-                    accels_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
-                    accels_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
-
-    sm_k(iglob)  = accelw_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
-                   accelw_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
-
-    eta_k(iglob) = velocw_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
-                   velocw_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
-  enddo
-
   ! kernels on local nodes
   do ispec = 1, nspec
-    if (ispec_is_poroelastic(ispec)) then
+    ! only poroelastic elements
+    if (.not. ispec_is_poroelastic(ispec)) cycle
 
-      do j = 1, NGLLZ
-        do i = 1, NGLLX
-          iglob = ibool(i,j,ispec)
+    do j = 1, NGLLZ
+      do i = 1, NGLLX
+        iglob = ibool(i,j,ispec)
 
-          ! gets poroelastic material
-          phi = phistore(i,j,ispec)
-          tort = tortstore(i,j,ispec)
-          kappa_s = kappaarraystore(1,i,j,ispec)
-          kappa_f = kappaarraystore(2,i,j,ispec)
-          kappa_fr = kappaarraystore(3,i,j,ispec)
-          mu_fr = mufr_store(i,j,ispec)
+        ! kernel contributions
+        rhot_k_loc = accels_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
+                        accels_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob)
 
-          ! Biot coefficients for the input phi
-          call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+        rhof_k_loc = accelw_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
+                        accelw_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob) + &
+                        accels_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
+                        accels_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
 
-          B_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr
+        sm_k_loc = accelw_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
+                       accelw_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
 
-          ! permeability
-          perm_xx = permstore(1,i,j,ispec)
-          eta_f = etastore(i,j,ispec)
+        eta_k_loc = velocw_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
+                       velocw_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
 
-          rho_s = rhoarraystore(1,i,j,ispec)
-          rho_f = rhoarraystore(2,i,j,ispec)
-          rho_bar = (1.d0 - phi)*rho_s + phi * rho_f
+        ! gets poroelastic material
+        phi = phistore(i,j,ispec)
+        tort = tortstore(i,j,ispec)
+        kappa_s = kappaarraystore(1,i,j,ispec)
+        kappa_f = kappaarraystore(2,i,j,ispec)
+        kappa_fr = kappaarraystore(3,i,j,ispec)
+        mu_fr = mufr_store(i,j,ispec)
 
-          ! Approximated velocities (no viscous dissipation)
-          afactor = rho_bar - phi/tort*rho_f
-          bfactor = H_biot + phi*rho_bar/(tort*rho_f)*M_biot - TWO*phi/tort*C_biot
-          cfactor = phi/(tort*rho_f)*(H_biot*M_biot - C_biot*C_biot)
+        ! Biot coefficients for the input phi
+        call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
 
-          cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-          cpIIsquare = (bfactor - sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-          cssquare = mu_fr/afactor
+        B_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr
 
-          ! Approximated ratio r = amplitude "w" field/amplitude "s" field (no viscous dissipation)
-          ! used later for wavespeed kernels calculation, which are presently implemented for inviscid case,
-          ! contrary to primary and density-normalized kernels, which are consistent with viscous fluid case.
-          gamma1 = H_biot - phi/tort*C_biot
-          gamma2 = C_biot - phi/tort*M_biot
-          gamma3 = phi/tort*( M_biot*(afactor/rho_f + phi/tort) - C_biot)
-          gamma4 = phi/tort*( C_biot*(afactor/rho_f + phi/tort) - H_biot)
+        ! permeability
+        perm_xx = permstore(1,i,j,ispec)
+        eta_f = etastore(i,j,ispec)
 
-          ratio = HALF*(gamma1 - gamma3)/gamma4 + HALF*sqrt((gamma1-gamma3)**2/gamma4**2 + 4.d0 * gamma2/gamma4)
+        rho_s = rhoarraystore(1,i,j,ispec)
+        rho_f = rhoarraystore(2,i,j,ispec)
+        rho_bar = (1.d0 - phi)*rho_s + phi * rho_f
 
-          rhot_kl(i,j,ispec) = rhot_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * rho_bar * rhot_k(iglob)
-          rhof_kl(i,j,ispec) = rhof_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * rho_f * rhof_k(iglob)
-          sm_kl(i,j,ispec) = sm_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * rho_f*tort/phi * sm_k(iglob)
+        ! Approximated velocities (no viscous dissipation)
+        afactor = rho_bar - phi/tort*rho_f
+        bfactor = H_biot + phi*rho_bar/(tort*rho_f)*M_biot - TWO*phi/tort*C_biot
+        cfactor = phi/(tort*rho_f)*(H_biot*M_biot - C_biot*C_biot)
 
-          !at the moment works with constant permeability
-          eta_kl(i,j,ispec) = eta_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * eta_f/perm_xx * eta_k(iglob)
+        cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+        cpIIsquare = (bfactor - sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+        cssquare = mu_fr/afactor
 
-          ! for B_k & mufr_k
-          dsxx = epsilondev_s(1,i,j,ispec) ! dux_dxl
-          dszz = epsilondev_s(2,i,j,ispec) ! duz_dzl
-          dsxz = epsilondev_s(3,i,j,ispec) ! dux_dzl
-          dszx_xz = epsilondev_s(4,i,j,ispec) ! 0.5_CUSTOM_REAL * (duz_dxl + dux_dzl)
+        ! Approximated ratio r = amplitude "w" field/amplitude "s" field (no viscous dissipation)
+        ! used later for wavespeed kernels calculation, which are presently implemented for inviscid case,
+        ! contrary to primary and density-normalized kernels, which are consistent with viscous fluid case.
+        gamma1 = H_biot - phi/tort*C_biot
+        gamma2 = C_biot - phi/tort*M_biot
+        gamma3 = phi/tort*( M_biot*(afactor/rho_f + phi/tort) - C_biot)
+        gamma4 = phi/tort*( C_biot*(afactor/rho_f + phi/tort) - H_biot)
 
-          b_dsxx = b_epsilondev_s(1,i,j,ispec) ! b_dux_dxl
-          b_dszz = b_epsilondev_s(2,i,j,ispec) ! b_duz_dzl
-          b_dsxz = b_epsilondev_s(3,i,j,ispec) ! b_dux_dzl
-          b_dszx_xz = b_epsilondev_s(4,i,j,ispec) ! 0.5_CUSTOM_REAL * (b_duz_dxl + b_dux_dzl)
+        ratio = HALF*(gamma1 - gamma3)/gamma4 + HALF*sqrt((gamma1-gamma3)**2/gamma4**2 + 4.d0 * gamma2/gamma4)
 
-          B_k(iglob) = (dsxx + dszz) *  (b_dsxx + b_dszz) * (H_biot - FOUR_THIRDS * mu_fr)
+        rhot_kl(i,j,ispec) = rhot_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * rho_bar * rhot_k_loc
+        rhof_kl(i,j,ispec) = rhof_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * rho_f * rhof_k_loc
+        sm_kl(i,j,ispec) = sm_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * rho_f*tort/phi * sm_k_loc
 
-          mufr_k(iglob) = (dsxx * b_dsxx + dszz * b_dszz + &
-                          2._CUSTOM_REAL * dszx_xz * b_dszx_xz - &
-                          1._CUSTOM_REAL/3._CUSTOM_REAL * (dsxx + dszz) * (b_dsxx + b_dszz) ) * mu_fr
+        !at the moment works with constant permeability
+        eta_kl(i,j,ispec) = eta_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * eta_f/perm_xx * eta_k_loc
 
-          ! from older compute_forces_poro_solid ...
-          !  iglob = ibool(i,j,ispec)
-          !  dsxx =  dux_dxl
-          !  dsxz = HALF * (duz_dxl + dux_dzl)
-          !  dszz =  duz_dzl
-          !
-          !  b_dsxx =  b_dux_dxl
-          !  b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
-          !  b_dszz =  b_duz_dzl
-          !
-          !  B_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl) * (H_biot - FOUR_THIRDS * mu_fr)
-          !  mufr_k(iglob) = (dsxx * b_dsxx + dszz * b_dszz + &
-          !                  2._CUSTOM_REAL * dsxz * b_dsxz - &
-          !                  1._CUSTOM_REAL/3._CUSTOM_REAL * (dux_dxl + duz_dzl) * (b_dux_dxl + b_duz_dzl) ) * mu_fr
+        ! for B_k & mufr_k
+        dsxx = epsilondev_s(1,i,j,ispec) ! dux_dxl
+        dszz = epsilondev_s(2,i,j,ispec) ! duz_dzl
+        dsxz = epsilondev_s(3,i,j,ispec) ! dux_dzl
+        dszx_xz = epsilondev_s(4,i,j,ispec) ! 0.5_CUSTOM_REAL * (duz_dxl + dux_dzl)
 
-          ! for C_k & M_k
-          dsxx = epsilondev_w(1,i,j,ispec) ! dux_dxl
-          dszz = epsilondev_w(2,i,j,ispec) ! duz_dzl
-          dwxx = epsilondev_w(3,i,j,ispec) ! dwx_dxl
-          dwzz = epsilondev_w(4,i,j,ispec) ! dwz_dzl
+        b_dsxx = b_epsilondev_s(1,i,j,ispec) ! b_dux_dxl
+        b_dszz = b_epsilondev_s(2,i,j,ispec) ! b_duz_dzl
+        b_dsxz = b_epsilondev_s(3,i,j,ispec) ! b_dux_dzl
+        b_dszx_xz = b_epsilondev_s(4,i,j,ispec) ! 0.5_CUSTOM_REAL * (b_duz_dxl + b_dux_dzl)
 
-          b_dsxx = b_epsilondev_w(1,i,j,ispec) ! b_dux_dxl
-          b_dszz = b_epsilondev_w(2,i,j,ispec) ! b_duz_dzl
-          b_dwxx = b_epsilondev_w(3,i,j,ispec) ! b_dwx_dxl
-          b_dwzz = b_epsilondev_w(4,i,j,ispec) ! b_dwz_dzl
+        B_k_loc = (dsxx + dszz) *  (b_dsxx + b_dszz) * (H_biot - FOUR_THIRDS * mu_fr)
 
-          C_k(iglob) =  ( (dsxx + dszz)*(b_dwxx + b_dwzz) + (dwxx + dwzz)*(b_dsxx + b_dszz) ) * C_biot
-          M_k(iglob) = (dwxx + dwzz)*(b_dwxx + b_dwzz) * M_biot
+        mufr_k_loc = (dsxx * b_dsxx + dszz * b_dszz + &
+                        2._CUSTOM_REAL * dszx_xz * b_dszx_xz - &
+                        1._CUSTOM_REAL/3._CUSTOM_REAL * (dsxx + dszz) * (b_dsxx + b_dszz) ) * mu_fr
 
-          ! from older compute_forces_poro_fluid ...
-          !C_k(iglob) =  ((dux_dxl + duz_dzl) *  (b_dwx_dxl + b_dwz_dzl) + &
-          !                (dwx_dxl + dwz_dzl) *  (b_dux_dxl + b_duz_dzl)) * C_biot
-          !M_k(iglob) = (dwx_dxl + dwz_dzl) *  (b_dwx_dxl + b_dwz_dzl) * M_biot
+        ! from older compute_forces_poro_solid ...
+        !  iglob = ibool(i,j,ispec)
+        !  dsxx =  dux_dxl
+        !  dsxz = HALF * (duz_dxl + dux_dzl)
+        !  dszz =  duz_dzl
+        !
+        !  b_dsxx =  b_dux_dxl
+        !  b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
+        !  b_dszz =  b_duz_dzl
+        !
+        !  B_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl) * (H_biot - FOUR_THIRDS * mu_fr)
+        !  mufr_k(iglob) = (dsxx * b_dsxx + dszz * b_dszz + &
+        !                  2._CUSTOM_REAL * dsxz * b_dsxz - &
+        !                  1._CUSTOM_REAL/3._CUSTOM_REAL * (dux_dxl + duz_dzl) * (b_dux_dxl + b_duz_dzl) ) * mu_fr
 
-          B_kl(i,j,ispec) = B_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * B_k(iglob)
-          C_kl(i,j,ispec) = C_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * C_k(iglob)
-          M_kl(i,j,ispec) = M_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * M_k(iglob)
+        ! for C_k & M_k
+        dsxx = epsilondev_w(1,i,j,ispec) ! dux_dxl
+        dszz = epsilondev_w(2,i,j,ispec) ! duz_dzl
+        dwxx = epsilondev_w(3,i,j,ispec) ! dwx_dxl
+        dwzz = epsilondev_w(4,i,j,ispec) ! dwz_dzl
 
-          mufr_kl(i,j,ispec) = mufr_kl(i,j,ispec) - TWO * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * mufr_k(iglob)
+        b_dsxx = b_epsilondev_w(1,i,j,ispec) ! b_dux_dxl
+        b_dszz = b_epsilondev_w(2,i,j,ispec) ! b_duz_dzl
+        b_dwxx = b_epsilondev_w(3,i,j,ispec) ! b_dwx_dxl
+        b_dwzz = b_epsilondev_w(4,i,j,ispec) ! b_dwz_dzl
 
-          ! density kernels
-          rholb = rho_bar - phi*rho_f/tort
-          rhob_kl(i,j,ispec) = rhot_kl(i,j,ispec) + B_kl(i,j,ispec) + mufr_kl(i,j,ispec)
-          rhofb_kl(i,j,ispec) = rhof_kl(i,j,ispec) + C_kl(i,j,ispec) + M_kl(i,j,ispec) + sm_kl(i,j,ispec)
+        C_k_loc = ((dsxx + dszz)*(b_dwxx + b_dwzz) + (dwxx + dwzz)*(b_dsxx + b_dszz)) * C_biot
+        M_k_loc = (dwxx + dwzz)*(b_dwxx + b_dwzz) * M_biot
 
-          mufrb_kl(i,j,ispec) = mufr_kl(i,j,ispec)
-          phi_kl(i,j,ispec) = - sm_kl(i,j,ispec) - M_kl(i,j,ispec)
+        ! from older compute_forces_poro_fluid ...
+        !C_k(iglob) =  ((dux_dxl + duz_dzl) *  (b_dwx_dxl + b_dwz_dzl) + &
+        !                (dwx_dxl + dwz_dzl) *  (b_dux_dxl + b_duz_dzl)) * C_biot
+        !M_k(iglob) = (dwx_dxl + dwz_dzl) *  (b_dwx_dxl + b_dwz_dzl) * M_biot
 
-          ! wave speed kernels
-          dd1 = (1._CUSTOM_REAL+rholb/rho_f)*ratio**2 + 2._CUSTOM_REAL*ratio + tort/phi
+        B_kl(i,j,ispec) = B_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * B_k_loc
+        C_kl(i,j,ispec) = C_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * C_k_loc
+        M_kl(i,j,ispec) = M_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * M_k_loc
 
-          rhobb_kl(i,j,ispec) = rhob_kl(i,j,ispec) &
-                - phi*rho_f/(tort*B_biot) * &
-                  (cpIIsquare + (cpIsquare - cpIIsquare)*( (phi / &
-                  tort*ratio +1._CUSTOM_REAL)/dd1 + &
-                  (rho_bar**2*ratio**2/rho_f**2*(phi / tort*ratio+1._CUSTOM_REAL)*(phi/tort*ratio + &
-                  phi/tort * &
-                  (1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL) )/dd1**2 ) - &
-                  FOUR_THIRDS*cssquare ) &
-                  * B_kl(i,j,ispec) &
-                - rho_bar*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
-                  (phi/tort*ratio + &
-                  1._CUSTOM_REAL)**2/dd1**2*M_kl(i,j,ispec) + &
-                  rho_bar*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
-                  (phi/tort*ratio+1._CUSTOM_REAL)/dd1 - &
-                  phi*ratio/tort*(phi / tort*ratio+1._CUSTOM_REAL)*&
-                  (1._CUSTOM_REAL+rho_bar*ratio/rho_f)/dd1**2) &
-                  * C_kl(i,j,ispec) &
-                + phi*rho_f*cssquare / (tort*mu_fr) &
-                  * mufrb_kl(i,j,ispec)
+        mufr_kl(i,j,ispec) = mufr_kl(i,j,ispec) - TWO * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * mufr_k_loc
 
-          rhofbb_kl(i,j,ispec) = rhofb_kl(i,j,ispec) &
-                + phi*rho_f/(tort*B_biot) * (cpIIsquare + (cpIsquare - cpIIsquare)*( (phi/ &
-                  tort*ratio +1._CUSTOM_REAL)/dd1+&
-                  (rho_bar**2*ratio**2/rho_f**2*(phi/tort*ratio+1)*(phi/tort*ratio+ &
-                  phi/tort*(1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL) )/dd1**2 )- &
-                  FOUR_THIRDS*cssquare ) &
-                  * B_kl(i,j,ispec) &
-                + rho_bar*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
-                  (phi/tort*ratio + 1._CUSTOM_REAL)**2/dd1**2 &
-                  * M_kl(i,j,ispec) &
-                - rho_bar*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
-                  (phi/tort*ratio+1._CUSTOM_REAL)/dd1 - &
-                  phi*ratio/tort*(phi/tort*ratio+1._CUSTOM_REAL)*&
-                  (1._CUSTOM_REAL+rho_bar*ratio/rho_f)/dd1**2) &
-                  * C_kl(i,j,ispec) &
-                - phi*rho_f*cssquare/(tort*mu_fr) &
-                  * mufrb_kl(i,j,ispec)
+        ! density kernels
+        rholb = rho_bar - phi*rho_f/tort
+        rhob_kl(i,j,ispec) = rhot_kl(i,j,ispec) + B_kl(i,j,ispec) + mufr_kl(i,j,ispec)
+        rhofb_kl(i,j,ispec) = rhof_kl(i,j,ispec) + C_kl(i,j,ispec) + M_kl(i,j,ispec) + sm_kl(i,j,ispec)
 
-          phib_kl(i,j,ispec) = phi_kl(i,j,ispec) &
-                - phi*rho_bar/(tort*B_biot) * ( cpIsquare - rho_f/rho_bar*cpIIsquare- &
-                  (cpIsquare-cpIIsquare)*( (TWO*ratio**2*phi/tort + (1._CUSTOM_REAL+rho_f/rho_bar)* &
-                  (TWO*ratio*phi/tort+1._CUSTOM_REAL))/dd1 + (phi/tort*ratio+1._CUSTOM_REAL)*(phi*&
-                  ratio/tort+phi/tort*(1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL)*((1._CUSTOM_REAL+ &
-                  rho_bar/rho_f-TWO*phi/tort)*ratio**2+TWO*ratio)/dd1**2 ) - &
-                  FOUR_THIRDS*rho_f*cssquare/rho_bar ) &
-                  * B_kl(i,j,ispec) &
-                + rho_f/M_biot * (cpIsquare-cpIIsquare) &
-                  *( TWO*ratio*(phi/tort*ratio+1._CUSTOM_REAL)/dd1 - &
-                    (phi/tort*ratio+1._CUSTOM_REAL)**2 &
-                    *((1._CUSTOM_REAL+rho_bar/rho_f-TWO*phi/tort)*ratio**2+TWO*ratio)/dd1**2) &
-                  * M_kl(i,j,ispec) &
-                + phi*rho_f/(tort*C_biot)* (cpIsquare-cpIIsquare)*ratio* (&
-                  (1._CUSTOM_REAL+rho_f/rho_bar*ratio)/dd1 - (phi/tort*ratio+1._CUSTOM_REAL)* &
-                  (1._CUSTOM_REAL+rho_bar/rho_f*ratio)*((1._CUSTOM_REAL+rho_bar/rho_f-TWO*phi/tort)*ratio+TWO)/dd1**2 ) &
-                  * C_kl(i,j,ispec) &
-                - phi*rho_f*cssquare /(tort*mu_fr) &
-                  * mufrb_kl(i,j,ispec)
+        mufrb_kl(i,j,ispec) = mufr_kl(i,j,ispec)
+        phi_kl(i,j,ispec) = - sm_kl(i,j,ispec) - M_kl(i,j,ispec)
 
-          ! wavespeed kernels
-          cpI_kl(i,j,ispec) = 2._CUSTOM_REAL*cpIsquare/B_biot*rho_bar*( &
-                  1._CUSTOM_REAL-phi/tort + (phi/tort*ratio+ 1._CUSTOM_REAL)*(phi/tort*&
-                  ratio+phi/tort* (1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL)/dd1 ) &
-                  * B_kl(i,j,ispec) &
-                + 2._CUSTOM_REAL*cpIsquare*rho_f*tort/(phi*M_biot) *&
-                  (phi/tort*ratio+1._CUSTOM_REAL)**2/dd1 &
-                  * M_kl(i,j,ispec) &
-                + 2._CUSTOM_REAL*cpIsquare*rho_f/C_biot * &
-                  (phi/tort*ratio+1._CUSTOM_REAL)* (1._CUSTOM_REAL+rho_bar/rho_f*ratio)/dd1 &
-                  * C_kl(i,j,ispec)
-          cpII_kl(i,j,ispec) = 2._CUSTOM_REAL*cpIIsquare*rho_bar/B_biot * (&
-                  phi*rho_f/(tort*rho_bar) - (phi/tort*ratio+ 1._CUSTOM_REAL)*(phi/tort*ratio+phi/tort* &
-                  (1._CUSTOM_REAL+rho_f/rho_bar)-&
-                  1._CUSTOM_REAL)/dd1  ) &
-                  * B_kl(i,j,ispec) &
-                + 2._CUSTOM_REAL*cpIIsquare*rho_f*tort/(phi*M_biot) * (&
-                  1._CUSTOM_REAL - (phi/tort*ratio+ 1._CUSTOM_REAL)**2/dd1  ) &
-                  * M_kl(i,j,ispec) &
-                + 2._CUSTOM_REAL*cpIIsquare*rho_f/C_biot * (&
-                  1._CUSTOM_REAL - (phi/tort*ratio+ 1._CUSTOM_REAL)*(1._CUSTOM_REAL+&
-                  rho_bar/rho_f*ratio)/dd1  ) &
-                  * C_kl(i,j,ispec)
+        ! wave speed kernels
+        dd1 = (1._CUSTOM_REAL+rholb/rho_f)*ratio**2 + 2._CUSTOM_REAL*ratio + tort/phi
 
-          cs_kl(i,j,ispec) = - 8._CUSTOM_REAL/3._CUSTOM_REAL*cssquare* rho_bar/B_biot &
-                  *(1._CUSTOM_REAL-phi*rho_f/(tort*rho_bar)) &
-                  * B_kl(i,j,ispec) &
-                + 2._CUSTOM_REAL*(rho_bar-rho_f*phi/tort)/mu_fr*cssquare &
-                  * mufrb_kl(i,j,ispec)
+        rhobb_kl(i,j,ispec) = rhob_kl(i,j,ispec) &
+              - phi*rho_f/(tort*B_biot) * &
+                (cpIIsquare + (cpIsquare - cpIIsquare)*( (phi / &
+                tort*ratio +1._CUSTOM_REAL)/dd1 + &
+                (rho_bar**2*ratio**2/rho_f**2*(phi / tort*ratio+1._CUSTOM_REAL)*(phi/tort*ratio + &
+                phi/tort * &
+                (1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL) )/dd1**2 ) - &
+                FOUR_THIRDS*cssquare ) &
+                * B_kl(i,j,ispec) &
+              - rho_bar*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
+                (phi/tort*ratio + &
+                1._CUSTOM_REAL)**2/dd1**2*M_kl(i,j,ispec) + &
+                rho_bar*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
+                (phi/tort*ratio+1._CUSTOM_REAL)/dd1 - &
+                phi*ratio/tort*(phi / tort*ratio+1._CUSTOM_REAL)*&
+                (1._CUSTOM_REAL+rho_bar*ratio/rho_f)/dd1**2) &
+                * C_kl(i,j,ispec) &
+              + phi*rho_f*cssquare / (tort*mu_fr) &
+                * mufrb_kl(i,j,ispec)
 
-          ratio_kl(i,j,ispec) = ratio*rho_bar*phi/(tort*B_biot) * (cpIsquare-cpIIsquare) &
-                  * (phi/tort*(2._CUSTOM_REAL*ratio+1._CUSTOM_REAL+rho_f/rho_bar)/dd1 - (phi/tort*ratio+1._CUSTOM_REAL)*&
-                    (phi/tort*ratio+phi/tort*( 1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL)*(2._CUSTOM_REAL*ratio*(&
-                      1._CUSTOM_REAL+rho_bar/rho_f-phi/tort) + 2._CUSTOM_REAL)/dd1**2  ) &
-                  * B_kl(i,j,ispec) &
-                + ratio*rho_f*tort/(phi*M_biot)*(cpIsquare-cpIIsquare) * 2._CUSTOM_REAL*phi/tort &
-                  * ( (phi/tort*ratio+1._CUSTOM_REAL)/dd1 - (phi/tort*ratio+1._CUSTOM_REAL)**2 &
-                      * ((1._CUSTOM_REAL+rho_bar/rho_f-phi/tort)*ratio + 1._CUSTOM_REAL)/dd1**2 ) &
-                  * M_kl(i,j,ispec) &
-                + ratio*rho_f/C_biot*(cpIsquare-cpIIsquare) &
-                  * ( (2._CUSTOM_REAL*phi*rho_bar*ratio/(tort*rho_f)+phi/tort+rho_bar/rho_f)/dd1 - &
-                       2._CUSTOM_REAL*phi/tort*(phi/tort*ratio+1._CUSTOM_REAL)*(1._CUSTOM_REAL+rho_bar/rho_f*ratio) &
-                      *((1._CUSTOM_REAL + rho_bar/rho_f - phi/tort)*ratio+1._CUSTOM_REAL)/dd1**2 ) &
-                  * C_kl(i,j,ispec)
-        enddo
+        rhofbb_kl(i,j,ispec) = rhofb_kl(i,j,ispec) &
+              + phi*rho_f/(tort*B_biot) * (cpIIsquare + (cpIsquare - cpIIsquare)*( (phi/ &
+                tort*ratio +1._CUSTOM_REAL)/dd1+&
+                (rho_bar**2*ratio**2/rho_f**2*(phi/tort*ratio+1)*(phi/tort*ratio+ &
+                phi/tort*(1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL) )/dd1**2 )- &
+                FOUR_THIRDS*cssquare ) &
+                * B_kl(i,j,ispec) &
+              + rho_bar*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
+                (phi/tort*ratio + 1._CUSTOM_REAL)**2/dd1**2 &
+                * M_kl(i,j,ispec) &
+              - rho_bar*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
+                (phi/tort*ratio+1._CUSTOM_REAL)/dd1 - &
+                phi*ratio/tort*(phi/tort*ratio+1._CUSTOM_REAL)*&
+                (1._CUSTOM_REAL+rho_bar*ratio/rho_f)/dd1**2) &
+                * C_kl(i,j,ispec) &
+              - phi*rho_f*cssquare/(tort*mu_fr) &
+                * mufrb_kl(i,j,ispec)
+
+        phib_kl(i,j,ispec) = phi_kl(i,j,ispec) &
+              - phi*rho_bar/(tort*B_biot) * ( cpIsquare - rho_f/rho_bar*cpIIsquare- &
+                (cpIsquare-cpIIsquare)*( (TWO*ratio**2*phi/tort + (1._CUSTOM_REAL+rho_f/rho_bar)* &
+                (TWO*ratio*phi/tort+1._CUSTOM_REAL))/dd1 + (phi/tort*ratio+1._CUSTOM_REAL)*(phi*&
+                ratio/tort+phi/tort*(1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL)*((1._CUSTOM_REAL+ &
+                rho_bar/rho_f-TWO*phi/tort)*ratio**2+TWO*ratio)/dd1**2 ) - &
+                FOUR_THIRDS*rho_f*cssquare/rho_bar ) &
+                * B_kl(i,j,ispec) &
+              + rho_f/M_biot * (cpIsquare-cpIIsquare) &
+                *( TWO*ratio*(phi/tort*ratio+1._CUSTOM_REAL)/dd1 - &
+                  (phi/tort*ratio+1._CUSTOM_REAL)**2 &
+                  *((1._CUSTOM_REAL+rho_bar/rho_f-TWO*phi/tort)*ratio**2+TWO*ratio)/dd1**2) &
+                * M_kl(i,j,ispec) &
+              + phi*rho_f/(tort*C_biot)* (cpIsquare-cpIIsquare)*ratio* (&
+                (1._CUSTOM_REAL+rho_f/rho_bar*ratio)/dd1 - (phi/tort*ratio+1._CUSTOM_REAL)* &
+                (1._CUSTOM_REAL+rho_bar/rho_f*ratio)*((1._CUSTOM_REAL+rho_bar/rho_f-TWO*phi/tort)*ratio+TWO)/dd1**2 ) &
+                * C_kl(i,j,ispec) &
+              - phi*rho_f*cssquare /(tort*mu_fr) &
+                * mufrb_kl(i,j,ispec)
+
+        ! wavespeed kernels
+        cpI_kl(i,j,ispec) = 2._CUSTOM_REAL*cpIsquare/B_biot*rho_bar*( &
+                1._CUSTOM_REAL-phi/tort + (phi/tort*ratio+ 1._CUSTOM_REAL)*(phi/tort*&
+                ratio+phi/tort* (1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL)/dd1 ) &
+                * B_kl(i,j,ispec) &
+              + 2._CUSTOM_REAL*cpIsquare*rho_f*tort/(phi*M_biot) *&
+                (phi/tort*ratio+1._CUSTOM_REAL)**2/dd1 &
+                * M_kl(i,j,ispec) &
+              + 2._CUSTOM_REAL*cpIsquare*rho_f/C_biot * &
+                (phi/tort*ratio+1._CUSTOM_REAL)* (1._CUSTOM_REAL+rho_bar/rho_f*ratio)/dd1 &
+                * C_kl(i,j,ispec)
+        cpII_kl(i,j,ispec) = 2._CUSTOM_REAL*cpIIsquare*rho_bar/B_biot * (&
+                phi*rho_f/(tort*rho_bar) - (phi/tort*ratio+ 1._CUSTOM_REAL)*(phi/tort*ratio+phi/tort* &
+                (1._CUSTOM_REAL+rho_f/rho_bar)-&
+                1._CUSTOM_REAL)/dd1  ) &
+                * B_kl(i,j,ispec) &
+              + 2._CUSTOM_REAL*cpIIsquare*rho_f*tort/(phi*M_biot) * (&
+                1._CUSTOM_REAL - (phi/tort*ratio+ 1._CUSTOM_REAL)**2/dd1  ) &
+                * M_kl(i,j,ispec) &
+              + 2._CUSTOM_REAL*cpIIsquare*rho_f/C_biot * (&
+                1._CUSTOM_REAL - (phi/tort*ratio+ 1._CUSTOM_REAL)*(1._CUSTOM_REAL+&
+                rho_bar/rho_f*ratio)/dd1  ) &
+                * C_kl(i,j,ispec)
+
+        cs_kl(i,j,ispec) = - 8._CUSTOM_REAL/3._CUSTOM_REAL*cssquare* rho_bar/B_biot &
+                *(1._CUSTOM_REAL-phi*rho_f/(tort*rho_bar)) &
+                * B_kl(i,j,ispec) &
+              + 2._CUSTOM_REAL*(rho_bar-rho_f*phi/tort)/mu_fr*cssquare &
+                * mufrb_kl(i,j,ispec)
+
+        ratio_kl(i,j,ispec) = ratio*rho_bar*phi/(tort*B_biot) * (cpIsquare-cpIIsquare) &
+                * (phi/tort*(2._CUSTOM_REAL*ratio+1._CUSTOM_REAL+rho_f/rho_bar)/dd1 - (phi/tort*ratio+1._CUSTOM_REAL)*&
+                  (phi/tort*ratio+phi/tort*( 1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL)*(2._CUSTOM_REAL*ratio*(&
+                    1._CUSTOM_REAL+rho_bar/rho_f-phi/tort) + 2._CUSTOM_REAL)/dd1**2  ) &
+                * B_kl(i,j,ispec) &
+              + ratio*rho_f*tort/(phi*M_biot)*(cpIsquare-cpIIsquare) * 2._CUSTOM_REAL*phi/tort &
+                * ( (phi/tort*ratio+1._CUSTOM_REAL)/dd1 - (phi/tort*ratio+1._CUSTOM_REAL)**2 &
+                    * ((1._CUSTOM_REAL+rho_bar/rho_f-phi/tort)*ratio + 1._CUSTOM_REAL)/dd1**2 ) &
+                * M_kl(i,j,ispec) &
+              + ratio*rho_f/C_biot*(cpIsquare-cpIIsquare) &
+                * ( (2._CUSTOM_REAL*phi*rho_bar*ratio/(tort*rho_f)+phi/tort+rho_bar/rho_f)/dd1 - &
+                     2._CUSTOM_REAL*phi/tort*(phi/tort*ratio+1._CUSTOM_REAL)*(1._CUSTOM_REAL+rho_bar/rho_f*ratio) &
+                    *((1._CUSTOM_REAL + rho_bar/rho_f - phi/tort)*ratio+1._CUSTOM_REAL)/dd1**2 ) &
+                * C_kl(i,j,ispec)
       enddo
-    endif
+    enddo
   enddo
 
   end subroutine compute_kernels_po

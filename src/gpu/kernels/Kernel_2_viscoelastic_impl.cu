@@ -313,10 +313,7 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
                         realw* d_kappav,
                         realw* d_muv,
                         const int simulation_type,
-                        const int p_sv,
-                        realw* dsxx,
-                        realw* dsxz,
-                        realw* dszz){
+                        const int p_sv){
 
 // elastic compute kernel without attenuation for isotropic elements
 //
@@ -572,22 +569,8 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
 // counts:
 // + 8 FLOP
 //
-// + 3 float * 125 threads = 1500 BYTE
+// + 2 float * 25 threads = 50 BYTE
 
-// Servira pour calcul futur des noyaux
-  if (simulation_type == 3){
-    if (threadIdx.x < NGLL2) {
-      dsxx[iglob] = duxdxl;
-      dszz[iglob] = duzdzl;
-      if (p_sv){
-        // P_SV case
-        dsxz[iglob] = 0.5f * duzdxl_plus_duxdzl;
-      }else{
-        // SH-case
-        dsxz[iglob] = duxdzl;
-      }
-    }
-  }
 
 // counts:
 // -----------------
@@ -902,9 +885,6 @@ Kernel_2_att_iso_impl(const int nb_blocks_to_compute,
                       realw* d_muv,
                       const int simulation_type,
                       const int p_sv,
-                      realw* dsxx,
-                      realw* dsxz,
-                      realw* dszz,
                       realw_const_p A_newmark_mu,realw_const_p B_newmark_mu,
                       realw_const_p A_newmark_kappa,realw_const_p B_newmark_kappa,
                       realw_p e1,realw_p e11,realw_p e13,
@@ -1130,22 +1110,6 @@ Kernel_2_att_iso_impl(const int nb_blocks_to_compute,
     atomicAdd(&d_accel[iglob*2], sum_terms1);
     atomicAdd(&d_accel[iglob*2+1], sum_terms3);
   }
-
-  // in future: Servira pour calcul futur des noyaux
-  if (simulation_type == 3){
-    if (threadIdx.x < NGLL2) {
-      dsxx[iglob] = duxdxl;
-      dszz[iglob] = duzdzl;
-      if (p_sv){
-        // P_SV case
-        dsxz[iglob] = 0.5f * duzdxl_plus_duxdzl;
-      }else{
-        // SH-case
-        dsxz[iglob] = duxdzl;
-      }
-    }
-  }
-
 } // kernel_2_att_iso_impl()
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1179,9 +1143,6 @@ Kernel_2_att_ani_impl(int nb_blocks_to_compute,
                       realw* d_c25store,realw* d_c33store,
                       realw* d_c35store,
                       realw* d_c55store,
-                      realw* dsxx,
-                      realw* dsxz,
-                      realw* dszz,
                       realw_const_p A_newmark_mu,realw_const_p B_newmark_mu,
                       realw_const_p A_newmark_kappa,realw_const_p B_newmark_kappa,
                       realw_p e1,realw_p e11,realw_p e13,
@@ -1455,22 +1416,6 @@ Kernel_2_att_ani_impl(int nb_blocks_to_compute,
     atomicAdd(&d_accel[iglob*2], sum_terms1);
     atomicAdd(&d_accel[iglob*2+1], sum_terms3);
   } // threadIdx.x
-
-  // in future: Servira pour calcul futur des noyaux
-  if (simulation_type == 3){
-    if (threadIdx.x < NGLL2) {
-      dsxx[iglob] = duxdxl;
-      dszz[iglob] = duzdzl;
-      if (p_sv){
-        // P_SV case
-        dsxz[iglob] = 0.5f * duzdxl_plus_duxdzl;
-      }else{
-        // SH-case
-        dsxz[iglob] = duxdzl;
-      }
-    }
-  }
-
 } // kernel_2_att_ani_impl()
 
 
@@ -1499,13 +1444,13 @@ template __global__ void Kernel_2_noatt_iso_impl<1>(const int,const int*,const i
                                                     realw_const_p,realw_p,
                                                     realw*,realw*,realw*,realw*,
                                                     realw_const_p,realw_const_p,realw_const_p,
-                                                    realw*,realw*,const int,const int,realw*,realw*,realw*);
+                                                    realw*,realw*,const int,const int);
 
 template __global__ void Kernel_2_noatt_iso_impl<3>(const int,const int*,const int*,const int,const int,
                                                     realw_const_p,realw_p,
                                                     realw*,realw*,realw*,realw*,
                                                     realw_const_p,realw_const_p,realw_const_p,
-                                                    realw*,realw*,const int,const int,realw*,realw*,realw*);
+                                                    realw*,realw*,const int,const int);
 
 template __global__ void Kernel_2_noatt_ani_impl<1>(int,const int*,const int*,const int,const int,
                                                     realw_const_p,realw_p,
@@ -1525,7 +1470,7 @@ template __global__ void Kernel_2_att_iso_impl<1>(const int,const int*,const int
                                                   realw_const_p,realw_p,
                                                   realw*,realw*,realw*,realw*,
                                                   realw_const_p,realw_const_p,realw_const_p,
-                                                  realw*,realw*,const int,const int,realw*,realw*,realw*,
+                                                  realw*,realw*,const int,const int,
                                                   realw_const_p,realw_const_p,realw_const_p,realw_const_p,
                                                   realw_p,realw_p,realw_p,realw_p,realw_p,realw_p);
 
@@ -1535,6 +1480,6 @@ template __global__ void Kernel_2_att_ani_impl<1>(int,const int*,const int*,cons
                                                   realw_const_p,realw_const_p,realw_const_p,realw_const_p,realw_const_p,
                                                   const int,const int,const int*,
                                                   realw*,realw*,realw*,realw*,realw*,realw*,realw*,
-                                                  realw*,realw*,realw*,realw*,realw*,
+                                                  realw*,realw*,
                                                   realw_const_p,realw_const_p,realw_const_p,realw_const_p,
                                                   realw_p,realw_p,realw_p,realw_p,realw_p,realw_p);

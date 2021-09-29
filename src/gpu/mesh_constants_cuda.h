@@ -591,12 +591,6 @@ typedef struct mesh_ {
   realw* d_mu_kl;
   realw* d_kappa_kl;
   realw* d_hess_el_kl;
-  realw* d_dsxx;
-  realw* d_dsxz;
-  realw* d_dszz;
-  realw* d_b_dsxx;
-  realw* d_b_dsxz;
-  realw* d_b_dszz;
 
   // ------------------------------------------------------------------ //
   // acoustic wavefield

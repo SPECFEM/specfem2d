@@ -246,22 +246,6 @@
   accel_elastic_adj_coupling(:,:) = 0.0_CUSTOM_REAL
 
   ! kernels
-  ! on global nodes
-  allocate(rho_k(b_nglob_elastic), &
-           mu_k(b_nglob_elastic), &
-           kappa_k(b_nglob_elastic), &
-           c11_k(b_nglob_elastic), &
-           c13_k(b_nglob_elastic), &
-           c15_k(b_nglob_elastic), &
-           c33_k(b_nglob_elastic), &
-           c35_k(b_nglob_elastic), &
-           c55_k(b_nglob_elastic),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating elastic kernel arrays')
-  rho_k(:) = 0.0_CUSTOM_REAL; mu_k(:) = 0.0_CUSTOM_REAL; kappa_k(:) = 0.0_CUSTOM_REAL
-  c11_k(:) = 0.0_CUSTOM_REAL; c13_k(:) = 0.0_CUSTOM_REAL; c15_k(:) = 0.0_CUSTOM_REAL
-  c33_k(:) = 0.0_CUSTOM_REAL; c35_k(:) = 0.0_CUSTOM_REAL; c55_k(:) = 0.0_CUSTOM_REAL
-
-  ! on local nodes
   allocate(rho_kl(NGLLX,NGLLZ,b_nspec_elastic), &
            mu_kl(NGLLX,NGLLZ,b_nspec_elastic), &
            kappa_kl(NGLLX,NGLLZ,b_nspec_elastic), &
@@ -394,23 +378,7 @@
   epsilondev_s(:,:,:,:) = 0.0_CUSTOM_REAL; epsilondev_w(:,:,:,:) = 0.0_CUSTOM_REAL
   b_epsilondev_s(:,:,:,:) = 0.0_CUSTOM_REAL; b_epsilondev_w(:,:,:,:) = 0.0_CUSTOM_REAL
 
-  ! kernels
-  ! on global nodes
-  allocate(rhot_k(b_nglob_poroelastic), &
-           rhof_k(b_nglob_poroelastic), &
-           sm_k(b_nglob_poroelastic), &
-           eta_k(b_nglob_poroelastic), &
-           mufr_k(b_nglob_poroelastic), &
-           B_k(b_nglob_poroelastic), &
-           C_k(b_nglob_poroelastic), &
-           M_k(b_nglob_poroelastic),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating rhot_k kernel arrays')
-  rhot_k(:) = 0.0_CUSTOM_REAL; rhof_k(:) = 0.0_CUSTOM_REAL
-  sm_k(:) = 0.0_CUSTOM_REAL; eta_k(:) = 0.0_CUSTOM_REAL
-  mufr_k(:) = 0.0_CUSTOM_REAL; B_k(:) = 0.0_CUSTOM_REAL
-  C_k(:) = 0.0_CUSTOM_REAL; M_k(:) = 0.0_CUSTOM_REAL
-
-  ! on local nodes
+  ! poroelastic kernels
   allocate(rhot_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
            rhof_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &
            sm_kl(NGLLX,NGLLZ,b_nspec_poroelastic), &

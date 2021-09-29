@@ -51,8 +51,8 @@
 
   implicit none
 
-  integer :: i_field
-  logical :: plot_b_wavefield_only
+  integer,intent(in) :: i_field
+  logical,intent(in) :: plot_b_wavefield_only
 
   ! local parameters
   integer :: i

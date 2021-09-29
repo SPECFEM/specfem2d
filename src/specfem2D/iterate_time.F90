@@ -353,13 +353,9 @@
       !       for the GPU-kernels, the NSTEP_** is still missing... adding it here
       rho_ac_kl(:,:,:) = rho_ac_kl(:,:,:) * NSTEP_BETWEEN_COMPUTE_KERNELS
       kappa_ac_kl(:,:,:) = kappa_ac_kl(:,:,:) * NSTEP_BETWEEN_COMPUTE_KERNELS
+
       rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
       alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
-
-      print *
-      print *,'Maximum value of rho prime kernel : ',maxval(rhop_ac_kl)
-      print *,'Maximum value of alpha kernel : ',maxval(alpha_ac_kl)
-      print *
     endif
 
     ! elastic domains

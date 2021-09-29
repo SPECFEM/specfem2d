@@ -55,20 +55,24 @@
 
   ! local parameters
   integer :: iphase
-  logical :: compute_wavefield_1
-  logical :: compute_wavefield_2
+  logical :: compute_wavefield_1    ! forward wavefield (forward or adjoint for SIMULATION_TYPE > 1)
+  logical :: compute_wavefield_2    ! backward/reconstructed wavefield (b_** arrays)
 
   ! determines which wavefields to compute
   if ((.not. UNDO_ATTENUATION_AND_OR_PML) .and. (SIMULATION_TYPE == 1 .or. NO_BACKWARD_RECONSTRUCTION) ) then
+    ! forward wavefield only
     compute_wavefield_1 = .true.
     compute_wavefield_2 = .false.
   else if ((.not. UNDO_ATTENUATION_AND_OR_PML) .and. SIMULATION_TYPE == 3) then
+    ! forward & backward wavefields
     compute_wavefield_1 = .true.
     compute_wavefield_2 = .true.
   else if (UNDO_ATTENUATION_AND_OR_PML .and. compute_b_wavefield_arg) then
+    ! only backward wavefield
     compute_wavefield_1 = .false.
     compute_wavefield_2 = .true.
   else
+    ! default forward wavefield only
     compute_wavefield_1 = .true.
     compute_wavefield_2 = .false.
   endif
@@ -280,6 +284,9 @@
   integer,intent(in) :: iphase
   logical,intent(in) :: compute_wavefield_1,compute_wavefield_2
 
+  ! local parameters
+  integer :: it_tmp
+
   ! forward simulations
   if (SIMULATION_TYPE == 1) then
     if (SOURCE_IS_MOVING) then
@@ -295,11 +302,15 @@
   endif
 
   ! adjoint simulations
+  ! time step index
+  it_tmp = NSTEP - it + 1
+
+  ! adds acoustic adjoint sources
   if (SIMULATION_TYPE == 3 .and. nadj_rec_local > 0 .and. compute_wavefield_1) &
-    call add_sources_ac_sim_2_or_3_cuda(Mesh_pointer,iphase, NSTEP -it + 1, nadj_rec_local,NSTEP)
+    call add_sources_ac_sim_2_or_3_cuda(Mesh_pointer, iphase, it_tmp, nadj_rec_local, NSTEP)
 
   ! adjoint simulations
-  if (compute_wavefield_2) call compute_add_sources_ac_s3_cuda(Mesh_pointer,iphase,NSTEP -it + 1)
+  if (compute_wavefield_2) call compute_add_sources_ac_s3_cuda(Mesh_pointer, iphase, it_tmp)
 
   end subroutine compute_add_sources_acoustic_GPU
 

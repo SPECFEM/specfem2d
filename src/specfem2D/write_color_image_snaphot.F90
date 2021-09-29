@@ -62,7 +62,7 @@
   implicit none
 
   !parameter useful for UNDO_ATTENUATION
-  logical :: plot_b_wavefield_only
+  logical,intent(in) :: plot_b_wavefield_only
 
   !local variables
   integer :: i,j,k,ispec,iglob,iproc,i_field,n_fields

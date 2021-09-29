@@ -507,7 +507,7 @@
   use specfem_par, only: myrank,it,NOISE_TOMOGRAPHY,GPU_MODE, &
     ibool,nglob,nspec, &
     accel_elastic,b_displ_elastic, &
-    rho_k,rho_kl
+    rho_kl
 
   use specfem_par_noise, only: mask_noise, &
     noise_surface_movie_y_or_z,noise_output_rhokl,noise_output_array,noise_output_ncol, &
@@ -515,8 +515,9 @@
 
   implicit none
   ! local parameters
-  integer :: ier
+  integer :: iglob,ier
   logical :: ex,is_opened
+  real(kind=CUSTOM_REAL) :: rho_k_loc
   character(len=MAX_STRING_LEN) :: noise_output_file
 
   ! checks if anything to do
@@ -544,8 +545,11 @@
     noise_output_array(2,:) = b_displ_elastic(1,:)
     noise_output_array(3,:) = accel_elastic(1,:)
 
-    ! rho kernel on global nodes
-    noise_output_array(4,:) = rho_k(:)
+    ! rho kernel contribution on global nodes
+    do iglob = 1,nglob
+      rho_k_loc =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) + accel_elastic(2,iglob)*b_displ_elastic(2,iglob)
+      noise_output_array(4,iglob) = rho_k_loc
+    enddo
 
     ! rho kernel on global nodes from local kernel (for comparison)
     noise_output_array(5,:) = noise_output_rhokl(:)

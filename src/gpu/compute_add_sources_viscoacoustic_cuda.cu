@@ -224,7 +224,7 @@ void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
   // checks
   if (*nadj_rec_local != mp->nadj_rec_local) exit_on_cuda_error("add_sources_ac_sim_type_2_or_3: nadj_rec_local not equal\n");
 
-  int it = *itf - 1;
+  int it = *itf - 1; // C-arrays start at 0
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nadj_rec_local,&num_blocks_x,&num_blocks_y);
