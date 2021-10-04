@@ -1388,10 +1388,7 @@
     call stop_the_code('Error invalid partitioning method')
   endif
 
-  ! simulation parameters
-  if (SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /= 3) &
-    call stop_the_code('SIMULATION_TYPE can only be set to 1 or 3 in the Par_file; exiting')
-
+  ! checks simulation parameters
   if (NOISE_TOMOGRAPHY < 0 .or. NOISE_TOMOGRAPHY > 3) &
     call stop_the_code('NOISE_TOMOGRAPHY can only be set to 0, 1, 2 or 3 in the Par_file; exiting')
 

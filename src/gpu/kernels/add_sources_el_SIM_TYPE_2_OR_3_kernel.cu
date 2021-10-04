@@ -35,7 +35,7 @@
 
 
 __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
-                                                      realw* source_adjointe,
+                                                      realw* source_adjoint,
                                                       realw* xir_store,
                                                       realw* gammar_store,
                                                       int* d_ibool,
@@ -61,8 +61,8 @@ __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
       realw  xir = xir_store[INDEX2(nadj_rec_local,irec_local,i)];
       realw  gammar = gammar_store[INDEX2(nadj_rec_local,irec_local,j)];
 
-      realw  source_adjx = source_adjointe[INDEX3(nadj_rec_local,NSTEP,irec_local,it,0)];
-      realw  source_adjz = source_adjointe[INDEX3(nadj_rec_local,NSTEP,irec_local,it,1)];
+      realw  source_adjx = source_adjoint[INDEX3(nadj_rec_local,NSTEP,irec_local,it,0)];
+      realw  source_adjz = source_adjoint[INDEX3(nadj_rec_local,NSTEP,irec_local,it,1)];
 
       // atomic operations are absolutely necessary for correctness!
       atomicAdd(&accel[2*iglob],source_adjx * gammar * xir);

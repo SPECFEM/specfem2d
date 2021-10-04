@@ -35,7 +35,7 @@
 
 
 __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_acoustic,
-                                                      realw* source_adjointe,
+                                                      realw* source_adjoint,
                                                       realw* xir_store,
                                                       realw* gammar_store,
                                                       int* d_ibool,
@@ -62,7 +62,7 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
       realw  kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
       realw  xir = xir_store[INDEX2(nadj_rec_local,irec_local,i)];
       realw  gammar = gammar_store[INDEX2(nadj_rec_local,irec_local,j)];
-      realw  source_adj = source_adjointe[INDEX3(nadj_rec_local,NSTEP,irec_local,it,0)];
+      realw  source_adj = source_adjoint[INDEX3(nadj_rec_local,NSTEP,irec_local,it,0)];
 
       // beware, for acoustic medium, a pressure source would be taking the negative
       // and divide by Kappa of the fluid;

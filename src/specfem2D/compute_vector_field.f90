@@ -34,7 +34,7 @@
   subroutine compute_vector_whole_medium(field_acoustic,field_elastic,fields_poroelastic)
 
 ! compute Grad(potential) in acoustic elements
-! and combine with existing velocity vector field in elastic elements
+! and combine with existing vector field in elastic/poroelastic elements
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
@@ -45,13 +45,13 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: field_acoustic
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic) :: field_elastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: fields_poroelastic
-  ! vector field in an element
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: vector_field_element
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(in) :: field_acoustic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic),intent(in) :: field_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic),intent(in) :: fields_poroelastic
 
   ! local parameters
+  ! vector field in an element
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: vector_field_element
   integer :: i,j,ispec,iglob
 
   ! loop over spectral elements
@@ -90,9 +90,9 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: field_acoustic
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic) :: field_elastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: fields_poroelastic
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(in) :: field_acoustic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic),intent(in) :: field_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic),intent(in) :: fields_poroelastic
 
   integer,intent(in) :: ispec
 
@@ -105,7 +105,8 @@
   double precision :: xixl,xizl,gammaxl,gammazl
   double precision :: hp1,hp2
   double precision :: rhol
-  double precision :: tempx1l,tempx2l
+  double precision :: tempx1l,tempx2l,dchi_dxl,dchi_dzl
+  double precision :: fieldx,fieldz
 
   ! initializes
   vector_field_element(:,:,:) = 0._CUSTOM_REAL
@@ -134,7 +135,7 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
-        vector_field_element(1,i,j) = fields_poroelastic(1,iglob)
+        vector_field_element(1,i,j) = fields_poroelastic(1,iglob)  ! from solid part
         vector_field_element(2,i,j) = fields_poroelastic(2,iglob)
       enddo
     enddo
@@ -191,11 +192,18 @@
         gammaxl = gammax(i,j,ispec)
         gammazl = gammaz(i,j,ispec)
 
+        ! derivatives
+        dchi_dxl = (tempx1l * xixl + tempx2l * gammaxl)
+        dchi_dzl = (tempx1l * xizl + tempx2l * gammazl)
+
         rhol = rhostore(i,j,ispec)
 
+        fieldx = dchi_dxl / rhol  ! u_x = 1/rho dChi/dx
+        fieldz = dchi_dzl / rhol  ! u_z = 1/rho dChi/dz
+
         ! derivatives of potential
-        vector_field_element(1,i,j) = real((tempx1l*xixl + tempx2l*gammaxl) / rhol,kind=CUSTOM_REAL) ! u_x = 1/rho dChi/dx
-        vector_field_element(2,i,j) = real((tempx1l*xizl + tempx2l*gammazl) / rhol,kind=CUSTOM_REAL) ! u_z = 1/rho dChi/dz
+        vector_field_element(1,i,j) = real(fieldx,kind=CUSTOM_REAL)
+        vector_field_element(2,i,j) = real(fieldz,kind=CUSTOM_REAL)
       enddo
     enddo
 

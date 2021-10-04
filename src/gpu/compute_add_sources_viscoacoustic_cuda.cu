@@ -224,6 +224,9 @@ void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
   // checks
   if (*nadj_rec_local != mp->nadj_rec_local) exit_on_cuda_error("add_sources_ac_sim_type_2_or_3: nadj_rec_local not equal\n");
 
+  // checks if anything to do
+  if (mp->nadj_rec_local == 0) return;
+
   int it = *itf - 1; // C-arrays start at 0
 
   int num_blocks_x, num_blocks_y;
@@ -234,16 +237,16 @@ void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
 
   // launches cuda kernel for acoustic adjoint sources
   add_sources_ac_SIM_TYPE_2_OR_3_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,
-                                                                                mp->d_source_adjointe,
-                                                                                mp->d_xir_store_loc,
-                                                                                mp->d_gammar_store_loc,
-                                                                                mp->d_ibool,
-                                                                                mp->d_ispec_is_acoustic,
-                                                                                mp->d_ispec_selected_rec_loc,
-                                                                                it,
-                                                                                mp->nadj_rec_local,
-                                                                                mp->d_kappastore,
-                                                                                *NSTEP);
+                                                                               mp->d_source_adjoint,
+                                                                               mp->d_xir_store_loc,
+                                                                               mp->d_gammar_store_loc,
+                                                                               mp->d_ibool,
+                                                                               mp->d_ispec_is_acoustic,
+                                                                               mp->d_ispec_selected_rec_loc,
+                                                                               it,
+                                                                               mp->nadj_rec_local,
+                                                                               mp->d_kappastore,
+                                                                               *NSTEP);
 
 //  print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),38);
 

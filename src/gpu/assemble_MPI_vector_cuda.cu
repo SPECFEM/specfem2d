@@ -159,7 +159,7 @@ void FC_FUNC_(prepare_boundary_on_device,
 
 // asynchronous transfer from device to host
 
-  TRACE("\ttransfer_boundary_from_device_a");
+  TRACE("\tprepare_boundary_on_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 

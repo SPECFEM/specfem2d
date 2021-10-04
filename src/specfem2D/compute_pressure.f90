@@ -56,9 +56,11 @@
 
     ! compute pressure in this element
     if (i_field == 1) then
+      ! forward/adjoint wavefield
       call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic, &
                                         potential_dot_dot_acoustic,potential_acoustic)
     else
+      ! backward/reconstructed wavefield
       call compute_pressure_one_element(ispec,pressure_element,b_displ_elastic,b_displs_poroelastic,b_displw_poroelastic, &
                                         b_potential_dot_dot_acoustic,b_potential_acoustic)
     endif
@@ -558,6 +560,8 @@
         enddo
       enddo
     else
+      ! assumes that potential definition is given by displacement u = 1/rho grad(chi)
+      ! and therefore pressure p = - \partial_t^2 chi
       do j = 1,NGLLZ
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)

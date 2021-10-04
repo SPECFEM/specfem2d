@@ -56,7 +56,7 @@ TRACE("Kernel_2_acoustic");
   // if the grid can handle the number of blocks, we let it be 1D
   int blocksize = NGLL2;
 
-  int num_blocks_x, num_blocks_y, nb_field;
+  int num_blocks_x, num_blocks_y;
   get_blocks_xy(nb_blocks_to_compute,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y);
@@ -69,6 +69,7 @@ TRACE("Kernel_2_acoustic");
   }
 
   // forward and/or backward fields
+  int nb_field;
   if (compute_wavefield_1 && compute_wavefield_2){
     nb_field = 2;  // both fields
   }else{

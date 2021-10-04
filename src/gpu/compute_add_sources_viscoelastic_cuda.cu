@@ -142,12 +142,15 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
   // checks
   if (*nadj_rec_local != mp->nadj_rec_local) exit_on_error("add_sources_el_sim_type_2_or_3: nadj_rec_local not equal\n");
 
+  // checks if anything to do
+  if (mp->nadj_rec_local == 0) return;
+
   int iphase = *iphasef;
 
   // only add this contribution for first pass
   if (iphase != 1) return;
 
-  int it = *itf - 1;
+  int it = *itf - 1; // C-arrays start at 0
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nadj_rec_local,&num_blocks_x,&num_blocks_y);
@@ -160,7 +163,7 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
   // and due to how it's incremented, it cannot be parallelized
 
   add_sources_el_SIM_TYPE_2_OR_3_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel,
-                                                                               mp->d_source_adjointe,
+                                                                               mp->d_source_adjoint,
                                                                                mp->d_xir_store_loc,
                                                                                mp->d_gammar_store_loc,
                                                                                mp->d_ibool,
