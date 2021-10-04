@@ -38,6 +38,9 @@ cp -v DATA/Par_file DATA/Par_file.bak
 sed -i "s:^PML_BOUNDARY_CONDITIONS .*:PML_BOUNDARY_CONDITIONS = .false.:" DATA/Par_file
 sed -i "s:^STACEY_ABSORBING_CONDITIONS .*:STACEY_ABSORBING_CONDITIONS = .true.:" DATA/Par_file
 
+# reduce image outputs
+sed -i "s:^output_postscript_snapshot .*:output_postscript_snapshot = .false.:" DATA/Par_file
+
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 
