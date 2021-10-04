@@ -41,7 +41,9 @@ __global__ void compute_coupling_elastic_ac_kernel(realw* potential_dot_dot_acou
                                                     int* coupling_ac_el_ijk,
                                                     realw* coupling_ac_el_normal,
                                                     realw* coupling_ac_el_jacobian1Dw,
-                                                    int* d_ibool) {
+                                                    int* d_ibool,
+                                                    int simulation_type,
+                                                    int backward_simulation) {
 
   int igll = threadIdx.x;
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
@@ -74,7 +76,15 @@ __global__ void compute_coupling_elastic_ac_kernel(realw* potential_dot_dot_acou
     // gets associated, weighted jacobian
     jacobianw = coupling_ac_el_jacobian1Dw[INDEX2(NGLLX,igll,iface)];
 
+    // uses potential chi such that displacement s = 1/rho grad(chi)
+    // pressure p = - kappa ( div( s )) then becomes: p = - dot_dot_chi
     pressure = - potential_dot_dot_acoustic[iglob];
+
+    if (simulation_type == 3 && backward_simulation == 0){
+      // handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+      // adjoint definition: pressure^\dagger = potential^\dagger
+      pressure = - pressure;
+    }
 
     // continuity of displacement and pressure on global point
     //

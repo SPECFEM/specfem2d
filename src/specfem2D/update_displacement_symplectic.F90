@@ -158,13 +158,14 @@
 
   if (.not. GPU_MODE) then
     ! for coupling with adjoint wavefield, stores old (at time t_n) wavefield
-    if (SIMULATION_TYPE == 3) then
-      ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
-      ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
-      if (coupled_acoustic_elastic) then
-        accel_elastic_adj_coupling(:,:) = - accel_elastic(:,:)
-      endif
-    endif
+    ! not needed anymore, taking care of by re-ordering domain updates
+    !if (SIMULATION_TYPE == 3) then
+    !  ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+    !  ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
+    !  if (coupled_acoustic_elastic) then
+    !    accel_elastic_adj_coupling(:,:) = - accel_elastic(:,:)
+    !  endif
+    !endif
 
     ! updates elastic wavefields
     call update_displacement_symplectic_elastic(deltat,accel_elastic,veloc_elastic,displ_elastic)
@@ -220,12 +221,14 @@
 
   if (.not. GPU_MODE) then
     ! for coupling with adjoint wavefield, stores old (at time t_n) wavefield
-    if (SIMULATION_TYPE == 3) then
-      ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
-      ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
-      accels_poroelastic_adj_coupling(:,:) = - accels_poroelastic(:,:)
-      accelw_poroelastic_adj_coupling(:,:) = - accelw_poroelastic(:,:)
-    endif
+    ! not needed anymore, taking care of by re-ordering domain updates
+    !if (SIMULATION_TYPE == 3) then
+    !  ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+    !  ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
+    !  ! not needed anymore...
+    !  accels_poroelastic_adj_coupling(:,:) = - accels_poroelastic(:,:)
+    !  accelw_poroelastic_adj_coupling(:,:) = - accelw_poroelastic(:,:)
+    !endif
 
     ! updates poroelastic wavefields
     call update_displacement_symplectic_poroelastic(deltat, &
@@ -437,11 +440,8 @@
   potential_dot_acoustic(:) = potential_dot_acoustic(:) + BETA_SYMPLECTIC(i_stage) * deltat * potential_dot_dot_acoustic(:)
 
   ! update the potential field (use a new array here) for coupling terms
-  if (SIMULATION_TYPE == 3) then
+  if (SIMULATION_TYPE == 3 .and. coupled_acoustic_elastic) then
     stop 'adjoint coupling with symplectic not implemented yet'
-    ! from newmark
-    !potential_acoustic_adj_coupling(:) = potential_acoustic(:) + deltat * potential_dot_acoustic(:) + &
-    !                                     deltatsquareover2 * potential_dot_dot_acoustic(:)
   endif
 
   ! final update

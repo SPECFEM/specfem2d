@@ -248,7 +248,7 @@ __global__ void UpdatePotential_kernel(realw_p potential_acoustic,
 //
 
 __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_acoustic,
-                                                      realw* source_adjointe,
+                                                      realw* source_adjoint,
                                                       realw* xir_store,
                                                       realw* gammar_store,
                                                       int* d_ibool,
@@ -265,7 +265,7 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
 //
 
 __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
-                                                      realw* source_adjointe,
+                                                      realw* source_adjoint,
                                                       realw* xir_store,
                                                       realw* gammar_store,
                                                       int* d_ibool,
@@ -386,7 +386,9 @@ __global__ void compute_coupling_acoustic_el_kernel(realw* displ,
                                                     int* coupling_ac_el_ijk,
                                                     realw* coupling_ac_el_normal,
                                                     realw* coupling_ac_el_jacobian1Dw,
-                                                    int* d_ibool) ;
+                                                    int* d_ibool,
+                                                    int simulation_type,
+                                                    int backward_simulation) ;
 
 
 //
@@ -400,7 +402,9 @@ __global__ void compute_coupling_elastic_ac_kernel(realw* potential_dot_dot_acou
                                                     int* coupling_ac_el_ijk,
                                                     realw* coupling_ac_el_normal,
                                                     realw* coupling_ac_el_jacobian1Dw,
-                                                    int* d_ibool) ;
+                                                    int* d_ibool,
+                                                    int simulation_type,
+                                                    int backward_simulation) ;
 
 
 //

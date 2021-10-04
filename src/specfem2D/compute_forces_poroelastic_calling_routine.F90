@@ -82,7 +82,7 @@
         if (SIMULATION_TYPE == 1) then
           ! forward wavefield
           call compute_add_sources_poro(accels_poroelastic,accelw_poroelastic,it,i_stage)
-        else if (SIMULATION_TYPE == 3) then
+        else
           ! adjoint wavefield
           call compute_add_sources_poro_adjoint()
         endif

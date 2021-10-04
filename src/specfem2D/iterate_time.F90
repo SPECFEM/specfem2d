@@ -36,7 +36,7 @@
 
   use constants, only: IMAIN,NOISE_SAVE_EVERYWHERE
   use specfem_par
-  use specfem_par_gpu
+  use specfem_par_movie, only: MOVIE_SIMULATION
 
   implicit none
 
@@ -102,29 +102,38 @@
   seismo_offset = it_begin - 1
   seismo_current = 0
 
+  ! timing safety checks
   if (TIME_THE_COST_TO_COMPUTE_WEIGHTS_FOR_THE_DOMAIN_DECOMPOSER) then
-    if (NPROC /= 1) call exit_MPI(myrank,'timing for element weights should be done in serial mode')
-    if (NSTEP < 1000) call exit_MPI(myrank,'timing for element weights should be done with at least 1000 time steps')
-    if (NSTEP > 10000) call exit_MPI(myrank,'timing for element weights does not need to be done with more than 10000 time steps')
+    if (NPROC /= 1) &
+      call exit_MPI(myrank,'timing for element weights should be done in serial mode')
+    if (NSTEP < 1000) &
+      call exit_MPI(myrank,'timing for element weights should be done with at least 1000 time steps')
+    if (NSTEP > 10000) &
+      call exit_MPI(myrank,'timing for element weights does not need to be done with more than 10000 time steps')
     if (NSTEP_BETWEEN_OUTPUT_INFO < NSTEP / 5) &
-       call exit_MPI(myrank,'timing for element weights should be done with NSTEP_BETWEEN_OUTPUT_INFO not smaller than NSTEP / 5')
-    if (SIMULATION_TYPE /= 1) call exit_MPI(myrank,'timing for element weights should be done with SIMULATION_TYPE = 1')
-    if (.not. P_SV) call exit_MPI(myrank,'timing for element weights should be done with P_SV set to true')
-    if (GPU_MODE) call exit_MPI(myrank,'timing for element weights should be done with GPU_MODE turned off')
+      call exit_MPI(myrank,'timing for element weights should be done with NSTEP_BETWEEN_OUTPUT_INFO not smaller than NSTEP / 5')
+    if (SIMULATION_TYPE /= 1) &
+      call exit_MPI(myrank,'timing for element weights should be done with SIMULATION_TYPE = 1')
+    if (.not. P_SV) &
+      call exit_MPI(myrank,'timing for element weights should be done with P_SV set to true')
+    if (GPU_MODE) &
+      call exit_MPI(myrank,'timing for element weights should be done with GPU_MODE turned off')
     if (save_ASCII_seismograms) &
-       call exit_MPI(myrank,'timing for element weights should be done with save_ASCII_seismograms turned off')
+      call exit_MPI(myrank,'timing for element weights should be done with save_ASCII_seismograms turned off')
     if (save_binary_seismograms_single) &
-       call exit_MPI(myrank,'timing for element weights should be done with save_binary_seismograms_single turned off')
+      call exit_MPI(myrank,'timing for element weights should be done with save_binary_seismograms_single turned off')
     if (save_binary_seismograms_double) &
-       call exit_MPI(myrank,'timing for element weights should be done with save_binary_seismograms_double turned off')
-    if (output_color_image) call exit_MPI(myrank,'timing for element weights should be done with output_color_image turned off')
+      call exit_MPI(myrank,'timing for element weights should be done with save_binary_seismograms_double turned off')
+    if (output_color_image) &
+      call exit_MPI(myrank,'timing for element weights should be done with output_color_image turned off')
     if (output_postscript_snapshot) &
-       call exit_MPI(myrank,'timing for element weights should be done with output_postscript_snapshot turned off')
+      call exit_MPI(myrank,'timing for element weights should be done with output_postscript_snapshot turned off')
     if (output_wavefield_dumps) &
-       call exit_MPI(myrank,'timing for element weights should be done with output_wavefield_dumps turned off')
-    if (OUTPUT_ENERGY) call exit_MPI(myrank,'timing for element weights should be done with OUTPUT_ENERGY turned off')
+      call exit_MPI(myrank,'timing for element weights should be done with output_wavefield_dumps turned off')
+    if (OUTPUT_ENERGY) &
+      call exit_MPI(myrank,'timing for element weights should be done with OUTPUT_ENERGY turned off')
     if (COMPUTE_INTEGRATED_ENERGY_FIELD) &
-       call exit_MPI(myrank,'timing for element weights should be done with COMPUTE_INTEGRATED_ENERGY_FIELD turned off')
+      call exit_MPI(myrank,'timing for element weights should be done with COMPUTE_INTEGRATED_ENERGY_FIELD turned off')
   endif
 
   ! timing
@@ -190,38 +199,166 @@
         call stop_the_code('Error time scheme not implemente yet in iterate_time()')
       end select
 
-      ! acoustic domains
-      if (ACOUSTIC_SIMULATION) then
+
+      ! note: the order of the computations for acoustic and elastic domains is crucial for coupled simulations.
+      !
+      !       the coupling terms involve continuity of traction, i.e., the exchange of pressure from fluid
+      !       to the solid traction (added in the elastic domain),
+      !       and continuity of the normal displacement, i.e., the exchange of the normal component of displacement from solid
+      !       to the fluid (added in the acoustic domain).
+      !
+      !       for forward simulations:
+      !         pressure p becomes
+      !           p = - \partial_t^2 chi
+      !         due to the definition of potential chi and displacement u:
+      !           u = 1/rho grad(chi)
+      !
+      !         given n is the normal to the fluid-solid interface,
+      !         the coupling term for elastic media involves: n * T = - p_fluid n = \partial_t^2 chi n
+      !         the coupling term for acoustic media involves: 1/rho grad(chi) * n = n * u
+      !
+      !         where T is the stress tensor, p_fluid pressure, u displacement, chi the acoustic scalar potential,
+      !         and rho is density.
+      !
+      !         \partial_t^2 chi is array potential_dot_dot_acoustic and only available after the acoustic domain update.
+      !         thus, by using a Newmark time scheme the update order becomes important (see Chaljub & Valette 2004):
+      !         1. acoustic domain update (using displ_accel for the coupling)
+      !         2. elastic domain update  (using potential_dot_dot_acoustic for the coupling)
+      !         (3. poroelastic domain update with same expression as for elastic domains)
+      !
+      !       for kernel simulations:
+      !         using Lagrange multiplier optimization as in Luo et al. (2013), one finds that once the definition of the forward
+      !         acoustic potential is chosen as u = 1/rho grad(chi), then the coupling of the adjoint
+      !         wavefields between fluid-solid interfaces becomes different:
+      !
+      !         the coupling term for elastic media involves: n * T^adj = - p_fluid^adj n = - chi^adj n
+      !         the coupling term of acoustic media involves: 1/rho grad(chi^adj) * n = - n * \partial_t^2 u^adj
+      !
+      !         where T^adj is the adjoint stress tensor, p_fluid^adj the adjoint pressure in the fluid.
+      !
+      !         note that the adjoint pressure p^adj for the adjoint wavefield corresponds to
+      !           p^adj = chi^adj
+      !         with an adjoint potential definition chi^adj related to adjoint acceleration (instead of displacement)
+      !           \partial_t^2 u^adj = - 1/rho grad(chi^adj)
+      !
+      !         since elastic media now couples with potential_acoustic rather than potential_dot_dot_acoustic, the order
+      !         of the domain updates switches to:
+      !         1. elastic domain update  (using -potential_acoustic for the coupling) to have \partial_t^2 u^adj at time n+1
+      !         (1b. poroelastic domain update uses same terms as elastic domain)
+      !         2. acoustic domain update (using -accel_elastic for the coupling)
+      !
+      !       for purely adjoint simulations:
+      !         if we choose a pure adjoint simulation, without forward wavefield propagation for kernel computations,
+      !         then we are free to choose and define the adjoint acoustic potential.
+      !         the coupling terms between adjoint wavefields then depend on the chosen potential definition, i.e.,
+      !         (i)  if we choose a displacement potential:
+      !                u^adj = 1/rho grad(chi^adj)
+      !              then the adjoint pressure is p^adj = - potential_dot_dot_acoustic and we have the same coupling terms
+      !              as for the forward case.
+      !
+      !         (ii) if we choose an acceleration potential:
+      !                \partial_t^2 u^adj = - 1/rho grad(chi^adj)
+      !              then the adjoint pressure is p^adj = chi^adj and we have the same coupling terms as for kernel simulations.
+      !
+      !       here, we choose to have (i) for a pure adjoint simulations, thus the coupling needs only a special treatment
+      !       for kernel simulations.
+      !
+      !       and, if there is no coupling between different media, then the ordering is obviously not important
+      !       as the domains can be computed independently from each other.
+
+      select case(SIMULATION_TYPE)
+      case (1,2)
+        ! forward/adjoint simulations
+        ! acoustic domains
+        if (ACOUSTIC_SIMULATION) then
+          if (.not. GPU_MODE) then
+            call compute_forces_viscoacoustic_main()
+          else
+            ! on GPU
+            if (any_acoustic) call compute_forces_viscoacoustic_GPU(.false.)
+          endif
+        endif
+        ! elastic domains
+        if (ELASTIC_SIMULATION) then
+          if (.not. GPU_MODE) then
+            call compute_forces_viscoelastic_main()
+          else
+            ! on GPU
+            if (any_elastic) call compute_forces_viscoelastic_GPU(.false.)
+          endif
+        endif
+        ! poroelastic domains
+        if (POROELASTIC_SIMULATION) then
+          if (.not. GPU_MODE) then
+            call compute_forces_poroelastic_main()
+          else
+            ! on GPU
+            if (any_poroelastic) call exit_MPI(myrank,'poroelastic not implemented in GPU MODE yet')
+          endif
+        endif
+
+      case (3)
+        ! kernel simulations
+        ! forward (adjoint) wavefields use switched update ordering
+        ! poroelastic domains
+        if (POROELASTIC_SIMULATION) then
+          if (.not. GPU_MODE) then
+            call compute_forces_poroelastic_main()
+          else
+            ! on GPU
+            if (any_poroelastic) call exit_MPI(myrank,'poroelastic not implemented in GPU MODE yet')
+          endif
+        endif
+        ! elastic domains
+        if (ELASTIC_SIMULATION) then
+          if (.not. GPU_MODE) then
+            call compute_forces_viscoelastic_main()
+          else
+            ! on GPU
+            if (any_elastic) call compute_forces_viscoelastic_GPU(.false.)
+          endif
+        endif
+        ! acoustic domains
         if (.not. GPU_MODE) then
           call compute_forces_viscoacoustic_main()
-          if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) call compute_forces_viscoacoustic_main_backward()
         else
           ! on GPU
           if (any_acoustic) call compute_forces_viscoacoustic_GPU(.false.)
         endif
-      endif
 
-      ! elastic domains
-      if (ELASTIC_SIMULATION) then
-        if (.not. GPU_MODE) then
-          call compute_forces_viscoelastic_main()
-          if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) call compute_forces_viscoelastic_main_backward()
-        else
-          ! on GPU
-          if (any_elastic) call compute_forces_viscoelastic_GPU()
-        endif
-      endif
+        ! backward/reconstructed wavefields
+        if (.not. NO_BACKWARD_RECONSTRUCTION) then
+          ! note: the reconstruction of the forward wavefield uses the last wavefield and backpropagates it in time.
+          !       backpropagation can use the same coupling terms as in the forward propagation case, thus the same
+          !       order as for forward simulations.
+          if (.not. GPU_MODE) then
+            ! acoustic domains
+            call compute_forces_viscoacoustic_main_backward()
+            ! elastic domains
+            call compute_forces_viscoelastic_main_backward()
+            ! poroelastic domains
+            call compute_forces_poroelastic_main_backward()
+          else
+            ! on GPU
+            if (coupled_acoustic_elastic) then
+              ! coupled simulations need a re-ordering of the domain updates
+              ! due to a change of the coupling terms for adjoint wavefields
+              !
+              ! we don't need to call this for un-coupled simulation, as both wavefields will be taken take of in the
+              ! GPU routines. only when the coupling terms for adjoint simulations are involved, we need to separate
+              ! forward/adjoint and backward wavefield computations.
 
-      ! poroelastic domains
-      if (POROELASTIC_SIMULATION) then
-        if (.not. GPU_MODE) then
-          call compute_forces_poroelastic_main()
-          if (SIMULATION_TYPE == 3) call compute_forces_poroelastic_main_backward()
-        else
-          ! on GPU
-          if (any_poroelastic) call exit_MPI(myrank,'poroelastic not implemented in GPU MODE yet')
+              ! here, we still need to compute reconstructed/backward wavefields
+              ! acoustic domains
+              if (any_acoustic) call compute_forces_viscoacoustic_GPU(.true.)  ! only reconstructed/backward wavefields
+              ! elastic domains
+              if (any_elastic) call compute_forces_viscoelastic_GPU(.true.)   ! only reconstructed/backward wavefields
+              ! poroelastic domains not implemented on GPUs yet...
+              if (any_poroelastic) call exit_MPI(myrank,'poroelastic coupling not implemented in GPU MODE yet')
+            endif
+          endif
         endif
-      endif
+      end select
 
     enddo ! stage_time_scheme (LDDRK or RK)
 
@@ -253,7 +390,9 @@
     endif
 
     ! display results at given time steps
-    call write_movie_output(.true.)
+    if (MOVIE_SIMULATION) then
+      call write_movie_output(.true.)
+    endif
 
     ! first step of noise tomography, i.e., save a surface movie at every time step
     if (NOISE_TOMOGRAPHY == 1) then
@@ -326,7 +465,7 @@
 
   use constants, only: TWO,FOUR_THIRDS
   use specfem_par
-  use specfem_par_gpu
+  use specfem_par_gpu, only: Mesh_pointer,NGLOB_AB,NSPEC_AB
 
   implicit none
 

@@ -145,9 +145,10 @@
   b_potential_acoustic_old(:) = 0._CUSTOM_REAL
 
   ! coupling for SIMULATION_TYPE == 3
-  allocate(potential_acoustic_adj_coupling(b_nglob_acoustic),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating potential_acoustic_adj_coupling array')
-  potential_acoustic_adj_coupling(:) = 0.0_CUSTOM_REAL
+  ! not needed anymore, taking care of by re-ordering domain updates
+  !allocate(potential_acoustic_adj_coupling(b_nglob_acoustic),stat=ier)
+  !if (ier /= 0) call stop_the_code('Error allocating potential_acoustic_adj_coupling array')
+  !potential_acoustic_adj_coupling(:) = 0.0_CUSTOM_REAL
 
   ! acoustic kernels
   allocate(rho_ac_kl(NGLLX,NGLLZ,b_nspec_acoustic), &
@@ -236,14 +237,16 @@
   if (ier /= 0) call stop_the_code('Error allocating elastic backward wavefield arrays')
   b_displ_elastic(:,:) = 0.0_CUSTOM_REAL; b_veloc_elastic(:,:) = 0.0_CUSTOM_REAL; b_accel_elastic(:,:) = 0.0_CUSTOM_REAL
 
+  ! PML
   allocate(b_displ_elastic_old(NDIM,b_nglob_elastic),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating b_displ_elastic_old array')
   b_displ_elastic_old(:,:) = 0.0_CUSTOM_REAL
 
   ! for SIMULATION_TYPE == 3 and coupled_acoustic_elastic
-  allocate(accel_elastic_adj_coupling(NDIM,b_nglob_elastic),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating accel_elastic_adj_coupling array')
-  accel_elastic_adj_coupling(:,:) = 0.0_CUSTOM_REAL
+  ! not needed anymore, taking care of by re-ordering domain updates
+  !allocate(accel_elastic_adj_coupling(NDIM,b_nglob_elastic),stat=ier)
+  !if (ier /= 0) call stop_the_code('Error allocating accel_elastic_adj_coupling array')
+  !accel_elastic_adj_coupling(:,:) = 0.0_CUSTOM_REAL
 
   ! kernels
   allocate(rho_kl(NGLLX,NGLLZ,b_nspec_elastic), &
@@ -364,10 +367,11 @@
   b_accelw_poroelastic(:,:) = 0.0_CUSTOM_REAL
 
   ! coupling when SIMULATION_TYPE == 3
-  allocate(accels_poroelastic_adj_coupling(NDIM,b_nglob_poroelastic), &
-           accelw_poroelastic_adj_coupling(NDIM,b_nglob_poroelastic),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating accels_poroelastic_adj_coupling arrays')
-  accels_poroelastic_adj_coupling(:,:) = 0.0_CUSTOM_REAL; accelw_poroelastic_adj_coupling(:,:) = 0.0_CUSTOM_REAL
+  ! not needed anymore, taking care of by re-ordering domain updates
+  !allocate(accels_poroelastic_adj_coupling(NDIM,b_nglob_poroelastic), &
+  !         accelw_poroelastic_adj_coupling(NDIM,b_nglob_poroelastic),stat=ier)
+  !if (ier /= 0) call stop_the_code('Error allocating accels_poroelastic_adj_coupling arrays')
+  !accels_poroelastic_adj_coupling(:,:) = 0.0_CUSTOM_REAL; accelw_poroelastic_adj_coupling(:,:) = 0.0_CUSTOM_REAL
 
   ! strain for kernel simulations
   allocate(epsilondev_s(4,NGLLX,NGLLZ,b_nspec_poroelastic), &

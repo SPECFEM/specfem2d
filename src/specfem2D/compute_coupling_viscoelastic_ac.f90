@@ -40,13 +40,16 @@
 
   use specfem_par, only: SIMULATION_TYPE,num_fluid_solid_edges, &
                          ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
-                         potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
-                         accel_elastic,fluid_solid_acoustic_ispec, &
-                         fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
-                         potential_acoustic_adj_coupling, &
+                         fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
+                         fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
                          rmemory_sfb_potential_ddot_acoustic,DT,deltat, &
                          rmemory_sfb_potential_ddot_acoustic_LDDRK,i_stage,time_stepping_scheme
+
+  use specfem_par, only: potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
+                         !potential_acoustic_adj_coupling, &
+                         accel_elastic
+
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,nspec_PML,ispec_is_PML,spec_to_PML,region_CPML, &
                 K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,potential_acoustic_old
@@ -57,7 +60,9 @@
   integer :: inum,ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic,ipoin1D,i,j,iglob,ii2,jj2, &
              ispec_PML,CPML_region_local
   real(kind=CUSTOM_REAL) :: pressure,xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
+  ! axisym
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
+  ! PML
   double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &
                       A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
 
@@ -81,12 +86,20 @@
       iglob = ibool(i,j,ispec_acoustic)
 
       ! compute pressure on the fluid/solid edge
-      pressure = - potential_dot_dot_acoustic(iglob)
-
-      if (SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE /= 3) then
+        ! forward and pure adjoint simulations
+        ! coupling term:
+        !   n * T = - p_fluid n = \partial_t^2 chi n
+        ! note: the negative sign is due to the normal nx,nz below being defined in opposite direction (from fluid to solid)
+        pressure = - potential_dot_dot_acoustic(iglob)
+      else
+        ! kernel simulations
         ! new definition of adjoint displacement and adjoint potential
         ! adjoint definition: pressure^\dagger = potential^\dagger
-        pressure = potential_acoustic_adj_coupling(iglob)
+        !
+        ! coupling term:
+        !   n * T^adj = - p_fluid^adj n = - chi^adj n
+        pressure = potential_acoustic(iglob)   ! potential_acoustic_adj_coupling(iglob)
       endif
 
       ! PML
@@ -257,6 +270,7 @@
   !local variable
   integer :: inum,ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic,ipoin1D,i,j,iglob,ii2,jj2
   real(kind=CUSTOM_REAL) :: b_pressure,xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
+  ! axisym
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
 
   ! loop on all the coupling edges

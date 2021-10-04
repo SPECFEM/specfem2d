@@ -362,6 +362,7 @@
   !local variables
   integer :: irec_local,i,j,iglob,ispec
   integer :: it_tmp
+  real(kind=CUSTOM_REAL) :: stfx,stfz
 
   ! time step index
   it_tmp = NSTEP - it + 1
@@ -378,10 +379,12 @@
         do j = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec)
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) + real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
-                                        source_adjoint(irec_local,it_tmp,1),kind=CUSTOM_REAL)
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) + real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
-                                        source_adjoint(irec_local,it_tmp,2),kind=CUSTOM_REAL)
+
+            stfx = xir_store_loc(irec_local,i) * gammar_store_loc(irec_local,j) * source_adjoint(irec_local,it_tmp,1)
+            stfz = xir_store_loc(irec_local,i) * gammar_store_loc(irec_local,j) * source_adjoint(irec_local,it_tmp,2)
+
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) + stfx
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) + stfz
           enddo
         enddo
       else
@@ -389,8 +392,10 @@
         do j = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec)
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) +  real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
-                                        source_adjoint(irec_local,it_tmp,1),kind=CUSTOM_REAL)
+
+            stfx = xir_store_loc(irec_local,i) * gammar_store_loc(irec_local,j) * source_adjoint(irec_local,it_tmp,1)
+
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) + stfx
           enddo
         enddo
       endif

@@ -455,14 +455,16 @@ void FC_FUNC_(prepare_fields_acoustic_adj_dev,
   // allocates backward/reconstructed arrays on device (GPU)
   int size = mp->NGLOB_AB * sizeof(realw);
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_potential_acoustic),size),3014);
+  // initializes values to zero
+  print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_acoustic,0,size),3007);
+
   if (! *NO_BACKWARD_RECONSTRUCTION){
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_potential_dot_acoustic),size),3015);
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_potential_dot_dot_acoustic),size),3016);
+    // initializes values to zero
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_dot_acoustic,0,size),3007);
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_dot_dot_acoustic,0,size),3007);
   }
-  // initializes values to zero
-  //print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_acoustic,0,size),3007);
-  //print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_dot_acoustic,0,size),3007);
-  //print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_dot_dot_acoustic,0,size),3007);
 
   #ifdef USE_TEXTURES_FIELDS
   {
@@ -502,8 +504,8 @@ void FC_FUNC_(prepare_fields_acoustic_adj_dev,
   }
 
   if (*ATTENUATION_VISCOACOUSTIC && (! *NO_BACKWARD_RECONSTRUCTION) ) {
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_sum_forces_old),size),3040);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_e1_acous),size*N_SLS),3041);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_sum_forces_old),size),3040);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_e1_acous),size*N_SLS),3041);
   }
 
   // mpi buffer
@@ -555,11 +557,11 @@ void FC_FUNC_(prepare_fields_elastic_device,
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_veloc),sizeof(realw)*size),4002);
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_accel),sizeof(realw)*size),4003);
   // initializes values to zero
-  //print_CUDA_error_if_any(cudaMemset(mp->d_displ,0,sizeof(realw)*size),4007);
-  //print_CUDA_error_if_any(cudaMemset(mp->d_veloc,0,sizeof(realw)*size),4007);
-  //print_CUDA_error_if_any(cudaMemset(mp->d_accel,0,sizeof(realw)*size),4007);
+  print_CUDA_error_if_any(cudaMemset(mp->d_displ,0,sizeof(realw)*size),4007);
+  print_CUDA_error_if_any(cudaMemset(mp->d_veloc,0,sizeof(realw)*size),4007);
+  print_CUDA_error_if_any(cudaMemset(mp->d_accel,0,sizeof(realw)*size),4007);
 
- #ifdef USE_TEXTURES_FIELDS
+  #ifdef USE_TEXTURES_FIELDS
   {
     #ifdef USE_OLDER_CUDA4_GPU
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
@@ -709,7 +711,9 @@ extern "C"
 void FC_FUNC_(prepare_fields_elastic_adj_dev,
               PREPARE_FIELDS_ELASTIC_ADJ_DEV)(long* Mesh_pointer,
                                               int* size_f,
-                                              int* APPROXIMATE_HESS_KL){
+                                              int* APPROXIMATE_HESS_KL,
+                                              int* ATTENUATION_VISCOELASTIC,
+                                              int* NO_BACKWARD_RECONSTRUCTION){
 
   TRACE("prepare_fields_elastic_adj_dev");
 
@@ -731,9 +735,9 @@ void FC_FUNC_(prepare_fields_elastic_adj_dev,
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_veloc),sizeof(realw)*size),5202);
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel),sizeof(realw)*size),5203);
   // initializes values to zero
-  //print_CUDA_error_if_any(cudaMemset(mp->d_b_displ,0,sizeof(realw)*size),5207);
-  //print_CUDA_error_if_any(cudaMemset(mp->d_b_veloc,0,sizeof(realw)*size),5207);
-  //print_CUDA_error_if_any(cudaMemset(mp->d_b_accel,0,sizeof(realw)*size),5207);
+  print_CUDA_error_if_any(cudaMemset(mp->d_b_displ,0,sizeof(realw)*size),5207);
+  print_CUDA_error_if_any(cudaMemset(mp->d_b_veloc,0,sizeof(realw)*size),5207);
+  print_CUDA_error_if_any(cudaMemset(mp->d_b_accel,0,sizeof(realw)*size),5207);
 
  #ifdef USE_TEXTURES_FIELDS
   {
@@ -778,6 +782,22 @@ void FC_FUNC_(prepare_fields_elastic_adj_dev,
     print_CUDA_error_if_any(cudaMemset(mp->d_hess_el_kl,0,size*sizeof(realw)),5451);
   }
 
+  // attenuation
+  if (*ATTENUATION_VISCOELASTIC && (! *NO_BACKWARD_RECONSTRUCTION) ) {
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_e1,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),4801);
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_e1,0,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),4802);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_e11,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),4803);
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_e11,0,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),4804);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_e13,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),4805);
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_e13,0,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),4806);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_dux_dxl_old,mp->NSPEC_AB*sizeof(realw)*NGLL2),4807);
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_dux_dxl_old,0,mp->NSPEC_AB*sizeof(realw)*NGLL2),4808);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_duz_dzl_old,mp->NSPEC_AB*sizeof(realw)*NGLL2),4809);
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_duz_dzl_old,0,mp->NSPEC_AB*sizeof(realw)*NGLL2),4810);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_dux_dzl_plus_duz_dxl_old,mp->NSPEC_AB*sizeof(realw)*NGLL2),4811);
+    print_CUDA_error_if_any(cudaMemset(mp->d_b_dux_dzl_plus_duz_dxl_old,0,mp->NSPEC_AB*sizeof(realw)*NGLL2),4812);
+  }
+
   // debug
   //printf("prepare_fields_elastic_adj_dev: rank %d - done\n",mp->myrank);
   //synchronize_mpi();
@@ -795,7 +815,7 @@ extern "C"
 void FC_FUNC_(prepare_sim2_or_3_const_device,
               PREPARE_SIM2_OR_3_CONST_DEVICE)(long* Mesh_pointer,
                                               int* nadj_rec_local,
-                                              realw* h_source_adjointe,
+                                              realw* h_source_adjoint,
                                               int* NSTEP) {
 
   TRACE("prepare_sim2_or_3_const_device");
@@ -807,7 +827,7 @@ void FC_FUNC_(prepare_sim2_or_3_const_device,
   if (mp->nadj_rec_local > 0) {
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_adj_sourcearrays,(mp->nadj_rec_local)*2*NGLL2*sizeof(realw)),6003);
 
-    copy_todevice_realw((void**)&mp->d_source_adjointe,h_source_adjointe,(*NSTEP)*(*nadj_rec_local)*NDIM);
+    copy_todevice_realw((void**)&mp->d_source_adjoint,h_source_adjoint,(*NSTEP)*(*nadj_rec_local)*NDIM);
   }
 
   GPU_ERROR_CHECKING ("prepare_sim2_or_3_const_device");
@@ -1317,6 +1337,14 @@ TRACE("prepare_cleanup_device");
       cudaFree(mp->d_mu_kl);
       cudaFree(mp->d_kappa_kl);
       if (*APPROXIMATE_HESS_KL ) cudaFree(mp->d_hess_el_kl);
+      if (*ATTENUATION_VISCOELASTIC && ! *NO_BACKWARD_RECONSTRUCTION) {
+        cudaFree(mp->d_b_e1);
+        cudaFree(mp->d_b_e11);
+        cudaFree(mp->d_b_e13);
+        cudaFree(mp->d_b_dux_dxl_old);
+        cudaFree(mp->d_b_duz_dzl_old);
+        cudaFree(mp->d_b_dux_dzl_plus_duz_dxl_old);
+      }
     }
 
     if (*ANISOTROPY) {

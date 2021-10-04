@@ -477,6 +477,65 @@ void FC_FUNC_(transfer_viscoacoustic_var_from_device,
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
+void FC_FUNC_(transfer_viscoelastic_b_var_to_device,
+              TRANSFER_VISCOELASTIC_b_VAR_TO_DEVICE)(int* size,
+                                                     realw* b_e1,
+                                                     realw* b_e11,
+                                                     realw* b_e13,
+                                                     realw* b_dux_dxl_old,
+                                                     realw* b_duz_dzl_old,
+                                                     realw* b_dux_dzl_plus_duz_dxl_old,
+                                                     long* Mesh_pointer) {
+
+  TRACE("transfer_viscoelastic_var_to_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_e1,b_e1,sizeof(realw)*(*size)*N_SLS,cudaMemcpyHostToDevice),70205);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_e11,b_e11,sizeof(realw)*(*size)*N_SLS,cudaMemcpyHostToDevice),70206);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_e13,b_e13,sizeof(realw)*(*size)*N_SLS,cudaMemcpyHostToDevice),70206);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_dux_dxl_old,b_dux_dxl_old,
+                                     sizeof(realw)*(*size)*N_SLS,cudaMemcpyHostToDevice),70206);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_duz_dzl_old,b_duz_dzl_old,
+                                     sizeof(realw)*(*size)*N_SLS,cudaMemcpyHostToDevice),70206);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_dux_dzl_plus_duz_dxl_old,b_dux_dzl_plus_duz_dxl_old,
+                                     sizeof(realw)*(*size)*N_SLS,cudaMemcpyHostToDevice),70206);
+
+}
+
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(transfer_viscoelastic_var_from_device,
+              TRANSFER_VISCOELASTIC_VAR_FROM_DEVICE)(int* size,
+                                                     realw* e1,
+                                                     realw* e11,
+                                                     realw* e13,
+                                                     realw* dux_dxl_old,
+                                                     realw* duz_dzl_old,
+                                                     realw* dux_dzl_plus_duz_dxl_old,
+                                                     long* Mesh_pointer) {
+
+  TRACE("transfer_viscoelastic_var_from_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(e1,mp->d_e1,sizeof(realw)*(*size)*N_SLS,cudaMemcpyDeviceToHost),70205);
+  print_CUDA_error_if_any(cudaMemcpy(e11,mp->d_e11,sizeof(realw)*(*size)*N_SLS,cudaMemcpyDeviceToHost),70206);
+  print_CUDA_error_if_any(cudaMemcpy(e13,mp->d_e13,sizeof(realw)*(*size)*N_SLS,cudaMemcpyDeviceToHost),70206);
+  print_CUDA_error_if_any(cudaMemcpy(dux_dxl_old,mp->d_dux_dxl_old,
+                                     sizeof(realw)*(*size)*N_SLS,cudaMemcpyDeviceToHost),70206);
+  print_CUDA_error_if_any(cudaMemcpy(duz_dzl_old,mp->d_duz_dzl_old,
+                                     sizeof(realw)*(*size)*N_SLS,cudaMemcpyDeviceToHost),70206);
+  print_CUDA_error_if_any(cudaMemcpy(dux_dzl_plus_duz_dxl_old,mp->d_dux_dzl_plus_duz_dxl_old,
+                                     sizeof(realw)*(*size)*N_SLS,cudaMemcpyDeviceToHost),70206);
+}
+
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
 void FC_FUNC_(transfer_async_pot_ac_from_device,
               TRANSFER_ASYNC_POT_AC_FROM_DEVICE)(realw* pot_buffer,long* Mesh_pointer) {
 

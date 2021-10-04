@@ -42,8 +42,12 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
-void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
-              int ANISOTROPY,int ATTENUATION_VISCOELASTIC) {
+void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,
+              realw d_deltat,
+              int ANISOTROPY,
+              int ATTENUATION_VISCOELASTIC,
+              int compute_wavefield_1,
+              int compute_wavefield_2) {
 
 TRACE("Kernel_2");
 
@@ -73,42 +77,10 @@ TRACE("Kernel_2");
     // full anisotropy
     if (ATTENUATION_VISCOELASTIC){
       // anisotropy, attenuation
-      // forward wavefields -> FORWARD_OR_ADJOINT == 1
-      TRACE("\tKernel_2_att_ani_impl 1");
-      Kernel_2_att_ani_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                                      mp->d_ibool,
-                                                                      mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
-                                                                      d_iphase,
-                                                                      mp->d_displ,
-                                                                      mp->d_accel,
-                                                                      mp->d_xix, mp->d_xiz,
-                                                                      mp->d_gammax, mp->d_gammaz,
-                                                                      mp->d_hprime_xx,
-                                                                      mp->d_hprimewgll_xx,
-                                                                      mp->d_wxgll,
-                                                                      mp->d_kappav,
-                                                                      mp->d_muv,
-                                                                      mp->simulation_type,
-                                                                      mp->p_sv,
-                                                                      mp->d_ispec_is_anisotropic,
-                                                                      mp->d_c11store,mp->d_c12store,mp->d_c13store,
-                                                                      mp->d_c15store,mp->d_c23store,mp->d_c25store,
-                                                                      mp->d_c33store,mp->d_c35store,mp->d_c55store,
-                                                                      mp->d_A_newmark_mu,
-                                                                      mp->d_B_newmark_mu,
-                                                                      mp->d_A_newmark_kappa,
-                                                                      mp->d_B_newmark_kappa,
-                                                                      mp->d_e1,
-                                                                      mp->d_e11,
-                                                                      mp->d_e13,
-                                                                      mp->d_dux_dxl_old,
-                                                                      mp->d_duz_dzl_old,
-                                                                      mp->d_dux_dzl_plus_duz_dxl_old);
-    }else{
-      // anisotropy, no attenuation
-      // forward wavefields -> FORWARD_OR_ADJOINT == 1
-      TRACE("\tKernel_2_noatt_ani_impl 1");
-      Kernel_2_noatt_ani_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+      if (compute_wavefield_1){
+        // forward wavefields -> FORWARD_OR_ADJOINT == 1
+        TRACE("\tKernel_2_att_ani_impl 1");
+        Kernel_2_att_ani_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                                         mp->d_ibool,
                                                                         mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
                                                                         d_iphase,
@@ -126,69 +98,109 @@ TRACE("Kernel_2");
                                                                         mp->d_ispec_is_anisotropic,
                                                                         mp->d_c11store,mp->d_c12store,mp->d_c13store,
                                                                         mp->d_c15store,mp->d_c23store,mp->d_c25store,
-                                                                        mp->d_c33store,mp->d_c35store,mp->d_c55store);
-    }
-    // backward/reconstructed wavefield
-    if (mp->simulation_type == 3) {
-      // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
-      // note: attenuation not supported yet for backward simulations
-      TRACE("\tKernel_2_noatt_ani_impl 3");
-      Kernel_2_noatt_ani_impl<3><<< grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                                         mp->d_ibool,
-                                                                         mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
-                                                                         d_iphase,
-                                                                         mp->d_b_displ,
-                                                                         mp->d_b_accel,
-                                                                         mp->d_xix, mp->d_xiz,
-                                                                         mp->d_gammax, mp->d_gammaz,
-                                                                         mp->d_hprime_xx,
-                                                                         mp->d_hprimewgll_xx,
-                                                                         mp->d_wxgll,
-                                                                         mp->d_kappav,
-                                                                         mp->d_muv,
-                                                                         mp->simulation_type,
-                                                                         mp->p_sv,
-                                                                         mp->d_ispec_is_anisotropic,
-                                                                         mp->d_c11store,mp->d_c12store,mp->d_c13store,
-                                                                         mp->d_c15store,mp->d_c23store,mp->d_c25store,
-                                                                         mp->d_c33store,mp->d_c35store,mp->d_c55store);
+                                                                        mp->d_c33store,mp->d_c35store,mp->d_c55store,
+                                                                        mp->d_A_newmark_mu,
+                                                                        mp->d_B_newmark_mu,
+                                                                        mp->d_A_newmark_kappa,
+                                                                        mp->d_B_newmark_kappa,
+                                                                        mp->d_e1,
+                                                                        mp->d_e11,
+                                                                        mp->d_e13,
+                                                                        mp->d_dux_dxl_old,
+                                                                        mp->d_duz_dzl_old,
+                                                                        mp->d_dux_dzl_plus_duz_dxl_old);
+      }
+      if (compute_wavefield_2){
+        // this run only happens with UNDO_ATTENUATION_AND_OR_PML on
+        // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
+        TRACE("\tKernel_2_att_ani_impl 3");
+        Kernel_2_att_ani_impl<3><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                                        mp->d_ibool,
+                                                                        mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
+                                                                        d_iphase,
+                                                                        mp->d_b_displ,
+                                                                        mp->d_b_accel,
+                                                                        mp->d_xix, mp->d_xiz,
+                                                                        mp->d_gammax, mp->d_gammaz,
+                                                                        mp->d_hprime_xx,
+                                                                        mp->d_hprimewgll_xx,
+                                                                        mp->d_wxgll,
+                                                                        mp->d_kappav,
+                                                                        mp->d_muv,
+                                                                        mp->simulation_type,
+                                                                        mp->p_sv,
+                                                                        mp->d_ispec_is_anisotropic,
+                                                                        mp->d_c11store,mp->d_c12store,mp->d_c13store,
+                                                                        mp->d_c15store,mp->d_c23store,mp->d_c25store,
+                                                                        mp->d_c33store,mp->d_c35store,mp->d_c55store,
+                                                                        mp->d_A_newmark_mu,
+                                                                        mp->d_B_newmark_mu,
+                                                                        mp->d_A_newmark_kappa,
+                                                                        mp->d_B_newmark_kappa,
+                                                                        mp->d_b_e1,
+                                                                        mp->d_b_e11,
+                                                                        mp->d_b_e13,
+                                                                        mp->d_b_dux_dxl_old,
+                                                                        mp->d_b_duz_dzl_old,
+                                                                        mp->d_b_dux_dzl_plus_duz_dxl_old);
+      }
+    }else{
+      // anisotropy, no attenuation
+      if (compute_wavefield_1){
+        // forward wavefields -> FORWARD_OR_ADJOINT == 1
+        TRACE("\tKernel_2_noatt_ani_impl 1");
+        Kernel_2_noatt_ani_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                                          mp->d_ibool,
+                                                                          mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
+                                                                          d_iphase,
+                                                                          mp->d_displ,
+                                                                          mp->d_accel,
+                                                                          mp->d_xix, mp->d_xiz,
+                                                                          mp->d_gammax, mp->d_gammaz,
+                                                                          mp->d_hprime_xx,
+                                                                          mp->d_hprimewgll_xx,
+                                                                          mp->d_wxgll,
+                                                                          mp->d_kappav,
+                                                                          mp->d_muv,
+                                                                          mp->simulation_type,
+                                                                          mp->p_sv,
+                                                                          mp->d_ispec_is_anisotropic,
+                                                                          mp->d_c11store,mp->d_c12store,mp->d_c13store,
+                                                                          mp->d_c15store,mp->d_c23store,mp->d_c25store,
+                                                                          mp->d_c33store,mp->d_c35store,mp->d_c55store);
+      }
+      if (compute_wavefield_2){
+        // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
+        TRACE("\tKernel_2_noatt_ani_impl 3");
+        Kernel_2_noatt_ani_impl<3><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                                          mp->d_ibool,
+                                                                          mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
+                                                                          d_iphase,
+                                                                          mp->d_b_displ,
+                                                                          mp->d_b_accel,
+                                                                          mp->d_xix, mp->d_xiz,
+                                                                          mp->d_gammax, mp->d_gammaz,
+                                                                          mp->d_hprime_xx,
+                                                                          mp->d_hprimewgll_xx,
+                                                                          mp->d_wxgll,
+                                                                          mp->d_kappav,
+                                                                          mp->d_muv,
+                                                                          mp->simulation_type,
+                                                                          mp->p_sv,
+                                                                          mp->d_ispec_is_anisotropic,
+                                                                          mp->d_c11store,mp->d_c12store,mp->d_c13store,
+                                                                          mp->d_c15store,mp->d_c23store,mp->d_c25store,
+                                                                          mp->d_c33store,mp->d_c35store,mp->d_c55store);
+      }
     }
   }else{
     // isotropic
     if (ATTENUATION_VISCOELASTIC){
       // isotropic, attenuation
-      TRACE("\tKernel_2_att_iso_impl 1");
-      Kernel_2_att_iso_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                                      mp->d_ibool,
-                                                                      mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
-                                                                      d_iphase,
-                                                                      mp->d_displ,
-                                                                      mp->d_accel,
-                                                                      mp->d_xix, mp->d_xiz,
-                                                                      mp->d_gammax, mp->d_gammaz,
-                                                                      mp->d_hprime_xx,
-                                                                      mp->d_hprimewgll_xx,
-                                                                      mp->d_wxgll,
-                                                                      mp->d_kappav,
-                                                                      mp->d_muv,
-                                                                      mp->simulation_type,
-                                                                      mp->p_sv,
-                                                                      mp->d_A_newmark_mu,
-                                                                      mp->d_B_newmark_mu,
-                                                                      mp->d_A_newmark_kappa,
-                                                                      mp->d_B_newmark_kappa,
-                                                                      mp->d_e1,
-                                                                      mp->d_e11,
-                                                                      mp->d_e13,
-                                                                      mp->d_dux_dxl_old,
-                                                                      mp->d_duz_dzl_old,
-                                                                      mp->d_dux_dzl_plus_duz_dxl_old);
-    } else {
-      // isotropic, no attenuation
-      // without storing strains
-      // forward wavefields -> FORWARD_OR_ADJOINT == 1
-      TRACE("\tKernel_2_noatt_iso_impl 1");
-      Kernel_2_noatt_iso_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+      if (compute_wavefield_1){
+        // forward wavefields -> FORWARD_OR_ADJOINT == 1
+        TRACE("\tKernel_2_att_iso_impl 1");
+        Kernel_2_att_iso_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                                         mp->d_ibool,
                                                                         mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
                                                                         d_iphase,
@@ -202,29 +214,89 @@ TRACE("Kernel_2");
                                                                         mp->d_kappav,
                                                                         mp->d_muv,
                                                                         mp->simulation_type,
-                                                                        mp->p_sv);
-
-    }
-    // backward/reconstructed wavefield
-    if (mp->simulation_type == 3) {
-      // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
-      // note: attenuation not supported yet for backward simulations
-      TRACE("\tKernel_2_noatt_iso_impl 3");
-      Kernel_2_noatt_iso_impl<3><<< grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                                         mp->d_ibool,
-                                                                         mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
-                                                                         d_iphase,
-                                                                         mp->d_b_displ,
-                                                                         mp->d_b_accel,
-                                                                         mp->d_xix, mp->d_xiz,
-                                                                         mp->d_gammax,mp->d_gammaz,
-                                                                         mp->d_hprime_xx,
-                                                                         mp->d_hprimewgll_xx,
-                                                                         mp->d_wxgll,
-                                                                         mp->d_kappav,
-                                                                         mp->d_muv,
-                                                                         mp->simulation_type,
-                                                                         mp->p_sv);
+                                                                        mp->p_sv,
+                                                                        mp->d_A_newmark_mu,
+                                                                        mp->d_B_newmark_mu,
+                                                                        mp->d_A_newmark_kappa,
+                                                                        mp->d_B_newmark_kappa,
+                                                                        mp->d_e1,
+                                                                        mp->d_e11,
+                                                                        mp->d_e13,
+                                                                        mp->d_dux_dxl_old,
+                                                                        mp->d_duz_dzl_old,
+                                                                        mp->d_dux_dzl_plus_duz_dxl_old);
+      }
+      if (compute_wavefield_2){
+        // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
+        TRACE("\tKernel_2_att_iso_impl 3");
+        Kernel_2_att_iso_impl<3><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                                        mp->d_ibool,
+                                                                        mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
+                                                                        d_iphase,
+                                                                        mp->d_b_displ,
+                                                                        mp->d_b_accel,
+                                                                        mp->d_xix, mp->d_xiz,
+                                                                        mp->d_gammax, mp->d_gammaz,
+                                                                        mp->d_hprime_xx,
+                                                                        mp->d_hprimewgll_xx,
+                                                                        mp->d_wxgll,
+                                                                        mp->d_kappav,
+                                                                        mp->d_muv,
+                                                                        mp->simulation_type,
+                                                                        mp->p_sv,
+                                                                        mp->d_A_newmark_mu,
+                                                                        mp->d_B_newmark_mu,
+                                                                        mp->d_A_newmark_kappa,
+                                                                        mp->d_B_newmark_kappa,
+                                                                        mp->d_b_e1,
+                                                                        mp->d_b_e11,
+                                                                        mp->d_b_e13,
+                                                                        mp->d_b_dux_dxl_old,
+                                                                        mp->d_b_duz_dzl_old,
+                                                                        mp->d_b_dux_dzl_plus_duz_dxl_old);
+      }
+    } else {
+      // isotropic, no attenuation
+      // without storing strains
+      if (compute_wavefield_1){
+        // forward wavefields -> FORWARD_OR_ADJOINT == 1
+        TRACE("\tKernel_2_noatt_iso_impl 1");
+        Kernel_2_noatt_iso_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                                          mp->d_ibool,
+                                                                          mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
+                                                                          d_iphase,
+                                                                          mp->d_displ,
+                                                                          mp->d_accel,
+                                                                          mp->d_xix, mp->d_xiz,
+                                                                          mp->d_gammax, mp->d_gammaz,
+                                                                          mp->d_hprime_xx,
+                                                                          mp->d_hprimewgll_xx,
+                                                                          mp->d_wxgll,
+                                                                          mp->d_kappav,
+                                                                          mp->d_muv,
+                                                                          mp->simulation_type,
+                                                                          mp->p_sv);
+      }
+      // backward/reconstructed wavefield
+      if (compute_wavefield_2){
+        // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
+        TRACE("\tKernel_2_noatt_iso_impl 3");
+        Kernel_2_noatt_iso_impl<3><<< grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                                           mp->d_ibool,
+                                                                           mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
+                                                                           d_iphase,
+                                                                           mp->d_b_displ,
+                                                                           mp->d_b_accel,
+                                                                           mp->d_xix, mp->d_xiz,
+                                                                           mp->d_gammax,mp->d_gammaz,
+                                                                           mp->d_hprime_xx,
+                                                                           mp->d_hprimewgll_xx,
+                                                                           mp->d_wxgll,
+                                                                           mp->d_kappav,
+                                                                           mp->d_muv,
+                                                                           mp->simulation_type,
+                                                                           mp->p_sv);
+      }
     }
   } // ANISOTROPY
 
@@ -259,7 +331,9 @@ void FC_FUNC_(compute_forces_viscoelastic_cuda,
                                                 int* nspec_outer_elastic,
                                                 int* nspec_inner_elastic,
                                                 int* ANISOTROPY,
-                                                int* ATTENUATION_VISCOELASTIC) {
+                                                int* ATTENUATION_VISCOELASTIC,
+                                                int* compute_wavefield_1,
+                                                int* compute_wavefield_2) {
 
   TRACE("compute_forces_viscoelastic_cuda");
   // EPIK_TRACER("compute_forces_viscoelastic_cuda");
@@ -280,6 +354,11 @@ void FC_FUNC_(compute_forces_viscoelastic_cuda,
   if (num_elements == 0) return;
 
   // no mesh coloring: uses atomic updates
-  Kernel_2(num_elements,mp,*iphase,*deltat,*ANISOTROPY,*ATTENUATION_VISCOELASTIC);
+  Kernel_2(num_elements,mp,*iphase,
+           *deltat,
+           *ANISOTROPY,
+           *ATTENUATION_VISCOELASTIC,
+           *compute_wavefield_1,
+           *compute_wavefield_2);
 
 }

@@ -346,7 +346,8 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_init_rk, potential_dot_acoustic_init_rk
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: potential_dot_dot_acoustic_rk, potential_dot_acoustic_rk
 
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_adj_coupling
+  ! not needed anymore, taking care of by re-ordering domain updates
+  !real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_adj_coupling
 
   ! for acoustic detection
   integer :: nglob_acoustic
@@ -464,7 +465,8 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_initial_rk_acous
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: e1_force_rk_acous,sum_forces_old,b_sum_forces_old
 
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
+  ! not needed anymore, taking care of by re-ordering domain updates
+  !real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
 
   ! the variable for CPML in elastic simulation
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
@@ -482,9 +484,11 @@ module specfem_par
                                                              muPML_rmemory_dux_dxl,muPML_rmemory_duz_dzl, &
                                                              muPML_rmemory_dux_dzl,muPML_rmemory_duz_dxl
 
-  !for backward simulation in adjoint inversion
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
-    b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old
+  ! for backward simulation in adjoint inversion
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_accel_elastic,b_veloc_elastic,b_displ_elastic
+
+  ! PML
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_elastic_old
 
   ! store potential, potential_dot, potential_dot_dot along interior interface of PML, shared by interior compuational domain
   ! for backward simulation in adjoint inversion
@@ -552,8 +556,9 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
     accelw_poroelastic_rk,velocw_poroelastic_rk
 
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
-    accels_poroelastic_adj_coupling, accelw_poroelastic_adj_coupling
+  ! not needed anymore, taking care of by re-ordering domain updates
+  !real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+  !  accels_poroelastic_adj_coupling, accelw_poroelastic_adj_coupling
 
   double precision, dimension(:), allocatable :: porosity,tortuosity
   double precision, dimension(:,:), allocatable :: density,permeability
@@ -819,11 +824,14 @@ module specfem_par_movie
 
 ! parameter module for noise simulations
 
-  use constants, only: MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN,CUSTOM_REAL
 
 !  use shared_parameters
 
   implicit none
+
+  ! movies flags
+  logical :: MOVIE_SIMULATION
 
   double precision, dimension(:,:), allocatable :: flagrange
   double precision, dimension(:,:), allocatable :: xinterp,zinterp,Uxinterp,Uzinterp
@@ -892,6 +900,10 @@ module specfem_par_movie
 
   logical, dimension(:), allocatable :: dump_duplicate_send, dump_duplicate_recv
   logical, dimension(:), allocatable  :: mask_duplicate ! mask array for identifying duplicates between partitions
+
+  ! helper arrays to integrate adjoint potential
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_adj_acoustic, &
+    potential_adj_int_acoustic,potential_adj_int_int_acoustic
 
 end module specfem_par_movie
 

@@ -213,13 +213,14 @@
 
   if (.not. GPU_MODE) then
     ! for coupling with adjoint wavefield, stores old (at time t_n) wavefield
-    if (SIMULATION_TYPE == 3) then
-      ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
-      ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
-      if (coupled_acoustic_elastic) then
-        accel_elastic_adj_coupling(:,:) = - accel_elastic(:,:)
-      endif
-    endif
+    ! not needed anymore, taking care of by re-ordering domain updates
+    !if (SIMULATION_TYPE == 3) then
+    !  ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+    !  ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
+    !  if (coupled_acoustic_elastic) then
+    !    accel_elastic_adj_coupling(:,:) = - accel_elastic(:,:)
+    !  endif
+    !endif
 
     ! updates elastic wavefields
     call update_displacement_newmark_elastic(deltat,deltatover2,deltatsquareover2, &
@@ -288,12 +289,13 @@
 
   if (.not. GPU_MODE) then
     ! for coupling with adjoint wavefield, stores old (at time t_n) wavefield
-    if (SIMULATION_TYPE == 3) then
-      ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
-      ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
-      accels_poroelastic_adj_coupling(:,:) = - accels_poroelastic(:,:)
-      accelw_poroelastic_adj_coupling(:,:) = - accelw_poroelastic(:,:)
-    endif
+    ! not needed anymore, taking care of by re-ordering domain updates
+    !if (SIMULATION_TYPE == 3) then
+    !  ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+    !  ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
+    !  accels_poroelastic_adj_coupling(:,:) = - accels_poroelastic(:,:)
+    !  accelw_poroelastic_adj_coupling(:,:) = - accelw_poroelastic(:,:)
+    !endif
 
     ! updates poroelastic wavefields
     call update_displacement_newmark_poroelastic(deltat,deltatover2,deltatsquareover2, &
@@ -651,10 +653,11 @@
   endif
 
   ! update the potential field (use a new array here) for coupling terms
-  if (SIMULATION_TYPE == 3) then
-    potential_acoustic_adj_coupling(:) = potential_acoustic(:) + deltat * potential_dot_acoustic(:) + &
-                                         deltatsquareover2 * potential_dot_dot_acoustic(:)
-  endif
+  ! not needed anymore, taking care of by re-ordering domain updates
+  !if (SIMULATION_TYPE == 3) then
+  !  potential_acoustic_adj_coupling(:) = potential_acoustic(:) + deltat * potential_dot_acoustic(:) + &
+  !                                       deltatsquareover2 * potential_dot_dot_acoustic(:)
+  !endif
 
   end subroutine update_veloc_acoustic_Newmark
 

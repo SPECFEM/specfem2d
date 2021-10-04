@@ -199,12 +199,14 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
 void FC_FUNC_(compute_coupling_ac_el_cuda,
               COMPUTE_COUPLING_AC_EL_CUDA)(long* Mesh_pointer,
                                            int* iphasef,
-                                           int* num_coupling_ac_el_facesf) {}
+                                           int* num_coupling_ac_el_facesf,
+                                           int* FORWARD_OR_ADJOINT) {}
 
 void FC_FUNC_(compute_coupling_el_ac_cuda,
               COMPUTE_COUPLING_EL_AC_CUDA)(long* Mesh_pointer,
                                            int* iphasef,
-                                           int* num_coupling_ac_el_facesf) {}
+                                           int* num_coupling_ac_el_facesf,
+                                           int* FORWARD_OR_ADJOINT) {}
 
 
 //
@@ -232,7 +234,9 @@ void FC_FUNC_(compute_forces_viscoelastic_cuda,
                                                 int* nspec_outer_elastic,
                                                 int* nspec_inner_elastic,
                                                 int* ANISOTROPY,
-                                                int* ATTENUATION_VISCOELASTIC) {}
+                                                int* ATTENUATION_VISCOELASTIC,
+                                                int* compute_wavefield_1,
+                                                int* compute_wavefield_2) {}
 
 
 //
@@ -277,7 +281,10 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
                                                 realw* h_b_absorb_elastic_left,
                                                 realw* h_b_absorb_elastic_right,
                                                 realw* h_b_absorb_elastic_top,
-                                                realw* h_b_absorb_elastic_bottom) {}
+                                                realw* h_b_absorb_elastic_bottom,
+                                                int* compute_wavefield_1,
+                                                int* compute_wavefield_2,
+                                                int *UNDO_ATTENUATION_AND_OR_PML) {}
 
 
 //
@@ -397,12 +404,14 @@ void FC_FUNC_(prepare_fields_elastic_device,
 void FC_FUNC_(prepare_fields_elastic_adj_dev,
               PREPARE_FIELDS_ELASTIC_ADJ_DEV)(long* Mesh_pointer,
                                               int* size_f,
-                                              int* APPROXIMATE_HESS_KL){}
+                                              int* APPROXIMATE_HESS_KL,
+                                              int* ATTENUATION_VISCOELASTIC,
+                                              int* NO_BACKWARD_RECONSTRUCTION){}
 
 void FC_FUNC_(prepare_sim2_or_3_const_device,
               PREPARE_SIM2_OR_3_CONST_DEVICE)(long* Mesh_pointer,
                                               int* nadj_rec_local,
-                                              realw* h_source_adjointe,
+                                              realw* h_source_adjoint,
                                               int* NSTEP) {}
 
 void FC_FUNC_(prepare_pml_device,
@@ -601,6 +610,26 @@ void FC_FUNC_(transfer_viscoacoustic_var_from_device,
                                                       realw* sum_forces_old,
                                                       long* Mesh_pointer) {}
 
+void FC_FUNC_(transfer_viscoelastic_b_var_to_device,
+              TRANSFER_VISCOELASTIC_b_VAR_TO_DEVICE)(int* size,
+                                                     realw* b_e1,
+                                                     realw* b_e11,
+                                                     realw* b_e13,
+                                                     realw* b_dux_dxl_old,
+                                                     realw* b_duz_dzl_old,
+                                                     realw* b_dux_dzl_plus_duz_dxl_old,
+                                                     long* Mesh_pointer) {}
+
+void FC_FUNC_(transfer_viscoelastic_var_from_device,
+              TRANSFER_VISCOELASTIC_VAR_FROM_DEVICE)(int* size,
+                                                     realw* e1,
+                                                     realw* e11,
+                                                     realw* e13,
+                                                     realw* dux_dxl_old,
+                                                     realw* duz_dzl_old,
+                                                     realw* dux_dzl_plus_duz_dxl_old,
+                                                     long* Mesh_pointer) {}
+
 void FC_FUNC_(transfer_async_pot_ac_from_device,
               TRANSFER_ASYNC_POT_AC_FROM_DEVICE)(realw* pot_buffer,long* Mesh_pointer) {}
 
@@ -659,7 +688,9 @@ void FC_FUNC_(update_displacement_ac_cuda,
 void FC_FUNC_(kernel_3_a_cuda,
               KERNEL_3_A_CUDA)(long* Mesh_pointer,
                                realw* deltatover2_F,
-                               realw* b_deltatover2_F) {}
+                               realw* b_deltatover2_F,
+                               int* compute_wavefield_1,
+                               int* compute_wavefield_2) {}
 
 void FC_FUNC_(kernel_3_b_cuda,
               KERNEL_3_B_CUDA)(long* Mesh_pointer,

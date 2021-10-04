@@ -142,7 +142,7 @@
     b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
     b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_e1,b_e11,b_e13, &
     b_dux_dxl_old,b_duz_dzl_old,b_dux_dzl_plus_duz_dxl_old,b_e1_acous_sf,b_sum_forces_old, &
-    GPU_MODE,nspec_ATT_ac,nglob
+    GPU_MODE,nspec_ATT_ac,nspec_ATT_el,nglob
 
   use specfem_par_gpu, only: Mesh_pointer
 
@@ -182,6 +182,8 @@
     read(IIN_UNDO_ATT) b_accel_elastic
     read(IIN_UNDO_ATT) b_veloc_elastic
     read(IIN_UNDO_ATT) b_displ_elastic
+    if (GPU_MODE) call transfer_b_fields_to_device(nglob,b_displ_elastic,b_veloc_elastic, &
+                                                   b_accel_elastic,Mesh_pointer)
 
     if (ATTENUATION_VISCOELASTIC) then
       read(IIN_UNDO_ATT) b_e1
@@ -190,6 +192,8 @@
       read(IIN_UNDO_ATT) b_dux_dxl_old
       read(IIN_UNDO_ATT) b_duz_dzl_old
       read(IIN_UNDO_ATT) b_dux_dzl_plus_duz_dxl_old
+      if (GPU_MODE) call transfer_viscoelastic_b_var_to_device(NGLLX*NGLLZ*nspec_ATT_el,b_e1,b_e11,b_e13, &
+                                                               b_dux_dxl_old,b_duz_dzl_old,b_dux_dzl_plus_duz_dxl_old,Mesh_pointer)
     endif
   endif
 

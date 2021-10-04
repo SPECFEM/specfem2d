@@ -41,7 +41,9 @@ __global__ void compute_coupling_acoustic_el_kernel(realw* displ,
                                                     int* coupling_ac_el_ijk,
                                                     realw* coupling_ac_el_normal,
                                                     realw* coupling_ac_el_jacobian1Dw,
-                                                    int* d_ibool) {
+                                                    int* d_ibool,
+                                                    int simulation_type,
+                                                    int backward_simulation) {
 
   int igll = threadIdx.x;
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
@@ -68,6 +70,14 @@ __global__ void compute_coupling_acoustic_el_kernel(realw* displ,
     // elastic displacement on global point
     displ_x = displ[iglob*2] ; // (1,iglob)
     displ_z = displ[iglob*2+1] ; // (2,iglob)
+
+    // adjoint wavefield case
+    if (simulation_type == 3 && backward_simulation == 0){
+      // handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+      // adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla\phi^\dagger
+      displ_x = - displ_x;
+      displ_z = - displ_z;
+    }
 
     // gets associated normal on GLL point
     nx = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,0,igll,iface)]; // (1,igll,iface)

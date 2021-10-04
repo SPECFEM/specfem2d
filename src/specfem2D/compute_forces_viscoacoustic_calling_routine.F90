@@ -131,23 +131,12 @@
 
       ! add coupling with the elastic side
       if (coupled_acoustic_elastic) then
-        if (SIMULATION_TYPE == 1) then
-          call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic,dot_e1)
-        endif
-
-        ! coupling for adjoint wavefields
-        if (SIMULATION_TYPE == 3) then
-          ! note: handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
-          !       adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
-          !
-          ! coupling with adjoint wavefields
-          call compute_coupling_acoustic_el(accel_elastic_adj_coupling,displ_elastic_old,potential_dot_dot_acoustic,dot_e1)
-        endif
+        call compute_coupling_acoustic_el()
       endif
 
       ! add coupling with the poroelastic side
       if (coupled_acoustic_poro) then
-        call compute_coupling_acoustic_po(dot_e1)
+        call compute_coupling_acoustic_po()
       endif
 
       ! add force source
@@ -158,7 +147,7 @@
           else
             call compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
           endif
-        else if (SIMULATION_TYPE == 3) then
+        else
           ! adjoint sources
           call compute_add_sources_acoustic_adjoint()
         endif
@@ -256,7 +245,7 @@
   integer :: iphase
 
   ! checks
-  if (SIMULATION_TYPE /= 3 ) return
+  if (SIMULATION_TYPE /= 3) return
 
   ! checks if anything to do in this slice
   if (.not. any_acoustic) return
@@ -325,7 +314,7 @@
 
       ! add coupling with the elastic side
       if (coupled_acoustic_elastic) then
-        call compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)
+        call compute_coupling_acoustic_el_backward()
       endif
 
       ! add coupling with the poroelastic side

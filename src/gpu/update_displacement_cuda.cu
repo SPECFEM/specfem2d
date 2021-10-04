@@ -221,7 +221,9 @@ extern "C"
 void FC_FUNC_(kernel_3_a_cuda,
               KERNEL_3_A_CUDA)(long* Mesh_pointer,
                                realw* deltatover2_F,
-                               realw* b_deltatover2_F) {
+                               realw* b_deltatover2_F,
+                               int* compute_wavefield_1,
+                               int* compute_wavefield_2) {
 
   TRACE("\tkernel_3_a_cuda");
 
@@ -241,12 +243,14 @@ void FC_FUNC_(kernel_3_a_cuda,
   realw deltatover2 = *deltatover2_F;
 
   // updates both, accel and veloc
-  kernel_3_cuda_device<<< grid, threads,0,mp->compute_stream>>>(mp->d_veloc,
-                                                                mp->d_accel,
-                                                                size, deltatover2,
-                                                                mp->d_rmassx,mp->d_rmassz);
+  if (*compute_wavefield_1){
+    kernel_3_cuda_device<<< grid, threads,0,mp->compute_stream>>>(mp->d_veloc,
+                                                                  mp->d_accel,
+                                                                  size, deltatover2,
+                                                                  mp->d_rmassx,mp->d_rmassz);
+  }
   // kernel for backward fields
-  if (mp->simulation_type == 3) {
+  if (*compute_wavefield_2) {
     realw b_deltatover2 = *b_deltatover2_F;
     kernel_3_cuda_device<<< grid, threads,0,mp->compute_stream>>>(mp->d_b_veloc,
                                                                   mp->d_b_accel,
@@ -260,6 +264,10 @@ void FC_FUNC_(kernel_3_a_cuda,
 }
 
 /* ----------------------------------------------------------------------------------------------- */
+
+/* unused so far...
+
+// updates velocity only
 
 extern "C"
 void FC_FUNC_(kernel_3_b_cuda,
@@ -299,7 +307,7 @@ void FC_FUNC_(kernel_3_b_cuda,
 
   GPU_ERROR_CHECKING ("kernel_3_b_cuda");
 }
-
+*/
 
 /* ----------------------------------------------------------------------------------------------- */
 

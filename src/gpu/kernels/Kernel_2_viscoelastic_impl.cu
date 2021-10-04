@@ -1474,7 +1474,25 @@ template __global__ void Kernel_2_att_iso_impl<1>(const int,const int*,const int
                                                   realw_const_p,realw_const_p,realw_const_p,realw_const_p,
                                                   realw_p,realw_p,realw_p,realw_p,realw_p,realw_p);
 
+template __global__ void Kernel_2_att_iso_impl<3>(const int,const int*,const int*,const int,const int,
+                                                  realw_const_p,realw_p,
+                                                  realw*,realw*,realw*,realw*,
+                                                  realw_const_p,realw_const_p,realw_const_p,
+                                                  realw*,realw*,const int,const int,
+                                                  realw_const_p,realw_const_p,realw_const_p,realw_const_p,
+                                                  realw_p,realw_p,realw_p,realw_p,realw_p,realw_p);
+
 template __global__ void Kernel_2_att_ani_impl<1>(int,const int*,const int*,const int,const int,
+                                                  realw_const_p,realw_p,
+                                                  realw*,realw*,realw*,realw*,
+                                                  realw_const_p,realw_const_p,realw_const_p,realw_const_p,realw_const_p,
+                                                  const int,const int,const int*,
+                                                  realw*,realw*,realw*,realw*,realw*,realw*,realw*,
+                                                  realw*,realw*,
+                                                  realw_const_p,realw_const_p,realw_const_p,realw_const_p,
+                                                  realw_p,realw_p,realw_p,realw_p,realw_p,realw_p);
+
+template __global__ void Kernel_2_att_ani_impl<3>(int,const int*,const int*,const int,const int,
                                                   realw_const_p,realw_p,
                                                   realw*,realw*,realw*,realw*,
                                                   realw_const_p,realw_const_p,realw_const_p,realw_const_p,realw_const_p,

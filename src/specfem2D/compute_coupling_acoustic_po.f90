@@ -33,7 +33,7 @@
 
 ! for acoustic solver
 
- subroutine compute_coupling_acoustic_po(dot_e1)
+ subroutine compute_coupling_acoustic_po()
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE, &
                        USE_A_STRONG_FORMULATION_FOR_E1
@@ -41,15 +41,17 @@
   use specfem_par, only: num_fluid_poro_edges,ibool,wxgll,wzgll,xix,xiz, &
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge, &
-                         fluid_poro_poroelastic_ispec,fluid_poro_poroelastic_iedge, &
-                         displs_poroelastic,displw_poroelastic, &
-                         accels_poroelastic_adj_coupling,accelw_poroelastic_adj_coupling, &
+                         fluid_poro_poroelastic_ispec,fluid_poro_poroelastic_iedge
+
+  use specfem_par, only: displs_poroelastic,displw_poroelastic, &
+                         !accels_poroelastic_adj_coupling,accelw_poroelastic_adj_coupling, &
+                         accels_poroelastic,accelw_poroelastic, &
                          potential_dot_dot_acoustic,SIMULATION_TYPE, &
-                         ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_att
+                         ATTENUATION_VISCOACOUSTIC
+
+  use specfem_par, only: dot_e1
 
   implicit none
-
-  real(kind=CUSTOM_REAL),dimension(nglob_att,N_SLS) :: dot_e1
 
   ! local variables
   integer :: inum,ispec_acoustic,iedge_acoustic,ispec_poroelastic,iedge_poroelastic, &
@@ -76,19 +78,22 @@
       j = jvalue_inverse(ipoin1D,iedge_poroelastic)
       iglob = ibool(i,j,ispec_poroelastic)
 
-      displ_x = displs_poroelastic(1,iglob)
-      displ_z = displs_poroelastic(2,iglob)
+      ! displacement from poroelastic domain
+      if (SIMULATION_TYPE /= 3) then
+        ! forward and pure adjoint simulations
+        displ_x = displs_poroelastic(1,iglob)    ! solid
+        displ_z = displs_poroelastic(2,iglob)
 
-      displw_x = displw_poroelastic(1,iglob)
-      displw_z = displw_poroelastic(2,iglob)
-
-      if (SIMULATION_TYPE == 3) then
+        displw_x = displw_poroelastic(1,iglob)   ! fluid
+        displw_z = displw_poroelastic(2,iglob)
+      else
+        ! kernel simulations
         ! new definition of adjoint displacement and adjoint potential
-        displ_x = accels_poroelastic_adj_coupling(1,iglob)
-        displ_z = accels_poroelastic_adj_coupling(2,iglob)
+        displ_x = - accels_poroelastic(1,iglob) ! accels_poroelastic_adj_coupling(1,iglob)
+        displ_z = - accels_poroelastic(2,iglob) ! accels_poroelastic_adj_coupling(2,iglob)
 
-        displw_x = accelw_poroelastic_adj_coupling(1,iglob)
-        displw_z = accelw_poroelastic_adj_coupling(2,iglob)
+        displw_x =  - accelw_poroelastic(1,iglob) ! accelw_poroelastic_adj_coupling(1,iglob)
+        displw_z =  - accelw_poroelastic(2,iglob) ! accelw_poroelastic_adj_coupling(2,iglob)
       endif
 
       ! get point values for the acoustic side

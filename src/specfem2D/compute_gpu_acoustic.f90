@@ -31,27 +31,27 @@
 !
 !========================================================================
 
-  subroutine compute_forces_viscoacoustic_GPU(compute_b_wavefield_arg)
+  subroutine compute_forces_viscoacoustic_GPU(compute_b_wavefield)
 
   use specfem_par, only: NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
-    my_neighbors,ninterface_acoustic,inum_interfaces_acoustic, &
-    nelem_acoustic_surface,num_fluid_solid_edges,UNDO_ATTENUATION_AND_OR_PML, &
-    STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS, &
-    any_elastic,any_poroelastic, &
-    SIMULATION_TYPE,ATTENUATION_VISCOACOUSTIC, &
-    deltatover2,b_deltatover2
+                         my_neighbors,ninterface_acoustic,inum_interfaces_acoustic, &
+                         nelem_acoustic_surface,num_fluid_solid_edges,UNDO_ATTENUATION_AND_OR_PML, &
+                         STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS, &
+                         coupled_acoustic_elastic,coupled_acoustic_poro, &
+                         SIMULATION_TYPE,ATTENUATION_VISCOACOUSTIC, &
+                         deltatover2,b_deltatover2
 
   use specfem_par, only: nspec_outer_acoustic, nspec_inner_acoustic,NO_BACKWARD_RECONSTRUCTION
 
   use specfem_par_gpu, only: Mesh_pointer, &
-    buffer_send_scalar_gpu,buffer_recv_scalar_gpu, &
-    b_buffer_send_scalar_gpu,b_buffer_recv_scalar_gpu, &
-    request_send_recv_scalar_gpu,b_request_send_recv_scalar_gpu
+                             buffer_send_scalar_gpu,buffer_recv_scalar_gpu, &
+                             b_buffer_send_scalar_gpu,b_buffer_recv_scalar_gpu, &
+                             request_send_recv_scalar_gpu,b_request_send_recv_scalar_gpu
 
   implicit none
 
   ! parameter useful only for undo_attenuation (to know which wavefield to compute)
-  logical :: compute_b_wavefield_arg
+  logical,intent(in) :: compute_b_wavefield
 
   ! local parameters
   integer :: iphase
@@ -67,7 +67,7 @@
     ! forward & backward wavefields
     compute_wavefield_1 = .true.
     compute_wavefield_2 = .true.
-  else if (UNDO_ATTENUATION_AND_OR_PML .and. compute_b_wavefield_arg) then
+  else if (UNDO_ATTENUATION_AND_OR_PML .and. compute_b_wavefield) then
     ! only backward wavefield
     compute_wavefield_1 = .false.
     compute_wavefield_2 = .true.
@@ -75,6 +75,22 @@
     ! default forward wavefield only
     compute_wavefield_1 = .true.
     compute_wavefield_2 = .false.
+  endif
+
+  ! coupled simulation
+  ! requires different coupling terms for forward/adjoint and backpropagated wavefields
+  if (coupled_acoustic_elastic) then
+    if (SIMULATION_TYPE == 3) then
+      if (compute_b_wavefield) then
+        ! only backward wavefield
+        compute_wavefield_1 = .false.
+        compute_wavefield_2 = .true.
+      else
+        ! only forward/adjoint wavefield
+        compute_wavefield_1 = .true.
+        compute_wavefield_2 = .false.
+      endif
+    endif
   endif
 
   if (nelem_acoustic_surface > 0) then
@@ -103,22 +119,20 @@
       endif
 
       ! elastic coupling
-      if (any_elastic) then
-        if (num_fluid_solid_edges > 0) then
-          ! on GPU
-          call compute_coupling_ac_el_cuda(Mesh_pointer,iphase, &
-                                           num_fluid_solid_edges)
-        endif
+      if (coupled_acoustic_elastic) then
+        if (compute_wavefield_1) &
+          call compute_coupling_ac_el_cuda(Mesh_pointer,iphase,num_fluid_solid_edges,1) ! 1 == forward/adjoint
+        if (compute_wavefield_2) &
+          call compute_coupling_ac_el_cuda(Mesh_pointer,iphase,num_fluid_solid_edges,3) ! 3 == backward
       endif
 
       ! poroelastic coupling
-      if (any_poroelastic) then
-            call stop_the_code('poroelastic not implemented yet in GPU mode')
+      if (coupled_acoustic_poro) then
+        call stop_the_code('poroelastic not implemented yet in GPU mode')
       endif
 
       ! sources
       call compute_add_sources_acoustic_GPU(iphase,compute_wavefield_1,compute_wavefield_2)
-
     endif
 
     ! assemble all the contributions between slices using MPI
@@ -126,7 +140,6 @@
 
       if (iphase == 1) then
         if (compute_wavefield_1) then
-
           ! sends potential_dot_dot_acoustic values to corresponding MPI interface neighbors (non-blocking)
           call transfer_boun_pot_from_device(Mesh_pointer, &
                                              buffer_send_scalar_gpu, &
@@ -306,10 +319,10 @@
   it_tmp = NSTEP - it + 1
 
   ! adds acoustic adjoint sources
-  if (SIMULATION_TYPE == 3 .and. nadj_rec_local > 0 .and. compute_wavefield_1) &
+  if (SIMULATION_TYPE /= 1 .and. nadj_rec_local > 0 .and. compute_wavefield_1) &
     call add_sources_ac_sim_2_or_3_cuda(Mesh_pointer, iphase, it_tmp, nadj_rec_local, NSTEP)
 
-  ! adjoint simulations
+  ! kernel simulations w/ backward/reconstructed sources
   if (compute_wavefield_2) call compute_add_sources_ac_s3_cuda(Mesh_pointer, iphase, it_tmp)
 
   end subroutine compute_add_sources_acoustic_GPU

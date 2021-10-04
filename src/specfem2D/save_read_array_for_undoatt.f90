@@ -40,7 +40,7 @@
     potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
     displ_elastic,veloc_elastic,accel_elastic, &
     e1,e11,e13,dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old, &
-    e1_acous_sf,sum_forces_old,GPU_MODE,nspec_ATT_ac,nglob
+    e1_acous_sf,sum_forces_old,GPU_MODE,nspec_ATT_ac,nspec_ATT_el,nglob
 
   use specfem_par_gpu, only: Mesh_pointer
 
@@ -84,6 +84,9 @@
     write(IOUT_UNDO_ATT) displ_elastic
 
     if (ATTENUATION_VISCOELASTIC) then
+      if (GPU_MODE) call transfer_viscoelastic_var_from_device(NGLLX*NGLLZ*nspec_ATT_el, &
+                                                               e1,e11,e13,dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old, &
+                                                               Mesh_pointer)
       write(IOUT_UNDO_ATT) e1
       write(IOUT_UNDO_ATT) e11
       write(IOUT_UNDO_ATT) e13

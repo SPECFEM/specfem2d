@@ -109,7 +109,7 @@
         end select
 
         ! adjoint wavefield source
-        if (SIMULATION_TYPE == 3) then
+        if (SIMULATION_TYPE /= 1) then
           ! adjoint sources
           call compute_add_sources_viscoelastic_adjoint()
         endif
@@ -220,7 +220,7 @@
   integer :: iphase
 
   ! checks if anything to do
-  if (SIMULATION_TYPE /= 3 ) return
+  if (SIMULATION_TYPE /= 3) return
 
   ! checks if anything to do in this slice
   if (.not. any_elastic) return

@@ -37,6 +37,7 @@
   use constants, only: IMAIN, APPROXIMATE_HESS_KL,USE_A_STRONG_FORMULATION_FOR_E1
   use specfem_par
   use specfem_par_gpu, only: Mesh_pointer
+  use specfem_par_movie, only: MOVIE_SIMULATION
 
   implicit none
 
@@ -97,15 +98,19 @@
 ! *********************************************************
 
   ! safety checks
-  if (GPU_MODE .and. ATTENUATION_VISCOELASTIC) call exit_MPI(myrank,'for undo_attenuation, &
-                                              & GPU_MODE does not support ATTENUATION_VISCOELASTIC')
-  if (any_poroelastic) call exit_MPI(myrank,'undo_attenuation is not implemented for poroelastic simulation yet')
-  if (NOISE_TOMOGRAPHY /= 0) call exit_MPI(myrank,'for undo_attenuation, NOISE_TOMOGRAPHY is not supported')
-  if (AXISYM) call exit_MPI(myrank,'Just axisymmetric FORWARD simulations are possible so far')
+  if (GPU_MODE .and. ATTENUATION_VISCOELASTIC) &
+    call exit_MPI(myrank,'For UNDO_ATTENUATION, GPU_MODE does not support ATTENUATION_VISCOELASTIC')
+  if (any_poroelastic) &
+    call exit_MPI(myrank,'UNDO_ATTENUATION is not implemented for poroelastic simulation yet')
+  if (NOISE_TOMOGRAPHY /= 0) &
+    call exit_MPI(myrank,'For UNDO_ATTENUATION, NOISE_TOMOGRAPHY is not supported')
+  if (AXISYM) &
+    call exit_MPI(myrank,'Just axisymmetric FORWARD simulations are possible so far')
   if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
-    call exit_MPI(myrank,'for undo_attenuation with viscoacousticity, &
+    call exit_MPI(myrank,'For UNDO_ATTENUATION with viscoacousticity, &
                  & USE_A_STRONG_FORMULATION_FOR_E1 has to be set to true (in setup/constants.h)')
-  if (NOISE_TOMOGRAPHY == 3) call stop_the_code('Undo_attenuation for noise kernels not implemented yet')
+  if (NOISE_TOMOGRAPHY == 3) &
+    call stop_the_code('UNDO_ATTENUATION for noise kernels not implemented yet')
 
   ! number of time subsets for time loop
   NSUBSET_ITERATIONS = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION) )
@@ -284,14 +289,23 @@
           if (any_acoustic) then
             if (.not. GPU_MODE) then
               call compute_forces_viscoacoustic_main()
-            else ! on GPU
+            else
+              ! on GPU
               call compute_forces_viscoacoustic_GPU(compute_b_wavefield)
             endif
           endif
 
           ! elastic domains
-          if (any_elastic) call compute_forces_viscoelastic_main()
+          if (any_elastic) then
+            if (.not. GPU_MODE) then
+              call compute_forces_viscoelastic_main()
+            else
+              ! on GPU
+              call compute_forces_viscoelastic_GPU(compute_b_wavefield)
+            endif
+          endif
 
+          if (any_poroelastic) call exit_MPI(myrank,'UNDO_ATTENUATION is not implemented for poroelastic simulation yet')
         enddo ! i_stage
 
         ! computes kinetic and potential energy
@@ -303,7 +317,9 @@
         call write_seismograms()
 
         ! display results at given time steps
-        call write_movie_output(compute_b_wavefield)
+        if (MOVIE_SIMULATION) then
+          call write_movie_output(compute_b_wavefield)
+        endif
 
         ! first step of noise tomography, i.e., save a surface movie at every time step
         if (NOISE_TOMOGRAPHY == 1) then
@@ -390,14 +406,23 @@
           if (any_acoustic) then
             if (.not. GPU_MODE) then
               call compute_forces_viscoacoustic_main_backward()
-            else ! on GPU
+            else
+              ! on GPU
               call compute_forces_viscoacoustic_GPU(compute_b_wavefield)
             endif
           endif
 
           ! elastic domains
-          if (any_elastic) call compute_forces_viscoelastic_main_backward()
+          if (any_elastic) then
+            if (.not. GPU_MODE) then
+              call compute_forces_viscoelastic_main_backward()
+            else
+              ! on GPU
+              call compute_forces_viscoelastic_GPU(compute_b_wavefield)
+            endif
+          endif
 
+          if (any_poroelastic) call exit_MPI(myrank,'UNDO_ATTENUATION is not implemented for poroelastic simulation yet')
         enddo
 
         ! stores wavefield in buffers
@@ -421,7 +446,9 @@
         endif
 
         ! display results at given time steps
-        call write_movie_output(compute_b_wavefield)
+        if (MOVIE_SIMULATION) then
+          call write_movie_output(compute_b_wavefield)
+        endif
 
       enddo ! subset loop
 
@@ -429,6 +456,7 @@
       it = it_temp
       nframes_kernel = iframe_kernel
       iframe_kernel = 0
+
       ! adjoint wavefield simulation
       do it_of_this_subset = 1, it_subset_end
 
@@ -519,32 +547,44 @@
             call stop_the_code('Error time scheme for update displacement not implemented yet in iterate_time_undoatt()')
           end select
 
-          if (any_acoustic) then
-            !ZN here we remove the trick introduced by Luoyang to stabilized the adjoint simulation
-            !ZN However in order to keep the current code be consistent, we still keep potential_acoustic_adj_coupling
-            !ZN the final goal should remove the *adj_coupling
-            potential_acoustic_adj_coupling(:) = potential_acoustic(:)
-          endif
+          ! not needed anymore, taking care of by re-ordering domain updates
+          !if (any_acoustic) then
+          !  !ZN here we remove the trick introduced by Luoyang to stabilized the adjoint simulation
+          !  !ZN However in order to keep the current code be consistent, we still keep potential_acoustic_adj_coupling
+          !  !ZN the final goal should remove the *adj_coupling
+          !  potential_acoustic_adj_coupling(:) = potential_acoustic(:)
+          !endif
 
-!daniel TODO: not sure if the following below is correct or needs to switch orders
-!             usually one computes first the updated pressure and afterwards computes the elastic domain
-!             and its coupling terms...please make sure...
+          ! note: for adjoint wavefields, the coupling terms change and the order of the domain updates should be:
+          !       1. elastic domain (and/or poroelastic domain)
+          !       2. acoustic domain
+
+          if (any_poroelastic) call exit_MPI(myrank,'UNDO_ATTENUATION is not implemented for poroelastic simulation yet')
 
           ! main solver for the elastic elements
-          if (any_elastic) call compute_forces_viscoelastic_main()
+          if (any_elastic) then
+            if (.not. GPU_MODE) then
+              call compute_forces_viscoelastic_main()
+            else
+              ! on GPU
+              call compute_forces_viscoelastic_GPU(compute_b_wavefield)
+            endif
+          endif
 
           ! for coupling with adjoint wavefields, stores temporary old wavefield
-          if (coupled_acoustic_elastic) then
-            ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
-            ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
-            accel_elastic_adj_coupling(:,:) = - accel_elastic(:,:)
-          endif
+          ! not needed anymore, taking care of by re-ordering domain updates
+          !if (coupled_acoustic_elastic) then
+          !  ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+          !  ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
+          !  accel_elastic_adj_coupling(:,:) = - accel_elastic(:,:)
+          !endif
 
           ! acoustic domains
           if (any_acoustic) then
             if (.not. GPU_MODE) then
               call compute_forces_viscoacoustic_main()
-            else ! on GPU
+            else
+              ! on GPU
               call compute_forces_viscoacoustic_GPU(compute_b_wavefield)
             endif
           endif
@@ -563,7 +603,9 @@
         call compute_kernels()
 
         ! display results at given time steps
-        call write_movie_output(compute_b_wavefield)
+        if (MOVIE_SIMULATION) then
+          call write_movie_output(compute_b_wavefield)
+        endif
 
       enddo ! subset loop
     end select ! SIMULATION_TYPE

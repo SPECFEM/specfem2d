@@ -43,7 +43,10 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
                                                 realw* h_b_absorb_elastic_left,
                                                 realw* h_b_absorb_elastic_right,
                                                 realw* h_b_absorb_elastic_top,
-                                                realw* h_b_absorb_elastic_bottom) {
+                                                realw* h_b_absorb_elastic_bottom,
+                                                int* compute_wavefield_1,
+                                                int* compute_wavefield_2,
+                                                int *UNDO_ATTENUATION_AND_OR_PML) {
 
   TRACE("compute_stacey_viscoelastic_cuda");
 
@@ -65,7 +68,11 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  if (mp->simulation_type == 3) {
+  // We have to distinguish between a UNDO_ATTENUATION_AND_OR_PML run or not to know if read/write operations are necessary
+  int read_abs = (mp->simulation_type == 3 && (! *UNDO_ATTENUATION_AND_OR_PML)) ? 1 : 0;
+  int write_abs = (mp->simulation_type == 1 && mp->save_forward && (! *UNDO_ATTENUATION_AND_OR_PML)) ? 1 : 0;
+
+  if (read_abs) {
     // reading is done in fortran routine
     print_CUDA_error_if_any(cudaMemcpy(mp->d_b_absorb_elastic_left,h_b_absorb_elastic_left,
                                        2*mp->d_nspec_left*sizeof(realw)*NGLLX,cudaMemcpyHostToDevice),7700);
@@ -79,32 +86,36 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
 
   GPU_ERROR_CHECKING ("between cudamemcpy and compute_stacey_elastic_kernel");
 
-  compute_stacey_elastic_kernel<<<grid,threads,0,mp->compute_stream>>>( mp->d_veloc,
-                                                                        mp->d_accel,
-                                                                        mp->d_abs_boundary_ispec,
-                                                                        mp->d_abs_boundary_ijk,
-                                                                        mp->d_abs_boundary_normal,
-                                                                        mp->d_abs_boundary_jacobian2Dw,
-                                                                        mp->d_ibool,
-                                                                        mp->d_rho_vp,
-                                                                        mp->d_rho_vs,
-                                                                        mp->d_ispec_is_elastic,
-                                                                        mp->simulation_type,
-                                                                        mp->p_sv,
-                                                                        mp->save_forward,
-                                                                        mp->d_num_abs_boundary_faces,
-                                                                        mp->d_b_absorb_elastic_left,
-                                                                        mp->d_b_absorb_elastic_right,
-                                                                        mp->d_b_absorb_elastic_top,
-                                                                        mp->d_b_absorb_elastic_bottom,
-                                                                        mp->d_ib_left,
-                                                                        mp->d_ib_right,
-                                                                        mp->d_ib_top,
-                                                                        mp->d_ib_bottom,
-                                                                        mp->d_edge_abs);
+  if (*compute_wavefield_1){
+    // forward/adjoint wavefield
+    compute_stacey_elastic_kernel<<<grid,threads,0,mp->compute_stream>>>( mp->d_veloc,
+                                                                          mp->d_accel,
+                                                                          mp->d_abs_boundary_ispec,
+                                                                          mp->d_abs_boundary_ijk,
+                                                                          mp->d_abs_boundary_normal,
+                                                                          mp->d_abs_boundary_jacobian2Dw,
+                                                                          mp->d_ibool,
+                                                                          mp->d_rho_vp,
+                                                                          mp->d_rho_vs,
+                                                                          mp->d_ispec_is_elastic,
+                                                                          mp->simulation_type,
+                                                                          mp->p_sv,
+                                                                          mp->save_forward,
+                                                                          mp->d_num_abs_boundary_faces,
+                                                                          mp->d_b_absorb_elastic_left,
+                                                                          mp->d_b_absorb_elastic_right,
+                                                                          mp->d_b_absorb_elastic_top,
+                                                                          mp->d_b_absorb_elastic_bottom,
+                                                                          mp->d_ib_left,
+                                                                          mp->d_ib_right,
+                                                                          mp->d_ib_top,
+                                                                          mp->d_ib_bottom,
+                                                                          mp->d_edge_abs);
+  }
 
-  // adjoint simulations
-  if (mp->simulation_type == 3) {
+  // kernel simulations
+  if (*compute_wavefield_2){
+    // backward/reconstructed wavefield
     compute_stacey_elastic_sim3_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_abs_boundary_ispec,
                                                                               mp->d_abs_boundary_ijk,
                                                                               mp->d_ibool,
@@ -124,7 +135,7 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
 
   GPU_ERROR_CHECKING ("compute_stacey_elastic_kernel");
 
-  if (mp->simulation_type == 1 && mp->save_forward) {
+  if (write_abs) {
     // explicitly wait until compute stream is done
     // (cudaMemcpy implicitly synchronizes all other cuda operations)
     cudaStreamSynchronize(mp->compute_stream);

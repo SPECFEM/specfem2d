@@ -204,7 +204,8 @@
       if (APPROXIMATE_HESS_KL) then
         call stop_the_code('Sorry, approximate elastic Hessian kernels not yet fully implemented for GPU simulations!')
       endif
-      call prepare_fields_elastic_adj_dev(Mesh_pointer,NDIM*NGLOB_AB,APPROXIMATE_HESS_KL)
+      call prepare_fields_elastic_adj_dev(Mesh_pointer,NDIM*NGLOB_AB,APPROXIMATE_HESS_KL, &
+                                          ATTENUATION_VISCOELASTIC,NO_BACKWARD_RECONSTRUCTION)
     endif
 
     ! frees memory

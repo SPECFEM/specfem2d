@@ -42,9 +42,11 @@
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge, &
                          fluid_poro_poroelastic_ispec,fluid_poro_poroelastic_iedge, &
                          phistore,tortstore,rhoarraystore, &
-                         potential_acoustic_adj_coupling, &
                          nglob_acoustic,nglob_poroelastic, &
                          SIMULATION_TYPE
+
+  use specfem_par, only: potential_acoustic
+                         !potential_acoustic_adj_coupling, &
 
   implicit none
 
@@ -83,7 +85,7 @@
       if (SIMULATION_TYPE == 3 .and. FORWARD_OR_ADJOINT == 1) then
         ! new definition of adjoint displacement and adjoint potential
         ! adjoint definition: pressure^\dagger = potential^\dagger
-        pressure = potential_acoustic_adj_coupling(iglob)
+        pressure = potential_acoustic(iglob)  ! potential_acoustic_adj_coupling(iglob)
       endif
 
       ! get point values for the poroelastic side

@@ -471,7 +471,7 @@ typedef struct mesh_ {
   int nadj_rec_local;
   realw* d_adj_sourcearrays;
   realw* h_adj_sourcearrays_slice;
-  realw* d_source_adjointe;
+  realw* d_source_adjoint;
   realw* d_xir_store_loc;
   realw* d_gammar_store_loc;
 
@@ -502,6 +502,9 @@ typedef struct mesh_ {
   realw* d_e1;
   realw* d_e11;
   realw* d_e13;
+  realw* d_b_e1;
+  realw* d_b_e11;
+  realw* d_b_e13;
   realw* d_A_newmark_mu;
   realw* d_B_newmark_mu;
   realw* d_A_newmark_kappa;
@@ -509,6 +512,9 @@ typedef struct mesh_ {
   realw* d_dux_dxl_old;
   realw* d_duz_dzl_old;
   realw* d_dux_dzl_plus_duz_dxl_old;
+  realw* d_b_dux_dxl_old;
+  realw* d_b_duz_dzl_old;
+  realw* d_b_dux_dzl_plus_duz_dxl_old;
 
   // mpi buffer
   realw* d_send_accel_buffer;
