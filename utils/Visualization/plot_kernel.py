@@ -26,6 +26,15 @@ except:
     sys.tracebacklimit=0
     raise Exception("Importing matplotlib failed")
 
+##################################################
+
+## set default colormap
+#colormap = 'jet'
+colormap = 'RdBu'
+
+##################################################
+
+
 def grid(x, y, z, resX=100, resY=100):
     """
     Converts 3 column data to matplotlib grid
@@ -48,6 +57,8 @@ def plot_kernels(filename,show=False):
     """
     plots ASCII kernel file
     """
+    global colormap
+
     print("plotting kernel file: ",filename)
     print("")
 
@@ -170,9 +181,6 @@ def plot_kernels(filename,show=False):
         elif i == 3:
             X, Y, Z = grid(x,y,z3)
             ax.set_ylabel(kernel3)
-
-        #colormap = 'jet'
-        colormap = 'RdBu'
 
         im = ax.imshow(Z,vmax=total_max, vmin=-total_max,
                        extent=[x.min(), x.max(), y.min(), y.max()],cmap=colormap)
