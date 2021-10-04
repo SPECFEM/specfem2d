@@ -50,6 +50,11 @@
 
   use specfem_par_gpu, only: Mesh_pointer,NGLOB_AB
 
+  ! wavefield integration
+  use shared_parameters, only: DT
+  use specfem_par, only: coupled_acoustic_elastic,nglob_acoustic
+  use specfem_par_movie, only: potential_adj_acoustic,potential_adj_int_acoustic,potential_adj_int_int_acoustic
+
   implicit none
 
   ! parameter useful for UNDO_ATTENUATION mode
@@ -58,11 +63,52 @@
   ! local parameters
   logical :: plot_b_wavefield_only
 
+  ! wavefield integration
+  integer :: ier
+
+  ! integrates wavefield for kernel adjoint simulations
+  !
+  ! this is meant mostly for looking at the adjoint wavefield to check it and applies only to plotting color images
+  if (coupled_acoustic_elastic .and. SIMULATION_TYPE == 3 .and. output_color_image) then
+    ! for kernel simulations and coupled acoustic-elastic simulations, the adjoint acoustic potential is defined
+    ! as an acceleration potential:
+    !   \partial_t^2 u^adj = - 1/rho grad(chi^adj)
+    ! to output displacement u^adj, we need to integrate twice the term -1/rho grad(chi^adj)
+    !
+    ! makes sure we have temporary arrays allocated
+    if (.not. allocated(potential_adj_acoustic)) then
+      allocate(potential_adj_acoustic(nglob_acoustic), &
+               potential_adj_int_acoustic(nglob_acoustic), &
+               potential_adj_int_int_acoustic(nglob_acoustic),stat=ier)
+      if (ier /= 0) stop 'Error allocating displ_adj_acoustic arrays'
+      potential_adj_acoustic(:) = 0.0_CUSTOM_REAL
+      potential_adj_int_acoustic(:) = 0.0_CUSTOM_REAL
+      potential_adj_int_int_acoustic(:) = 0.0_CUSTOM_REAL
+    endif
+
+    ! transfers acoustic adjoint arrays from GPU to CPU
+    if (GPU_MODE) then
+      ! Fields transfer for imaging
+      call transfer_fields_ac_from_device(NGLOB_AB,potential_acoustic,potential_dot_acoustic, &
+                                          potential_dot_dot_acoustic,Mesh_pointer)
+    endif
+
+    ! acceleration potential
+    ! term: \partial_t^2 u^adj = - [ 1/rho grad(chi^adj) ]
+    ! adding minus sign to have correct derivation in compute_vector_whole_medium() routine
+    potential_adj_acoustic(:) = - potential_acoustic(:)
+
+    ! integrates velocity potential in acoustic medium
+    ! term: \partial_t u^adj = - int[ 1/rho grad(chi^adj) ]
+    potential_adj_int_acoustic(:) = potential_adj_int_acoustic(:) + potential_adj_acoustic(:) * DT
+
+    ! integrates displacement potential in acoustic medium
+    ! term: u^adj = - int[int[ 1/rho grad(chi^adj) ]]
+    potential_adj_int_int_acoustic(:) = potential_adj_int_int_acoustic(:) + potential_adj_int_acoustic(:) * DT
+  endif
+
   ! checks if anything to do
   if (.not. (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP)) return
-
-  if ( (.not. output_postscript_snapshot) .and. (.not. NOISE_MOVIE_OUTPUT) .and. (.not. output_color_image) &
-       .and. (.not. output_wavefield_dumps) ) return
 
   ! checks plotting of backward wavefield
   if (UNDO_ATTENUATION_AND_OR_PML .and. get_b_wavefield .and. .not. NO_BACKWARD_RECONSTRUCTION) then

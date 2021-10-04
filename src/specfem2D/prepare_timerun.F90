@@ -119,11 +119,8 @@
     call read_binary_database_part2()
   endif
 
-  ! postscript images for grids and snapshots
-  call prepare_timerun_postscripts()
-
-  ! jpeg images
-  call prepare_timerun_image_coloring()
+  ! movie simulations
+  call prepare_timerun_movies()
 
   ! init specific to NO_BACKWARD_RECONSTRUCTION option
   call prepare_timerun_no_backward_reconstruction()
@@ -297,6 +294,80 @@
 
   end subroutine prepare_timerun_mass_matrix
 
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_movies()
+
+  use constants, only: IMAIN,NOISE_MOVIE_OUTPUT
+  use specfem_par
+  use specfem_par_movie
+
+  implicit none
+
+  ! local parameters
+  integer :: ier
+
+  ! sets movie flag
+  if (output_postscript_snapshot .or. &
+      output_color_image .or. &
+      output_wavefield_dumps .or. &
+      NOISE_MOVIE_OUTPUT) then
+    MOVIE_SIMULATION = .true.
+  else
+    MOVIE_SIMULATION = .false.
+  endif
+
+  if (MOVIE_SIMULATION) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) 'Movie simulation:'
+      if (output_postscript_snapshot) then
+        write(IMAIN,*) '  postscript snapshots - PS image type  : ',imagetype_postscript
+      endif
+      if (output_color_image) then
+        write(IMAIN,*) '  color images         - JPEG image type: ',imagetype_JPEG
+      endif
+      if (output_wavefield_dumps) then
+        write(IMAIN,*) '  wavefield dumps      - image type     : ',imagetype_wavefield_dumps
+      endif
+      if (NOISE_MOVIE_OUTPUT) then
+        write(IMAIN,*) '  noise movie'
+      endif
+      write(IMAIN,*) '  number of steps between outputs       : ',NSTEP_BETWEEN_OUTPUT_IMAGES
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    ! to display the whole vector field (it needs to be computed from the potential in acoustic elements,
+    ! thus it does not exist as a whole in case of simulations that contain some acoustic elements
+    ! and it thus needs to be computed specifically for display purposes)
+    allocate(vector_field_display(NDIM,nglob),stat=ier)
+    ! when periodic boundary conditions are on, some global degrees of freedom are going to be removed,
+    ! thus we need to set this array to zero otherwise some of its locations may contain random values
+    ! if the memory is not cleaned
+    vector_field_display(:,:) = 0.d0
+
+    ! postscript images for grids and snapshots
+    if (output_postscript_snapshot) then
+      call prepare_timerun_postscripts()
+    endif
+
+    ! jpeg images
+    if (output_color_image) then
+      call prepare_timerun_image_coloring()
+    endif
+
+    ! wavefield dumps
+    if (output_wavefield_dumps) then
+      call prepare_timerun_wavefield_dumps()
+    endif
+  endif
+
+  end subroutine prepare_timerun_movies
+
 !
 !-------------------------------------------------------------------------------------
 !
@@ -306,6 +377,9 @@
   use constants, only: IMAIN
   use specfem_par
   use specfem_par_movie
+#ifdef WITH_MPI
+  use constants, only: DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
+#endif
 
   implicit none
 
@@ -315,9 +389,31 @@
   ! for Lagrange interpolants
   double precision, external :: hgll, hglj
 
+  ! postscripts
+  integer :: d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
+             d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
+             d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
+             d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model
+
+  integer :: d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
+             d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
+             d1_color_send_ps_element_mesh, &
+             d1_color_recv_ps_element_mesh
+
+  integer :: d1_coorg_send_ps_abs, d2_coorg_send_ps_abs, &
+             d1_coorg_recv_ps_abs, d2_coorg_recv_ps_abs
+
+  integer :: d1_coorg_send_ps_free_surface, d2_coorg_send_ps_free_surface, &
+             d1_coorg_recv_ps_free_surface, d2_coorg_recv_ps_free_surface
+
+  integer :: d1_coorg_send_ps_vector_field, d2_coorg_send_ps_vector_field, &
+             d1_coorg_recv_ps_vector_field, d2_coorg_recv_ps_vector_field
+
+  ! checks if anything to do
+  if (.not. output_postscript_snapshot) return
+
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*)
     write(IMAIN,*) 'Preparing image coloring: postscripts'
     call flush_IMAIN()
   endif
@@ -366,14 +462,146 @@
   xinterp(:,:) = 0.d0; zinterp(:,:) = 0.d0
   Uxinterp(:,:) = 0.d0; Uzinterp(:,:) = 0.d0
 
-  ! to display the whole vector field (it needs to be computed from the potential in acoustic elements,
-  ! thus it does not exist as a whole in case of simulations that contain some acoustic elements
-  ! and it thus needs to be computed specifically for display purposes)
-  allocate(vector_field_display(NDIM,nglob))
-  ! when periodic boundary conditions are on, some global degrees of freedom are going to be removed,
-  ! thus we need to set this array to zero otherwise some of its locations may contain random values
-  ! if the memory is not cleaned
-  vector_field_display(:,:) = 0.d0
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  allocating postscript image arrays'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! allocate arrays for postscript output
+#ifdef WITH_MPI
+  if (modelvect) then
+    d1_coorg_recv_ps_velocity_model = 2
+    call max_all_all_i(nspec,d2_coorg_recv_ps_velocity_model)
+    d2_coorg_recv_ps_velocity_model = d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+       ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
+    d1_RGB_recv_ps_velocity_model = 1
+
+    call max_all_all_i(nspec,d2_RGB_recv_ps_velocity_model)
+    d2_RGB_recv_ps_velocity_model = d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+       ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
+  else
+    d1_coorg_recv_ps_velocity_model=1
+    d2_coorg_recv_ps_velocity_model=1
+    d1_RGB_recv_ps_velocity_model=1
+    d2_RGB_recv_ps_velocity_model=1
+  endif
+
+  d1_coorg_send_ps_element_mesh=2
+  if (ngnod == 4) then
+    if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
+      d2_coorg_send_ps_element_mesh=nspec*5
+      if (DISPLAY_COLORS == 1) then
+        d1_color_send_ps_element_mesh=2*nspec
+      else
+        d1_color_send_ps_element_mesh=1*nspec
+      endif
+    else
+      d2_coorg_send_ps_element_mesh=nspec*6
+      if (DISPLAY_COLORS == 1) then
+        d1_color_send_ps_element_mesh=1*nspec
+      endif
+    endif
+  else
+    if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
+      d2_coorg_send_ps_element_mesh=nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1+1)
+      if (DISPLAY_COLORS == 1) then
+        d1_color_send_ps_element_mesh=2*nspec
+      else
+        d1_color_send_ps_element_mesh=1*nspec
+      endif
+    else
+      d2_coorg_send_ps_element_mesh=nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1)
+      if (DISPLAY_COLORS == 1) then
+        d1_color_send_ps_element_mesh=1*nspec
+      endif
+    endif
+  endif
+
+  call max_all_all_i(d1_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh)
+  call max_all_all_i(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh)
+  call max_all_all_i(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh)
+
+  d1_coorg_send_ps_abs=5
+  d2_coorg_send_ps_abs=4*num_abs_boundary_faces
+  call max_all_all_i(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs)
+  call max_all_all_i(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs)
+
+  d1_coorg_send_ps_free_surface=4
+  d2_coorg_send_ps_free_surface=4*nelem_acoustic_surface
+  call max_all_all_i(d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface)
+  call max_all_all_i(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface)
+
+  d1_coorg_send_ps_vector_field=8
+  if (interpol) then
+    if (plot_lowerleft_corner_only) then
+      d2_coorg_send_ps_vector_field=nspec*1*1
+    else
+      d2_coorg_send_ps_vector_field=nspec*pointsdisp*pointsdisp
+    endif
+  else
+    d2_coorg_send_ps_vector_field=nglob
+  endif
+  call max_all_all_i(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field)
+  call max_all_all_i(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field)
+
+#else
+  ! dummy values
+  d1_coorg_recv_ps_velocity_model=1
+  d2_coorg_recv_ps_velocity_model=1
+  d1_RGB_recv_ps_velocity_model=1
+  d2_RGB_recv_ps_velocity_model=1
+
+  d1_coorg_send_ps_element_mesh=1
+  d2_coorg_send_ps_element_mesh=1
+  d1_coorg_recv_ps_element_mesh=1
+  d2_coorg_recv_ps_element_mesh=1
+  d1_color_send_ps_element_mesh=1
+  d1_color_recv_ps_element_mesh=1
+
+  d1_coorg_send_ps_abs=1
+  d2_coorg_send_ps_abs=1
+  d1_coorg_recv_ps_abs=1
+  d2_coorg_recv_ps_abs=1
+  d1_coorg_send_ps_free_surface=1
+  d2_coorg_send_ps_free_surface=1
+  d1_coorg_recv_ps_free_surface=1
+  d2_coorg_recv_ps_free_surface=1
+
+  d1_coorg_send_ps_vector_field=1
+  d2_coorg_send_ps_vector_field=1
+  d1_coorg_recv_ps_vector_field=1
+  d2_coorg_recv_ps_vector_field=1
+#endif
+
+  d1_coorg_send_ps_velocity_model=2
+  d2_coorg_send_ps_velocity_model=nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+                                        ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
+  d1_RGB_send_ps_velocity_model=1
+  d2_RGB_send_ps_velocity_model=nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+                                      ((NGLLX-subsamp_postscript)/subsamp_postscript)
+
+  allocate(coorg_send_ps_velocity_model(d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model))
+  allocate(RGB_send_ps_velocity_model(d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model))
+
+  allocate(coorg_recv_ps_velocity_model(d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model))
+  allocate(RGB_recv_ps_velocity_model(d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model))
+
+  allocate(coorg_send_ps_element_mesh(d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh))
+  allocate(coorg_recv_ps_element_mesh(d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh))
+  allocate(color_send_ps_element_mesh(d1_color_send_ps_element_mesh))
+  allocate(color_recv_ps_element_mesh(d1_color_recv_ps_element_mesh))
+
+  allocate(coorg_send_ps_abs(d1_coorg_send_ps_abs,d2_coorg_send_ps_abs))
+  allocate(coorg_recv_ps_abs(d1_coorg_recv_ps_abs,d2_coorg_recv_ps_abs))
+
+  allocate(coorg_send_ps_free_surface(d1_coorg_send_ps_free_surface,d2_coorg_send_ps_free_surface))
+  allocate(coorg_recv_ps_free_surface(d1_coorg_recv_ps_free_surface,d2_coorg_recv_ps_free_surface))
+
+  allocate(coorg_send_ps_vector_field(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field))
+  allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating postscript arrays')
 
   ! synchronizes all processes
   call synchronize_all()
@@ -387,9 +615,6 @@
   subroutine prepare_timerun_image_coloring()
 
   use constants, only: IMAIN
-#ifdef WITH_MPI
-  use constants, only: DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
-#endif
   use specfem_par
   use specfem_par_movie
 
@@ -399,325 +624,180 @@
   integer :: i,j,k,iproc,ipixel
   integer :: ier
 
-  ! postscripts
-  integer :: d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
-             d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
-             d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
-             d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model
-
-  integer :: d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
-             d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
-             d1_color_send_ps_element_mesh, &
-             d1_color_recv_ps_element_mesh
-
-  integer :: d1_coorg_send_ps_abs, d2_coorg_send_ps_abs, &
-             d1_coorg_recv_ps_abs, d2_coorg_recv_ps_abs
-
-  integer :: d1_coorg_send_ps_free_surface, d2_coorg_send_ps_free_surface, &
-             d1_coorg_recv_ps_free_surface, d2_coorg_recv_ps_free_surface
-
-  integer :: d1_coorg_send_ps_vector_field, d2_coorg_send_ps_vector_field, &
-             d1_coorg_recv_ps_vector_field, d2_coorg_recv_ps_vector_field
-
-  ! wavefield dump
-  integer :: d1_dump_send, d2_dump_send, d1_dump_recv, d2_dump_recv
-
   ! checks if anything to do
-  if (.not. (output_color_image .or. output_postscript_snapshot .or. output_wavefield_dumps)) return
+  if (.not. output_color_image) return
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*)
     write(IMAIN,*) 'Preparing image coloring: jpeg'
     call flush_IMAIN()
   endif
 
+  ! prepares dimension of image
+  call prepare_color_image_init()
+
   ! for color images
-  if (output_color_image) then
-    ! user output
-    if (myrank == 0) then
-      write(IMAIN,*) '  allocating color image arrays'
-      call flush_IMAIN()
-    endif
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  allocating color image arrays'
+    call flush_IMAIN()
+  endif
 
-    ! prepares dimension of image
-    call prepare_color_image_init()
+  ! allocate an array for image data
+  allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
+  if (ier /= 0) call stop_the_code('error in an allocate statement 1')
+  allocate(image_color_vp_display(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
+  if (ier /= 0) call stop_the_code('error in an allocate statement 2')
+  image_color_data(:,:) = 0.d0; image_color_vp_display(:,:) = 0.d0
 
-    ! allocate an array for image data
-    allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
-    if (ier /= 0) call stop_the_code('error in an allocate statement 1')
-    allocate(image_color_vp_display(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
-    if (ier /= 0) call stop_the_code('error in an allocate statement 2')
-    image_color_data(:,:) = 0.d0; image_color_vp_display(:,:) = 0.d0
+  ! allocate an array for the grid point that corresponds to a given image data point
+  allocate(iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
+  if (ier /= 0) call stop_the_code('error in an allocate statement 3')
+  allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
+  if (ier /= 0) call stop_the_code('error in an allocate statement 4')
+  iglob_image_color(:,:) = 0; copy_iglob_image_color(:,:) = 0
 
-    ! allocate an array for the grid point that corresponds to a given image data point
-    allocate(iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
-    if (ier /= 0) call stop_the_code('error in an allocate statement 3')
-    allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
-    if (ier /= 0) call stop_the_code('error in an allocate statement 4')
-    iglob_image_color(:,:) = 0; copy_iglob_image_color(:,:) = 0
+  !remember which image are going to produce
+  if (USE_SNAPSHOT_NUMBER_IN_FILENAME) then
+    ! initializes counter
+    isnapshot_number = 0
+  endif
 
-    !remember which image are going to produce
-    if (USE_SNAPSHOT_NUMBER_IN_FILENAME) then
-      ! initializes counter
-      isnapshot_number = 0
-    endif
+  ! creates pixels indexing
+  call prepare_color_image_pixels()
 
-    ! creates pixels indexing
-    call prepare_color_image_pixels()
-
-    ! creating and filling array num_pixel_loc with the positions of each colored
-    ! pixel owned by the local process (useful for parallel jobs)
-    allocate(num_pixel_loc(nb_pixel_loc))
-    num_pixel_loc(:) = 0
-    ipixel = 0
-    do i = 1, NX_IMAGE_color
-       do j = 1, NZ_IMAGE_color
-          if (iglob_image_color(i,j) /= -1) then
-             ipixel = ipixel + 1
-             num_pixel_loc(ipixel) = (j-1)*NX_IMAGE_color + i
-          endif
-       enddo
-    enddo
-    ! checks
-    if (ipixel /= nb_pixel_loc) then
-      print *,'Error: pixel count ',ipixel,nb_pixel_loc
-      call stop_the_code('Error invalid pixel count for color image')
-    endif
-    ! filling array iglob_image_color, containing info on which process owns which pixels.
-    iproc = 0
-    k = 0
+  ! creating and filling array num_pixel_loc with the positions of each colored
+  ! pixel owned by the local process (useful for parallel jobs)
+  allocate(num_pixel_loc(nb_pixel_loc))
+  num_pixel_loc(:) = 0
+  ipixel = 0
+  do i = 1, NX_IMAGE_color
+     do j = 1, NZ_IMAGE_color
+        if (iglob_image_color(i,j) /= -1) then
+           ipixel = ipixel + 1
+           num_pixel_loc(ipixel) = (j-1)*NX_IMAGE_color + i
+        endif
+     enddo
+  enddo
+  ! checks
+  if (ipixel /= nb_pixel_loc) then
+    print *,'Error: pixel count ',ipixel,nb_pixel_loc
+    call stop_the_code('Error invalid pixel count for color image')
+  endif
+  ! filling array iglob_image_color, containing info on which process owns which pixels.
+  iproc = 0
+  k = 0
 #ifdef WITH_MPI
-    allocate(nb_pixel_per_proc(0:NPROC-1))
-    nb_pixel_per_proc(:) = 0
-    call gather_all_singlei(nb_pixel_loc,nb_pixel_per_proc,NPROC)
+  allocate(nb_pixel_per_proc(0:NPROC-1))
+  nb_pixel_per_proc(:) = 0
+  call gather_all_singlei(nb_pixel_loc,nb_pixel_per_proc,NPROC)
 
+  if (myrank == 0) then
+    allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),NPROC))
+    allocate(data_pixel_recv(maxval(nb_pixel_per_proc(:))))
+    num_pixel_recv(:,:) = 0; data_pixel_recv(:) = 0.d0
+  endif
+  allocate(data_pixel_send(nb_pixel_loc))
+  data_pixel_send(:) = 0.d0
+
+  if (NPROC > 1) then
     if (myrank == 0) then
-      allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),NPROC))
-      allocate(data_pixel_recv(maxval(nb_pixel_per_proc(:))))
-      num_pixel_recv(:,:) = 0; data_pixel_recv(:) = 0.d0
-    endif
-    allocate(data_pixel_send(nb_pixel_loc))
-    data_pixel_send(:) = 0.d0
+      ! main collects
+      do iproc = 1, NPROC-1
+        call recv_i(num_pixel_recv(1,iproc+1), nb_pixel_per_proc(iproc), iproc, 42)
 
-    if (NPROC > 1) then
-      if (myrank == 0) then
-        ! main collects
-        do iproc = 1, NPROC-1
-          call recv_i(num_pixel_recv(1,iproc+1), nb_pixel_per_proc(iproc), iproc, 42)
+        do k = 1, nb_pixel_per_proc(iproc)
+          j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
+          i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
 
-          do k = 1, nb_pixel_per_proc(iproc)
-            j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
-            i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
+          ! avoid edge effects
+          if (i < 1) i = 1
+          if (j < 1) j = 1
 
-            ! avoid edge effects
-            if (i < 1) i = 1
-            if (j < 1) j = 1
+          if (i > NX_IMAGE_color) i = NX_IMAGE_color
+          if (j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
-            if (i > NX_IMAGE_color) i = NX_IMAGE_color
-            if (j > NZ_IMAGE_color) j = NZ_IMAGE_color
+          iglob_image_color(i,j) = iproc
 
-            iglob_image_color(i,j) = iproc
-
-          enddo
         enddo
+      enddo
 
-      else
-        call send_i(num_pixel_loc(1), nb_pixel_loc, 0, 42)
-      endif
+    else
+      call send_i(num_pixel_loc(1), nb_pixel_loc, 0, 42)
     endif
-    call synchronize_all()
+  endif
+  call synchronize_all()
 #endif
 
-    ! user output
-    if (myrank == 0) then
-      write(IMAIN,*) '  done locating all the pixels of color images'
-      call flush_IMAIN()
-    endif
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  done locating all the pixels of color images'
+    call flush_IMAIN()
+  endif
 
-    ! prepares image background
-    call prepare_color_image_vp()
-
-  endif ! output_color_image
+  ! prepares image background
+  call prepare_color_image_vp()
 
   ! synchronizes all processes
   call synchronize_all()
 
-  ! postscript output
-  if (output_postscript_snapshot) then
-    ! user output
-    if (myrank == 0) then
-      write(IMAIN,*) '  allocating postscript image arrays'
-      call flush_IMAIN()
-    endif
-
-    ! allocate arrays for postscript output
-#ifdef WITH_MPI
-    if (modelvect) then
-      d1_coorg_recv_ps_velocity_model = 2
-      call max_all_all_i(nspec,d2_coorg_recv_ps_velocity_model)
-      d2_coorg_recv_ps_velocity_model = d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
-         ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
-      d1_RGB_recv_ps_velocity_model = 1
-
-      call max_all_all_i(nspec,d2_RGB_recv_ps_velocity_model)
-      d2_RGB_recv_ps_velocity_model = d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
-         ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
-    else
-      d1_coorg_recv_ps_velocity_model=1
-      d2_coorg_recv_ps_velocity_model=1
-      d1_RGB_recv_ps_velocity_model=1
-      d2_RGB_recv_ps_velocity_model=1
-    endif
-
-    d1_coorg_send_ps_element_mesh=2
-    if (ngnod == 4) then
-      if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
-        d2_coorg_send_ps_element_mesh=nspec*5
-        if (DISPLAY_COLORS == 1) then
-          d1_color_send_ps_element_mesh=2*nspec
-        else
-          d1_color_send_ps_element_mesh=1*nspec
-        endif
-      else
-        d2_coorg_send_ps_element_mesh=nspec*6
-        if (DISPLAY_COLORS == 1) then
-          d1_color_send_ps_element_mesh=1*nspec
-        endif
-      endif
-    else
-      if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
-        d2_coorg_send_ps_element_mesh=nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1+1)
-        if (DISPLAY_COLORS == 1) then
-          d1_color_send_ps_element_mesh=2*nspec
-        else
-          d1_color_send_ps_element_mesh=1*nspec
-        endif
-      else
-        d2_coorg_send_ps_element_mesh=nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1)
-        if (DISPLAY_COLORS == 1) then
-          d1_color_send_ps_element_mesh=1*nspec
-        endif
-      endif
-    endif
-
-    call max_all_all_i(d1_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh)
-    call max_all_all_i(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh)
-    call max_all_all_i(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh)
-
-    d1_coorg_send_ps_abs=5
-    d2_coorg_send_ps_abs=4*num_abs_boundary_faces
-    call max_all_all_i(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs)
-    call max_all_all_i(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs)
-
-    d1_coorg_send_ps_free_surface=4
-    d2_coorg_send_ps_free_surface=4*nelem_acoustic_surface
-    call max_all_all_i(d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface)
-    call max_all_all_i(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface)
-
-    d1_coorg_send_ps_vector_field=8
-    if (interpol) then
-      if (plot_lowerleft_corner_only) then
-        d2_coorg_send_ps_vector_field=nspec*1*1
-      else
-        d2_coorg_send_ps_vector_field=nspec*pointsdisp*pointsdisp
-      endif
-    else
-      d2_coorg_send_ps_vector_field=nglob
-    endif
-    call max_all_all_i(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field)
-    call max_all_all_i(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field)
-
-#else
-    ! dummy values
-    d1_coorg_recv_ps_velocity_model=1
-    d2_coorg_recv_ps_velocity_model=1
-    d1_RGB_recv_ps_velocity_model=1
-    d2_RGB_recv_ps_velocity_model=1
-
-    d1_coorg_send_ps_element_mesh=1
-    d2_coorg_send_ps_element_mesh=1
-    d1_coorg_recv_ps_element_mesh=1
-    d2_coorg_recv_ps_element_mesh=1
-    d1_color_send_ps_element_mesh=1
-    d1_color_recv_ps_element_mesh=1
-
-    d1_coorg_send_ps_abs=1
-    d2_coorg_send_ps_abs=1
-    d1_coorg_recv_ps_abs=1
-    d2_coorg_recv_ps_abs=1
-    d1_coorg_send_ps_free_surface=1
-    d2_coorg_send_ps_free_surface=1
-    d1_coorg_recv_ps_free_surface=1
-    d2_coorg_recv_ps_free_surface=1
-
-    d1_coorg_send_ps_vector_field=1
-    d2_coorg_send_ps_vector_field=1
-    d1_coorg_recv_ps_vector_field=1
-    d2_coorg_recv_ps_vector_field=1
-#endif
-
-    d1_coorg_send_ps_velocity_model=2
-    d2_coorg_send_ps_velocity_model=nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
-                                          ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
-    d1_RGB_send_ps_velocity_model=1
-    d2_RGB_send_ps_velocity_model=nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
-                                        ((NGLLX-subsamp_postscript)/subsamp_postscript)
-
-    allocate(coorg_send_ps_velocity_model(d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model))
-    allocate(RGB_send_ps_velocity_model(d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model))
-
-    allocate(coorg_recv_ps_velocity_model(d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model))
-    allocate(RGB_recv_ps_velocity_model(d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model))
-
-    allocate(coorg_send_ps_element_mesh(d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh))
-    allocate(coorg_recv_ps_element_mesh(d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh))
-    allocate(color_send_ps_element_mesh(d1_color_send_ps_element_mesh))
-    allocate(color_recv_ps_element_mesh(d1_color_recv_ps_element_mesh))
-
-    allocate(coorg_send_ps_abs(d1_coorg_send_ps_abs,d2_coorg_send_ps_abs))
-    allocate(coorg_recv_ps_abs(d1_coorg_recv_ps_abs,d2_coorg_recv_ps_abs))
-
-    allocate(coorg_send_ps_free_surface(d1_coorg_send_ps_free_surface,d2_coorg_send_ps_free_surface))
-    allocate(coorg_recv_ps_free_surface(d1_coorg_recv_ps_free_surface,d2_coorg_recv_ps_free_surface))
-
-    allocate(coorg_send_ps_vector_field(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field))
-    allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating postscript arrays')
-
-    ! to dump the wave field
-    this_is_the_first_time_we_dump = .true.
-
-  endif ! postscript
-
-  if (output_wavefield_dumps) then
-    ! allocate arrays for wavefield dump
-    d1_dump_recv = 2
-    d1_dump_send = 2
-
-    d2_dump_send = nspec*NGLLX*NGLLZ
-    call max_all_all_i(d2_dump_send,d2_dump_recv)
-
-    ! allocates temporary arrays for wavefield outputs
-    allocate(dump_send(d1_dump_send, d2_dump_send))
-    allocate(dump_recv(d1_dump_recv, d2_dump_recv))
-    dump_send(:,:) = 0.d0
-    dump_recv(:,:) = 0.d0
-
-    allocate(dump_duplicate_send(d2_dump_send))
-    allocate(dump_duplicate_recv(d2_dump_recv))
-    dump_duplicate_send(:) = .false.
-    dump_duplicate_recv(:) = .false.
-
-    allocate(dump_recv_counts(0:NPROC-1),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating wavefield_dumps arrays')
-    dump_recv_counts(:) = 0
-
-    this_is_the_first_time_we_dump = .true.
-
-  endif ! wavefield dump
-
   end subroutine prepare_timerun_image_coloring
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_wavefield_dumps()
+
+  use constants, only: IMAIN
+  use specfem_par
+  use specfem_par_movie
+
+  implicit none
+
+  ! wavefield dump
+  integer :: d1_dump_send, d2_dump_send, d1_dump_recv, d2_dump_recv
+  integer :: ier
+
+  ! checks if anything to do
+  if (.not. output_wavefield_dumps) return
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'Preparing wavefield dumps:'
+    write(IMAIN,*) '  allocating dump arrays'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! allocate arrays for wavefield dump
+  d1_dump_recv = 2
+  d1_dump_send = 2
+
+  d2_dump_send = nspec*NGLLX*NGLLZ
+  call max_all_all_i(d2_dump_send,d2_dump_recv)
+
+  ! allocates temporary arrays for wavefield outputs
+  allocate(dump_send(d1_dump_send, d2_dump_send))
+  allocate(dump_recv(d1_dump_recv, d2_dump_recv))
+  dump_send(:,:) = 0.d0
+  dump_recv(:,:) = 0.d0
+
+  allocate(dump_duplicate_send(d2_dump_send))
+  allocate(dump_duplicate_recv(d2_dump_recv))
+  dump_duplicate_send(:) = .false.
+  dump_duplicate_recv(:) = .false.
+
+  allocate(dump_recv_counts(0:NPROC-1),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating wavefield_dumps arrays')
+  dump_recv_counts(:) = 0
+
+  this_is_the_first_time_we_dump = .true.
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine prepare_timerun_wavefield_dumps
 
 !
 !-------------------------------------------------------------------------------------
