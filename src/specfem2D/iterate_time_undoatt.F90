@@ -58,7 +58,7 @@
 
   ! timing
   double precision, external :: wtime
-  real :: start_time_of_time_loop,duration_of_time_loop_in_seconds
+  double precision :: start_time_of_time_loop,duration_of_time_loop_in_seconds
   logical :: compute_b_wavefield
 
   ! checks if anything to do
@@ -620,14 +620,14 @@
     duration_of_time_loop_in_seconds = wtime() - start_time_of_time_loop
 
     write(IMAIN,*)
-    write(IMAIN,*) 'Total duration of the time loop in seconds = ',duration_of_time_loop_in_seconds,' s'
+    write(IMAIN,*) 'Total duration of the time loop in seconds = ',sngl(duration_of_time_loop_in_seconds),' s'
     write(IMAIN,*) 'Total number of time steps = ',NSTEP
-    write(IMAIN,*) 'Average duration of a time step of the time loop = ',duration_of_time_loop_in_seconds / real(NSTEP),' s'
+    write(IMAIN,*) 'Average duration of a time step of the time loop = ',sngl(duration_of_time_loop_in_seconds / NSTEP),' s'
     write(IMAIN,*) 'Total number of spectral elements in the mesh = ',NSPEC
     write(IMAIN,*) '    of which ',NSPEC - count(ispec_is_PML),' are regular elements'
     write(IMAIN,*) '    and ',count(ispec_is_PML),' are PML elements.'
     write(IMAIN,*) 'Average duration of the calculation per spectral element = ', &
-                         duration_of_time_loop_in_seconds / real(NSTEP * NSPEC),' s'
+                         sngl(duration_of_time_loop_in_seconds / (NSTEP * NSPEC)),' s'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
