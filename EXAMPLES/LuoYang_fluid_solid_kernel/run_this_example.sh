@@ -35,6 +35,13 @@ echo
 
 rm -f xadj_source
 
+# store outputs
+mkdir -p OUTPUT_FILES/forward_run
+rm -rf OUTPUT_FILES/forward_run/*
+cp -v OUTPUT_FILES/AA* OUTPUT_FILES/forward_run/
+cp -v OUTPUT_FILES/Par_file OUTPUT_FILES/forward_run/
+echo
+
 ## adjoint kernel simulation
 ./change_simulation_type.pl -b
 
