@@ -281,6 +281,10 @@
     enddo
 
     ! draw position of the receivers with green squares
+    ! limit receiver square size for many receiver cases
+    if (nrec > 1000) then
+      half_size_square = 1
+    endif
     do i = 1,nrec
       ! avoid edge effects for source or receiver symbols that can be partly outside of the image
       do iy = max(iy_image_color_receiver(i) - half_size_square,1), &
