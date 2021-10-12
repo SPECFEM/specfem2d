@@ -160,6 +160,10 @@
           ! isotropic kernel contributions
           if (P_SV) then
             ! P-SV waves
+            !   K_kappa = - kappa int_0^T [ div(s^adj) div(s) ] dt
+            !   K_mu    = - 2 mu  int_0^T [ D^adj : D ] dt               (where D = 1/2[grad(s) + grad(s)^T] - 1/3 div(s) I )
+            !
+            ! the factors (- kappa dt) and (- 2 mu dt) will be added later in save_adjoint_kernels() routine
             dsxx =  dux_dxl
             dsxz = HALF * (duz_dxl + dux_dzl)
             dszz =  duz_dzl
@@ -168,13 +172,34 @@
             b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
             b_dszz =  b_duz_dzl
 
-            kappa_k_loc = (dsxx + dszz) *  (b_dsxx + b_dszz)
+            kappa_k_loc = (dsxx + dszz) * (b_dsxx + b_dszz)
             mu_k_loc = dsxx * b_dsxx + dszz * b_dszz + &
                           2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k_loc
           else
             ! SH (membrane) waves
-            mu_k_loc = dux_dxl * b_dux_dxl + dux_dzl * b_dux_dzl
+            !   K_kappa = 0
+            !   K_mu    = - 2 mu  int_0^T [ D^adj : D ] dt
+            ! where
+            !   D = 1/2[grad(s) + grad(s)^T] - 1/3 div(s) I       deviatoric strain
+            ! and the factor (- 2 mu dt) will be added later in save_adjoint_kernels() routine
+            !
+            ! note:
+            !   D = [    dux_dx         1/2(dux_dy+duy_dx) 1/2(dux_dz+duz_dx)        [ 1/3 (dux_dx + duy_dy + duz_dz)
+            !        1/2(duy_dx+dux_dy)     duy_dy         1/2(duy_dz+duz_dy)     -         1/3 (dux_dx + duy_dy + duz_dz)
+            !        1/2(duz_dx+dux_dz) 1/2(duz_dy+duy_dz)     duz_dz   ]                       1/3 (dux_dx + duy_dy + duz_dx) ]
+            !
+            ! SH-waves: plane strain assumption ux==uz==0 and d/dy==0
+            !   D = [   0             1/2 duy_dx       0                   [
+            !          1/2 duy_dx       0             1/2 duy_dz       -             0
+            !           0             1/2 duy_dz       0                                     ]
+            !
+            !  D^adj : D = sum_i sum_j D^adj_ij * D_ij
+            !            = 1/2duy_dx^adj * 1/2duy_dx + 1/2duy_dx^adj * 1/2duy_dx
+            !                + 1/2duy_dz^adj * 1/2duy_dz + 1/2duy_dz^adj * 1/2duy_dz
+            !            = 1/2 ( duy_dx^adj * duy_dx) + 1/2 (duy_dz^adj * duy_dz)
+            !            = 1/2 ( duy_dx^adj * duy_dx + duy_dz^adj * duy_dz )
             kappa_k_loc = 0.0_CUSTOM_REAL
+            mu_k_loc = HALF * (dux_dxl * b_dux_dxl + dux_dzl * b_dux_dzl)
           endif
 
 
@@ -296,11 +321,11 @@
 
             ! derivatives of potential
             ! warning : the variable is named accel_loc but it is displ that is computed
-            accel_loc(1) = (tempx1l*xixl + tempx2l*gammaxl) / rhol
-            accel_loc(2) = (tempx1l*xizl + tempx2l*gammazl) / rhol
+            accel_loc(1) = (tempx1l*xixl + tempx2l*gammaxl)
+            accel_loc(2) = (tempx1l*xizl + tempx2l*gammazl)
 
-            b_displ_loc(1) = (b_tempx1l*xixl + b_tempx2l*gammaxl) / rhol
-            b_displ_loc(2) = (b_tempx1l*xizl + b_tempx2l*gammazl) / rhol
+            b_displ_loc(1) = (b_tempx1l*xixl + b_tempx2l*gammaxl)
+            b_displ_loc(2) = (b_tempx1l*xizl + b_tempx2l*gammazl)
 
             ! acoustic kernel integration
             ! YANGL
@@ -313,17 +338,36 @@
             !!!      * deltat
 
             ! new expression (from PDE-constrained optimization, coupling terms changed as well)
-
+            ! note: from Luo et al. (2013), kernels are given for absolute perturbations d(1/rho) and d(1/kappa)
+            !       and only change from Peter et al. (2011) for acoustic kernels:
+            !         K_kappa = - int_0^T [ phi^adj \partial_t^2 phi ] dt     see (A-27)
+            !         K_rho   = - int_0^T [ grad(phi^adj) * grad(phi) ] dt        (A-28)
+            !
+            !       since we output relative perturbation kernels for elastic domains, we make here also use of the variation
+            !         d(1/rho) = - 1/rho^2 d(rho) = - 1/rho d(rho)/rho = - 1/rho dln(rho)
+            !
+            !       to obtain relative kernels, we start from eq. (A-24)
+            !         dChi = int_V [ d(1/kappa) K_kappa + d(1/rho) K_rho ] d^3x (+ elastic kernels)
+            !              = int_V [ (-1/kappa K_kappa) dln(kappa) + (- 1/rho K_rho) dln(rho)
+            !
+            !       and see that relative perturbation kernels are given by
+            !          \tilde{K}_kappa = - 1/kappa K_kappa
+            !                          = + 1/kappa int_0^T [ phi^adj \partial_t^2 phi ] dt
+            !                          = + 1/kappa int_0^T [ \partial_t^2 phi^adj phi ] dt              (equivalent)
+            !
+            !          \tilde{K}_rho   = - 1/rho   K_rho
+            !                          = + 1/rho   int_0^T [ grad(phi^adj) * grad(phi) ] dt
+            !                          = + rho     int_0^T [ 1/rho grad(phi^adj) * 1/rho grad(phi) ] dt   (equivalent)
+            !
             ! density kernel
             rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) &
-                                 + rhol * dot_product(accel_loc(:),b_displ_loc(:)) &
+                                 + 1.0_CUSTOM_REAL/rhol * dot_product(accel_loc(:),b_displ_loc(:)) &
                                         * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
 
             ! kappa (bulk modulus) kernel
             kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) &
-                                   + kappal * potential_dot_dot_acoustic(iglob) / kappal &
-                                            * b_potential_acoustic(iglob) / kappal &
-                                            * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
+                                   + 1.0_CUSTOM_REAL/kappal * potential_dot_dot_acoustic(iglob) * b_potential_acoustic(iglob) &
+                                        * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
 
             ! rho prime kernel
             rhop_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + kappa_ac_kl(i,j,ispec)

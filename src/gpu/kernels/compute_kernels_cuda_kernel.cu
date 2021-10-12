@@ -192,7 +192,7 @@ __global__ void compute_kernels_cudakernel(const int* ispec_is_elastic,
       kappa_kl[ij_ispec] += prod;
     }else{
       // SH-case (membrane) waves
-      mu_kl[ij_ispec] += dsxx * b_dsxx + dsxz * b_dsxz; // dux_dxl * b_dux_dxl + dux_dzl * b_dux_dzl
+      mu_kl[ij_ispec] += 0.5f * (dsxx * b_dsxx + dsxz * b_dsxz);
       // zero kappa kernel
       //kappa_kl[ij_ispec] = 0.f;
     }
