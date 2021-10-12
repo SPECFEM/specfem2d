@@ -44,12 +44,15 @@
                               x_final_receiver, z_final_receiver)
 
   use constants, only: NDIM,NGLLX,NGLLZ,MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME, &
-    IIN,IMAIN,HUGEVAL,TINYVAL,NUM_ITER,mygroup,MAX_STRING_LEN,IN_DATA_FILES, &
+    IIN,IOUT,IMAIN,HUGEVAL,TINYVAL,NUM_ITER,mygroup,MAX_STRING_LEN, &
+    IN_DATA_FILES,OUTPUT_FILES, &
     IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC
 
-  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,ispec_is_acoustic,USE_TRICK_FOR_BETTER_PRESSURE,NUMBER_OF_SIMULTANEOUS_RUNS
-
   use specfem_par, only: ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic
+
+  use specfem_par, only: AXISYM,is_on_the_axis,xiglj
+
+  use specfem_par, only: USE_TRICK_FOR_BETTER_PRESSURE,NUMBER_OF_SIMULTANEOUS_RUNS,SU_FORMAT
 
   implicit none
 
@@ -103,6 +106,7 @@
 
   double precision, dimension(:,:), allocatable :: gather_final_distance
   double precision, dimension(:,:), allocatable :: gather_xi_receiver, gather_gamma_receiver
+  double precision :: final_distance_max
 
   integer, dimension(:,:), allocatable  :: gather_ispec_selected_rec
   integer, dimension(:,:), allocatable  :: gather_idomain_rec
@@ -111,8 +115,11 @@
   integer :: irec,i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess
   integer :: idomain,rank_selected,ier
 
+  logical :: show_station_output
+
   character(len=MAX_STRING_LEN) :: stations_filename,path_to_add
 
+  ! defaults to: DATA/STATIONS
   stations_filename = trim(IN_DATA_FILES)//'STATIONS'
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
@@ -412,32 +419,71 @@
       xi = gather_xi_receiver(irec,rank_selected+1)
       gamma = gather_gamma_receiver(irec,rank_selected+1)
 
-      ! output
-      write(IMAIN,*)
-      write(IMAIN,*) 'Station # ',irec,'    ',network_name(irec),station_name(irec)
-
-      if (final_distance_this_element == HUGEVAL) &
-        call exit_MPI(myrank,'Error locating receiver')
-
-      write(IMAIN,*) '            original x: ',sngl(st_xval(irec))
-      write(IMAIN,*) '            original z: ',sngl(st_zval(irec))
-      write(IMAIN,*) 'Closest estimate found: ',sngl(final_distance_this_element), &
-                    ' m away'
-      write(IMAIN,*) ' in rank ', rank_selected
-      write(IMAIN,*) ' in element ',ispec
-      if (idomain == IDOMAIN_ACOUSTIC) then
-        write(IMAIN,*) ' in acoustic domain'
-      else if (idomain == IDOMAIN_ELASTIC) then
-        write(IMAIN,*) ' in elastic domain'
-      else if (idomain == IDOMAIN_POROELASTIC) then
-        write(IMAIN,*) ' in poroelastic domain'
+      ! limits user output if too many receivers
+      if (nrec < 1000 .and. (.not. SU_FORMAT )) then
+        ! all stations output
+        show_station_output = .true.
       else
-        write(IMAIN,*) ' in unknown domain'
+        ! only first and last station output
+        if (irec == 1 .or. irec == nrec) then
+          show_station_output = .true.
+        else
+          ! skipping station output
+          if (irec == 2) then
+            write(IMAIN,*)
+            write(IMAIN,*) ".. skipping station outputs .."
+            write(IMAIN,*) "(see output_list_stations.txt for full list)"
+            write(IMAIN,*)
+          endif
+          show_station_output = .false.
+        endif
       endif
-      write(IMAIN,*) ' at xi,gamma coordinates = ',xi,gamma
-      write(IMAIN,*) 'Distance from source: ',sngl(distance_receiver(irec)),' m'
-      write(IMAIN,*)
+
+      ! output
+      if (show_station_output) then
+        write(IMAIN,*)
+        write(IMAIN,*) 'Station # ',irec,'    ',network_name(irec),station_name(irec)
+
+        if (final_distance_this_element == HUGEVAL) &
+          call exit_MPI(myrank,'Error locating receiver')
+
+        write(IMAIN,*) '            original x: ',sngl(st_xval(irec))
+        write(IMAIN,*) '            original z: ',sngl(st_zval(irec))
+        write(IMAIN,*) 'Closest estimate found: ',sngl(final_distance_this_element), &
+                      ' m away'
+        write(IMAIN,*) ' in rank ', rank_selected
+        write(IMAIN,*) ' in element ',ispec
+        if (idomain == IDOMAIN_ACOUSTIC) then
+          write(IMAIN,*) ' in acoustic domain'
+        else if (idomain == IDOMAIN_ELASTIC) then
+          write(IMAIN,*) ' in elastic domain'
+        else if (idomain == IDOMAIN_POROELASTIC) then
+          write(IMAIN,*) ' in poroelastic domain'
+        else
+          write(IMAIN,*) ' in unknown domain'
+        endif
+        write(IMAIN,*) ' at xi,gamma coordinates = ',xi,gamma
+        write(IMAIN,*) 'Distance from source: ',sngl(distance_receiver(irec)),' m'
+        write(IMAIN,*)
+      endif
     enddo
+
+    ! compute maximal distance for all the receivers
+    final_distance_max = maxval(gather_final_distance(:,:))
+
+    ! display maximum error for all the receivers
+    write(IMAIN,*) 'maximum error in location of all the receivers: ',sngl(final_distance_max),' m'
+
+    ! write the locations of stations, so that we can load them and write them to SU headers later
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/output_list_stations.txt',status='unknown',action='write',iostat=ier)
+    if (ier /= 0) &
+      call exit_mpi(myrank,'error opening file '//trim(OUTPUT_FILES)//'/output_list_stations.txt')
+    ! writes station infos
+    do irec = 1,nrec
+      write(IOUT,'(a32,a8,2f24.12)') station_name(irec),network_name(irec),st_xval(irec),st_zval(irec)
+    enddo
+    ! closes output file
+    close(IOUT)
 
     write(IMAIN,*)
     write(IMAIN,*) 'end of receiver detection'
