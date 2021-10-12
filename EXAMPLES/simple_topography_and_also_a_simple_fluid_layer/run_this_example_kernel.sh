@@ -178,8 +178,14 @@ echo
 
 
 # plots kernel image
-./plot_kernel.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat
-
+if [ -e OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat ]; then
+  # elastic kernel
+  ./plot_kernel.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat
+fi
+if [ -e OUTPUT_FILES/proc000000_rhop_c_kernel.dat.dat ]; then
+  # acoustic kernel
+  ./plot_kernel.py OUTPUT_FILES/proc000000_rhop_c_kernel.dat.dat
+fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 
