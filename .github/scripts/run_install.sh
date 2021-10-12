@@ -22,6 +22,7 @@ echo
 # python script needs numpy
 #sudo apt-get install -qq python-numpy # not working, likely installed on older python version
 pip install --user --upgrade pip setuptools wheel
+pip install --user --upgrade matplotlib
 pip install --user --only-binary=numpy numpy
 
 # checks exit code
