@@ -1487,26 +1487,6 @@
   if (reread_rec_normal_to_surface .neqv. rec_normal_to_surface) &
     call stop_the_code('Invalid re-reading of rec_normal_to_surface parameter')
 
-  ! only valid if at least 1 receiver line is specified
-  if (nreceiversets < 1) &
-    call stop_the_code('number of receiver sets must be greater than 1')
-
-  ! allocate receiver line arrays
-  allocate(nrec_line(nreceiversets))
-  allocate(xdeb(nreceiversets))
-  allocate(zdeb(nreceiversets))
-  allocate(xfin(nreceiversets))
-  allocate(zfin(nreceiversets))
-  allocate(record_at_surface_same_vertical(nreceiversets),stat=ier)
-  if (ier /= 0 ) call stop_the_code('Error allocating receiver lines')
-
-  nrec_line(:) = 0
-  xdeb(:) = 0.d0
-  zdeb(:) = 0.d0
-  xfin(:) = 0.d0
-  zfin(:) = 0.d0
-  record_at_surface_same_vertical(:) = .false.
-
   ! reads in receiver sets
   if (use_existing_STATIONS) then
     ! checks if STATIONS file exisits
@@ -1534,7 +1514,17 @@
     nrec = 0
     do while(ier == 0)
       read(IIN,"(a)",iostat=ier) dummystring
-      if (ier == 0) nrec = nrec + 1
+      if (ier == 0) then
+        ! skip empty lines
+        if (len_trim(dummystring) == 0) cycle
+
+        ! skip comment lines
+        dummystring = adjustl(dummystring)
+        if (dummystring(1:1) == "#") cycle
+
+        ! increase counter
+        nrec = nrec + 1
+      endif
     enddo
     close(IIN)
 
@@ -1543,6 +1533,27 @@
     write(IMAIN,*)
 
   else
+    ! receiver lines specified in Par_file
+    ! only valid if at least 1 receiver line is specified
+    if (nreceiversets < 1) &
+      call stop_the_code('number of receiver sets must be greater than 1')
+
+    ! allocate receiver line arrays
+    allocate(nrec_line(nreceiversets))
+    allocate(xdeb(nreceiversets))
+    allocate(zdeb(nreceiversets))
+    allocate(xfin(nreceiversets))
+    allocate(zfin(nreceiversets))
+    allocate(record_at_surface_same_vertical(nreceiversets),stat=ier)
+    if (ier /= 0 ) call stop_the_code('Error allocating receiver lines')
+
+    nrec_line(:) = 0
+    xdeb(:) = 0.d0
+    zdeb(:) = 0.d0
+    xfin(:) = 0.d0
+    zfin(:) = 0.d0
+    record_at_surface_same_vertical(:) = .false.
+
     ! loop on all the receiver lines
     do ireceiverlines = 1,nreceiversets
       call read_value_integer_next_p(nrec_line(ireceiverlines),'nrec')
