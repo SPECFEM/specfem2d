@@ -400,6 +400,12 @@
     endif
   endif
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   end subroutine save_kernels_elastic
 
 !
@@ -526,6 +532,12 @@
     endif
   endif
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   end subroutine save_kernels_acoustic
 
 
@@ -646,6 +658,12 @@
   close(21)
   close(22)
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   end subroutine save_kernels_poroelastic
 
 
@@ -714,6 +732,12 @@
   endif
 
   deallocate(weights_kernel)
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   end subroutine save_weights_kernel
 

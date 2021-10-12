@@ -250,7 +250,7 @@
 
   use specfem_par, only: potential_dot_dot_acoustic,ispec_is_acoustic,NSTEP,it, &
                          nrecloc,ispec_selected_rec_loc, &
-                         ibool,kappastore,source_adjoint,xir_store_loc,gammar_store_loc
+                         ibool,source_adjoint,xir_store_loc,gammar_store_loc
   implicit none
 
   !local variables
