@@ -62,7 +62,8 @@ __global__ void compute_add_moving_sources_acoustic_kernel(realw* potential_dot_
       iglob = d_ibool[INDEX3_PADDED(NGLLX, NGLLX, i, j, ispec)] - 1;
 
       kappal = kappastore[INDEX3(NGLLX, NGLLX, i, j, ispec)];
-      stf = source_time_function_moving[INDEX2(nsources, isource, it)]/kappal;
+      stf = source_time_function_moving[INDEX2(nsources, isource, it)] / kappal;
+
       accel = sourcearrays_moving[INDEX5(NDIM, NGLLX, NGLLX, nsources, 0, i, j, isource, it)] * stf;
 
       atomicAdd(&potential_dot_dot_acoustic[iglob], accel);

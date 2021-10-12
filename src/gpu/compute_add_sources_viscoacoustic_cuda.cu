@@ -245,7 +245,7 @@ void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
                                                                                mp->d_ispec_selected_rec_loc,
                                                                                it,
                                                                                mp->nadj_rec_local,
-                                                                               mp->d_kappastore,
+                                                                               //mp->d_kappastore,
                                                                                *NSTEP);
 
 //  print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),38);

@@ -272,20 +272,16 @@
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
 
-          !ZN Zinan Xie, Year 2012:
-          !ZN be careful, the following line is newly added, thus when doing a comparison
-          !ZN of the new code with the old code, you will have a big difference if you
-          !ZN do not adjust the amplitude of the adjoint source
-
-          ! beware, for acoustic medium, a pressure source would be taking the negative
-          ! and divide by Kappa of the fluid;
-          ! this would have to be done when constructing the adjoint source.
+          ! adjoint source of Peter et al. (A8):
+          !   f^adj = - sum_i \partial_t^2 (p^syn - p^obs)(T-t) \delta(x - x_i)
+          ! note that using the adjoint source derived from the optimization problem, there is no 1/kappa term applied
+          ! to the adjoint source. the negative sign also is part of the construction of the adjoint source.
           !
-          ! the idea is to have e.g. a pressure source, where all 3 components would be the same
-          stf = xir_store_loc(irec_local,i) * gammar_store_loc(irec_local,j) * source_adjoint(irec_local,it_tmp,1) &
-                / kappastore(i,j,ispec)
+          ! since we don't know which formulation of adjoint source is used for the input, we add the adjoint source as is,
+          ! without 1/kappa factor, and with a positive sign.
+          stf = xir_store_loc(irec_local,i) * gammar_store_loc(irec_local,j) * source_adjoint(irec_local,it_tmp,1)
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + stf
 
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - stf
         enddo
       enddo
     endif ! if element acoustic

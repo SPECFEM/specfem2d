@@ -43,7 +43,7 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
                                                       int* ispec_selected_rec_loc,
                                                       int it,
                                                       int nadj_rec_local,
-                                                      realw* kappastore,
+                                                      //realw* kappastore,
                                                       int NSTEP ) {
 
   int irec_local = blockIdx.x + gridDim.x*blockIdx.y;
@@ -59,21 +59,20 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
 
       int iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
-      realw  kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
+      //realw  kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
       realw  xir = xir_store[INDEX2(nadj_rec_local,irec_local,i)];
       realw  gammar = gammar_store[INDEX2(nadj_rec_local,irec_local,j)];
       realw  source_adj = source_adjoint[INDEX3(nadj_rec_local,NSTEP,irec_local,it,0)];
 
-      // beware, for acoustic medium, a pressure source would be taking the negative
-      // and divide by Kappa of the fluid;
-      // this would have to be done when constructing the adjoint source.
+      // adjoint source of Peter et al. (A8):
+      //   f^adj = - sum_i \partial_t^2 (p^syn - p^obs)(T-t) \delta(x - x_i)
+      // note that using the adjoint source derived from the optimization problem, there is no 1/kappa term applied
+      // to the adjoint source. the negative sign also is part of the construction of the adjoint source.
       //
-      //          the idea is to have e.g. a pressure source, where all 3 components would be the same
-      realw stf = source_adj * gammar * xir / kappal ;
-
-      atomicAdd(&potential_dot_dot_acoustic[iglob],-stf);
-      // Alexis Bottero added a - sign for consistency with CPU version
-      //atomicAdd(&potential_dot_dot_acoustic[iglob],stf);
+      // since we don't know which formulation of adjoint source is used for the input, we add the adjoint source as is,
+      // without 1/kappa factor, and with a positive sign.
+      realw stf = source_adj * gammar * xir;
+      atomicAdd(&potential_dot_dot_acoustic[iglob],stf);
     }
   }
 }

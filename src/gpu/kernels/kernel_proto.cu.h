@@ -256,7 +256,7 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
                                                       int* ispec_selected_rec_loc,
                                                       int it,
                                                       int nadj_rec_local,
-                                                      realw* kappastore,
+                                                      //realw* kappastore,
                                                       int NSTEP ) ;
 
 

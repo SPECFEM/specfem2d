@@ -107,6 +107,7 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
                             rhol);
 
     // acoustic kernel integration
+
     // old expression (from elastic kernels)
     //rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) - rhol  * &
     //      dot_product(accel_loc(:),b_displ_loc(:)) * deltat
@@ -116,7 +117,27 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
     //      * deltat
 
     // new expression (from PDE-constrained optimization, coupling terms changed as well)
-
+    // note: from Luo et al. (2013), kernels are given for absolute perturbations d(1/rho) and d(1/kappa)
+    //       and only change from Peter et al. (2011) for acoustic kernels:
+    //         K_kappa = - int_0^T [ phi^adj \partial_t^2 phi ] dt     see (A-27)
+    //         K_rho   = - int_0^T [ grad(phi^adj) * grad(phi) ] dt        (A-28)
+    //
+    //       since we output relative perturbation kernels for elastic domains, we make here also use of the variation
+    //         d(1/rho) = - 1/rho^2 d(rho) = - 1/rho d(rho)/rho = - 1/rho dln(rho)
+    //
+    //       to obtain relative kernels, we start from eq. (A-24)
+    //         dChi = int_V [ d(1/kappa) K_kappa + d(1/rho) K_rho ] d^3x (+ elastic kernels)
+    //              = int_V [ (-1/kappa K_kappa) dln(kappa) + (- 1/rho K_rho) dln(rho)
+    //
+    //       and see that relative perturbation kernels are given by
+    //          \tilde{K}_kappa = - 1/kappa K_kappa
+    //                          = + 1/kappa int_0^T [ phi^adj \partial_t^2 phi ] dt
+    //                          = + 1/kappa int_0^T [ \partial_t^2 phi^adj phi ] dt              (equivalent)
+    //
+    //          \tilde{K}_rho   = - 1/rho   K_rho
+    //                          = + 1/rho   int_0^T [ grad(phi^adj) * grad(phi) ] dt
+    //                          = + rho     int_0^T [ 1/rho grad(phi^adj) * 1/rho grad(phi) ] dt   (equivalent)
+    //
     // density kernel
     rho_ac_kl[ij_ispec] +=  rhol * (accel_elm[0]*b_displ_elm[0] + accel_elm[1]*b_displ_elm[1] ) * deltat;
 
