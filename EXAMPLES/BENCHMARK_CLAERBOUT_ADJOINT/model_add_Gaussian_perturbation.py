@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# perturbs model with a Gaussian perturbation  
+# perturbs model with a Gaussian perturbation
 #
 #########################################
 from __future__ import print_function

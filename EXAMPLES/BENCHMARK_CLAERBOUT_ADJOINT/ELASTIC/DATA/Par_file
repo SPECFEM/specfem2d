@@ -5,7 +5,7 @@
 #-----------------------------------------------------------------------------
 
 # title of job
-title                           = Test elastic 
+title                           = Test elastic
 
 # forward or adjoint simulation
 # 1 = forward, 2 = adjoint, 3 = both simultaneously
@@ -162,7 +162,7 @@ SU_FORMAT                       = .true.        # output single precision binary
 use_existing_STATIONS           = .true.
 
 # number of receiver sets (i.e. number of receiver lines to create below)
-nreceiversets                   = 0 
+nreceiversets                   = 0
 
 # orientation
 anglerec                        = 0.d0           # angle to rotate components at receivers
