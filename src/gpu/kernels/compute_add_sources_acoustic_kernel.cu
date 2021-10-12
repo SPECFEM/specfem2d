@@ -60,7 +60,7 @@ __global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_aco
       iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
       kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
-      stf = source_time_function[INDEX2(nsources_local,isource,it)]/kappal;
+      stf = source_time_function[INDEX2(nsources_local,isource,it)] / kappal;
 
       accel = sourcearrays[INDEX4(NDIM,NGLLX,NGLLX, 0,i,j,isource)] * stf;
 

@@ -172,7 +172,6 @@
 
     read(IIN) rhoext
     close(IIN)
-    print *, 'rho', minval(rhoext), maxval(rhoext)
 
     write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_vp.bin'
     open(unit = IIN, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
@@ -188,7 +187,18 @@
     read(IIN) vsext
     close(IIN)
 
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  rho min/max = ', minval(rhoext), maxval(rhoext)
+      write(IMAIN,*) '  vp  min/max = ', minval(vpext), maxval(vpext)
+      write(IMAIN,*) '  vs  min/max = ', minval(vsext), maxval(vsext)
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    ! for the moment we don't do external model with both viscoacoustics and viscoelastics
     if (ATTENUATION_VISCOACOUSTIC) then
+      ! visco-acoustic
       write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_Qkappa.bin'
       open(unit = IIN, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
       if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_Qkappa.bin file.')
@@ -196,9 +206,16 @@
       read(IIN) QKappa_attenuationext
       close(IIN)
       Qmu_attenuationext(:,:,:) = 9999.d0
-    ! for the moment we don't do external model with both viscoacoustics and
-    ! viscoelastics
+
+      ! user output
+      if (myrank == 0) then
+        write(IMAIN,*) '  Qkappa min/max = ', minval(Qkappa_attenuationext), maxval(Qkappa_attenuationext)
+        write(IMAIN,*)
+        call flush_IMAIN()
+      endif
+
     else if (ATTENUATION_VISCOELASTIC) then
+      ! visco-elastic
       write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_Qkappa.bin'
       open(unit = IIN, file = inputname,status='old',action='read',form='unformatted',iostat=ier)
       if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_Qkappa.bin file.')
@@ -212,6 +229,14 @@
 
       read(IIN) Qmu_attenuationext
       close(IIN)
+
+      ! user output
+      if (myrank == 0) then
+        write(IMAIN,*) '  Qkappa min/max = ', minval(Qkappa_attenuationext), maxval(Qkappa_attenuationext)
+        write(IMAIN,*) '  Qmu    min/max = ', minval(Qmu_attenuationext), maxval(Qmu_attenuationext)
+        write(IMAIN,*)
+        call flush_IMAIN()
+      endif
 
     else
       ! default no attenuation
