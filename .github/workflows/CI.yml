@@ -253,3 +253,101 @@ jobs:
 
     - name: make tests
       run: make tests
+
+  linuxTest_1:
+    name: Test run example 1 - benchmark claerbout kernel acoustic
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi  # --enable-vectorization
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/BENCHMARK_CLAERBOUT_ADJOINT/ACOUSTIC
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_2:
+    name: Test run example 2 - benchmark claerbout kernel elastic P-SV
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi  # --enable-vectorization
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/BENCHMARK_CLAERBOUT_ADJOINT/ELASTIC
+        TESTCASE: P-SV
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_3:
+    name: Test run example 3 - benchmark claerbout kernel elastic SH
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi  # --enable-vectorization
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/BENCHMARK_CLAERBOUT_ADJOINT/ELASTIC
+        TESTCASE: SH
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_4:
+    name: Test run example 3 - benchmark claerbout kernel acoustic-elastic
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi  # --enable-vectorization
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/BENCHMARK_CLAERBOUT_ADJOINT/ACOUSTIC_ELASTIC
+      run: ./.github/scripts/run_tests.sh
+      shell: bash

@@ -50,8 +50,8 @@ sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
 
 # compilation
 echo
-echo "clean compilation:"
-make clean; #make -j2 all
+echo "compilation:"
+make clean; make -j2 all
 
 # checks
 if [[ $? -ne 0 ]]; then exit 1; fi

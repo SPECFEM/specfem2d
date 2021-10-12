@@ -35,9 +35,9 @@ cd $dir
 
 # default setup
 # limit number of time steps
-sed -i "s:^NSTEP .*:NSTEP = 200:" DATA/Par_file
+#sed -i "s:^NSTEP .*:NSTEP = 200:" DATA/Par_file
 # shortens output interval to avoid timeouts
-sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
+#sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
 
 # debug
 if [ "${DEBUG}" == "true" ]; then
@@ -45,8 +45,27 @@ if [ "${DEBUG}" == "true" ]; then
   sed -i "s:^NSTEP .*:NSTEP = 5:" DATA/Par_file
 fi
 
-# default script
-./run_this_example.sh
+# selects kernel script for kernel benchmark examples
+do_kernel_script=0
+
+if [ "${TESTDIR}" == "EXAMPLES/BENCHMARK_CLAERBOUT_ADJOINT/ACOUSTIC" ]; then do_kernel_script=1; fi
+if [ "${TESTDIR}" == "EXAMPLES/BENCHMARK_CLAERBOUT_ADJOINT/ELASTIC" ]; then do_kernel_script=1; fi
+if [ "${TESTDIR}" == "EXAMPLES/BENCHMARK_CLAERBOUT_ADJOINT/ACOUSTIC_ELASTIC" ]; then do_kernel_script=1; fi
+
+# setup elastic kernel for SH simulations
+if [ "${TESTDIR}" == "EXAMPLES/BENCHMARK_CLAERBOUT_ADJOINT/ELASTIC" ] && [ "${TESTCASE}" == "SH" ]; then
+  # sets simulation type for SH-waves
+  sed -i "s:^SIM_TYPE.*:SIM_TYPE=3:" run_this_example_kernel.sh
+fi
+
+# runs simulation
+if [ "$do_kernel_script" == "1" ]; then
+  # kernel test script
+  ./run_this_example_kernel.sh
+else
+  # default script
+  ./run_this_example.sh
+fi
 
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
@@ -58,15 +77,16 @@ echo `date`
 echo
 
 # seismogram comparison
-if [ "${DEBUG}" == "true" ]; then
+if [ "${DEBUG}" == "true" ] || [ "$do_kernel_script" == "1" ]; then
   # no comparisons
   continue
 else
+  # tests seismograms
   my_test
 fi
 
 # cleanup
-rm -rf OUTPUT_FILES/ DATABASES_MPI/
+rm -rf OUTPUT_FILES*
 
 echo
 echo "all good"
