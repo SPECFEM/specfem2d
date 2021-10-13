@@ -79,7 +79,7 @@ echo
 # seismogram comparison
 if [ "${DEBUG}" == "true" ] || [ "$do_kernel_script" == "1" ]; then
   # no comparisons
-  #continue
+  ;;
 else
   # tests seismograms
   my_test
