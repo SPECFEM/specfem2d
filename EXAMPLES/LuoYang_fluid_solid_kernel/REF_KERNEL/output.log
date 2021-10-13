@@ -1,5 +1,5 @@
 Changed simulation_type to 1 and save_forward = .true. in Par_file 
-running example: Tue Oct 12 11:25:19 +03 2021
+running example: Wed Oct 13 11:44:57 +03 2021
 
 (will take about 1 minute)
 
@@ -258,7 +258,7 @@ erasing all database files
  Test
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 12 - 10 - 2021                                 T i m e  : 11:25:19
+ D a t e : 13 - 10 - 2021                                 T i m e  : 11:44:58
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
@@ -780,7 +780,7 @@ Time step number       5   t =    0.0044 s out of    1600
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
  Estimated total run time in seconds =    5.1200103759765625     
  Estimated total run time in hh:mm:ss =      0 h 00 m 05 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step            5
  drawing scalar image of the forward wavefield displacement...
@@ -794,15 +794,15 @@ Time step number     100   t =    0.1089 s out of    1600
  We have done    6.19136953     % of the total
  Max norm of vector field in solid (elastic) =    0.00000000    
  Max absolute value of scalar field in fluid (acoustic) =    333.551056    
- Elapsed time in seconds =   0.40599989891052246     
+ Elapsed time in seconds =   0.41700005531311035     
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    4.0599989891052244E-003
+ Mean elapsed time per time step in seconds =    4.1700005531311035E-003
  Time steps remaining =         1500
- Estimated remaining time in seconds =    6.0899984836578369     
+ Estimated remaining time in seconds =    6.2550008296966553     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
- Estimated total run time in seconds =    6.4959983825683594     
+ Estimated total run time in seconds =    6.6720008850097656     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          100
  drawing scalar image of the forward wavefield displacement...
@@ -816,15 +816,15 @@ Time step number     200   t =    0.2189 s out of    1600
  We have done    12.4452782     % of the total
  Max norm of vector field in solid (elastic) =    0.00000000    
  Max absolute value of scalar field in fluid (acoustic) =    113.412613    
- Elapsed time in seconds =   0.81999993324279785     
+ Elapsed time in seconds =   0.83699989318847656     
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    4.0999996662139894E-003
+ Mean elapsed time per time step in seconds =    4.1849994659423828E-003
  Time steps remaining =         1400
- Estimated remaining time in seconds =    5.7399995326995850     
+ Estimated remaining time in seconds =    5.8589992523193359     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    6.5599994659423828     
+ Estimated total run time in seconds =    6.6959991455078125     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          200
  drawing scalar image of the forward wavefield displacement...
@@ -838,15 +838,15 @@ Time step number     300   t =    0.3289 s out of    1600
  We have done    18.6991863     % of the total
  Max norm of vector field in solid (elastic) =    1.95388757E-11
  Max absolute value of scalar field in fluid (acoustic) =    75.3311615    
- Elapsed time in seconds =    1.2330000400543213     
+ Elapsed time in seconds =    1.2760000228881836     
  Elapsed time in hh:mm:ss =      0 h 00 m 01 s
- Mean elapsed time per time step in seconds =    4.1100001335144043E-003
+ Mean elapsed time per time step in seconds =    4.2533334096272789E-003
  Time steps remaining =         1300
- Estimated remaining time in seconds =    5.3430001735687256     
+ Estimated remaining time in seconds =    5.5293334325154628     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    6.5760002136230469     
+ Estimated total run time in seconds =    6.8053334554036464     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          300
  drawing scalar image of the forward wavefield displacement...
@@ -860,15 +860,15 @@ Time step number     400   t =    0.4389 s out of    1600
  We have done    24.9530964     % of the total
  Max norm of vector field in solid (elastic) =    1.45620725E-04
  Max absolute value of scalar field in fluid (acoustic) =    60.2864761    
- Elapsed time in seconds =    1.6610000133514404     
+ Elapsed time in seconds =    1.7179999351501465     
  Elapsed time in hh:mm:ss =      0 h 00 m 01 s
- Mean elapsed time per time step in seconds =    4.1525000333786010E-003
+ Mean elapsed time per time step in seconds =    4.2949998378753662E-003
  Time steps remaining =         1200
- Estimated remaining time in seconds =    4.9830000400543213     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    6.6440000534057617     
+ Estimated remaining time in seconds =    5.1539998054504395     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
+ Estimated total run time in seconds =    6.8719997406005859     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          400
  drawing scalar image of the forward wavefield displacement...
@@ -882,15 +882,15 @@ Time step number     500   t =    0.5489 s out of    1600
  We have done    31.2070045     % of the total
  Max norm of vector field in solid (elastic) =    4.40521253E-04
  Max absolute value of scalar field in fluid (acoustic) =    53.4989891    
- Elapsed time in seconds =    2.0750000476837158     
+ Elapsed time in seconds =    2.1480000019073486     
  Elapsed time in hh:mm:ss =      0 h 00 m 02 s
- Mean elapsed time per time step in seconds =    4.1500000953674319E-003
+ Mean elapsed time per time step in seconds =    4.2960000038146972E-003
  Time steps remaining =         1100
- Estimated remaining time in seconds =    4.5650001049041746     
+ Estimated remaining time in seconds =    4.7256000041961670     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    6.6400001525878904     
+ Estimated total run time in seconds =    6.8736000061035156     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          500
  drawing scalar image of the forward wavefield displacement...
@@ -904,15 +904,15 @@ Time step number     600   t =    0.6589 s out of    1600
  We have done    37.4609146     % of the total
  Max norm of vector field in solid (elastic) =    4.32790635E-04
  Max absolute value of scalar field in fluid (acoustic) =    50.1215363    
- Elapsed time in seconds =    2.4869999885559082     
+ Elapsed time in seconds =    2.5850000381469727     
  Elapsed time in hh:mm:ss =      0 h 00 m 02 s
- Mean elapsed time per time step in seconds =    4.1449999809265135E-003
+ Mean elapsed time per time step in seconds =    4.3083333969116209E-003
  Time steps remaining =         1000
- Estimated remaining time in seconds =    4.1449999809265137     
+ Estimated remaining time in seconds =    4.3083333969116211     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    6.6319999694824219     
+ Estimated total run time in seconds =    6.8933334350585938     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          600
  drawing scalar image of the forward wavefield displacement...
@@ -926,15 +926,15 @@ Time step number     700   t =    0.7689 s out of    1600
  We have done    43.7148209     % of the total
  Max norm of vector field in solid (elastic) =    4.22607583E-04
  Max absolute value of scalar field in fluid (acoustic) =    46.7779160    
- Elapsed time in seconds =    2.9059998989105225     
- Elapsed time in hh:mm:ss =      0 h 00 m 02 s
- Mean elapsed time per time step in seconds =    4.1514284270150323E-003
+ Elapsed time in seconds =    3.0420000553131104     
+ Elapsed time in hh:mm:ss =      0 h 00 m 03 s
+ Mean elapsed time per time step in seconds =    4.3457143647330151E-003
  Time steps remaining =          900
- Estimated remaining time in seconds =    3.7362855843135292     
+ Estimated remaining time in seconds =    3.9111429282597134     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    6.6422854832240521     
+ Estimated total run time in seconds =    6.9531429835728238     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          700
  drawing scalar image of the forward wavefield displacement...
@@ -948,15 +948,15 @@ Time step number     800   t =    0.8789 s out of    1600
  We have done    49.9687309     % of the total
  Max norm of vector field in solid (elastic) =    3.82568309E-04
  Max absolute value of scalar field in fluid (acoustic) =    35.7664948    
- Elapsed time in seconds =    3.3220000267028809     
+ Elapsed time in seconds =    3.4739999771118164     
  Elapsed time in hh:mm:ss =      0 h 00 m 03 s
- Mean elapsed time per time step in seconds =    4.1525000333786010E-003
+ Mean elapsed time per time step in seconds =    4.3424999713897704E-003
  Time steps remaining =          800
- Estimated remaining time in seconds =    3.3220000267028809     
+ Estimated remaining time in seconds =    3.4739999771118164     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    6.6440000534057617     
+ Estimated total run time in seconds =    6.9479999542236328     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          800
  drawing scalar image of the forward wavefield displacement...
@@ -970,15 +970,15 @@ Time step number     900   t =    0.9889 s out of    1600
  We have done    56.2226410     % of the total
  Max norm of vector field in solid (elastic) =    3.70708032E-04
  Max absolute value of scalar field in fluid (acoustic) =    33.7154083    
- Elapsed time in seconds =    3.7379999160766602     
+ Elapsed time in seconds =    3.9040000438690186     
  Elapsed time in hh:mm:ss =      0 h 00 m 03 s
- Mean elapsed time per time step in seconds =    4.1533332400851778E-003
+ Mean elapsed time per time step in seconds =    4.3377778265211320E-003
  Time steps remaining =          700
- Estimated remaining time in seconds =    2.9073332680596247     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
- Estimated total run time in seconds =    6.6453331841362848     
+ Estimated remaining time in seconds =    3.0364444785647926     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
+ Estimated total run time in seconds =    6.9404445224338112     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          900
  drawing scalar image of the forward wavefield displacement...
@@ -992,19 +992,19 @@ Time step number    1000   t =    1.0989 s out of    1600
  We have done    62.4765472     % of the total
  Max norm of vector field in solid (elastic) =    3.47308116E-04
  Max absolute value of scalar field in fluid (acoustic) =    31.9741707    
- Elapsed time in seconds =    4.1499998569488525     
+ Elapsed time in seconds =    4.3389999866485596     
  Elapsed time in hh:mm:ss =      0 h 00 m 04 s
- Mean elapsed time per time step in seconds =    4.1499998569488527E-003
+ Mean elapsed time per time step in seconds =    4.3389999866485594E-003
  Time steps remaining =          600
- Estimated remaining time in seconds =    2.4899999141693114     
+ Estimated remaining time in seconds =    2.6033999919891357     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
- Estimated total run time in seconds =    6.6399997711181644     
+ Estimated total run time in seconds =    6.9423999786376953     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
 
  Total number of time steps done:         1000
- Writing the seismograms by main proc alone took    2.33000005E-03  seconds
+ Writing the seismograms by main proc alone took    2.45100004E-03  seconds
 
  Creating color image of size          800  x          506  for time step         1000
  drawing scalar image of the forward wavefield displacement...
@@ -1018,15 +1018,15 @@ Time step number    1100   t =    1.2089 s out of    1600
  We have done    68.7304535     % of the total
  Max norm of vector field in solid (elastic) =    4.66113648E-04
  Max absolute value of scalar field in fluid (acoustic) =    30.4734497    
- Elapsed time in seconds =    4.5629999637603760     
+ Elapsed time in seconds =    4.7749998569488525     
  Elapsed time in hh:mm:ss =      0 h 00 m 04 s
- Mean elapsed time per time step in seconds =    4.1481817852367054E-003
+ Mean elapsed time per time step in seconds =    4.3409089608625936E-003
  Time steps remaining =          500
- Estimated remaining time in seconds =    2.0740908926183526     
+ Estimated remaining time in seconds =    2.1704544804312969     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
- Estimated total run time in seconds =    6.6370908563787285     
+ Estimated total run time in seconds =    6.9454543373801494     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step         1100
  drawing scalar image of the forward wavefield displacement...
@@ -1040,15 +1040,15 @@ Time step number    1200   t =    1.3189 s out of    1600
  We have done    74.9843674     % of the total
  Max norm of vector field in solid (elastic) =    1.83158627E-04
  Max absolute value of scalar field in fluid (acoustic) =    29.8616352    
- Elapsed time in seconds =    4.9809999465942383     
- Elapsed time in hh:mm:ss =      0 h 00 m 04 s
- Mean elapsed time per time step in seconds =    4.1508332888285319E-003
+ Elapsed time in seconds =    5.2109999656677246     
+ Elapsed time in hh:mm:ss =      0 h 00 m 05 s
+ Mean elapsed time per time step in seconds =    4.3424999713897704E-003
  Time steps remaining =          400
- Estimated remaining time in seconds =    1.6603333155314128     
+ Estimated remaining time in seconds =    1.7369999885559082     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
- Estimated total run time in seconds =    6.6413332621256513     
+ Estimated total run time in seconds =    6.9479999542236328     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step         1200
  drawing scalar image of the forward wavefield displacement...
@@ -1062,15 +1062,15 @@ Time step number    1300   t =    1.4289 s out of    1600
  We have done    81.2382736     % of the total
  Max norm of vector field in solid (elastic) =    1.88634149E-04
  Max absolute value of scalar field in fluid (acoustic) =    30.0716972    
- Elapsed time in seconds =    5.3980000019073486     
+ Elapsed time in seconds =    5.6410000324249268     
  Elapsed time in hh:mm:ss =      0 h 00 m 05 s
- Mean elapsed time per time step in seconds =    4.1523076937748839E-003
+ Mean elapsed time per time step in seconds =    4.3392307941730202E-003
  Time steps remaining =          300
- Estimated remaining time in seconds =    1.2456923081324651     
+ Estimated remaining time in seconds =    1.3017692382519062     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
- Estimated total run time in seconds =    6.6436923100398140     
+ Estimated total run time in seconds =    6.9427692706768331     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step         1300
  drawing scalar image of the forward wavefield displacement...
@@ -1084,15 +1084,15 @@ Time step number    1400   t =    1.5389 s out of    1600
  We have done    87.4921799     % of the total
  Max norm of vector field in solid (elastic) =    1.76476751E-04
  Max absolute value of scalar field in fluid (acoustic) =    29.8968124    
- Elapsed time in seconds =    5.8209998607635498     
- Elapsed time in hh:mm:ss =      0 h 00 m 05 s
- Mean elapsed time per time step in seconds =    4.1578570434025360E-003
+ Elapsed time in seconds =    6.0779998302459717     
+ Elapsed time in hh:mm:ss =      0 h 00 m 06 s
+ Mean elapsed time per time step in seconds =    4.3414284501756941E-003
  Time steps remaining =          200
- Estimated remaining time in seconds =   0.83157140868050716     
+ Estimated remaining time in seconds =   0.86828569003513878     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    6.6525712694440573     
+ Estimated total run time in seconds =    6.9462855202811102     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step         1400
  drawing scalar image of the forward wavefield displacement...
@@ -1106,15 +1106,15 @@ Time step number    1500   t =    1.6489 s out of    1600
  We have done    93.7460938     % of the total
  Max norm of vector field in solid (elastic) =    1.90327162E-04
  Max absolute value of scalar field in fluid (acoustic) =    29.0312271    
- Elapsed time in seconds =    6.2449998855590820     
+ Elapsed time in seconds =    6.5090000629425049     
  Elapsed time in hh:mm:ss =      0 h 00 m 06 s
- Mean elapsed time per time step in seconds =    4.1633332570393880E-003
+ Mean elapsed time per time step in seconds =    4.3393333752950033E-003
  Time steps remaining =          100
- Estimated remaining time in seconds =   0.41633332570393877     
+ Estimated remaining time in seconds =   0.43393333752950031     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    6.6613332112630204     
+ Estimated total run time in seconds =    6.9429334004720049     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
- The run will finish approximately on: Tue Oct 12, 2021 11:25
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step         1500
  drawing scalar image of the forward wavefield displacement...
@@ -1128,18 +1128,18 @@ Time step number    1600   t =    1.7589 s out of    1600
  We have done    100.000000     % of the total
  Max norm of vector field in solid (elastic) =    2.87038507E-04
  Max absolute value of scalar field in fluid (acoustic) =    8.26502228    
- Elapsed time in seconds =    6.6959998607635498     
+ Elapsed time in seconds =    6.9359998703002930     
  Elapsed time in hh:mm:ss =      0 h 00 m 06 s
- Mean elapsed time per time step in seconds =    4.1849999129772190E-003
+ Mean elapsed time per time step in seconds =    4.3349999189376829E-003
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    6.6959998607635498     
+ Estimated total run time in seconds =    6.9359998703002930     
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
 
 
  Total number of time steps done:         1600
- Writing the seismograms by main proc alone took    1.65300001E-03  seconds
+ Writing the seismograms by main proc alone took    1.44400005E-03  seconds
 
  Creating color image of size          800  x          506  for time step         1600
  drawing scalar image of the forward wavefield displacement...
@@ -1147,17 +1147,17 @@ Time step number    1600   t =    1.7589 s out of    1600
  Color image created
 
 
- Total duration of the time loop in seconds =    6.73821688      s
+ Total duration of the time loop in seconds =    6.97621918      s
  Total number of time steps =         1600
- Average duration of a time step of the time loop =    4.21138573E-03  s
+ Average duration of a time step of the time loop =    4.36013704E-03  s
  Total number of spectral elements in the mesh =         6000
      of which         6000  are regular elements
      and            0  are PML elements.
- Average duration of the calculation per spectral element =    7.01897591E-07  s
+ Average duration of the calculation per spectral element =    7.26689507E-07  s
 
 
  Total duration of the timeloop in seconds, measured using 
- date and time of the system :    6.73799992      s
+ date and time of the system :    6.97599983      s
 
  Saving forward arrays:
  Saving Stacey absorbing boundary contributions...
@@ -1173,14 +1173,14 @@ Time step number    1600   t =    1.7589 s out of    1600
  Test
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 12 - 10 - 2021                                 T i m e  : 11:25:26
+ D a t e : 13 - 10 - 2021                                 T i m e  : 11:45:06
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
 see results in directory: OUTPUT_FILES/
 
 done
-Tue Oct 12 11:25:26 +03 2021
+Wed Oct 13 11:45:06 +03 2021
 
 creating adjoint source...
 
@@ -1204,7 +1204,7 @@ OUTPUT_FILES/AA.S0001.POT.semx -> OUTPUT_FILES/forward_run/AA.S0001.POT.semx
 OUTPUT_FILES/Par_file -> OUTPUT_FILES/forward_run/Par_file
 
 Changed simulation_type to 3 in Par_file 
-running example: Tue Oct 12 11:25:26 +03 2021
+running example: Wed Oct 13 11:45:06 +03 2021
 
 (will take about 1 minute)
 
@@ -1463,7 +1463,7 @@ not erasing any of the database files
  Test
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 12 - 10 - 2021                                 T i m e  : 11:25:27
+ D a t e : 13 - 10 - 2021                                 T i m e  : 11:45:07
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
@@ -1996,7 +1996,7 @@ Time step number       5   t =    0.0044 s out of    1600
  Estimated remaining time in hh:mm:ss =      0 h 00 m 20 s
  Estimated total run time in seconds =    20.159988403320312     
  Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step            5
  drawing scalar image of the adjoint wavefield displacement...
@@ -2016,15 +2016,15 @@ Time step number     100   t =    0.1089 s out of    1600
  Max norm of backward vector field in solid (elastic) =    1.98699927E-04
  Max absolute value of scalar field in fluid (acoustic) =    0.00000000    
  Max absolute value of backward scalar field in fluid (acoustic) =    28.9714298    
- Elapsed time in seconds =    1.2839999198913574     
+ Elapsed time in seconds =    1.3540000915527344     
  Elapsed time in hh:mm:ss =      0 h 00 m 01 s
- Mean elapsed time per time step in seconds =    1.2839999198913574E-002
+ Mean elapsed time per time step in seconds =    1.3540000915527343E-002
  Time steps remaining =         1500
- Estimated remaining time in seconds =    19.259998798370361     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 19 s
- Estimated total run time in seconds =    20.543998718261719     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ Estimated remaining time in seconds =    20.310001373291016     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 20 s
+ Estimated total run time in seconds =    21.664001464843750     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          100
  drawing scalar image of the adjoint wavefield displacement...
@@ -2044,15 +2044,15 @@ Time step number     200   t =    0.2189 s out of    1600
  Max norm of backward vector field in solid (elastic) =    2.09290607E-04
  Max absolute value of scalar field in fluid (acoustic) =    0.00000000    
  Max absolute value of backward scalar field in fluid (acoustic) =    29.9347439    
- Elapsed time in seconds =    2.5709998607635498     
+ Elapsed time in seconds =    2.6740000247955322     
  Elapsed time in hh:mm:ss =      0 h 00 m 02 s
- Mean elapsed time per time step in seconds =    1.2854999303817749E-002
+ Mean elapsed time per time step in seconds =    1.3370000123977661E-002
  Time steps remaining =         1400
- Estimated remaining time in seconds =    17.996999025344849     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 17 s
- Estimated total run time in seconds =    20.567998886108398     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ Estimated remaining time in seconds =    18.718000173568726     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 18 s
+ Estimated total run time in seconds =    21.392000198364258     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          200
  drawing scalar image of the adjoint wavefield displacement...
@@ -2072,15 +2072,15 @@ Time step number     300   t =    0.3289 s out of    1600
  Max norm of backward vector field in solid (elastic) =    1.80087853E-04
  Max absolute value of scalar field in fluid (acoustic) =    0.00000000    
  Max absolute value of backward scalar field in fluid (acoustic) =    30.0887299    
- Elapsed time in seconds =    3.8449997901916504     
- Elapsed time in hh:mm:ss =      0 h 00 m 03 s
- Mean elapsed time per time step in seconds =    1.2816665967305501E-002
+ Elapsed time in seconds =    4.0340001583099365     
+ Elapsed time in hh:mm:ss =      0 h 00 m 04 s
+ Mean elapsed time per time step in seconds =    1.3446667194366456E-002
  Time steps remaining =         1300
- Estimated remaining time in seconds =    16.661665757497151     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 16 s
- Estimated total run time in seconds =    20.506665547688801     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ Estimated remaining time in seconds =    17.480667352676392     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 17 s
+ Estimated total run time in seconds =    21.514667510986328     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          300
  drawing scalar image of the adjoint wavefield displacement...
@@ -2100,15 +2100,15 @@ Time step number     400   t =    0.4389 s out of    1600
  Max norm of backward vector field in solid (elastic) =    1.97556627E-04
  Max absolute value of scalar field in fluid (acoustic) =    1202.49182    
  Max absolute value of backward scalar field in fluid (acoustic) =    29.6122761    
- Elapsed time in seconds =    5.1380000114440918     
+ Elapsed time in seconds =    5.4479999542236328     
  Elapsed time in hh:mm:ss =      0 h 00 m 05 s
- Mean elapsed time per time step in seconds =    1.2845000028610229E-002
+ Mean elapsed time per time step in seconds =    1.3619999885559082E-002
  Time steps remaining =         1200
- Estimated remaining time in seconds =    15.414000034332275     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 15 s
- Estimated total run time in seconds =    20.552000045776367     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ Estimated remaining time in seconds =    16.343999862670898     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 16 s
+ Estimated total run time in seconds =    21.791999816894531     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          400
  drawing scalar image of the adjoint wavefield displacement...
@@ -2128,15 +2128,15 @@ Time step number     500   t =    0.5489 s out of    1600
  Max norm of backward vector field in solid (elastic) =    4.67522448E-04
  Max absolute value of scalar field in fluid (acoustic) =    41836.0312    
  Max absolute value of backward scalar field in fluid (acoustic) =    30.2639275    
- Elapsed time in seconds =    6.4179999828338623     
+ Elapsed time in seconds =    6.8200001716613770     
  Elapsed time in hh:mm:ss =      0 h 00 m 06 s
- Mean elapsed time per time step in seconds =    1.2835999965667725E-002
+ Mean elapsed time per time step in seconds =    1.3640000343322753E-002
  Time steps remaining =         1100
- Estimated remaining time in seconds =    14.119599962234497     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 14 s
- Estimated total run time in seconds =    20.537599945068358     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ Estimated remaining time in seconds =    15.004000377655029     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 15 s
+ Estimated total run time in seconds =    21.824000549316406     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          500
  drawing scalar image of the adjoint wavefield displacement...
@@ -2156,15 +2156,15 @@ Time step number     600   t =    0.6589 s out of    1600
  Max norm of backward vector field in solid (elastic) =    3.48035217E-04
  Max absolute value of scalar field in fluid (acoustic) =    7402.02441    
  Max absolute value of backward scalar field in fluid (acoustic) =    31.9102783    
- Elapsed time in seconds =    7.6989998817443848     
- Elapsed time in hh:mm:ss =      0 h 00 m 07 s
- Mean elapsed time per time step in seconds =    1.2831666469573975E-002
+ Elapsed time in seconds =    8.2020001411437988     
+ Elapsed time in hh:mm:ss =      0 h 00 m 08 s
+ Mean elapsed time per time step in seconds =    1.3670000235239664E-002
  Time steps remaining =         1000
- Estimated remaining time in seconds =    12.831666469573975     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 12 s
- Estimated total run time in seconds =    20.530666351318359     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ Estimated remaining time in seconds =    13.670000235239664     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 13 s
+ Estimated total run time in seconds =    21.872000376383461     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          600
  drawing scalar image of the adjoint wavefield displacement...
@@ -2184,15 +2184,15 @@ Time step number     700   t =    0.7689 s out of    1600
  Max norm of backward vector field in solid (elastic) =    3.51169962E-04
  Max absolute value of scalar field in fluid (acoustic) =    5029.63086    
  Max absolute value of backward scalar field in fluid (acoustic) =    33.8298111    
- Elapsed time in seconds =    9.2149999141693115     
+ Elapsed time in seconds =    9.5680000782012939     
  Elapsed time in hh:mm:ss =      0 h 00 m 09 s
- Mean elapsed time per time step in seconds =    1.3164285591670445E-002
+ Mean elapsed time per time step in seconds =    1.3668571540287562E-002
  Time steps remaining =          900
- Estimated remaining time in seconds =    11.847857032503400     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 11 s
- Estimated total run time in seconds =    21.062856946672710     
+ Estimated remaining time in seconds =    12.301714386258807     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 12 s
+ Estimated total run time in seconds =    21.869714464460102     
  Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          700
  drawing scalar image of the adjoint wavefield displacement...
@@ -2212,15 +2212,15 @@ Time step number     800   t =    0.8789 s out of    1600
  Max norm of backward vector field in solid (elastic) =    3.84406769E-04
  Max absolute value of scalar field in fluid (acoustic) =    4055.15234    
  Max absolute value of backward scalar field in fluid (acoustic) =    35.9350471    
- Elapsed time in seconds =    10.485999822616577     
+ Elapsed time in seconds =    10.929000139236450     
  Elapsed time in hh:mm:ss =      0 h 00 m 10 s
- Mean elapsed time per time step in seconds =    1.3107499778270722E-002
+ Mean elapsed time per time step in seconds =    1.3661250174045562E-002
  Time steps remaining =          800
- Estimated remaining time in seconds =    10.485999822616577     
+ Estimated remaining time in seconds =    10.929000139236450     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 10 s
- Estimated total run time in seconds =    20.971999645233154     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ Estimated total run time in seconds =    21.858000278472900     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          800
  drawing scalar image of the adjoint wavefield displacement...
@@ -2240,15 +2240,15 @@ Time step number     900   t =    0.9889 s out of    1600
  Max norm of backward vector field in solid (elastic) =    4.23802645E-04
  Max absolute value of scalar field in fluid (acoustic) =    3565.31274    
  Max absolute value of backward scalar field in fluid (acoustic) =    45.2511368    
- Elapsed time in seconds =    11.758999824523926     
- Elapsed time in hh:mm:ss =      0 h 00 m 11 s
- Mean elapsed time per time step in seconds =    1.3065555360582140E-002
+ Elapsed time in seconds =    12.282000064849854     
+ Elapsed time in hh:mm:ss =      0 h 00 m 12 s
+ Mean elapsed time per time step in seconds =    1.3646666738722059E-002
  Time steps remaining =          700
- Estimated remaining time in seconds =    9.1458887524074974     
+ Estimated remaining time in seconds =    9.5526667171054420     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 09 s
- Estimated total run time in seconds =    20.904888576931423     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ Estimated total run time in seconds =    21.834666781955296     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step          900
  drawing scalar image of the adjoint wavefield displacement...
@@ -2268,19 +2268,19 @@ Time step number    1000   t =    1.0989 s out of    1600
  Max norm of backward vector field in solid (elastic) =    4.33503679E-04
  Max absolute value of scalar field in fluid (acoustic) =    3225.74585    
  Max absolute value of backward scalar field in fluid (acoustic) =    50.1433067    
- Elapsed time in seconds =    13.020999908447266     
+ Elapsed time in seconds =    13.666000127792358     
  Elapsed time in hh:mm:ss =      0 h 00 m 13 s
- Mean elapsed time per time step in seconds =    1.3020999908447265E-002
+ Mean elapsed time per time step in seconds =    1.3666000127792358E-002
  Time steps remaining =          600
- Estimated remaining time in seconds =    7.8125999450683592     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 07 s
- Estimated total run time in seconds =    20.833599853515626     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ Estimated remaining time in seconds =    8.1996000766754147     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 08 s
+ Estimated total run time in seconds =    21.865600204467775     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
 
  Total number of time steps done:         1000
- Writing the seismograms by main proc alone took    2.45600007E-03  seconds
+ Writing the seismograms by main proc alone took    2.35400000E-03  seconds
 
  Creating color image of size          800  x          506  for time step         1000
  drawing scalar image of the adjoint wavefield displacement...
@@ -2300,15 +2300,15 @@ Time step number    1100   t =    1.2089 s out of    1600
  Max norm of backward vector field in solid (elastic) =    4.38287039E-04
  Max absolute value of scalar field in fluid (acoustic) =    2770.88428    
  Max absolute value of backward scalar field in fluid (acoustic) =    53.4416847    
- Elapsed time in seconds =    14.328999996185303     
- Elapsed time in hh:mm:ss =      0 h 00 m 14 s
- Mean elapsed time per time step in seconds =    1.3026363632895730E-002
+ Elapsed time in seconds =    15.018000125885010     
+ Elapsed time in hh:mm:ss =      0 h 00 m 15 s
+ Mean elapsed time per time step in seconds =    1.3652727387168192E-002
  Time steps remaining =          500
- Estimated remaining time in seconds =    6.5131818164478652     
+ Estimated remaining time in seconds =    6.8263636935840957     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
- Estimated total run time in seconds =    20.842181812633168     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ Estimated total run time in seconds =    21.844363819469105     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step         1100
  drawing scalar image of the adjoint wavefield displacement...
@@ -2328,15 +2328,15 @@ Time step number    1200   t =    1.3189 s out of    1600
  Max norm of backward vector field in solid (elastic) =    1.59748088E-04
  Max absolute value of scalar field in fluid (acoustic) =    2470.38477    
  Max absolute value of backward scalar field in fluid (acoustic) =    59.9614334    
- Elapsed time in seconds =    15.600999832153320     
- Elapsed time in hh:mm:ss =      0 h 00 m 15 s
- Mean elapsed time per time step in seconds =    1.3000833193461099E-002
+ Elapsed time in seconds =    16.354000091552734     
+ Elapsed time in hh:mm:ss =      0 h 00 m 16 s
+ Mean elapsed time per time step in seconds =    1.3628333409627279E-002
  Time steps remaining =          400
- Estimated remaining time in seconds =    5.2003332773844395     
+ Estimated remaining time in seconds =    5.4513333638509121     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    20.801333109537758     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ Estimated total run time in seconds =    21.805333455403648     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step         1200
  drawing scalar image of the adjoint wavefield displacement...
@@ -2356,15 +2356,15 @@ Time step number    1300   t =    1.4289 s out of    1600
  Max norm of backward vector field in solid (elastic) =    6.65252209E-09
  Max absolute value of scalar field in fluid (acoustic) =    2326.63477    
  Max absolute value of backward scalar field in fluid (acoustic) =    74.7021637    
- Elapsed time in seconds =    16.863999843597412     
- Elapsed time in hh:mm:ss =      0 h 00 m 16 s
- Mean elapsed time per time step in seconds =    1.2972307571998009E-002
+ Elapsed time in seconds =    17.751000165939331     
+ Elapsed time in hh:mm:ss =      0 h 00 m 17 s
+ Mean elapsed time per time step in seconds =    1.3654615512261024E-002
  Time steps remaining =          300
- Estimated remaining time in seconds =    3.8916922715994025     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    20.755692115196815     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ Estimated remaining time in seconds =    4.0963846536783075     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
+ Estimated total run time in seconds =    21.847384819617638     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step         1300
  drawing scalar image of the adjoint wavefield displacement...
@@ -2384,15 +2384,15 @@ Time step number    1400   t =    1.5389 s out of    1600
  Max norm of backward vector field in solid (elastic) =    6.33619512E-09
  Max absolute value of scalar field in fluid (acoustic) =    2205.36450    
  Max absolute value of backward scalar field in fluid (acoustic) =    111.351624    
- Elapsed time in seconds =    18.113999843597412     
- Elapsed time in hh:mm:ss =      0 h 00 m 18 s
- Mean elapsed time per time step in seconds =    1.2938571316855295E-002
+ Elapsed time in seconds =    19.101000070571899     
+ Elapsed time in hh:mm:ss =      0 h 00 m 19 s
+ Mean elapsed time per time step in seconds =    1.3643571478979929E-002
  Time steps remaining =          200
- Estimated remaining time in seconds =    2.5877142633710588     
+ Estimated remaining time in seconds =    2.7287142957959856     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
- Estimated total run time in seconds =    20.701714106968470     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ Estimated total run time in seconds =    21.829714366367885     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step         1400
  drawing scalar image of the adjoint wavefield displacement...
@@ -2412,15 +2412,15 @@ Time step number    1500   t =    1.6489 s out of    1600
  Max norm of backward vector field in solid (elastic) =    6.04105699E-09
  Max absolute value of scalar field in fluid (acoustic) =    2097.97485    
  Max absolute value of backward scalar field in fluid (acoustic) =    525.202942    
- Elapsed time in seconds =    19.376999855041504     
- Elapsed time in hh:mm:ss =      0 h 00 m 19 s
- Mean elapsed time per time step in seconds =    1.2917999903361002E-002
+ Elapsed time in seconds =    20.443000078201294     
+ Elapsed time in hh:mm:ss =      0 h 00 m 20 s
+ Mean elapsed time per time step in seconds =    1.3628666718800862E-002
  Time steps remaining =          100
- Estimated remaining time in seconds =    1.2917999903361002     
+ Estimated remaining time in seconds =    1.3628666718800861     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
- Estimated total run time in seconds =    20.668799845377603     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Tue Oct 12, 2021 11:26
+ Estimated total run time in seconds =    21.805866750081378     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
+ The run will finish approximately on: Wed Oct 13, 2021 11:45
 
  Creating color image of size          800  x          506  for time step         1500
  drawing scalar image of the adjoint wavefield displacement...
@@ -2440,18 +2440,18 @@ Time step number    1600   t =    1.7589 s out of    1600
  Max norm of backward vector field in solid (elastic) =    6.39561337E-09
  Max absolute value of scalar field in fluid (acoustic) =    1996.50940    
  Max absolute value of backward scalar field in fluid (acoustic) =    9.03462898E-03
- Elapsed time in seconds =    20.625999927520752     
- Elapsed time in hh:mm:ss =      0 h 00 m 20 s
- Mean elapsed time per time step in seconds =    1.2891249954700470E-002
+ Elapsed time in seconds =    21.751000165939331     
+ Elapsed time in hh:mm:ss =      0 h 00 m 21 s
+ Mean elapsed time per time step in seconds =    1.3594375103712081E-002
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    20.625999927520752     
- Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
+ Estimated total run time in seconds =    21.751000165939331     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
 
 
  Total number of time steps done:         1600
- Writing the seismograms by main proc alone took    1.40199997E-03  seconds
+ Writing the seismograms by main proc alone took    1.44400005E-03  seconds
 
  Creating color image of size          800  x          506  for time step         1600
  drawing scalar image of the adjoint wavefield displacement...
@@ -2463,17 +2463,17 @@ Time step number    1600   t =    1.7589 s out of    1600
  Color image created
 
 
- Total duration of the time loop in seconds =    20.6948490      s
+ Total duration of the time loop in seconds =    21.8306465      s
  Total number of time steps =         1600
- Average duration of a time step of the time loop =    1.29342806E-02  s
+ Average duration of a time step of the time loop =    1.36441542E-02  s
  Total number of spectral elements in the mesh =         6000
      of which         6000  are regular elements
      and            0  are PML elements.
- Average duration of the calculation per spectral element =    2.15571345E-06  s
+ Average duration of the calculation per spectral element =    2.27402575E-06  s
 
 
  Total duration of the timeloop in seconds, measured using 
- date and time of the system :    20.6949997      s
+ date and time of the system :    21.8309994      s
 
  Writing Kernels file
 
@@ -2511,14 +2511,14 @@ Time step number    1600   t =    1.7589 s out of    1600
  Test
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 12 - 10 - 2021                                 T i m e  : 11:25:50
+ D a t e : 13 - 10 - 2021                                 T i m e  : 11:45:31
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
 see results in directory: OUTPUT_FILES/
 
 done
-Tue Oct 12 11:25:50 +03 2021
+Wed Oct 13 11:45:31 +03 2021
 
 gnuplot plotted: OUTPUT_FILES/rho_and_kappa_kernels.png
 gnuplot plotted: OUTPUT_FILES/rho_and_kappa_kernels_acoustic_and_elastic_only_no_caption.png

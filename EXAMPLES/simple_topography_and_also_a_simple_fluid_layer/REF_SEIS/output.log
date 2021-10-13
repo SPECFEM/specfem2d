@@ -1,4 +1,4 @@
-running example: Mon Oct  4 20:54:01 +03 2021
+running example: Wed Oct 13 10:44:56 +03 2021
 
 setting up example...
 
@@ -298,7 +298,7 @@ running solver...
  Test of SPECFEM2D with curved interfaces
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 04 - 10 - 2021                                 T i m e  : 20:54:02
+ D a t e : 13 - 10 - 2021                                 T i m e  : 10:44:56
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
@@ -851,6 +851,7 @@ running solver...
   at xi,gamma coordinates =    1.0000000000000000       -1.0000000000000000     
  Distance from source:    2500.00000      m
 
+ maximum error in location of all the receivers:    6.43109860E-13  m
 
  end of receiver detection
 
@@ -1065,15 +1066,15 @@ Time step number       5   t =    0.0044 s out of    1600
  We have done   0.250156343     % of the total
  Max norm of vector field in solid (elastic) =    5.90507670E-06
  Max absolute value of scalar field in fluid (acoustic) =    0.00000000    
- Elapsed time in seconds =    2.9999971389770508E-002
+ Elapsed time in seconds =    3.6000013351440430E-002
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    5.9999942779541014E-003
+ Mean elapsed time per time step in seconds =    7.2000026702880859E-003
  Time steps remaining =         1595
- Estimated remaining time in seconds =    9.5699908733367920     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 09 s
- Estimated total run time in seconds =    9.5999908447265625     
- Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ Estimated remaining time in seconds =    11.484004259109497     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 11 s
+ Estimated total run time in seconds =    11.520004272460938     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 11 s
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step            5
@@ -1100,15 +1101,15 @@ Time step number     100   t =    0.1089 s out of    1600
  We have done    6.19136953     % of the total
  Max norm of vector field in solid (elastic) =   0.149366736    
  Max absolute value of scalar field in fluid (acoustic) =    2.81995835E-06
- Elapsed time in seconds =   0.90499997138977051     
+ Elapsed time in seconds =   0.91500020027160645     
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    9.0499997138977044E-003
+ Mean elapsed time per time step in seconds =    9.1500020027160643E-003
  Time steps remaining =         1500
- Estimated remaining time in seconds =    13.574999570846556     
+ Estimated remaining time in seconds =    13.725003004074097     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 13 s
- Estimated total run time in seconds =    14.479999542236326     
+ Estimated total run time in seconds =    14.640003204345703     
  Estimated total run time in hh:mm:ss =      0 h 00 m 14 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step          100
@@ -1135,15 +1136,15 @@ Time step number     200   t =    0.2189 s out of    1600
  We have done    12.4452782     % of the total
  Max norm of vector field in solid (elastic) =   0.152609348    
  Max absolute value of scalar field in fluid (acoustic) =    1.32673705    
- Elapsed time in seconds =    1.8339998722076416     
+ Elapsed time in seconds =    1.8680000305175781     
  Elapsed time in hh:mm:ss =      0 h 00 m 01 s
- Mean elapsed time per time step in seconds =    9.1699993610382079E-003
+ Mean elapsed time per time step in seconds =    9.3400001525878913E-003
  Time steps remaining =         1400
- Estimated remaining time in seconds =    12.837999105453491     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 12 s
- Estimated total run time in seconds =    14.671998977661133     
+ Estimated remaining time in seconds =    13.076000213623049     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 13 s
+ Estimated total run time in seconds =    14.944000244140627     
  Estimated total run time in hh:mm:ss =      0 h 00 m 14 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step          200
@@ -1170,15 +1171,15 @@ Time step number     300   t =    0.3289 s out of    1600
  We have done    18.6991863     % of the total
  Max norm of vector field in solid (elastic) =   0.111685403    
  Max absolute value of scalar field in fluid (acoustic) =    5132.20557    
- Elapsed time in seconds =    2.7989997863769531     
+ Elapsed time in seconds =    2.8620002269744873     
  Elapsed time in hh:mm:ss =      0 h 00 m 02 s
- Mean elapsed time per time step in seconds =    9.3299992879231769E-003
+ Mean elapsed time per time step in seconds =    9.5400007565816236E-003
  Time steps remaining =         1300
- Estimated remaining time in seconds =    12.128999074300131     
+ Estimated remaining time in seconds =    12.402000983556110     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 12 s
- Estimated total run time in seconds =    14.927998860677084     
- Estimated total run time in hh:mm:ss =      0 h 00 m 14 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ Estimated total run time in seconds =    15.264001210530598     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 15 s
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step          300
@@ -1205,15 +1206,15 @@ Time step number     400   t =    0.4389 s out of    1600
  We have done    24.9530964     % of the total
  Max norm of vector field in solid (elastic) =    9.42512453E-02
  Max absolute value of scalar field in fluid (acoustic) =    3958.40576    
- Elapsed time in seconds =    3.8650000095367432     
+ Elapsed time in seconds =    3.9740002155303955     
  Elapsed time in hh:mm:ss =      0 h 00 m 03 s
- Mean elapsed time per time step in seconds =    9.6625000238418583E-003
+ Mean elapsed time per time step in seconds =    9.9350005388259884E-003
  Time steps remaining =         1200
- Estimated remaining time in seconds =    11.595000028610229     
+ Estimated remaining time in seconds =    11.922000646591187     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 11 s
- Estimated total run time in seconds =    15.460000038146973     
+ Estimated total run time in seconds =    15.896000862121582     
  Estimated total run time in hh:mm:ss =      0 h 00 m 15 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step          400
@@ -1240,15 +1241,15 @@ Time step number     500   t =    0.5489 s out of    1600
  We have done    31.2070045     % of the total
  Max norm of vector field in solid (elastic) =    9.34777707E-02
  Max absolute value of scalar field in fluid (acoustic) =    5218.36475    
- Elapsed time in seconds =    5.0309998989105225     
+ Elapsed time in seconds =    5.1750001907348633     
  Elapsed time in hh:mm:ss =      0 h 00 m 05 s
- Mean elapsed time per time step in seconds =    1.0061999797821046E-002
+ Mean elapsed time per time step in seconds =    1.0350000381469727E-002
  Time steps remaining =         1100
- Estimated remaining time in seconds =    11.068199777603150     
+ Estimated remaining time in seconds =    11.385000419616700     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 11 s
- Estimated total run time in seconds =    16.099199676513670     
+ Estimated total run time in seconds =    16.560000610351565     
  Estimated total run time in hh:mm:ss =      0 h 00 m 16 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step          500
@@ -1275,15 +1276,15 @@ Time step number     600   t =    0.6589 s out of    1600
  We have done    37.4609146     % of the total
  Max norm of vector field in solid (elastic) =    8.33311602E-02
  Max absolute value of scalar field in fluid (acoustic) =    4839.91260    
- Elapsed time in seconds =    6.3359999656677246     
+ Elapsed time in seconds =    6.5190000534057617     
  Elapsed time in hh:mm:ss =      0 h 00 m 06 s
- Mean elapsed time per time step in seconds =    1.0559999942779541E-002
+ Mean elapsed time per time step in seconds =    1.0865000089009603E-002
  Time steps remaining =         1000
- Estimated remaining time in seconds =    10.559999942779541     
+ Estimated remaining time in seconds =    10.865000089009603     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 10 s
- Estimated total run time in seconds =    16.895999908447266     
- Estimated total run time in hh:mm:ss =      0 h 00 m 16 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ Estimated total run time in seconds =    17.384000142415367     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 17 s
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step          600
@@ -1310,15 +1311,15 @@ Time step number     700   t =    0.7689 s out of    1600
  We have done    43.7148209     % of the total
  Max norm of vector field in solid (elastic) =    8.56300443E-02
  Max absolute value of scalar field in fluid (acoustic) =    4481.51074    
- Elapsed time in seconds =    7.7809998989105225     
+ Elapsed time in seconds =    7.9880001544952393     
  Elapsed time in hh:mm:ss =      0 h 00 m 07 s
- Mean elapsed time per time step in seconds =    1.1115714141300746E-002
+ Mean elapsed time per time step in seconds =    1.1411428792136056E-002
  Time steps remaining =          900
- Estimated remaining time in seconds =    10.004142727170672     
+ Estimated remaining time in seconds =    10.270285912922450     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 10 s
- Estimated total run time in seconds =    17.785142626081196     
- Estimated total run time in hh:mm:ss =      0 h 00 m 17 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ Estimated total run time in seconds =    18.258286067417689     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 18 s
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step          700
@@ -1345,15 +1346,15 @@ Time step number     800   t =    0.8789 s out of    1600
  We have done    49.9687309     % of the total
  Max norm of vector field in solid (elastic) =    8.42891335E-02
  Max absolute value of scalar field in fluid (acoustic) =    4429.24658    
- Elapsed time in seconds =    9.3369998931884766     
+ Elapsed time in seconds =    9.5810000896453857     
  Elapsed time in hh:mm:ss =      0 h 00 m 09 s
- Mean elapsed time per time step in seconds =    1.1671249866485595E-002
+ Mean elapsed time per time step in seconds =    1.1976250112056733E-002
  Time steps remaining =          800
- Estimated remaining time in seconds =    9.3369998931884766     
+ Estimated remaining time in seconds =    9.5810000896453857     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 09 s
- Estimated total run time in seconds =    18.673999786376953     
- Estimated total run time in hh:mm:ss =      0 h 00 m 18 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ Estimated total run time in seconds =    19.162000179290771     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 19 s
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step          800
@@ -1380,15 +1381,15 @@ Time step number     900   t =    0.9889 s out of    1600
  We have done    56.2226410     % of the total
  Max norm of vector field in solid (elastic) =    8.25266242E-02
  Max absolute value of scalar field in fluid (acoustic) =    5129.15088    
- Elapsed time in seconds =    10.984999895095825     
- Elapsed time in hh:mm:ss =      0 h 00 m 10 s
- Mean elapsed time per time step in seconds =    1.2205555438995361E-002
+ Elapsed time in seconds =    11.266000032424927     
+ Elapsed time in hh:mm:ss =      0 h 00 m 11 s
+ Mean elapsed time per time step in seconds =    1.2517777813805473E-002
  Time steps remaining =          700
- Estimated remaining time in seconds =    8.5438888072967529     
+ Estimated remaining time in seconds =    8.7624444696638317     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 08 s
- Estimated total run time in seconds =    19.528888702392578     
- Estimated total run time in hh:mm:ss =      0 h 00 m 19 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ Estimated total run time in seconds =    20.028444502088760     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step          900
@@ -1415,19 +1416,19 @@ Time step number    1000   t =    1.0989 s out of    1600
  We have done    62.4765472     % of the total
  Max norm of vector field in solid (elastic) =    8.70450586E-02
  Max absolute value of scalar field in fluid (acoustic) =    4269.07959    
- Elapsed time in seconds =    12.788999795913696     
- Elapsed time in hh:mm:ss =      0 h 00 m 12 s
- Mean elapsed time per time step in seconds =    1.2788999795913697E-002
+ Elapsed time in seconds =    13.104000091552734     
+ Elapsed time in hh:mm:ss =      0 h 00 m 13 s
+ Mean elapsed time per time step in seconds =    1.3104000091552735E-002
  Time steps remaining =          600
- Estimated remaining time in seconds =    7.6733998775482180     
+ Estimated remaining time in seconds =    7.8624000549316415     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 07 s
- Estimated total run time in seconds =    20.462399673461913     
+ Estimated total run time in seconds =    20.966400146484375     
  Estimated total run time in hh:mm:ss =      0 h 00 m 20 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Total number of time steps done:         1000
- Writing the seismograms by main proc alone took   0.114768997      seconds
+ Writing the seismograms by main proc alone took   0.117829002      seconds
 
 
  Writing PostScript vector plot for time step         1000
@@ -1454,15 +1455,15 @@ Time step number    1100   t =    1.2089 s out of    1600
  We have done    68.7304535     % of the total
  Max norm of vector field in solid (elastic) =    9.37750638E-02
  Max absolute value of scalar field in fluid (acoustic) =    4083.20239    
- Elapsed time in seconds =    14.736999988555908     
- Elapsed time in hh:mm:ss =      0 h 00 m 14 s
- Mean elapsed time per time step in seconds =    1.3397272716869007E-002
+ Elapsed time in seconds =    15.131000041961670     
+ Elapsed time in hh:mm:ss =      0 h 00 m 15 s
+ Mean elapsed time per time step in seconds =    1.3755454583601518E-002
  Time steps remaining =          500
- Estimated remaining time in seconds =    6.6986363584345030     
+ Estimated remaining time in seconds =    6.8777272918007588     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
- Estimated total run time in seconds =    21.435636346990410     
- Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ Estimated total run time in seconds =    22.008727333762430     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 22 s
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step         1100
@@ -1489,15 +1490,15 @@ Time step number    1200   t =    1.3189 s out of    1600
  We have done    74.9843674     % of the total
  Max norm of vector field in solid (elastic) =    8.67052227E-02
  Max absolute value of scalar field in fluid (acoustic) =    4800.42676    
- Elapsed time in seconds =    16.535999774932861     
+ Elapsed time in seconds =    16.972000122070312     
  Elapsed time in hh:mm:ss =      0 h 00 m 16 s
- Mean elapsed time per time step in seconds =    1.3779999812444051E-002
+ Mean elapsed time per time step in seconds =    1.4143333435058594E-002
  Time steps remaining =          400
- Estimated remaining time in seconds =    5.5119999249776201     
+ Estimated remaining time in seconds =    5.6573333740234375     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    22.047999699910481     
+ Estimated total run time in seconds =    22.629333496093750     
  Estimated total run time in hh:mm:ss =      0 h 00 m 22 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step         1200
@@ -1524,15 +1525,15 @@ Time step number    1300   t =    1.4289 s out of    1600
  We have done    81.2382736     % of the total
  Max norm of vector field in solid (elastic) =    7.35722482E-02
  Max absolute value of scalar field in fluid (acoustic) =    3210.04590    
- Elapsed time in seconds =    18.393999814987183     
+ Elapsed time in seconds =    18.923000097274780     
  Elapsed time in hh:mm:ss =      0 h 00 m 18 s
- Mean elapsed time per time step in seconds =    1.4149230626913218E-002
+ Mean elapsed time per time step in seconds =    1.4556153920980600E-002
  Time steps remaining =          300
- Estimated remaining time in seconds =    4.2447691880739651     
+ Estimated remaining time in seconds =    4.3668461762941799     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    22.638769003061149     
- Estimated total run time in hh:mm:ss =      0 h 00 m 22 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ Estimated total run time in seconds =    23.289846273568962     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 23 s
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step         1300
@@ -1559,15 +1560,15 @@ Time step number    1400   t =    1.5389 s out of    1600
  We have done    87.4921799     % of the total
  Max norm of vector field in solid (elastic) =    8.74082521E-02
  Max absolute value of scalar field in fluid (acoustic) =    3000.19897    
- Elapsed time in seconds =    20.357999801635742     
+ Elapsed time in seconds =    20.920000076293945     
  Elapsed time in hh:mm:ss =      0 h 00 m 20 s
- Mean elapsed time per time step in seconds =    1.4541428429739815E-002
+ Mean elapsed time per time step in seconds =    1.4942857197352818E-002
  Time steps remaining =          200
- Estimated remaining time in seconds =    2.9082856859479631     
+ Estimated remaining time in seconds =    2.9885714394705638     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
- Estimated total run time in seconds =    23.266285487583705     
+ Estimated total run time in seconds =    23.908571515764510     
  Estimated total run time in hh:mm:ss =      0 h 00 m 23 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step         1400
@@ -1594,15 +1595,15 @@ Time step number    1500   t =    1.6489 s out of    1600
  We have done    93.7460938     % of the total
  Max norm of vector field in solid (elastic) =    7.94998780E-02
  Max absolute value of scalar field in fluid (acoustic) =    2824.06274    
- Elapsed time in seconds =    22.264999866485596     
+ Elapsed time in seconds =    22.898000001907349     
  Elapsed time in hh:mm:ss =      0 h 00 m 22 s
- Mean elapsed time per time step in seconds =    1.4843333244323730E-002
+ Mean elapsed time per time step in seconds =    1.5265333334604898E-002
  Time steps remaining =          100
- Estimated remaining time in seconds =    1.4843333244323731     
+ Estimated remaining time in seconds =    1.5265333334604898     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
- Estimated total run time in seconds =    23.749333190917969     
- Estimated total run time in hh:mm:ss =      0 h 00 m 23 s
- The run will finish approximately on: Mon Oct 04, 2021 20:54
+ Estimated total run time in seconds =    24.424533335367837     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 24 s
+ The run will finish approximately on: Wed Oct 13, 2021 10:45
 
 
  Writing PostScript vector plot for time step         1500
@@ -1629,18 +1630,18 @@ Time step number    1600   t =    1.7589 s out of    1600
  We have done    100.000000     % of the total
  Max norm of vector field in solid (elastic) =    8.50227028E-02
  Max absolute value of scalar field in fluid (acoustic) =    3912.43945    
- Elapsed time in seconds =    24.227999925613403     
+ Elapsed time in seconds =    24.894000053405762     
  Elapsed time in hh:mm:ss =      0 h 00 m 24 s
- Mean elapsed time per time step in seconds =    1.5142499953508377E-002
+ Mean elapsed time per time step in seconds =    1.5558750033378602E-002
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    24.227999925613403     
+ Estimated total run time in seconds =    24.894000053405762     
  Estimated total run time in hh:mm:ss =      0 h 00 m 24 s
 
 
  Total number of time steps done:         1600
- Writing the seismograms by main proc alone took    6.36510029E-02  seconds
+ Writing the seismograms by main proc alone took    6.70190006E-02  seconds
 
 
  Writing PostScript vector plot for time step         1600
@@ -1661,17 +1662,17 @@ Time step number    1600   t =    1.7589 s out of    1600
  Color image created
 
 
- Total duration of the time loop in seconds =    25.5591564      s
+ Total duration of the time loop in seconds =    26.2674656      s
  Total number of time steps =         1600
- Average duration of a time step of the time loop =    1.59744732E-02  s
+ Average duration of a time step of the time loop =    1.64171662E-02  s
  Total number of spectral elements in the mesh =         4800
      of which         4218  are regular elements
      and          582  are PML elements.
- Average duration of the calculation per spectral element =    3.32801505E-06  s
+ Average duration of the calculation per spectral element =    3.42024305E-06  s
 
 
  Total duration of the timeloop in seconds, measured using 
- date and time of the system :    25.5590000      s
+ date and time of the system :    26.2679996      s
 
 
  -------------------------------------------------------------------------------
@@ -1682,11 +1683,11 @@ Time step number    1600   t =    1.7589 s out of    1600
  Test of SPECFEM2D with curved interfaces
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 04 - 10 - 2021                                 T i m e  : 20:54:29
+ D a t e : 13 - 10 - 2021                                 T i m e  : 10:45:24
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
 see results in directory: OUTPUT_FILES/
 
 done
-Mon Oct 4 20:54:29 +03 2021
+Wed Oct 13 10:45:24 +03 2021

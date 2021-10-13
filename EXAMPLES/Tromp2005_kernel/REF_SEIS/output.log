@@ -1,4 +1,4 @@
-running example: Mon Oct  4 17:58:24 +03 2021
+running example: Wed Oct 13 11:03:09 +03 2021
 
 setting up example...
 
@@ -211,7 +211,7 @@ running solver...
  Tromp-Tape-Liu (GJI 2005)
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 04 - 10 - 2021                                 T i m e  : 17:58:25
+ D a t e : 13 - 10 - 2021                                 T i m e  : 11:03:10
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
@@ -483,6 +483,7 @@ running solver...
   at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
  Distance from source:    100000.000      m
 
+ maximum error in location of all the receivers:    0.00000000      m
 
  end of receiver detection
 
@@ -644,7 +645,7 @@ Time step number       5   t =    0.0800 s out of    3000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
  Estimated total run time in seconds =    5.9999942779541016     
  Estimated total run time in hh:mm:ss =      0 h 00 m 05 s
- The run will finish approximately on: Mon Oct 04, 2021 17:59
+ The run will finish approximately on: Wed Oct 13, 2021 11:03
 
  Creating color image of size          800  x          343  for time step            5
  drawing scalar image of the forward wavefield displacement...
@@ -672,15 +673,15 @@ Time step number     400   t =    7.9800 s out of    3000
  ******************************************************************
  We have done    13.3044348     % of the total
  Max norm of vector field in solid (elastic) =    2.35748906E-02
- Elapsed time in seconds =   0.99699997901916504     
+ Elapsed time in seconds =   0.98799991607666016     
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    2.4924999475479125E-003
+ Mean elapsed time per time step in seconds =    2.4699997901916505E-003
  Time steps remaining =         2600
- Estimated remaining time in seconds =    6.4804998636245728     
+ Estimated remaining time in seconds =    6.4219994544982910     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
- Estimated total run time in seconds =    7.4774998426437378     
+ Estimated total run time in seconds =    7.4099993705749512     
  Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
- The run will finish approximately on: Mon Oct 04, 2021 17:59
+ The run will finish approximately on: Wed Oct 13, 2021 11:03
 
  Creating color image of size          800  x          343  for time step          400
  drawing scalar image of the forward wavefield displacement...
@@ -708,15 +709,15 @@ Time step number     800   t =   15.9800 s out of    3000
  ******************************************************************
  We have done    26.6422138     % of the total
  Max norm of vector field in solid (elastic) =    5.87902451E-03
- Elapsed time in seconds =    2.0260000228881836     
- Elapsed time in hh:mm:ss =      0 h 00 m 02 s
- Mean elapsed time per time step in seconds =    2.5325000286102297E-003
+ Elapsed time in seconds =    1.9900000095367432     
+ Elapsed time in hh:mm:ss =      0 h 00 m 01 s
+ Mean elapsed time per time step in seconds =    2.4875000119209288E-003
  Time steps remaining =         2200
- Estimated remaining time in seconds =    5.5715000629425049     
+ Estimated remaining time in seconds =    5.4725000262260437     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    7.5975000858306885     
+ Estimated total run time in seconds =    7.4625000357627869     
  Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
- The run will finish approximately on: Mon Oct 04, 2021 17:59
+ The run will finish approximately on: Wed Oct 13, 2021 11:03
 
  Creating color image of size          800  x          343  for time step          800
  drawing scalar image of the forward wavefield displacement...
@@ -730,7 +731,7 @@ Time step number     800   t =   15.9800 s out of    3000
 
 
  Total number of time steps done:         1000
- Writing the seismograms by main proc alone took    4.44300007E-03  seconds
+ Writing the seismograms by main proc alone took    4.40899981E-03  seconds
 
  Creating color image of size          800  x          343  for time step         1000
  drawing scalar image of the forward wavefield displacement...
@@ -748,15 +749,15 @@ Time step number    1200   t =   23.9800 s out of    3000
  ******************************************************************
  We have done    39.9799919     % of the total
  Max norm of vector field in solid (elastic) =    5.64937945E-03
- Elapsed time in seconds =    3.0520000457763672     
+ Elapsed time in seconds =    3.0030000209808350     
  Elapsed time in hh:mm:ss =      0 h 00 m 03 s
- Mean elapsed time per time step in seconds =    2.5433333714803062E-003
+ Mean elapsed time per time step in seconds =    2.5025000174840289E-003
  Time steps remaining =         1800
- Estimated remaining time in seconds =    4.5780000686645508     
+ Estimated remaining time in seconds =    4.5045000314712524     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    7.6300001144409180     
+ Estimated total run time in seconds =    7.5075000524520874     
  Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
- The run will finish approximately on: Mon Oct 04, 2021 17:59
+ The run will finish approximately on: Wed Oct 13, 2021 11:03
 
  Creating color image of size          800  x          343  for time step         1200
  drawing scalar image of the forward wavefield displacement...
@@ -784,15 +785,15 @@ Time step number    1600   t =   31.9800 s out of    3000
  ******************************************************************
  We have done    53.3177719     % of the total
  Max norm of vector field in solid (elastic) =    3.38317524E-03
- Elapsed time in seconds =    4.0710000991821289     
+ Elapsed time in seconds =    4.0160000324249268     
  Elapsed time in hh:mm:ss =      0 h 00 m 04 s
- Mean elapsed time per time step in seconds =    2.5443750619888305E-003
+ Mean elapsed time per time step in seconds =    2.5100000202655792E-003
  Time steps remaining =         1400
- Estimated remaining time in seconds =    3.5621250867843628     
+ Estimated remaining time in seconds =    3.5140000283718109     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    7.6331251859664917     
+ Estimated total run time in seconds =    7.5300000607967377     
  Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
- The run will finish approximately on: Mon Oct 04, 2021 17:59
+ The run will finish approximately on: Wed Oct 13, 2021 11:03
 
  Creating color image of size          800  x          343  for time step         1600
  drawing scalar image of the forward wavefield displacement...
@@ -820,19 +821,19 @@ Time step number    2000   t =   39.9800 s out of    3000
  ******************************************************************
  We have done    66.6555481     % of the total
  Max norm of vector field in solid (elastic) =    2.95987283E-03
- Elapsed time in seconds =    5.1010000705718994     
+ Elapsed time in seconds =    5.0329999923706055     
  Elapsed time in hh:mm:ss =      0 h 00 m 05 s
- Mean elapsed time per time step in seconds =    2.5505000352859498E-003
+ Mean elapsed time per time step in seconds =    2.5164999961853028E-003
  Time steps remaining =         1000
- Estimated remaining time in seconds =    2.5505000352859497     
+ Estimated remaining time in seconds =    2.5164999961853027     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
- Estimated total run time in seconds =    7.6515001058578491     
+ Estimated total run time in seconds =    7.5494999885559082     
  Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
- The run will finish approximately on: Mon Oct 04, 2021 17:59
+ The run will finish approximately on: Wed Oct 13, 2021 11:03
 
 
  Total number of time steps done:         2000
- Writing the seismograms by main proc alone took    4.31900006E-03  seconds
+ Writing the seismograms by main proc alone took    4.61700000E-03  seconds
 
  Creating color image of size          800  x          343  for time step         2000
  drawing scalar image of the forward wavefield displacement...
@@ -860,15 +861,15 @@ Time step number    2400   t =   47.9800 s out of    3000
  ******************************************************************
  We have done    79.9933319     % of the total
  Max norm of vector field in solid (elastic) =    2.57650134E-03
- Elapsed time in seconds =    6.1389999389648438     
+ Elapsed time in seconds =    6.0590000152587891     
  Elapsed time in hh:mm:ss =      0 h 00 m 06 s
- Mean elapsed time per time step in seconds =    2.5579166412353516E-003
+ Mean elapsed time per time step in seconds =    2.5245833396911623E-003
  Time steps remaining =          600
- Estimated remaining time in seconds =    1.5347499847412109     
+ Estimated remaining time in seconds =    1.5147500038146975     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
- Estimated total run time in seconds =    7.6737499237060547     
+ Estimated total run time in seconds =    7.5737500190734863     
  Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
- The run will finish approximately on: Mon Oct 04, 2021 17:59
+ The run will finish approximately on: Wed Oct 13, 2021 11:03
 
  Creating color image of size          800  x          343  for time step         2400
  drawing scalar image of the forward wavefield displacement...
@@ -896,15 +897,15 @@ Time step number    2800   t =   55.9800 s out of    3000
  ******************************************************************
  We have done    93.3311081     % of the total
  Max norm of vector field in solid (elastic) =    2.32279790E-03
- Elapsed time in seconds =    7.1559998989105225     
+ Elapsed time in seconds =    7.0720000267028809     
  Elapsed time in hh:mm:ss =      0 h 00 m 07 s
- Mean elapsed time per time step in seconds =    2.5557142496109007E-003
+ Mean elapsed time per time step in seconds =    2.5257142952510290E-003
  Time steps remaining =          200
- Estimated remaining time in seconds =   0.51114284992218018     
+ Estimated remaining time in seconds =   0.50514285905020584     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    7.6671427488327026     
+ Estimated total run time in seconds =    7.5771428857530871     
  Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
- The run will finish approximately on: Mon Oct 04, 2021 17:59
+ The run will finish approximately on: Wed Oct 13, 2021 11:03
 
  Creating color image of size          800  x          343  for time step         2800
  drawing scalar image of the forward wavefield displacement...
@@ -922,18 +923,18 @@ Time step number    3000   t =   59.9800 s out of    3000
  ******************************************************************
  We have done    100.000000     % of the total
  Max norm of vector field in solid (elastic) =    2.18262966E-03
- Elapsed time in seconds =    7.6649999618530273     
+ Elapsed time in seconds =    7.5759999752044678     
  Elapsed time in hh:mm:ss =      0 h 00 m 07 s
- Mean elapsed time per time step in seconds =    2.5549999872843425E-003
+ Mean elapsed time per time step in seconds =    2.5253333250681558E-003
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    7.6649999618530273     
+ Estimated total run time in seconds =    7.5759999752044678     
  Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
 
 
  Total number of time steps done:         3000
- Writing the seismograms by main proc alone took    4.19399980E-03  seconds
+ Writing the seismograms by main proc alone took    4.21700021E-03  seconds
 
  Creating color image of size          800  x          343  for time step         3000
  drawing scalar image of the forward wavefield displacement...
@@ -941,17 +942,17 @@ Time step number    3000   t =   59.9800 s out of    3000
  Color image created
 
 
- Total duration of the time loop in seconds =    7.69022894      s
+ Total duration of the time loop in seconds =    7.60239697      s
  Total number of time steps =         3000
- Average duration of a time step of the time loop =    2.56340974E-03  s
+ Average duration of a time step of the time loop =    2.53413222E-03  s
  Total number of spectral elements in the mesh =         2560
      of which         2560  are regular elements
      and            0  are PML elements.
- Average duration of the calculation per spectral element =    1.00133195E-06  s
+ Average duration of the calculation per spectral element =    9.89895398E-07  s
 
 
  Total duration of the timeloop in seconds, measured using 
- date and time of the system :    7.69000006      s
+ date and time of the system :    7.60200024      s
 
  Saving forward arrays:
  Saving Stacey absorbing boundary contributions...
@@ -966,11 +967,11 @@ Time step number    3000   t =   59.9800 s out of    3000
  Tromp-Tape-Liu (GJI 2005)
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 04 - 10 - 2021                                 T i m e  : 17:58:33
+ D a t e : 13 - 10 - 2021                                 T i m e  : 11:03:18
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
 see results in directory: OUTPUT_FILES/
 
 done
-Mon Oct 4 17:58:33 +03 2021
+Wed Oct 13 11:03:18 +03 2021

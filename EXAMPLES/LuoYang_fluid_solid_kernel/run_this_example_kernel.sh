@@ -54,3 +54,7 @@ gnuplot plot_kernel.gnu
 
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
+
+# for setup of comparison script
+ln -s ../../utils/compare_two_images.py
+
