@@ -154,10 +154,10 @@ def plot_kernels(filename,show=False):
     print("")
 
     # limit size
-    if total_max < 1.e-8:
+    if total_max < 1.e-5:
         total_max = 1.0 * 10**(int(np.log10(total_max))-1)  # example: 2.73e-11 limits to 1.e-11
     else:
-        total_max = 1.e-8
+        total_max = 1.e-5
     print("plot: color scale max = ",total_max)
     print("")
 
