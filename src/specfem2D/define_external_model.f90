@@ -37,7 +37,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
 
-  use specfem_par, only: poroelastcoef,density,kmato,myrank,nspec,nglob
+  use specfem_par, only: myrank,nspec,nglob
 
   implicit none
 
@@ -125,12 +125,6 @@
           write(IMAIN,*) 'Error: invalid flag number in external model is equal to ',material_element(ispec)
           call stop_the_code('wrong flag number in external model; exiting...')
         endif
-
-        !! ABAB Do not forget these 3 lines otherwise PML may not work !! TODO check that
-        density(1,kmato(ispec)) = rho(i,j,ispec)
-        poroelastcoef(3,1,kmato(ispec)) = rho(i,j,ispec) * vp(i,j,ispec) * vp(i,j,ispec)
-        poroelastcoef(2,1,kmato(ispec)) =  rho(i,j,ispec) * vs(i,j,ispec) * vs(i,j,ispec)
-        !! ABAB Do not forget these 3 lines otherwise PML may not work !! TODO check that
 
       enddo
     enddo
