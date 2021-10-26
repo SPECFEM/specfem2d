@@ -329,7 +329,7 @@ jobs:
       shell: bash
 
   linuxTest_4:
-    name: Test run example 3 - benchmark claerbout kernel acoustic-elastic
+    name: Test run example 4 - benchmark claerbout kernel acoustic-elastic
     runs-on: ubuntu-latest
     needs: [linuxCheck]
 
@@ -351,3 +351,79 @@ jobs:
         TESTDIR: EXAMPLES/BENCHMARK_CLAERBOUT_ADJOINT/ACOUSTIC_ELASTIC
       run: ./.github/scripts/run_tests.sh
       shell: bash
+
+  linuxTest_5:
+    name: Test run example 5 - moving sources
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi  # --enable-vectorization
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/moving_sources_acoustic
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_6:
+    name: Test run example 6 - anisotropy
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi  # --enable-vectorization
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/anisotropic_isotropic_model
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+
+  linuxTest_7:
+    name: Test run example 7 - Industrial_Format_SEP
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi  # --enable-vectorization
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/Industrial_Format_SEP
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+
+

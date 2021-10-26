@@ -360,23 +360,6 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
 fi
 echo -en 'travis_fold:end:coverage.simple_topo\\r'
 
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.industrial\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
-  ##
-  ## testing MPI, SEP example
-  ##
-  echo "##################################################################"
-  echo "EXAMPLES/Industrial_Format_SEP/"
-  echo
-  cd EXAMPLES/Industrial_Format_SEP/
-  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
-  ./run_this_example.sh
-  if [[ $? -ne 0 ]]; then exit 1; fi
-  # only for coverage, comparison would fail: my_test
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.industrial\\r'
-
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.rayleigh\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
@@ -453,6 +436,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
 fi
 echo -en 'travis_fold:end:coverage.no_backward\\r'
 
+##
+## tested by github actions
+##
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.moving_sources\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
@@ -473,7 +459,7 @@ echo -en 'travis_fold:end:coverage.moving_sources\\r'
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.anisotropic_isotropic_model\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
-  ## moving sources
+  ## anisotropy
   ##
   echo "##################################################################"
   echo "EXAMPLES/anisotropic_isotropic_model/"
@@ -487,6 +473,22 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
 fi
 echo -en 'travis_fold:end:coverage.anisotropic_isotropic_model\\r'
 
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.industrial\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## testing MPI, SEP example
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/Industrial_Format_SEP/"
+  echo
+  cd EXAMPLES/Industrial_Format_SEP/
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.industrial\\r'
 
 # done
 echo "all done"

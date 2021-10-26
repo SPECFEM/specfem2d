@@ -39,6 +39,15 @@ cd $dir
 # shortens output interval to avoid timeouts
 #sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
 
+# specific example setups
+if [ "${TESTDIR}" == "EXAMPLES/moving_sources_acoustic" ]; then
+  sed -i "s:^NSTEP .*:NSTEP    = 3000:" DATA/Par_file
+fi
+if [ "${TESTDIR}" == "EXAMPLES/Industrial_Format_SEP" ]; then
+  sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
+fi
+
+
 # debug
 if [ "${DEBUG}" == "true" ]; then
   # limit for debugging
