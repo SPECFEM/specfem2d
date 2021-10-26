@@ -332,8 +332,6 @@
               !if (iglob == 37905) &
               !write(1234,*) it, dble(sourcearrays(1,i,j,i_source) * source_time_function(i_source,it,i_stage)), &
               !              accel_elastic(1,iglob),source_time_function(i_source,it,i_stage),sourcearrays(1,i,j,i_source)
-
-
             enddo
           enddo
         endif

@@ -77,7 +77,7 @@ ATTENUATION_VISCOACOUSTIC       = .false.        # turn attenuation (viscoacoust
 N_SLS                           = 3              # number of standard linear solids for attenuation (3 is usually the minimum)
 ATTENUATION_f0_REFERENCE        = 5.196152422706633 # in case of attenuation, reference frequency in Hz at which the velocity values in the velocity model are given (unused otherwise); relevant only if source is a Dirac or a Heaviside, otherwise it is automatically set to f0 the dominant frequency of the source in the DATA/SOURCE file
 READ_VELOCITIES_AT_f0           = .false.        # read seismic velocities at ATTENUATION_f0_REFERENCE instead of at infinite frequency (see user manual for more information)
-USE_SOLVOPT                     = .false.        # use more precise but much more expensive way of determining the Q factor relaxation times, as in http://komatitsch.free.fr/preprints/GJI_Lombard_2016.pdf
+USE_SOLVOPT                     = .false.        # use more precise but much more expensive way of determining the Q factor relaxation times, as in https://doi.org/10.1093/gji/ggw024
 
 # for poroelastic attenuation
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
@@ -256,7 +256,7 @@ free_surface_file               = dummy                     # file containing th
 axial_elements_file             = dummy                     # file containing the axial elements if AXISYM is true
 absorbing_surface_file          = dummy                     # file containing the absorbing surface
 acoustic_forcing_surface_file   = dummy                     # file containing the acoustic forcing surface
-absorbing_cpml_file             = dummy          # file containing the CPML element numbers
+absorbing_cpml_file             = dummy                     # file containing the CPML element numbers
 tangential_detection_curve_file = dummy                     # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------------------------

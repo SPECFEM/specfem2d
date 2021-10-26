@@ -75,7 +75,6 @@ module specfem_par
 
   ! material store arrays
   !
-  ! daniel todo: unify material properties
   ! note: we will be unifying the default & external model arrays **coef and **ext to have a single **store repository
   !       of model material properties (similar to 3D versions).
   !
@@ -87,6 +86,7 @@ module specfem_par
   !       once material properties are read in, they will be stored for the solver in the **store arrays
   !       and all **ext arrays freed afterwards.
   !
+  ! unified material properties
   ! density
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhostore
   ! isotropic moduli
