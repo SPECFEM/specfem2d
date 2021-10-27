@@ -328,7 +328,7 @@
 
               accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(1,i,j,i_source) * stf_used
 
-              ! daniel debug source contribution
+              ! debugging source contribution
               !if (iglob == 37905) &
               !write(1234,*) it, dble(sourcearrays(1,i,j,i_source) * source_time_function(i_source,it,i_stage)), &
               !              accel_elastic(1,iglob),source_time_function(i_source,it,i_stage),sourcearrays(1,i,j,i_source)
