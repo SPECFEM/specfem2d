@@ -325,24 +325,6 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
 fi
 echo -en 'travis_fold:end:coverage.poroelastic_acoustic\\r'
 
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.axisym\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
-  ##
-  ## testing axisymmetric example
-  ##
-  echo "##################################################################"
-  echo "EXAMPLES/axisymmetric_case_AXISYM_option/"
-  echo
-  cd EXAMPLES/axisymmetric_case_AXISYM_option/
-  sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
-  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
-  ./run_this_example.sh
-  if [[ $? -ne 0 ]]; then exit 1; fi
-  # only for coverage, comparison would fail: my_test
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.axisym\\r'
-
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.simple_topo\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
@@ -436,9 +418,14 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
 fi
 echo -en 'travis_fold:end:coverage.no_backward\\r'
 
+
+
+#################################################################
 ##
 ## tested by github actions
 ##
+#################################################################
+
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.moving_sources\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
@@ -489,6 +476,25 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.industrial\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.axisym\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## testing axisymmetric example
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/axisymmetric_case_AXISYM_option/"
+  echo
+  cd EXAMPLES/axisymmetric_case_AXISYM_option/
+  sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.axisym\\r'
+
 
 # done
 echo "all done"

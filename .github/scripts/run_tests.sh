@@ -46,6 +46,10 @@ fi
 if [ "${TESTDIR}" == "EXAMPLES/Industrial_Format_SEP" ]; then
   sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
 fi
+if [ "${TESTDIR}" == "EXAMPLES/axisymmetric_case_AXISYM_option" ]; then
+  sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
+  sed -i "s:^NSTEP .*:NSTEP    = 1400:" DATA/Par_file
+fi
 
 
 # debug

@@ -73,8 +73,8 @@ env:
     # example w/ noise
     - TESTID=12 TESTDIR=6 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
 
-    # example w/ axisymmetric & attenuation
-    - TESTID=13 TESTDIR=7 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
+    # example w/ axisymmetric & attenuation (tested on github actions)
+    #- TESTID=13 TESTDIR=7 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
 
     # example w/ PML and MPI
     - TESTID=14 TESTDIR=8 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
