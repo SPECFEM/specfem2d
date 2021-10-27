@@ -82,6 +82,7 @@ For the moment just one model can be read from an external file but it is not ve
 @author: alexis bottero (alexis dot bottero at gmail dot com)
 """
 from __future__ import print_function
+
 import numpy as np
 import matplotlib.pyplot as plt
 
