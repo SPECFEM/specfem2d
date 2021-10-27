@@ -26,14 +26,14 @@ running example: Sun Feb 10 19:09:10 AST 2019
 
  --------
  Material #           1  isotropic
- rho,cp,cs   =    2000.0000000000000        3297.8490000000002        2222.5360000000001     
- Qkappa, Qmu =    22.300000000000001        20.000000000000000     
+ rho,cp,cs   =    2000.0000000000000        3297.8490000000002        2222.5360000000001
+ Qkappa, Qmu =    22.300000000000001        20.000000000000000
  Material is solid
  --------
 
  Mesh from internal meshing:
 
- Reading interface data from file: ./DATA/interfaces_attenuation_analytic.dat                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+ Reading interface data from file: ./DATA/interfaces_attenuation_analytic.dat
  Reading            2  points for interface            1
  Reading            2  points for interface            2
 
@@ -52,39 +52,39 @@ running example: Sun Feb 10 19:09:10 AST 2019
  IZ from            1  to           44
  Material #            1  isotropic
  Material is solid
- vp     =    3297.84912    
- vs     =    2222.53589    
- rho    =    2000.00000    
+ vp     =    3297.84912
+ vs     =    2222.53589
+ rho    =    2000.00000
  Poisson's ratio =    8.39329287E-02
- QKappa =    22.2999992    
- Qmu    =    20.0000000    
+ QKappa =    22.2999992
+ Qmu    =    20.0000000
  ------
  Total number of spectral elements         =         1936
 
 
- Parameter file successfully read 
+ Parameter file successfully read
 
  The mesh contains         1936  elements
 
  Control elements have            4  nodes
 
  Source           1
-   Position xs, zs =    1000.0000000000000        1000.0000000000000     
+   Position xs, zs =    1000.0000000000000        1000.0000000000000
 
    Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, 5=plane incident S):            1
    Force source:
-   Angle of the source (deg) =    0.0000000000000000     
-   Multiplying factor  =    1.0000000000000000     
+   Angle of the source (deg) =    0.0000000000000000
+   Multiplying factor  =    1.0000000000000000
 
    Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 8=Read from file, 9=burst):           1
    Ricker wavelet (second-derivative):
-   Frequency, delay =    18.000000000000000        0.0000000000000000     
+   Frequency, delay =    18.000000000000000        0.0000000000000000
 
  Reading interface data from file: ./DATA/interfaces_attenuation_analytic.dat
 
- Mesh dimensions: 
-   Min and max value of X in the grid =    0.0000000000000000        2000.0000000000000     
-   Min and max value of Z in the grid =    0.0000000000000000        2000.0000000000005     
+ Mesh dimensions:
+   Min and max value of X in the grid =    0.0000000000000000        2000.0000000000000
+   Min and max value of Z in the grid =    0.0000000000000000        2000.0000000000005
 
  nedges_coupled (acoustic/elastic)     =            0
  nedges_coupled (acoustic/poroelastic) =            0
@@ -92,7 +92,7 @@ running example: Sun Feb 10 19:09:10 AST 2019
 
  slice            0  has number of spectral elements =        1936
 
- Position (x,z) of the source =    1000.0000000000000        1000.0000000000000     
+ Position (x,z) of the source =    1000.0000000000000        1000.0000000000000
 
 
  writing the ./DATA/STATIONS file
@@ -102,7 +102,7 @@ running example: Sun Feb 10 19:09:10 AST 2019
 
  Target positions (x,z) of the            1  receivers
 
- Receiver            1  =    1500.0000000000000        1500.0000000000000     
+ Receiver            1  =    1500.0000000000000        1500.0000000000000
 
  This will be a serial simulation
 
@@ -135,7 +135,7 @@ running example: Sun Feb 10 19:09:10 AST 2019
 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Program SPECFEM2D: 
+ Program SPECFEM2D:
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
  Test for 2D attenuation 1999 GJI paper
@@ -158,11 +158,11 @@ running example: Sun Feb 10 19:09:10 AST 2019
 
      Display frequency . . . .(NSTEP_BETWEEN_OUTPUT_INFO) =    200
      Color display . . . . . . . . . . . . . . . (colors) =      1
-      == 0     black and white display              
-      == 1     color display                        
+      == 0     black and white display
+      == 1     color display
      Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
-      == 0     do not number the mesh               
-      == 1     number the mesh                      
+      == 0     do not number the mesh
+      == 1     number the mesh
 
 
  C o n t r o l
@@ -194,7 +194,7 @@ running example: Sun Feb 10 19:09:10 AST 2019
      Subsampling of velocity model display. (subsamp_postscript) =      1
 
 
- I t e r a t i o n s 
+ I t e r a t i o n s
  ===================
 
      Number of time iterations . . . . .(NSTEP) =    1400
@@ -212,7 +212,7 @@ running example: Sun Feb 10 19:09:10 AST 2019
 
      Onset time. . . . . . =   -6.6666666666666666E-002
      Fundamental period. . =    5.5555555555555552E-002
-     Fundamental frequency =    18.000000000000000     
+     Fundamental frequency =    18.000000000000000
      The onset time is ok
 
      -- Spectral Elements --
@@ -278,8 +278,8 @@ running example: Sun Feb 10 19:09:10 AST 2019
    in reality they have more degrees of freedom)
 
  Mesh dimensions:
-   Xmin,Xmax of the whole mesh =    0.0000000000000000        2000.0000000000000     
-   Zmin,Zmax of the whole mesh =    0.0000000000000000        2000.0000000000005     
+   Xmin,Xmax of the whole mesh =    0.0000000000000000        2000.0000000000000
+   Zmin,Zmax of the whole mesh =    0.0000000000000000        2000.0000000000005
 
  Domains:
    total number of acoustic elements        =            0
@@ -317,13 +317,13 @@ running example: Sun Feb 10 19:09:10 AST 2019
 
 
  Force source:
-             original x:    1000.00000    
-             original z:    1000.00000    
+             original x:    1000.00000
+             original z:    1000.00000
  Closest estimate found:    0.00000000      m away
   in rank            0
   in element          946
   in elastic domain
-  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000
 
 
  end of force source detection
@@ -341,13 +341,13 @@ running example: Sun Feb 10 19:09:10 AST 2019
  reading receiver information from the ./DATA/STATIONS file
 
 
- Station #            1     AA      S0001                           
-             original x:    1500.00000    
-             original z:    1500.00000    
+ Station #            1     AA      S0001
+             original x:    1500.00000
+             original z:    1500.00000
  Closest estimate found:    0.00000000      m away
   in element         1441
   in rank            0
-  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000
  Distance from source:    707.106812      m
 
 
@@ -379,9 +379,9 @@ running example: Sun Feb 10 19:09:10 AST 2019
  Checking mesh and stability
 
  ********
- Model: P (or PI) velocity min,max =    3297.8490000000002        3297.8490000000002     
- Model: S velocity min,max         =    2222.5360000000001        2222.5360000000001     
- Model: density min,max            =    2000.0000000000000        2000.0000000000000     
+ Model: P (or PI) velocity min,max =    3297.8490000000002        3297.8490000000002
+ Model: S velocity min,max         =    2222.5360000000001        2222.5360000000001
+ Model: density min,max            =    2000.0000000000000        2000.0000000000000
  ********
 
 
@@ -389,21 +389,21 @@ running example: Sun Feb 10 19:09:10 AST 2019
  *** Verification of simulation parameters ***
  *********************************************
 
- *** Max grid size =    45.454545454545723     
- *** Min grid size =    45.454545454545269     
- *** Max/min ratio =    1.0000000000000100     
+ *** Max grid size =    45.454545454545723
+ *** Min grid size =    45.454545454545269
+ *** Max/min ratio =    1.0000000000000100
 
- *** Minimum GLL point distance  =    7.8487802111823042     
- *** Average GLL point distance  =    11.363636363636317     
+ *** Minimum GLL point distance  =    7.8487802111823042
+ *** Average GLL point distance  =    11.363636363636317
 
  *** Minimum period resolved     =    2.5564572100601361E-002
  *** Maximum frequency resolved  =    39.116633599999773      Hz
 
  *** Maximum suggested time step                 =    1.1899847766198973E-003
- *** Maximum suggested (Ricker) source frequency =    15.646653439999909     
+ *** Maximum suggested (Ricker) source frequency =    15.646653439999909
 
  *** for DT :    4.0000000000000002E-004
- *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.16806937696135218     
+ *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.16806937696135218
 
  ----
  Number of points per wavelength:
@@ -411,11 +411,11 @@ running example: Sun Feb 10 19:09:10 AST 2019
    Source            1
    maximum dominant source frequency =    45.000000000000000      Hz
 
-   Nb pts / lambdaP_fmax min =    6.44912672    
-   Nb pts / lambdaP_fmax max =    6.44912672    
+   Nb pts / lambdaP_fmax min =    6.44912672
+   Nb pts / lambdaP_fmax max =    6.44912672
 
-   Nb pts / lambdaS_fmax min =    4.34629250    
-   Nb pts / lambdaS_fmax max =    4.34629250    
+   Nb pts / lambdaS_fmax min =    4.34629250
+   Nb pts / lambdaS_fmax max =    4.34629250
 
  -----------------------------------------
 
@@ -488,9 +488,9 @@ Time step number       5   t =    0.0016 s out of    1400
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
  Mean elapsed time per time step in seconds =    1.1800003051757813E-002
  Time steps remaining =         1395
- Estimated remaining time in seconds =    16.461004257202148     
+ Estimated remaining time in seconds =    16.461004257202148
  Estimated remaining time in hh:mm:ss =      0 h 00 m 16 s
- Estimated total run time in seconds =    16.520004272460938     
+ Estimated total run time in seconds =    16.520004272460938
  Estimated total run time in hh:mm:ss =      0 h 00 m 16 s
  The run will finish approximately on: Sun Feb 10, 2019 19:09
 
@@ -505,13 +505,13 @@ Time step number     200   t =    0.0796 s out of    1400
  ******************************************************************
  We have done    14.2244463     % of the total
  Max norm of vector field in solid (elastic) =    2.14844306E-11
- Elapsed time in seconds =    3.0770001411437988     
+ Elapsed time in seconds =    3.0770001411437988
  Elapsed time in hh:mm:ss =      0 h 00 m 03 s
  Mean elapsed time per time step in seconds =    1.5385000705718995E-002
  Time steps remaining =         1200
- Estimated remaining time in seconds =    18.462000846862793     
+ Estimated remaining time in seconds =    18.462000846862793
  Estimated remaining time in hh:mm:ss =      0 h 00 m 18 s
- Estimated total run time in seconds =    21.539000988006592     
+ Estimated total run time in seconds =    21.539000988006592
  Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
  The run will finish approximately on: Sun Feb 10, 2019 19:10
 
@@ -526,13 +526,13 @@ Time step number     400   t =    0.1596 s out of    1400
  ******************************************************************
  We have done    28.5203724     % of the total
  Max norm of vector field in solid (elastic) =    4.84333667E-12
- Elapsed time in seconds =    6.0600001811981201     
+ Elapsed time in seconds =    6.0600001811981201
  Elapsed time in hh:mm:ss =      0 h 00 m 06 s
  Mean elapsed time per time step in seconds =    1.5150000452995300E-002
  Time steps remaining =         1000
- Estimated remaining time in seconds =    15.150000452995300     
+ Estimated remaining time in seconds =    15.150000452995300
  Estimated remaining time in hh:mm:ss =      0 h 00 m 15 s
- Estimated total run time in seconds =    21.210000634193420     
+ Estimated total run time in seconds =    21.210000634193420
  Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
  The run will finish approximately on: Sun Feb 10, 2019 19:10
 
@@ -547,13 +547,13 @@ Time step number     600   t =    0.2396 s out of    1400
  ******************************************************************
  We have done    42.8162956     % of the total
  Max norm of vector field in solid (elastic) =    2.87035912E-12
- Elapsed time in seconds =    9.1349999904632568     
+ Elapsed time in seconds =    9.1349999904632568
  Elapsed time in hh:mm:ss =      0 h 00 m 09 s
  Mean elapsed time per time step in seconds =    1.5224999984105429E-002
  Time steps remaining =          800
- Estimated remaining time in seconds =    12.179999987284344     
+ Estimated remaining time in seconds =    12.179999987284344
  Estimated remaining time in hh:mm:ss =      0 h 00 m 12 s
- Estimated total run time in seconds =    21.314999977747600     
+ Estimated total run time in seconds =    21.314999977747600
  Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
  The run will finish approximately on: Sun Feb 10, 2019 19:10
 
@@ -568,13 +568,13 @@ Time step number     800   t =    0.3196 s out of    1400
  ******************************************************************
  We have done    57.1122246     % of the total
  Max norm of vector field in solid (elastic) =    1.88621254E-12
- Elapsed time in seconds =    12.266000032424927     
+ Elapsed time in seconds =    12.266000032424927
  Elapsed time in hh:mm:ss =      0 h 00 m 12 s
  Mean elapsed time per time step in seconds =    1.5332500040531159E-002
  Time steps remaining =          600
- Estimated remaining time in seconds =    9.1995000243186951     
+ Estimated remaining time in seconds =    9.1995000243186951
  Estimated remaining time in hh:mm:ss =      0 h 00 m 09 s
- Estimated total run time in seconds =    21.465500056743622     
+ Estimated total run time in seconds =    21.465500056743622
  Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
  The run will finish approximately on: Sun Feb 10, 2019 19:10
 
@@ -589,13 +589,13 @@ Time step number    1000   t =    0.3996 s out of    1400
  ******************************************************************
  We have done    71.4081497     % of the total
  Max norm of vector field in solid (elastic) =    1.33239687E-12
- Elapsed time in seconds =    15.524000167846680     
+ Elapsed time in seconds =    15.524000167846680
  Elapsed time in hh:mm:ss =      0 h 00 m 15 s
  Mean elapsed time per time step in seconds =    1.5524000167846679E-002
  Time steps remaining =          400
- Estimated remaining time in seconds =    6.2096000671386715     
+ Estimated remaining time in seconds =    6.2096000671386715
  Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
- Estimated total run time in seconds =    21.733600234985353     
+ Estimated total run time in seconds =    21.733600234985353
  Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
  The run will finish approximately on: Sun Feb 10, 2019 19:10
 
@@ -610,13 +610,13 @@ Time step number    1200   t =    0.4796 s out of    1400
  ******************************************************************
  We have done    85.7040710     % of the total
  Max norm of vector field in solid (elastic) =    9.55089523E-13
- Elapsed time in seconds =    18.742000102996826     
+ Elapsed time in seconds =    18.742000102996826
  Elapsed time in hh:mm:ss =      0 h 00 m 18 s
  Mean elapsed time per time step in seconds =    1.5618333419164021E-002
  Time steps remaining =          200
- Estimated remaining time in seconds =    3.1236666838328042     
+ Estimated remaining time in seconds =    3.1236666838328042
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    21.865666786829632     
+ Estimated total run time in seconds =    21.865666786829632
  Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
  The run will finish approximately on: Sun Feb 10, 2019 19:10
 
@@ -631,13 +631,13 @@ Time step number    1400   t =    0.5596 s out of    1400
  ******************************************************************
  We have done    100.000000     % of the total
  Max norm of vector field in solid (elastic) =    6.09466741E-13
- Elapsed time in seconds =    21.748000144958496     
+ Elapsed time in seconds =    21.748000144958496
  Elapsed time in hh:mm:ss =      0 h 00 m 21 s
  Mean elapsed time per time step in seconds =    1.5534285817827497E-002
  Time steps remaining =            0
- Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    21.748000144958496     
+ Estimated total run time in seconds =    21.748000144958496
  Estimated total run time in hh:mm:ss =      0 h 00 m 21 s
 
 
@@ -655,13 +655,13 @@ Time step number    1400   t =    0.5596 s out of    1400
  Average duration of the calculation per spectral element =    8.02096929E-06  s
 
 
- Total duration of the timeloop in seconds, measured using 
+ Total duration of the timeloop in seconds, measured using
  date and time of the system :    21.7709999      s
 
 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Program SPECFEM2D: 
+ Program SPECFEM2D:
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
  Test for 2D attenuation 1999 GJI paper

@@ -25,7 +25,7 @@ creating STATIONS file:
 
 running data forward simulation
 
-Changed simulation_type to 1 in Par_file 
+Changed simulation_type to 1 in Par_file
 
 output.log -> OUTPUT_FILES/output.log
 OUTPUT_FILES/Ux_file_single_d.su -> SEM/dat/Ux_file_single_d.su
@@ -38,7 +38,7 @@ DATA/proc000000_x.bin -> MODELS/target_model/proc000000_x.bin
 DATA/proc000000_z.bin -> MODELS/target_model/proc000000_z.bin
 
 setting up perturbed model...
-> ./model_add_Gaussian_perturbation.py vp -0.02 1 
+> ./model_add_Gaussian_perturbation.py vp -0.02 1
 
 
 model perturbation generation:
@@ -91,7 +91,7 @@ DATA/proc000000_vs_gaussian.bin -> DATA/proc000000_vs.bin
 
 running synthetics forward simulation (with saving forward wavefield)
 
-Changed simulation_type to 1 and save_forward = .true. in Par_file 
+Changed simulation_type to 1 and save_forward = .true. in Par_file
 
 output.log -> OUTPUT_FILES/output.forward.log
 OUTPUT_FILES/Ux_file_single_d.su -> SEM/syn/Ux_file_single_d.su
@@ -153,7 +153,7 @@ all done
 
 running kernel simulation
 
-Changed simulation_type to 3 in Par_file 
+Changed simulation_type to 3 in Par_file
 
 output.log -> OUTPUT_FILES/output.kernel.log
 OUTPUT_FILES/output.kernel.log -> KERNELS/output.kernel.log
@@ -239,7 +239,7 @@ DATA/proc000000_vs_new.bin -> DATA/proc000000_vs.bin
 
 running forward simulation (updated model)
 
-Changed simulation_type to 1 in Par_file 
+Changed simulation_type to 1 in Par_file
 
 output.log -> OUTPUT_FILES/output.log
 
@@ -294,7 +294,7 @@ reading model...
 
   calculating inner product in data space: < F dm, F dm>
 
-  data sources: 
+  data sources:
    OUTPUT_FILES.dat.forward/Ux_file_single_d.su
 
    OUTPUT_FILES.syn.forward/Ux_file_single_d.su

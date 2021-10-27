@@ -26,14 +26,14 @@ running mesher...
 
  --------
  Material #           1  isotropic
- rho,cp,cs   =    2000.0000000000000        2000.0000000000000        0.0000000000000000     
- Qkappa, Qmu =    100.00000000000000        9999.0000000000000     
+ rho,cp,cs   =    2000.0000000000000        2000.0000000000000        0.0000000000000000
+ Qkappa, Qmu =    100.00000000000000        9999.0000000000000
  Material is fluid
  --------
 
  Mesh from internal meshing:
 
- Reading interface data from file: ./DATA/interfaces_simple_flat_viscoacoustic.dat                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+ Reading interface data from file: ./DATA/interfaces_simple_flat_viscoacoustic.dat
  Reading            2  points for interface            1
  Reading            2  points for interface            2
 
@@ -52,39 +52,39 @@ running mesher...
  IZ from            1  to          250
  Material #            1  isotropic
  Material is fluid
- vp     =    2000.00000    
- vs     =    0.00000000    
- rho    =    2000.00000    
- Poisson's ratio =   0.500000000    
- QKappa =    100.000000    
- Qmu    =    9999.00000    
+ vp     =    2000.00000
+ vs     =    0.00000000
+ rho    =    2000.00000
+ Poisson's ratio =   0.500000000
+ QKappa =    100.000000
+ Qmu    =    9999.00000
  ------
  Total number of spectral elements         =        62500
 
 
- Parameter file successfully read 
+ Parameter file successfully read
 
  The mesh contains        62500  elements
 
  Control elements have            4  nodes
 
  Source           1
-   Position xs, zs =    0.0000000000000000        0.0000000000000000     
+   Position xs, zs =    0.0000000000000000        0.0000000000000000
 
    Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, 5=plane incident S):            1
    Force source:
-   Angle of the source (deg) =    0.0000000000000000     
-   Multiplying factor  =    50264000.000000000     
+   Angle of the source (deg) =    0.0000000000000000
+   Multiplying factor  =    50264000.000000000
 
    Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 8=Read from file, 9=burst):           3
    Gaussian:
-   Frequency, delay =    50.000000000000000        0.0000000000000000     
+   Frequency, delay =    50.000000000000000        0.0000000000000000
 
  Reading interface data from file: ./DATA/interfaces_simple_flat_viscoacoustic.dat
 
- Mesh dimensions: 
-   Min and max value of X in the grid =   -1500.0000000000000        1500.0000000000000     
-   Min and max value of Z in the grid =   -1500.0000000000002        1500.0000000000002     
+ Mesh dimensions:
+   Min and max value of X in the grid =   -1500.0000000000000        1500.0000000000000
+   Min and max value of Z in the grid =   -1500.0000000000002        1500.0000000000002
 
 
  ************ Computing elements load ************
@@ -110,7 +110,7 @@ running mesher...
  slice            2  has number of spectral elements =       15625
  slice            3  has number of spectral elements =       15625
 
- Position (x,z) of the source =    0.0000000000000000        0.0000000000000000     
+ Position (x,z) of the source =    0.0000000000000000        0.0000000000000000
 
 
  writing the ./DATA/STATIONS file
@@ -120,7 +120,7 @@ running mesher...
 
  Target positions (x,z) of the            1  receivers
 
- Receiver            1  =    800.00000000000000        0.0000000000000000     
+ Receiver            1  =    800.00000000000000        0.0000000000000000
 
  This will be a parallel simulation on            4  processor cores
 
@@ -153,7 +153,7 @@ running solver on 4 processors...
 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Program SPECFEM2D: 
+ Program SPECFEM2D:
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
  Test of SPECFEM2D for a viscoacoustic medium
@@ -176,11 +176,11 @@ running solver on 4 processors...
 
      Display frequency . . . .(NSTEP_BETWEEN_OUTPUT_INFO) =    200
      Color display . . . . . . . . . . . . . . . (colors) =      1
-      == 0     black and white display              
-      == 1     color display                        
+      == 0     black and white display
+      == 1     color display
      Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
-      == 0     do not number the mesh               
-      == 1     number the mesh                      
+      == 0     do not number the mesh
+      == 1     number the mesh
 
 
  C o n t r o l
@@ -212,7 +212,7 @@ running solver on 4 processors...
      Subsampling of velocity model display. (subsamp_postscript) =      1
 
 
- I t e r a t i o n s 
+ I t e r a t i o n s
  ===================
 
      Number of time iterations . . . . .(NSTEP) =    4100
@@ -230,7 +230,7 @@ running solver on 4 processors...
 
      Onset time. . . . . . =   -2.4000000000000000E-002
      Fundamental period. . =    2.0000000000000000E-002
-     Fundamental frequency =    50.000000000000000     
+     Fundamental frequency =    50.000000000000000
      The onset time is ok
 
      -- Spectral Elements --
@@ -291,8 +291,8 @@ running solver on 4 processors...
    in reality they have more degrees of freedom)
 
  Mesh dimensions:
-   Xmin,Xmax of the whole mesh =   -1500.0000000000000        1500.0000000000000     
-   Zmin,Zmax of the whole mesh =   -1500.0000000000005        1500.0000000000005     
+   Xmin,Xmax of the whole mesh =   -1500.0000000000000        1500.0000000000000
+   Zmin,Zmax of the whole mesh =   -1500.0000000000005        1500.0000000000005
 
  Domains:
    total number of acoustic elements        =        62500
@@ -340,13 +340,13 @@ running solver on 4 processors...
 
 
  Force source:
-             original x:    0.00000000    
-             original z:    0.00000000    
+             original x:    0.00000000
+             original z:    0.00000000
  Closest estimate found:    0.00000000      m away
   in rank            2
   in element          148
   in acoustic domain
-  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000
 
 
  end of force source detection
@@ -364,13 +364,13 @@ running solver on 4 processors...
  reading receiver information from the ./DATA/STATIONS file
 
 
- Station #            1     AA      S0001                           
-             original x:    800.000000    
-             original z:    0.00000000    
+ Station #            1     AA      S0001
+             original x:    800.000000
+             original z:    0.00000000
  Closest estimate found:    0.00000000      m away
   in element        15499
   in rank            3
-  at xi,gamma coordinates =   0.33333333333332854        1.0000000000000000     
+  at xi,gamma coordinates =   0.33333333333332854        1.0000000000000000
  Distance from source:    800.000000      m
 
 
@@ -398,9 +398,9 @@ running solver on 4 processors...
  Checking mesh and stability
 
  ********
- Model: P (or PI) velocity min,max =    2000.0000000000000        2000.0000000000000     
- Model: S velocity min,max         =    0.0000000000000000        0.0000000000000000     
- Model: density min,max            =    2000.0000000000000        2000.0000000000000     
+ Model: P (or PI) velocity min,max =    2000.0000000000000        2000.0000000000000
+ Model: S velocity min,max         =    0.0000000000000000        0.0000000000000000
+ Model: density min,max            =    2000.0000000000000        2000.0000000000000
  ********
 
 
@@ -408,21 +408,21 @@ running solver on 4 processors...
  *** Verification of simulation parameters ***
  *********************************************
 
- *** Max grid size =    12.000000000000227     
- *** Min grid size =    11.999999999999545     
- *** Max/min ratio =    1.0000000000000568     
+ *** Max grid size =    12.000000000000227
+ *** Min grid size =    11.999999999999545
+ *** Max/min ratio =    1.0000000000000568
 
- *** Minimum GLL point distance  =    2.0720779757520584     
- *** Average GLL point distance  =    2.9999999999998863     
+ *** Minimum GLL point distance  =    2.0720779757520584
+ *** Average GLL point distance  =    2.9999999999998863
 
  *** Minimum period resolved     =    7.5000000000001420E-003
  *** Maximum frequency resolved  =    133.33333333333081      Hz
 
  *** Maximum suggested time step                 =    5.1801949393801461E-004
- *** Maximum suggested (Ricker) source frequency =    53.333333333332327     
+ *** Maximum suggested (Ricker) source frequency =    53.333333333332327
 
  *** for DT :    1.2999999999999999E-004
- *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.12547790336202636     
+ *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.12547790336202636
 
  ----
  Number of points per wavelength:
@@ -430,8 +430,8 @@ running solver on 4 processors...
    Source            1
    maximum dominant source frequency =    125.00000000000000      Hz
 
-   Nb pts / lambdaP_fmax min =    5.33333349    
-   Nb pts / lambdaP_fmax max =    5.33333349    
+   Nb pts / lambdaP_fmax min =    5.33333349
+   Nb pts / lambdaP_fmax max =    5.33333349
 
    purely fluid regions
 
@@ -501,13 +501,13 @@ Time step number       5   t =  5.200000E-04 s out of    4100
  ******************************************************************
  We have done    9.75847766E-02 % of the total
  Max absolute value of scalar field in fluid (acoustic) =    6.50665606E-05
- Elapsed time in seconds =   0.11599993705749512     
+ Elapsed time in seconds =   0.11599993705749512
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
  Mean elapsed time per time step in seconds =    2.3199987411499024E-002
  Time steps remaining =         4095
- Estimated remaining time in seconds =    95.003948450088501     
+ Estimated remaining time in seconds =    95.003948450088501
  Estimated remaining time in hh:mm:ss =      0 h 01 m 35 s
- Estimated total run time in seconds =    95.119948387145996     
+ Estimated total run time in seconds =    95.119948387145996
  Estimated total run time in hh:mm:ss =      0 h 01 m 35 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
@@ -521,378 +521,378 @@ Time step number       5   t =  5.200000E-04 s out of    4100
 Time step number     200   t =    0.0259 s out of    4100
  ******************************************************************
  We have done    4.85484266     % of the total
- Max absolute value of scalar field in fluid (acoustic) =    7.84786558    
- Elapsed time in seconds =    5.0030000209808350     
+ Max absolute value of scalar field in fluid (acoustic) =    7.84786558
+ Elapsed time in seconds =    5.0030000209808350
  Elapsed time in hh:mm:ss =      0 h 00 m 05 s
  Mean elapsed time per time step in seconds =    2.5015000104904175E-002
  Time steps remaining =         3900
- Estimated remaining time in seconds =    97.558500409126282     
+ Estimated remaining time in seconds =    97.558500409126282
  Estimated remaining time in hh:mm:ss =      0 h 01 m 37 s
- Estimated total run time in seconds =    102.56150043010712     
+ Estimated total run time in seconds =    102.56150043010712
  Estimated total run time in hh:mm:ss =      0 h 01 m 42 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step          200
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =    3.8319253921508789     
+ Color image maximum amplitude =    3.8319253921508789
  Color image created
 
  ******************************************************************
 Time step number     400   t =    0.0519 s out of    4100
  ******************************************************************
  We have done    9.73408127     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.841053426    
- Elapsed time in seconds =    9.9309999942779541     
+ Max absolute value of scalar field in fluid (acoustic) =   0.841053426
+ Elapsed time in seconds =    9.9309999942779541
  Elapsed time in hh:mm:ss =      0 h 00 m 09 s
  Mean elapsed time per time step in seconds =    2.4827499985694886E-002
  Time steps remaining =         3700
- Estimated remaining time in seconds =    91.861749947071075     
+ Estimated remaining time in seconds =    91.861749947071075
  Estimated remaining time in hh:mm:ss =      0 h 01 m 31 s
- Estimated total run time in seconds =    101.79274994134903     
+ Estimated total run time in seconds =    101.79274994134903
  Estimated total run time in hh:mm:ss =      0 h 01 m 41 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step          400
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.83909189701080322     
+ Color image maximum amplitude =   0.83909189701080322
  Color image created
 
  ******************************************************************
 Time step number     600   t =    0.0779 s out of    4100
  ******************************************************************
  We have done    14.6133204     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.567449212    
- Elapsed time in seconds =    15.305999994277954     
+ Max absolute value of scalar field in fluid (acoustic) =   0.567449212
+ Elapsed time in seconds =    15.305999994277954
  Elapsed time in hh:mm:ss =      0 h 00 m 15 s
  Mean elapsed time per time step in seconds =    2.5509999990463259E-002
  Time steps remaining =         3500
- Estimated remaining time in seconds =    89.284999966621399     
+ Estimated remaining time in seconds =    89.284999966621399
  Estimated remaining time in hh:mm:ss =      0 h 01 m 29 s
- Estimated total run time in seconds =    104.59099996089935     
+ Estimated total run time in seconds =    104.59099996089935
  Estimated total run time in hh:mm:ss =      0 h 01 m 44 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step          600
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.56652140617370605     
+ Color image maximum amplitude =   0.56652140617370605
  Color image created
 
  ******************************************************************
 Time step number     800   t =    0.1039 s out of    4100
  ******************************************************************
  We have done    19.4925594     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.442201257    
- Elapsed time in seconds =    20.829999923706055     
+ Max absolute value of scalar field in fluid (acoustic) =   0.442201257
+ Elapsed time in seconds =    20.829999923706055
  Elapsed time in hh:mm:ss =      0 h 00 m 20 s
  Mean elapsed time per time step in seconds =    2.6037499904632569E-002
  Time steps remaining =         3300
- Estimated remaining time in seconds =    85.923749685287476     
+ Estimated remaining time in seconds =    85.923749685287476
  Estimated remaining time in hh:mm:ss =      0 h 01 m 25 s
- Estimated total run time in seconds =    106.75374960899353     
+ Estimated total run time in seconds =    106.75374960899353
  Estimated total run time in hh:mm:ss =      0 h 01 m 46 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step          800
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.44216272234916687     
+ Color image maximum amplitude =   0.44216272234916687
  Color image created
 
  ******************************************************************
 Time step number    1000   t =    0.1299 s out of    4100
  ******************************************************************
  We have done    24.3717976     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.366713256    
- Elapsed time in seconds =    26.608999967575073     
+ Max absolute value of scalar field in fluid (acoustic) =   0.366713256
+ Elapsed time in seconds =    26.608999967575073
  Elapsed time in hh:mm:ss =      0 h 00 m 26 s
  Mean elapsed time per time step in seconds =    2.6608999967575073E-002
  Time steps remaining =         3100
- Estimated remaining time in seconds =    82.487899899482727     
+ Estimated remaining time in seconds =    82.487899899482727
  Estimated remaining time in hh:mm:ss =      0 h 01 m 22 s
- Estimated total run time in seconds =    109.09689986705780     
+ Estimated total run time in seconds =    109.09689986705780
  Estimated total run time in hh:mm:ss =      0 h 01 m 49 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step         1000
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.36638554930686951     
+ Color image maximum amplitude =   0.36638554930686951
  Color image created
 
  ******************************************************************
 Time step number    1200   t =    0.1559 s out of    4100
  ******************************************************************
  We have done    29.2510376     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.313895226    
- Elapsed time in seconds =    32.457999944686890     
+ Max absolute value of scalar field in fluid (acoustic) =   0.313895226
+ Elapsed time in seconds =    32.457999944686890
  Elapsed time in hh:mm:ss =      0 h 00 m 32 s
  Mean elapsed time per time step in seconds =    2.7048333287239074E-002
  Time steps remaining =         2900
- Estimated remaining time in seconds =    78.440166532993317     
+ Estimated remaining time in seconds =    78.440166532993317
  Estimated remaining time in hh:mm:ss =      0 h 01 m 18 s
- Estimated total run time in seconds =    110.89816647768021     
+ Estimated total run time in seconds =    110.89816647768021
  Estimated total run time in hh:mm:ss =      0 h 01 m 50 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step         1200
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.31367838382720947     
+ Color image maximum amplitude =   0.31367838382720947
  Color image created
 
  ******************************************************************
 Time step number    1400   t =    0.1819 s out of    4100
  ******************************************************************
  We have done    34.1302757     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.274471819    
- Elapsed time in seconds =    38.687999963760376     
+ Max absolute value of scalar field in fluid (acoustic) =   0.274471819
+ Elapsed time in seconds =    38.687999963760376
  Elapsed time in hh:mm:ss =      0 h 00 m 38 s
  Mean elapsed time per time step in seconds =    2.7634285688400269E-002
  Time steps remaining =         2700
- Estimated remaining time in seconds =    74.612571358680725     
+ Estimated remaining time in seconds =    74.612571358680725
  Estimated remaining time in hh:mm:ss =      0 h 01 m 14 s
- Estimated total run time in seconds =    113.30057132244110     
+ Estimated total run time in seconds =    113.30057132244110
  Estimated total run time in hh:mm:ss =      0 h 01 m 53 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step         1400
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.27438899874687195     
+ Color image maximum amplitude =   0.27438899874687195
  Color image created
 
  ******************************************************************
 Time step number    1600   t =    0.2079 s out of    4100
  ******************************************************************
  We have done    39.0095139     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.243429169    
- Elapsed time in seconds =    44.476999998092651     
+ Max absolute value of scalar field in fluid (acoustic) =   0.243429169
+ Elapsed time in seconds =    44.476999998092651
  Elapsed time in hh:mm:ss =      0 h 00 m 44 s
  Mean elapsed time per time step in seconds =    2.7798124998807908E-002
  Time steps remaining =         2500
- Estimated remaining time in seconds =    69.495312497019768     
+ Estimated remaining time in seconds =    69.495312497019768
  Estimated remaining time in hh:mm:ss =      0 h 01 m 09 s
- Estimated total run time in seconds =    113.97231249511242     
+ Estimated total run time in seconds =    113.97231249511242
  Estimated total run time in hh:mm:ss =      0 h 01 m 53 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step         1600
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.24326261878013611     
+ Color image maximum amplitude =   0.24326261878013611
  Color image created
 
  ******************************************************************
 Time step number    1800   t =    0.2339 s out of    4100
  ******************************************************************
  We have done    43.8887520     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.218114659    
- Elapsed time in seconds =    50.226999998092651     
+ Max absolute value of scalar field in fluid (acoustic) =   0.218114659
+ Elapsed time in seconds =    50.226999998092651
  Elapsed time in hh:mm:ss =      0 h 00 m 50 s
  Mean elapsed time per time step in seconds =    2.7903888887829249E-002
  Time steps remaining =         2300
- Estimated remaining time in seconds =    64.178944442007278     
+ Estimated remaining time in seconds =    64.178944442007278
  Estimated remaining time in hh:mm:ss =      0 h 01 m 04 s
- Estimated total run time in seconds =    114.40594444009993     
+ Estimated total run time in seconds =    114.40594444009993
  Estimated total run time in hh:mm:ss =      0 h 01 m 54 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step         1800
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.21800521016120911     
+ Color image maximum amplitude =   0.21800521016120911
  Color image created
 
  ******************************************************************
 Time step number    2000   t =    0.2599 s out of    4100
  ******************************************************************
  We have done    48.7679939     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.197015554    
- Elapsed time in seconds =    56.774999856948853     
+ Max absolute value of scalar field in fluid (acoustic) =   0.197015554
+ Elapsed time in seconds =    56.774999856948853
  Elapsed time in hh:mm:ss =      0 h 00 m 56 s
  Mean elapsed time per time step in seconds =    2.8387499928474426E-002
  Time steps remaining =         2100
- Estimated remaining time in seconds =    59.613749849796292     
+ Estimated remaining time in seconds =    59.613749849796292
  Estimated remaining time in hh:mm:ss =      0 h 00 m 59 s
- Estimated total run time in seconds =    116.38874970674514     
+ Estimated total run time in seconds =    116.38874970674514
  Estimated total run time in hh:mm:ss =      0 h 01 m 56 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step         2000
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.19707699120044708     
+ Color image maximum amplitude =   0.19707699120044708
  Color image created
 
  ******************************************************************
 Time step number    2200   t =    0.2859 s out of    4100
  ******************************************************************
  We have done    53.6472321     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.179205179    
- Elapsed time in seconds =    64.083999872207642     
+ Max absolute value of scalar field in fluid (acoustic) =   0.179205179
+ Elapsed time in seconds =    64.083999872207642
  Elapsed time in hh:mm:ss =      0 h 01 m 04 s
  Mean elapsed time per time step in seconds =    2.9129090851003472E-002
  Time steps remaining =         1900
- Estimated remaining time in seconds =    55.345272616906598     
+ Estimated remaining time in seconds =    55.345272616906598
  Estimated remaining time in hh:mm:ss =      0 h 00 m 55 s
- Estimated total run time in seconds =    119.42927248911424     
+ Estimated total run time in seconds =    119.42927248911424
  Estimated total run time in hh:mm:ss =      0 h 01 m 59 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step         2200
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.17914910614490509     
+ Color image maximum amplitude =   0.17914910614490509
  Color image created
 
  ******************************************************************
 Time step number    2400   t =    0.3119 s out of    4100
  ******************************************************************
  We have done    58.5264702     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.163826749    
- Elapsed time in seconds =    70.353999853134155     
+ Max absolute value of scalar field in fluid (acoustic) =   0.163826749
+ Elapsed time in seconds =    70.353999853134155
  Elapsed time in hh:mm:ss =      0 h 01 m 10 s
  Mean elapsed time per time step in seconds =    2.9314166605472564E-002
  Time steps remaining =         1700
- Estimated remaining time in seconds =    49.834083229303360     
+ Estimated remaining time in seconds =    49.834083229303360
  Estimated remaining time in hh:mm:ss =      0 h 00 m 49 s
- Estimated total run time in seconds =    120.18808308243752     
+ Estimated total run time in seconds =    120.18808308243752
  Estimated total run time in hh:mm:ss =      0 h 02 m 00 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step         2400
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.16373398900032043     
+ Color image maximum amplitude =   0.16373398900032043
  Color image created
 
  ******************************************************************
 Time step number    2600   t =    0.3379 s out of    4100
  ******************************************************************
  We have done    63.4057083     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.150377542    
- Elapsed time in seconds =    77.037999868392944     
+ Max absolute value of scalar field in fluid (acoustic) =   0.150377542
+ Elapsed time in seconds =    77.037999868392944
  Elapsed time in hh:mm:ss =      0 h 01 m 17 s
  Mean elapsed time per time step in seconds =    2.9629999949381900E-002
  Time steps remaining =         1500
- Estimated remaining time in seconds =    44.444999924072853     
+ Estimated remaining time in seconds =    44.444999924072853
  Estimated remaining time in hh:mm:ss =      0 h 00 m 44 s
- Estimated total run time in seconds =    121.48299979246579     
+ Estimated total run time in seconds =    121.48299979246579
  Estimated total run time in hh:mm:ss =      0 h 02 m 01 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step         2600
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.15027973055839539     
+ Color image maximum amplitude =   0.15027973055839539
  Color image created
 
  ******************************************************************
 Time step number    2800   t =    0.3639 s out of    4100
  ******************************************************************
  We have done    68.2849503     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.138615966    
- Elapsed time in seconds =    83.287999868392944     
+ Max absolute value of scalar field in fluid (acoustic) =   0.138615966
+ Elapsed time in seconds =    83.287999868392944
  Elapsed time in hh:mm:ss =      0 h 01 m 23 s
  Mean elapsed time per time step in seconds =    2.9745714238711765E-002
  Time steps remaining =         1300
- Estimated remaining time in seconds =    38.669428510325297     
+ Estimated remaining time in seconds =    38.669428510325297
  Estimated remaining time in hh:mm:ss =      0 h 00 m 38 s
- Estimated total run time in seconds =    121.95742837871825     
+ Estimated total run time in seconds =    121.95742837871825
  Estimated total run time in hh:mm:ss =      0 h 02 m 01 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step         2800
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.13855789601802826     
+ Color image maximum amplitude =   0.13855789601802826
  Color image created
 
  ******************************************************************
 Time step number    3000   t =    0.3899 s out of    4100
  ******************************************************************
  We have done    73.1641846     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.128133178    
- Elapsed time in seconds =    89.924999952316284     
+ Max absolute value of scalar field in fluid (acoustic) =   0.128133178
+ Elapsed time in seconds =    89.924999952316284
  Elapsed time in hh:mm:ss =      0 h 01 m 29 s
  Mean elapsed time per time step in seconds =    2.9974999984105428E-002
  Time steps remaining =         1100
- Estimated remaining time in seconds =    32.972499982515970     
+ Estimated remaining time in seconds =    32.972499982515970
  Estimated remaining time in hh:mm:ss =      0 h 00 m 32 s
- Estimated total run time in seconds =    122.89749993483225     
+ Estimated total run time in seconds =    122.89749993483225
  Estimated total run time in hh:mm:ss =      0 h 02 m 02 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step         3000
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.12808236479759216     
+ Color image maximum amplitude =   0.12808236479759216
  Color image created
 
  ******************************************************************
 Time step number    3200   t =    0.4159 s out of    4100
  ******************************************************************
  We have done    78.0434265     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.118753105    
- Elapsed time in seconds =    96.484999895095825     
+ Max absolute value of scalar field in fluid (acoustic) =   0.118753105
+ Elapsed time in seconds =    96.484999895095825
  Elapsed time in hh:mm:ss =      0 h 01 m 36 s
  Mean elapsed time per time step in seconds =    3.0151562467217445E-002
  Time steps remaining =          900
- Estimated remaining time in seconds =    27.136406220495701     
+ Estimated remaining time in seconds =    27.136406220495701
  Estimated remaining time in hh:mm:ss =      0 h 00 m 27 s
- Estimated total run time in seconds =    123.62140611559153     
+ Estimated total run time in seconds =    123.62140611559153
  Estimated total run time in hh:mm:ss =      0 h 02 m 03 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step         3200
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.11868917942047119     
+ Color image maximum amplitude =   0.11868917942047119
  Color image created
 
  ******************************************************************
 Time step number    3400   t =    0.4419 s out of    4100
  ******************************************************************
  We have done    82.9226608     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.110326558    
- Elapsed time in seconds =    102.36800003051758     
+ Max absolute value of scalar field in fluid (acoustic) =   0.110326558
+ Elapsed time in seconds =    102.36800003051758
  Elapsed time in hh:mm:ss =      0 h 01 m 42 s
  Mean elapsed time per time step in seconds =    3.0108235303093405E-002
  Time steps remaining =          700
- Estimated remaining time in seconds =    21.075764712165384     
+ Estimated remaining time in seconds =    21.075764712165384
  Estimated remaining time in hh:mm:ss =      0 h 00 m 21 s
- Estimated total run time in seconds =    123.44376474268296     
+ Estimated total run time in seconds =    123.44376474268296
  Estimated total run time in hh:mm:ss =      0 h 02 m 03 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step         3400
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.11026494950056076     
+ Color image maximum amplitude =   0.11026494950056076
  Color image created
 
  ******************************************************************
 Time step number    3600   t =    0.4679 s out of    4100
  ******************************************************************
  We have done    87.8019028     % of the total
- Max absolute value of scalar field in fluid (acoustic) =   0.102767766    
- Elapsed time in seconds =    108.82999992370605     
+ Max absolute value of scalar field in fluid (acoustic) =   0.102767766
+ Elapsed time in seconds =    108.82999992370605
  Elapsed time in hh:mm:ss =      0 h 01 m 48 s
  Mean elapsed time per time step in seconds =    3.0230555534362793E-002
  Time steps remaining =          500
- Estimated remaining time in seconds =    15.115277767181396     
+ Estimated remaining time in seconds =    15.115277767181396
  Estimated remaining time in hh:mm:ss =      0 h 00 m 15 s
- Estimated total run time in seconds =    123.94527769088745     
+ Estimated total run time in seconds =    123.94527769088745
  Estimated total run time in hh:mm:ss =      0 h 02 m 03 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
 
  Creating color image of size         1010  x         1060  for time step         3600
  drawing scalar image of the forward wavefield pressure...
- Color image maximum amplitude =   0.10274169594049454     
+ Color image maximum amplitude =   0.10274169594049454
  Color image created
 
  ******************************************************************
@@ -900,13 +900,13 @@ Time step number    3800   t =    0.4939 s out of    4100
  ******************************************************************
  We have done    92.6811447     % of the total
  Max absolute value of scalar field in fluid (acoustic) =    9.58866328E-02
- Elapsed time in seconds =    115.64100003242493     
+ Elapsed time in seconds =    115.64100003242493
  Elapsed time in hh:mm:ss =      0 h 01 m 55 s
  Mean elapsed time per time step in seconds =    3.0431842113796032E-002
  Time steps remaining =          300
- Estimated remaining time in seconds =    9.1295526341388094     
+ Estimated remaining time in seconds =    9.1295526341388094
  Estimated remaining time in hh:mm:ss =      0 h 00 m 09 s
- Estimated total run time in seconds =    124.77055266656373     
+ Estimated total run time in seconds =    124.77055266656373
  Estimated total run time in hh:mm:ss =      0 h 02 m 04 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
@@ -921,13 +921,13 @@ Time step number    4000   t =    0.5199 s out of    4100
  ******************************************************************
  We have done    97.5603790     % of the total
  Max absolute value of scalar field in fluid (acoustic) =    8.96139219E-02
- Elapsed time in seconds =    121.98499989509583     
+ Elapsed time in seconds =    121.98499989509583
  Elapsed time in hh:mm:ss =      0 h 02 m 01 s
  Mean elapsed time per time step in seconds =    3.0496249973773957E-002
  Time steps remaining =          100
- Estimated remaining time in seconds =    3.0496249973773959     
+ Estimated remaining time in seconds =    3.0496249973773959
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    125.03462489247322     
+ Estimated total run time in seconds =    125.03462489247322
  Estimated total run time in hh:mm:ss =      0 h 02 m 05 s
  The run will finish approximately on: Sun Feb 10, 2019 19:01
 
@@ -942,13 +942,13 @@ Time step number    4100   t =    0.5329 s out of    4100
  ******************************************************************
  We have done    100.000000     % of the total
  Max absolute value of scalar field in fluid (acoustic) =    8.66813511E-02
- Elapsed time in seconds =    125.19599986076355     
+ Elapsed time in seconds =    125.19599986076355
  Elapsed time in hh:mm:ss =      0 h 02 m 05 s
  Mean elapsed time per time step in seconds =    3.0535609722137452E-002
  Time steps remaining =            0
- Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    125.19599986076355     
+ Estimated total run time in seconds =    125.19599986076355
  Estimated total run time in hh:mm:ss =      0 h 02 m 05 s
 
 
@@ -966,13 +966,13 @@ Time step number    4100   t =    0.5329 s out of    4100
  Average duration of the calculation per spectral element =    1.93893288E-06  s
 
 
- Total duration of the timeloop in seconds, measured using 
+ Total duration of the timeloop in seconds, measured using
  date and time of the system :    125.302002      s
 
 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Program SPECFEM2D: 
+ Program SPECFEM2D:
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
  Test of SPECFEM2D for a viscoacoustic medium

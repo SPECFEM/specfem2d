@@ -1,6 +1,5 @@
-set term png
-
-set output "OUTPUT_FILES/rho_and_kappa_kernels.png"
+## sets terminal
+set term png size 1000,1000 enhanced font "arial,10"
 
 ## sets color range
 
@@ -18,27 +17,32 @@ unset grid
 set samples 2
 set isosamples 2
 
+# point size
+set pointsize 0.2
+
+set output "OUTPUT_FILES/rho_and_kappa_kernels.png"
+
 set multiplot
 
 set size 0.5,0.5
 set origin 0,0
 set title "rho kernel acoustic only"
-splot "OUTPUT_FILES/proc000000_rho_kappa_kernel.dat" using 1:2:(($1>=2000.0 && $1<=3000.0)? 1/0 : $3) w points palette ps 0.02 pt 5
+splot "OUTPUT_FILES/proc000000_rho_kappa_kernel.dat" using 1:2:(($1>=2000.0 && $1<=3000.0)? 1/0 : $3) w points palette pt 5
 
 set size 0.5,0.5
 set origin 0.47,0
 set title "kappa kernel acoustic only"
-splot "OUTPUT_FILES/proc000000_rho_kappa_kernel.dat" using 1:2:(($1>=2000.0 &&$1<=3000.0)? 1/0 : $4)   w points palette ps 0.02 pt 5
+splot "OUTPUT_FILES/proc000000_rho_kappa_kernel.dat" using 1:2:(($1>=2000.0 &&$1<=3000.0)? 1/0 : $4)   w points palette pt 5
 
 set size 0.5,0.5
 set origin 0,0.5
 set title "rho kernel acoustic and elastic"
-splot "OUTPUT_FILES/proc000000_rho_kappa_kernel.dat" using 1:2:(($1>=2000.0 && $1<=3000.0)? 1/0 : $3) w points palette ps 0.02 pt 5,"OUTPUT_FILES/proc000000_rho_kappa_mu_kernel.dat" using 1:2:(($1>=2000.0 && $1<=3000.0)? $3 : 1/0) w points palette ps 0.02 pt 5
+splot "OUTPUT_FILES/proc000000_rho_kappa_kernel.dat" using 1:2:(($1>=2000.0 && $1<=3000.0)? 1/0 : $3) w points palette pt 5,"OUTPUT_FILES/proc000000_rho_kappa_mu_kernel.dat" using 1:2:(($1>=2000.0 && $1<=3000.0)? $3 : 1/0) w points palette pt 5
 
 set size 0.5,0.5
 set origin 0.47,0.5
 set title "kappa kernel acoustic and elastic"
-splot "OUTPUT_FILES/proc000000_rho_kappa_kernel.dat" using 1:2:(($1>=2000.0 &&$1<=3000.0)? 1/0 : $4)   w points palette ps 0.02 pt 5,"OUTPUT_FILES/proc000000_rho_kappa_mu_kernel.dat" using 1:2:(($1>=2000.0 && $1<=3000.0)? $4 : 1/0) w points palette ps 0.02 pt 5
+splot "OUTPUT_FILES/proc000000_rho_kappa_kernel.dat" using 1:2:(($1>=2000.0 &&$1<=3000.0)? 1/0 : $4)   w points palette pt 5,"OUTPUT_FILES/proc000000_rho_kappa_mu_kernel.dat" using 1:2:(($1>=2000.0 && $1<=3000.0)? $4 : 1/0) w points palette pt 5
 
 unset multiplot
 
@@ -56,6 +60,13 @@ unset key
 unset grid
 unset cbtics
 unset title
+unset colorbox
+unset border
+unset tics
+
+# for output compatibility linux/mac/.. to compare images
+# sets margins <left>, <right>, <bottom>, <top> to place two figures in the middle of the canvas (or screen)
+set margins -1, -1, screen 0.25, screen 0.75
 
 set output "OUTPUT_FILES/rho_and_kappa_kernels_acoustic_and_elastic_only_no_caption.png"
 
@@ -63,14 +74,16 @@ set multiplot
 
 set size 0.5,0.5
 set origin 0,0.5
-splot "OUTPUT_FILES/proc000000_rho_kappa_kernel.dat" using 1:2:(($1>=2000.0 && $1<=3000.0)? 1/0 : $3) w points palette ps 0.02 pt 5,"OUTPUT_FILES/proc000000_rho_kappa_mu_kernel.dat" using 1:2:(($1>=2000.0 && $1<=3000.0)? $3 : 1/0) w points palette ps 0.02 pt 5
+splot "OUTPUT_FILES/proc000000_rho_kappa_kernel.dat" using 1:2:(($1>=2000.0 && $1<=3000.0)? 1/0 : $3) w points palette pt 5,"OUTPUT_FILES/proc000000_rho_kappa_mu_kernel.dat" using 1:2:(($1>=2000.0 && $1<=3000.0)? $3 : 1/0) w points palette pt 5
 
 set size 0.5,0.5
 set origin 0.5,0.5
-splot "OUTPUT_FILES/proc000000_rho_kappa_kernel.dat" using 1:2:(($1>=2000.0 &&$1<=3000.0)? 1/0 : $4)   w points palette ps 0.02 pt 5,"OUTPUT_FILES/proc000000_rho_kappa_mu_kernel.dat" using 1:2:(($1>=2000.0 && $1<=3000.0)? $4 : 1/0) w points palette ps 0.02 pt 5
+splot "OUTPUT_FILES/proc000000_rho_kappa_kernel.dat" using 1:2:(($1>=2000.0 &&$1<=3000.0)? 1/0 : $4)   w points palette pt 5,"OUTPUT_FILES/proc000000_rho_kappa_mu_kernel.dat" using 1:2:(($1>=2000.0 && $1<=3000.0)? $4 : 1/0) w points palette pt 5
 
 unset multiplot
 
+#debug view
+#show variables all
 
 set print "-"
 print "gnuplot plotted: OUTPUT_FILES/rho_and_kappa_kernels_acoustic_and_elastic_only_no_caption.png"

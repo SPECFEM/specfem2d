@@ -26,17 +26,17 @@ running mesher on 4 processors...
 
  --------
  Material #           1  isotropic
- rho_s, kappa_s         =    2650.0000000000000        12200000000.000000     
- rho_f, kappa_f, eta_f  =    880.00000000000000        1985000000.0000000        0.0000000000000000     
- phi, tortuosity        =   0.10000000000000001        2.0000000000000000     
+ rho_s, kappa_s         =    2650.0000000000000        12200000000.000000
+ rho_f, kappa_f, eta_f  =    880.00000000000000        1985000000.0000000        0.0000000000000000
+ phi, tortuosity        =   0.10000000000000001        2.0000000000000000
  permxx, permxz, permzz =    1.0000000000000001E-009   0.0000000000000000        1.0000000000000001E-009
- kappa_fr, mu_fr, Qmu   =    9600000000.0000000        5100000000.0000000        9999999999.0000000     
+ kappa_fr, mu_fr, Qmu   =    9600000000.0000000        5100000000.0000000        9999999999.0000000
  Material is porous
  --------
 
  Mesh from internal meshing:
 
- Reading interface data from file: ./DATA/./interfaces.dat                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+ Reading interface data from file: ./DATA/./interfaces.dat
  Reading            2  points for interface            1
  Reading            2  points for interface            2
 
@@ -59,30 +59,30 @@ running mesher on 4 processors...
  Total number of spectral elements         =        40000
 
 
- Parameter file successfully read 
+ Parameter file successfully read
 
  The mesh contains        40000  elements
 
  Control elements have            9  nodes
 
  Source           1
-   Position xs, zs =    500.00000000000000        300.00000000000000     
+   Position xs, zs =    500.00000000000000        300.00000000000000
 
    Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, 5=plane incident S):            2
    Moment tensor source:
-   Mxx of the source =    1.0000000000000000     
-   Mzz of the source =    1.0000000000000000     
-   Mxz of the source =    0.0000000000000000     
+   Mxx of the source =    1.0000000000000000
+   Mzz of the source =    1.0000000000000000
+   Mxz of the source =    0.0000000000000000
 
    Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 8=Read from file, 9=burst):           3
    Gaussian:
-   Frequency, delay =    30.000000000000000        0.0000000000000000     
+   Frequency, delay =    30.000000000000000        0.0000000000000000
 
  Reading interface data from file: ./DATA/./interfaces.dat
 
- Mesh dimensions: 
-   Min and max value of X in the grid =    0.0000000000000000        1000.0000000000000     
-   Min and max value of Z in the grid =    0.0000000000000000        1000.0000000000000     
+ Mesh dimensions:
+   Min and max value of X in the grid =    0.0000000000000000        1000.0000000000000
+   Min and max value of Z in the grid =    0.0000000000000000        1000.0000000000000
 
 
  ************ Computing elements load ************
@@ -108,7 +108,7 @@ running mesher on 4 processors...
  slice            2  has number of spectral elements =       10000
  slice            3  has number of spectral elements =       10000
 
- Position (x,z) of the source =    500.00000000000000        300.00000000000000     
+ Position (x,z) of the source =    500.00000000000000        300.00000000000000
 
 
  writing the ./DATA/STATIONS file
@@ -118,7 +118,7 @@ running mesher on 4 processors...
 
  Target positions (x,z) of the            1  receivers
 
- Receiver            1  =    600.00000000000000        400.00000000000000     
+ Receiver            1  =    600.00000000000000        400.00000000000000
 
  This will be a parallel simulation on            4  processor cores
 
@@ -151,7 +151,7 @@ running solver on 4 processors...
 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Program SPECFEM2D: 
+ Program SPECFEM2D:
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
  poroelastic semi-infinite homogeneous
@@ -174,11 +174,11 @@ running solver on 4 processors...
 
      Display frequency . . . .(NSTEP_BETWEEN_OUTPUT_INFO) =    200
      Color display . . . . . . . . . . . . . . . (colors) =      1
-      == 0     black and white display              
-      == 1     color display                        
+      == 0     black and white display
+      == 1     color display
      Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
-      == 0     do not number the mesh               
-      == 1     number the mesh                      
+      == 0     do not number the mesh
+      == 1     number the mesh
 
 
  C o n t r o l
@@ -210,7 +210,7 @@ running solver on 4 processors...
      Subsampling of velocity model display. (subsamp_postscript) =      1
 
 
- I t e r a t i o n s 
+ I t e r a t i o n s
  ===================
 
      Number of time iterations . . . . .(NSTEP) =    2500
@@ -229,7 +229,7 @@ running solver on 4 processors...
      Mxz. . . . . . . . . . . . . . . . . . =    0.0000000000E+00
      Onset time. . . . . . =   -4.0000000000000001E-002
      Fundamental period. . =    3.3333333333333333E-002
-     Fundamental frequency =    30.000000000000000     
+     Fundamental frequency =    30.000000000000000
      The onset time is ok
 
      -- Spectral Elements --
@@ -335,8 +335,8 @@ running solver on 4 processors...
    in reality they have more degrees of freedom)
 
  Mesh dimensions:
-   Xmin,Xmax of the whole mesh =    0.0000000000000000        1000.0000000000001     
-   Zmin,Zmax of the whole mesh =    0.0000000000000000        1000.0000000000001     
+   Xmin,Xmax of the whole mesh =    0.0000000000000000        1000.0000000000001
+   Zmin,Zmax of the whole mesh =    0.0000000000000000        1000.0000000000001
 
  Domains:
    total number of acoustic elements        =            0
@@ -379,13 +379,13 @@ running solver on 4 processors...
 
 
  Moment-tensor source:
-             original x:    500.000000    
-             original z:    300.000000    
+             original x:    500.000000
+             original z:    300.000000
  Closest estimate found:    0.00000000      m away
   in rank            2
   in element         6000
   in poroelastic domain
-  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000
 
 
  end of moment-tensor source detection
@@ -403,13 +403,13 @@ running solver on 4 processors...
  reading receiver information from the ./DATA/STATIONS file
 
 
- Station #            1     AA      S0001                           
-             original x:    600.000000    
-             original z:    400.000000    
+ Station #            1     AA      S0001
+             original x:    600.000000
+             original z:    400.000000
  Closest estimate found:    0.00000000      m away
   in element         7920
   in rank            3
-  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000
  Distance from source:    141.421356      m
 
 
@@ -432,10 +432,10 @@ running solver on 4 processors...
  Checking mesh and stability
 
  ********
- Model: P (or PI) velocity min,max =    2639.0297580905385        2639.0297580905385     
- Model: PII velocity min,max       =    960.95715542029916        960.95715542029916     
- Model: S velocity min,max         =    1449.0098264508392        1449.0098264508392     
- Model: density min,max            =    2650.0000000000000        2650.0000000000000     
+ Model: P (or PI) velocity min,max =    2639.0297580905385        2639.0297580905385
+ Model: PII velocity min,max       =    960.95715542029916        960.95715542029916
+ Model: S velocity min,max         =    1449.0098264508392        1449.0098264508392
+ Model: density min,max            =    2650.0000000000000        2650.0000000000000
  ********
 
 
@@ -443,21 +443,21 @@ running solver on 4 processors...
  *** Verification of simulation parameters ***
  *********************************************
 
- *** Max grid size =    5.0000000000000000     
- *** Min grid size =    5.0000000000000000     
- *** Max/min ratio =    1.0000000000000000     
+ *** Max grid size =    5.0000000000000000
+ *** Min grid size =    5.0000000000000000
+ *** Max/min ratio =    1.0000000000000000
 
- *** Minimum GLL point distance  =   0.86336582323005695     
- *** Average GLL point distance  =    1.2500000000000000     
+ *** Minimum GLL point distance  =   0.86336582323005695
+ *** Average GLL point distance  =    1.2500000000000000
 
  *** Minimum period resolved     =    4.3132902799621177E-003
  *** Maximum frequency resolved  =    231.84157223213427      Hz
 
  *** Maximum suggested time step                 =    1.6357637131283098E-004
- *** Maximum suggested (Ricker) source frequency =    92.736628892853716     
+ *** Maximum suggested (Ricker) source frequency =    92.736628892853716
 
  *** for DT :    1.0000000000000000E-004
- *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.30566761934324671     
+ *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.30566761934324671
 
  ----
  Number of points per wavelength:
@@ -465,14 +465,14 @@ running solver on 4 processors...
    Source            1
    maximum dominant source frequency =    75.000000000000000      Hz
 
-   Nb pts / lambdaPI_fmax min =    28.1496506    
-   Nb pts / lambdaPI_fmax max =    28.1496506    
+   Nb pts / lambdaPI_fmax min =    28.1496506
+   Nb pts / lambdaPI_fmax max =    28.1496506
 
-   Nb pts / lambdaPII_fmax min =    10.2502098    
-   Nb pts / lambdaPII_fmax max =    10.2502098    
+   Nb pts / lambdaPII_fmax min =    10.2502098
+   Nb pts / lambdaPII_fmax max =    10.2502098
 
-   Nb pts / lambdaS_fmax min =    15.4561052    
-   Nb pts / lambdaS_fmax max =    15.4561052    
+   Nb pts / lambdaS_fmax min =    15.4561052
+   Nb pts / lambdaS_fmax max =    15.4561052
 
  -----------------------------------------
 
@@ -541,13 +541,13 @@ Time step number       5   t =  4.000000E-04 s out of    2500
  We have done   0.160064027     % of the total
  Max norm of vector field in solid (poroelastic) =    5.85419213E-11
  Max norm of vector field in fluid (poroelastic) =    1.07419212E-11
- Elapsed time in seconds =   0.15700006484985352     
+ Elapsed time in seconds =   0.15700006484985352
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
  Mean elapsed time per time step in seconds =    3.1400012969970706E-002
  Time steps remaining =         2495
- Estimated remaining time in seconds =    78.343032360076904     
+ Estimated remaining time in seconds =    78.343032360076904
  Estimated remaining time in hh:mm:ss =      0 h 01 m 18 s
- Estimated total run time in seconds =    78.500032424926758     
+ Estimated total run time in seconds =    78.500032424926758
  Estimated total run time in hh:mm:ss =      0 h 01 m 18 s
  The run will finish approximately on: Mon Feb 11, 2019 04:05
 
@@ -563,13 +563,13 @@ Time step number     200   t =    0.0199 s out of    2500
  We have done    7.96318531     % of the total
  Max norm of vector field in solid (poroelastic) =    9.28500185E-07
  Max norm of vector field in fluid (poroelastic) =    1.38497921E-06
- Elapsed time in seconds =    7.8510000705718994     
+ Elapsed time in seconds =    7.8510000705718994
  Elapsed time in hh:mm:ss =      0 h 00 m 07 s
  Mean elapsed time per time step in seconds =    3.9255000352859497E-002
  Time steps remaining =         2300
- Estimated remaining time in seconds =    90.286500811576843     
+ Estimated remaining time in seconds =    90.286500811576843
  Estimated remaining time in hh:mm:ss =      0 h 01 m 30 s
- Estimated total run time in seconds =    98.137500882148743     
+ Estimated total run time in seconds =    98.137500882148743
  Estimated total run time in hh:mm:ss =      0 h 01 m 38 s
  The run will finish approximately on: Mon Feb 11, 2019 04:05
 
@@ -580,13 +580,13 @@ Time step number     400   t =    0.0399 s out of    2500
  We have done    15.9663868     % of the total
  Max norm of vector field in solid (poroelastic) =    3.46976594E-05
  Max norm of vector field in fluid (poroelastic) =    5.48414246E-05
- Elapsed time in seconds =    15.770999908447266     
+ Elapsed time in seconds =    15.770999908447266
  Elapsed time in hh:mm:ss =      0 h 00 m 15 s
  Mean elapsed time per time step in seconds =    3.9427499771118167E-002
  Time steps remaining =         2100
- Estimated remaining time in seconds =    82.797749519348145     
+ Estimated remaining time in seconds =    82.797749519348145
  Estimated remaining time in hh:mm:ss =      0 h 01 m 22 s
- Estimated total run time in seconds =    98.568749427795410     
+ Estimated total run time in seconds =    98.568749427795410
  Estimated total run time in hh:mm:ss =      0 h 01 m 38 s
  The run will finish approximately on: Mon Feb 11, 2019 04:05
 
@@ -602,13 +602,13 @@ Time step number     600   t =    0.0599 s out of    2500
  We have done    23.9695873     % of the total
  Max norm of vector field in solid (poroelastic) =    1.07047686E-06
  Max norm of vector field in fluid (poroelastic) =    7.76378602E-06
- Elapsed time in seconds =    24.243999958038330     
+ Elapsed time in seconds =    24.243999958038330
  Elapsed time in hh:mm:ss =      0 h 00 m 24 s
  Mean elapsed time per time step in seconds =    4.0406666596730548E-002
  Time steps remaining =         1900
- Estimated remaining time in seconds =    76.772666533788041     
+ Estimated remaining time in seconds =    76.772666533788041
  Estimated remaining time in hh:mm:ss =      0 h 01 m 16 s
- Estimated total run time in seconds =    101.01666649182637     
+ Estimated total run time in seconds =    101.01666649182637
  Estimated total run time in hh:mm:ss =      0 h 01 m 41 s
  The run will finish approximately on: Mon Feb 11, 2019 04:06
 
@@ -619,13 +619,13 @@ Time step number     800   t =    0.0799 s out of    2500
  We have done    31.9727898     % of the total
  Max norm of vector field in solid (poroelastic) =    1.09476062E-07
  Max norm of vector field in fluid (poroelastic) =    7.29693193E-06
- Elapsed time in seconds =    32.394999980926514     
+ Elapsed time in seconds =    32.394999980926514
  Elapsed time in hh:mm:ss =      0 h 00 m 32 s
  Mean elapsed time per time step in seconds =    4.0493749976158143E-002
  Time steps remaining =         1700
- Estimated remaining time in seconds =    68.839374959468842     
+ Estimated remaining time in seconds =    68.839374959468842
  Estimated remaining time in hh:mm:ss =      0 h 01 m 08 s
- Estimated total run time in seconds =    101.23437494039536     
+ Estimated total run time in seconds =    101.23437494039536
  Estimated total run time in hh:mm:ss =      0 h 01 m 41 s
  The run will finish approximately on: Mon Feb 11, 2019 04:06
 
@@ -636,13 +636,13 @@ Time step number    1000   t =    0.0999 s out of    2500
  We have done    39.9759903     % of the total
  Max norm of vector field in solid (poroelastic) =    8.85822047E-08
  Max norm of vector field in fluid (poroelastic) =    6.83028838E-06
- Elapsed time in seconds =    41.872999906539917     
+ Elapsed time in seconds =    41.872999906539917
  Elapsed time in hh:mm:ss =      0 h 00 m 41 s
  Mean elapsed time per time step in seconds =    4.1872999906539914E-002
  Time steps remaining =         1500
- Estimated remaining time in seconds =    62.809499859809868     
+ Estimated remaining time in seconds =    62.809499859809868
  Estimated remaining time in hh:mm:ss =      0 h 01 m 02 s
- Estimated total run time in seconds =    104.68249976634979     
+ Estimated total run time in seconds =    104.68249976634979
  Estimated total run time in hh:mm:ss =      0 h 01 m 44 s
  The run will finish approximately on: Mon Feb 11, 2019 04:06
 
@@ -658,13 +658,13 @@ Time step number    1200   t =    0.1199 s out of    2500
  We have done    47.9791908     % of the total
  Max norm of vector field in solid (poroelastic) =    7.63714780E-08
  Max norm of vector field in fluid (poroelastic) =    6.33902891E-06
- Elapsed time in seconds =    51.056999921798706     
+ Elapsed time in seconds =    51.056999921798706
  Elapsed time in hh:mm:ss =      0 h 00 m 51 s
  Mean elapsed time per time step in seconds =    4.2547499934832256E-002
  Time steps remaining =         1300
- Estimated remaining time in seconds =    55.311749915281929     
+ Estimated remaining time in seconds =    55.311749915281929
  Estimated remaining time in hh:mm:ss =      0 h 00 m 55 s
- Estimated total run time in seconds =    106.36874983708063     
+ Estimated total run time in seconds =    106.36874983708063
  Estimated total run time in hh:mm:ss =      0 h 01 m 46 s
  The run will finish approximately on: Mon Feb 11, 2019 04:06
 
@@ -675,13 +675,13 @@ Time step number    1400   t =    0.1399 s out of    2500
  We have done    55.9823914     % of the total
  Max norm of vector field in solid (poroelastic) =    6.81297649E-08
  Max norm of vector field in fluid (poroelastic) =    5.87871182E-06
- Elapsed time in seconds =    60.174000024795532     
+ Elapsed time in seconds =    60.174000024795532
  Elapsed time in hh:mm:ss =      0 h 01 m 00 s
  Mean elapsed time per time step in seconds =    4.2981428589139663E-002
  Time steps remaining =         1100
- Estimated remaining time in seconds =    47.279571448053630     
+ Estimated remaining time in seconds =    47.279571448053630
  Estimated remaining time in hh:mm:ss =      0 h 00 m 47 s
- Estimated total run time in seconds =    107.45357147284916     
+ Estimated total run time in seconds =    107.45357147284916
  Estimated total run time in hh:mm:ss =      0 h 01 m 47 s
  The run will finish approximately on: Mon Feb 11, 2019 04:06
 
@@ -697,13 +697,13 @@ Time step number    1600   t =    0.1599 s out of    2500
  We have done    63.9855957     % of the total
  Max norm of vector field in solid (poroelastic) =    6.22907095E-08
  Max norm of vector field in fluid (poroelastic) =    5.52239135E-06
- Elapsed time in seconds =    69.046999931335449     
+ Elapsed time in seconds =    69.046999931335449
  Elapsed time in hh:mm:ss =      0 h 01 m 09 s
  Mean elapsed time per time step in seconds =    4.3154374957084657E-002
  Time steps remaining =          900
- Estimated remaining time in seconds =    38.838937461376190     
+ Estimated remaining time in seconds =    38.838937461376190
  Estimated remaining time in hh:mm:ss =      0 h 00 m 38 s
- Estimated total run time in seconds =    107.88593739271164     
+ Estimated total run time in seconds =    107.88593739271164
  Estimated total run time in hh:mm:ss =      0 h 01 m 47 s
  The run will finish approximately on: Mon Feb 11, 2019 04:06
 
@@ -714,13 +714,13 @@ Time step number    1800   t =    0.1799 s out of    2500
  We have done    71.9887924     % of the total
  Max norm of vector field in solid (poroelastic) =    5.74069858E-08
  Max norm of vector field in fluid (poroelastic) =    5.19283776E-06
- Elapsed time in seconds =    77.977999925613403     
+ Elapsed time in seconds =    77.977999925613403
  Elapsed time in hh:mm:ss =      0 h 01 m 17 s
  Mean elapsed time per time step in seconds =    4.3321111069785222E-002
  Time steps remaining =          700
- Estimated remaining time in seconds =    30.324777748849655     
+ Estimated remaining time in seconds =    30.324777748849655
  Estimated remaining time in hh:mm:ss =      0 h 00 m 30 s
- Estimated total run time in seconds =    108.30277767446306     
+ Estimated total run time in seconds =    108.30277767446306
  Estimated total run time in hh:mm:ss =      0 h 01 m 48 s
  The run will finish approximately on: Mon Feb 11, 2019 04:06
 
@@ -731,13 +731,13 @@ Time step number    2000   t =    0.1999 s out of    2500
  We have done    79.9919968     % of the total
  Max norm of vector field in solid (poroelastic) =    5.36406937E-08
  Max norm of vector field in fluid (poroelastic) =    4.92862682E-06
- Elapsed time in seconds =    86.677000045776367     
+ Elapsed time in seconds =    86.677000045776367
  Elapsed time in hh:mm:ss =      0 h 01 m 26 s
  Mean elapsed time per time step in seconds =    4.3338500022888186E-002
  Time steps remaining =          500
- Estimated remaining time in seconds =    21.669250011444092     
+ Estimated remaining time in seconds =    21.669250011444092
  Estimated remaining time in hh:mm:ss =      0 h 00 m 21 s
- Estimated total run time in seconds =    108.34625005722046     
+ Estimated total run time in seconds =    108.34625005722046
  Estimated total run time in hh:mm:ss =      0 h 01 m 48 s
  The run will finish approximately on: Mon Feb 11, 2019 04:06
 
@@ -753,13 +753,13 @@ Time step number    2200   t =    0.2199 s out of    2500
  We have done    87.9952011     % of the total
  Max norm of vector field in solid (poroelastic) =    5.05932718E-08
  Max norm of vector field in fluid (poroelastic) =    4.70017949E-06
- Elapsed time in seconds =    96.130000114440918     
+ Elapsed time in seconds =    96.130000114440918
  Elapsed time in hh:mm:ss =      0 h 01 m 36 s
  Mean elapsed time per time step in seconds =    4.3695454597473142E-002
  Time steps remaining =          300
- Estimated remaining time in seconds =    13.108636379241943     
+ Estimated remaining time in seconds =    13.108636379241943
  Estimated remaining time in hh:mm:ss =      0 h 00 m 13 s
- Estimated total run time in seconds =    109.23863649368286     
+ Estimated total run time in seconds =    109.23863649368286
  Estimated total run time in hh:mm:ss =      0 h 01 m 49 s
  The run will finish approximately on: Mon Feb 11, 2019 04:06
 
@@ -770,13 +770,13 @@ Time step number    2400   t =    0.2399 s out of    2500
  We have done    95.9983978     % of the total
  Max norm of vector field in solid (poroelastic) =    4.79772204E-08
  Max norm of vector field in fluid (poroelastic) =    4.49699110E-06
- Elapsed time in seconds =    105.21300005912781     
+ Elapsed time in seconds =    105.21300005912781
  Elapsed time in hh:mm:ss =      0 h 01 m 45 s
  Mean elapsed time per time step in seconds =    4.3838750024636587E-002
  Time steps remaining =          100
- Estimated remaining time in seconds =    4.3838750024636584     
+ Estimated remaining time in seconds =    4.3838750024636584
  Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    109.59687506159146     
+ Estimated total run time in seconds =    109.59687506159146
  Estimated total run time in hh:mm:ss =      0 h 01 m 49 s
  The run will finish approximately on: Mon Feb 11, 2019 04:06
 
@@ -787,13 +787,13 @@ Time step number    2500   t =    0.2499 s out of    2500
  We have done    100.000000     % of the total
  Max norm of vector field in solid (poroelastic) =    4.67469015E-08
  Max norm of vector field in fluid (poroelastic) =    4.40540589E-06
- Elapsed time in seconds =    109.84599995613098     
+ Elapsed time in seconds =    109.84599995613098
  Elapsed time in hh:mm:ss =      0 h 01 m 49 s
  Mean elapsed time per time step in seconds =    4.3938399982452393E-002
  Time steps remaining =            0
- Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    109.84599995613098     
+ Estimated total run time in seconds =    109.84599995613098
  Estimated total run time in hh:mm:ss =      0 h 01 m 49 s
 
 
@@ -811,13 +811,13 @@ Time step number    2500   t =    0.2499 s out of    2500
  Average duration of the calculation per spectral element =    4.43670797E-06  s
 
 
- Total duration of the timeloop in seconds, measured using 
+ Total duration of the timeloop in seconds, measured using
  date and time of the system :    110.039001      s
 
 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Program SPECFEM2D: 
+ Program SPECFEM2D:
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
  poroelastic semi-infinite homogeneous

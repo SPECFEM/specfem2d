@@ -26,24 +26,24 @@ running example: Fri May 19 10:25:45 AST 2017
 
  --------
  Material #           1  isotropic
- rho,cp,cs   =    1.0000000000000000        2.0000000000000000        1.0000000000000000     
- Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ rho,cp,cs   =    1.0000000000000000        2.0000000000000000        1.0000000000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
  Material is solid
  --------
  Material #           2  isotropic
- rho,cp,cs   =    1.0000000000000000        2.0000000000000000        1.0000000000000000     
- Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ rho,cp,cs   =    1.0000000000000000        2.0000000000000000        1.0000000000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
  Material is solid
  --------
  Material #           3  isotropic
- rho,cp,cs   =    1.0000000000000000        2.0000000000000000        1.0000000000000000     
- Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ rho,cp,cs   =    1.0000000000000000        2.0000000000000000        1.0000000000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
  Material is solid
  --------
 
  Mesh from internal meshing:
 
- Reading interface data from file: ./DATA/interfaces_Rayleigh_flat.dat                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+ Reading interface data from file: ./DATA/interfaces_Rayleigh_flat.dat
  Reading            2  points for interface            1
  Reading            2  points for interface            2
 
@@ -62,24 +62,24 @@ running example: Fri May 19 10:25:45 AST 2017
  IZ from            1  to           28
  Material #            1  isotropic
  Material is solid
- vp     =    2.00000000    
- vs     =    1.00000000    
- rho    =    1.00000000    
- Poisson's ratio =   0.333333343    
- QKappa =    9999.00000    
- Qmu    =    9999.00000    
+ vp     =    2.00000000
+ vs     =    1.00000000
+ rho    =    1.00000000
+ Poisson's ratio =   0.333333343
+ QKappa =    9999.00000
+ Qmu    =    9999.00000
  ------
  Region            2
  IX from           30  to           30
  IZ from           26  to           28
  Material #            2  isotropic
  Material is solid
- vp     =    2.00000000    
- vs     =    1.00000000    
- rho    =    1.00000000    
- Poisson's ratio =   0.333333343    
- QKappa =    9999.00000    
- Qmu    =    9999.00000    
+ vp     =    2.00000000
+ vs     =    1.00000000
+ rho    =    1.00000000
+ Poisson's ratio =   0.333333343
+ QKappa =    9999.00000
+ Qmu    =    9999.00000
  *************************************
  Warning: Element range from this region is overwriting material numbers previously set on elements.
           This indicates that your region range is overlapping the region for material            1
@@ -91,12 +91,12 @@ running example: Fri May 19 10:25:45 AST 2017
  IZ from           26  to           28
  Material #            3  isotropic
  Material is solid
- vp     =    2.00000000    
- vs     =    1.00000000    
- rho    =    1.00000000    
- Poisson's ratio =   0.333333343    
- QKappa =    9999.00000    
- Qmu    =    9999.00000    
+ vp     =    2.00000000
+ vs     =    1.00000000
+ rho    =    1.00000000
+ Poisson's ratio =   0.333333343
+ QKappa =    9999.00000
+ Qmu    =    9999.00000
  *************************************
  Warning: Element range from this region is overwriting material numbers previously set on elements.
           This indicates that your region range is overlapping the region for material            1
@@ -106,27 +106,27 @@ running example: Fri May 19 10:25:45 AST 2017
  Total number of spectral elements         =         1680
 
 
- Parameter file successfully read 
+ Parameter file successfully read
 
  The mesh contains         1680  elements
 
  Control elements have            4  nodes
 
  Source           1
-   Position xs, zs =    3.5000000000000000        9.0000000000000000     
+   Position xs, zs =    3.5000000000000000        9.0000000000000000
 
    Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, 5=plane incident S):            3
    Rayleigh wave source:
 
    Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 8=Read from file, 9=burst):           1
    Ricker wavelet (second-derivative):
-   Frequency, delay =    1.0000000000000000        0.0000000000000000     
+   Frequency, delay =    1.0000000000000000        0.0000000000000000
 
  Reading interface data from file: ./DATA/interfaces_Rayleigh_flat.dat
 
- Mesh dimensions: 
-   Min and max value of X in the grid =    0.0000000000000000        19.000000000000000     
-   Min and max value of Z in the grid =    0.0000000000000000        9.0000000000000018     
+ Mesh dimensions:
+   Min and max value of X in the grid =    0.0000000000000000        19.000000000000000
+   Min and max value of Z in the grid =    0.0000000000000000        9.0000000000000018
 
 
  ************ Computing elements load ************
@@ -151,7 +151,7 @@ running example: Fri May 19 10:25:45 AST 2017
  slice            0  has number of spectral elements =         843
  slice            1  has number of spectral elements =         837
 
- Position (x,z) of the source =    3.5000000000000000        9.0000000000000000     
+ Position (x,z) of the source =    3.5000000000000000        9.0000000000000000
 
 
  writing the ./DATA/STATIONS file
@@ -161,11 +161,11 @@ running example: Fri May 19 10:25:45 AST 2017
 
  Target positions (x,z) of the            5  receivers
 
- Receiver            1  =    14.500000000000000        9.0000000000000000     
- Receiver            2  =    15.250000000000000        9.0000000000000000     
- Receiver            3  =    16.000000000000000        9.0000000000000000     
- Receiver            4  =    16.750000000000000        9.0000000000000000     
- Receiver            5  =    17.500000000000000        9.0000000000000000     
+ Receiver            1  =    14.500000000000000        9.0000000000000000
+ Receiver            2  =    15.250000000000000        9.0000000000000000
+ Receiver            3  =    16.000000000000000        9.0000000000000000
+ Receiver            4  =    16.750000000000000        9.0000000000000000
+ Receiver            5  =    17.500000000000000        9.0000000000000000
 
  This will be a parallel simulation on            2  processor cores
 
@@ -194,7 +194,7 @@ running example: Fri May 19 10:25:45 AST 2017
 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Program SPECFEM2D: 
+ Program SPECFEM2D:
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
  Rayleigh wave in a homogeneous medium with crack
@@ -217,11 +217,11 @@ running example: Fri May 19 10:25:45 AST 2017
 
      Display frequency . . . .(NSTEP_BETWEEN_OUTPUT_INFO) =    200
      Color display . . . . . . . . . . . . . . . (colors) =      1
-      == 0     black and white display              
-      == 1     color display                        
+      == 0     black and white display
+      == 1     color display
      Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
-      == 0     do not number the mesh               
-      == 1     number the mesh                      
+      == 0     do not number the mesh
+      == 1     number the mesh
 
 
  C o n t r o l
@@ -252,7 +252,7 @@ running example: Fri May 19 10:25:45 AST 2017
      Subsampling of velocity model display. (subsamp_postscript) =      1
 
 
- I t e r a t i o n s 
+ I t e r a t i o n s
  ===================
 
      Number of time iterations . . . . .(NSTEP) =    5000
@@ -358,8 +358,8 @@ running example: Fri May 19 10:25:45 AST 2017
    in reality they have more degrees of freedom)
 
  Mesh dimensions:
-   Xmin,Xmax of the whole mesh =    0.0000000000000000        19.000000000000000     
-   Zmin,Zmax of the whole mesh =    0.0000000000000000        9.0000000000000018     
+   Xmin,Xmax of the whole mesh =    0.0000000000000000        19.000000000000000
+   Zmin,Zmax of the whole mesh =    0.0000000000000000        9.0000000000000018
 
  Domains:
    total number of acoustic elements        =            0
@@ -409,54 +409,54 @@ running example: Fri May 19 10:25:45 AST 2017
  reading receiver information from the ./DATA/STATIONS file
 
 
- Station #            1     AA      S0001                           
-             original x:    14.5000000    
-             original z:    9.00000000    
-   distance from source:    11.0000000    
+ Station #            1     AA      S0001
+             original x:    14.5000000
+             original z:    9.00000000
+   distance from source:    11.0000000
  closest estimate found:    0.00000000      m away
   in element          829
   in rank            0
-  at xi,gamma coordinates =   0.57894736842105532       0.99999999999999500     
+  at xi,gamma coordinates =   0.57894736842105532       0.99999999999999500
 
 
- Station #            2     AA      S0002                           
-             original x:    15.2500000    
-             original z:    9.00000000    
-   distance from source:    11.7500000    
+ Station #            2     AA      S0002
+             original x:    15.2500000
+             original z:    9.00000000
+   distance from source:    11.7500000
  closest estimate found:    0.00000000      m away
   in element          832
   in rank            0
-  at xi,gamma coordinates =  -0.68421052631579782       0.99999999999999645     
+  at xi,gamma coordinates =  -0.68421052631579782       0.99999999999999645
 
 
- Station #            3     AA      S0003                           
-             original x:    16.0000000    
-             original z:    9.00000000    
-   distance from source:    12.5000000    
+ Station #            3     AA      S0003
+             original x:    16.0000000
+             original z:    9.00000000
+   distance from source:    12.5000000
  closest estimate found:    3.55271368E-15  m away
   in element          834
   in rank            0
-  at xi,gamma coordinates =    5.2631578947377661E-002  0.99999999999999545     
+  at xi,gamma coordinates =    5.2631578947377661E-002  0.99999999999999545
 
 
- Station #            4     AA      S0004                           
-             original x:    16.7500000    
-             original z:    9.00000000    
-   distance from source:    13.2500000    
+ Station #            4     AA      S0004
+             original x:    16.7500000
+             original z:    9.00000000
+   distance from source:    13.2500000
  closest estimate found:    0.00000000      m away
   in element          836
   in rank            0
-  at xi,gamma coordinates =   0.78947368421051611        1.0000000000000060     
+  at xi,gamma coordinates =   0.78947368421051611        1.0000000000000060
 
 
- Station #            5     AA      S0005                           
-             original x:    17.5000000    
-             original z:    9.00000000    
-   distance from source:    14.0000000    
+ Station #            5     AA      S0005
+             original x:    17.5000000
+             original z:    9.00000000
+   distance from source:    14.0000000
  closest estimate found:    0.00000000      m away
   in element          839
   in rank            0
-  at xi,gamma coordinates =  -0.47368421052632492       0.99999999999999645     
+  at xi,gamma coordinates =  -0.47368421052632492       0.99999999999999645
 
 
  end of receiver detection
@@ -478,9 +478,9 @@ running example: Fri May 19 10:25:45 AST 2017
  Checking mesh and stability
 
  ********
- Model: P (or PI) velocity min,max =    2.0000000000000000        2.0000000000000000     
- Model: S velocity min,max         =    1.0000000000000000        1.0000000000000000     
- Model: density min,max            =    1.0000000000000000        1.0000000000000000     
+ Model: P (or PI) velocity min,max =    2.0000000000000000        2.0000000000000000
+ Model: S velocity min,max         =    1.0000000000000000        1.0000000000000000
+ Model: density min,max            =    1.0000000000000000        1.0000000000000000
  ********
 
 
@@ -488,21 +488,21 @@ running example: Fri May 19 10:25:45 AST 2017
  *** Verification of simulation parameters ***
  *********************************************
 
- *** Max grid size =   0.32142857142857295     
- *** Min grid size =   0.31666666666666465     
- *** Max/min ratio =    1.0150375939849736     
+ *** Max grid size =   0.32142857142857295
+ *** Min grid size =   0.31666666666666465
+ *** Max/min ratio =    1.0150375939849736
 
  *** Minimum GLL point distance  =    5.4679835471236594E-002
  *** Average GLL point distance  =    7.9166666666666163E-002
 
- *** Minimum period resolved     =   0.40178571428571619     
+ *** Minimum period resolved     =   0.40178571428571619
  *** Maximum frequency resolved  =    2.4888888888888769      Hz
 
  *** Maximum suggested time step                 =    1.3669958867809149E-002
- *** Maximum suggested (Ricker) source frequency =   0.99555555555555086     
+ *** Maximum suggested (Ricker) source frequency =   0.99555555555555086
 
  *** for DT :    3.9062500000000000E-003
- *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.14287716728975225     
+ *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.14287716728975225
 
 
  Creating PostScript file with stability condition
@@ -532,7 +532,7 @@ running example: Fri May 19 10:25:45 AST 2017
 
  Rayleigh wave introduced.
 
- angle source          =    0.0000000000000000     
+ angle source          =    0.0000000000000000
 
 
  It is not possible to have several materials with a plane wave, thus using the first material.
@@ -542,8 +542,8 @@ running example: Fri May 19 10:25:45 AST 2017
  Thus use at your own risk!
 
  mesh dimensions:
-   x min/max =    0.00000000       19.0000000    
-   z min/max =    0.00000000       9.00000000    
+   x min/max =    0.00000000       19.0000000
+   z min/max =    0.00000000       9.00000000
 
  Number of grid points =        13737
 
@@ -561,10 +561,10 @@ running example: Fri May 19 10:25:45 AST 2017
 
  N found to perform the frequency calculation =       16384
  number of discrete frequencies               =         8192
- delta in period (seconds)                    =    32.000000000000000     
+ delta in period (seconds)                    =    32.000000000000000
  delta in frequency (Hz)                      =    3.1250000000000000E-002
  dt (here we need deltat/2)                   =    1.9531250000000000E-003
- Poisson's ratio                              =   0.33333333333333331     
+ Poisson's ratio                              =   0.33333333333333331
  calculation of the initial field for every point of the mesh
          500 points have been computed out of        13737
         1000 points have been computed out of        13737
@@ -630,1084 +630,1084 @@ running example: Fri May 19 10:25:45 AST 2017
 Time step number       5   t =    0.0156 s out of    5000
  ******************************************************************
  We have done    8.00160021E-02 % of the total
- Max norm of vector field in solid (elastic) =   0.701794684    
+ Max norm of vector field in solid (elastic) =   0.701794684
  Elapsed time in seconds =    6.0000419616699219E-003
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
  Mean elapsed time per time step in seconds =    1.2000083923339843E-003
  Time steps remaining =         4995
- Estimated remaining time in seconds =    5.9940419197082520     
+ Estimated remaining time in seconds =    5.9940419197082520
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    6.0000419616699219     
+ Estimated total run time in seconds =    6.0000419616699219
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
  The run will finish approximately on: Fri May 19, 2017 10:29
 
 
  Writing PostScript vector plot for time step            5
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.70049845466274119     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.70049845466274119
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step            5
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.69664656493721966     
+ Color image maximum amplitude =   0.69664656493721966
  Color image created
 
  Writing PostScript vector plot for time step          100
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.69964220723525017     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.69964220723525017
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step          100
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.69964220723525017     
+ Color image maximum amplitude =   0.69964220723525017
  Color image created
 
  ******************************************************************
 Time step number     200   t =    0.7773 s out of    5000
  ******************************************************************
  We have done    3.98079610     % of the total
- Max norm of vector field in solid (elastic) =   0.682489216    
- Elapsed time in seconds =   0.24800014495849609     
+ Max norm of vector field in solid (elastic) =   0.682489216
+ Elapsed time in seconds =   0.24800014495849609
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
  Mean elapsed time per time step in seconds =    1.2400007247924804E-003
  Time steps remaining =         4800
- Estimated remaining time in seconds =    5.9520034790039054     
+ Estimated remaining time in seconds =    5.9520034790039054
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    6.2000036239624015     
+ Estimated total run time in seconds =    6.2000036239624015
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step          200
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.67784161767417650     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.67784161767417650
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step          200
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.67784161767417650     
+ Color image maximum amplitude =   0.67784161767417650
  Color image created
 
  Writing PostScript vector plot for time step          300
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.70304523563777033     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.70304523563777033
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step          300
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.70304523563777033     
+ Color image maximum amplitude =   0.70304523563777033
  Color image created
 
  ******************************************************************
 Time step number     400   t =    1.5586 s out of    5000
  ******************************************************************
  We have done    7.98159647     % of the total
- Max norm of vector field in solid (elastic) =   0.691201150    
- Elapsed time in seconds =   0.49000000953674316     
+ Max norm of vector field in solid (elastic) =   0.691201150
+ Elapsed time in seconds =   0.49000000953674316
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
  Mean elapsed time per time step in seconds =    1.2250000238418579E-003
  Time steps remaining =         4600
- Estimated remaining time in seconds =    5.6350001096725464     
+ Estimated remaining time in seconds =    5.6350001096725464
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    6.1250001192092896     
+ Estimated total run time in seconds =    6.1250001192092896
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step          400
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.68767298417659983     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.68767298417659983
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step          400
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.68767298417659983     
+ Color image maximum amplitude =   0.68767298417659983
  Color image created
 
  Writing PostScript vector plot for time step          500
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.70476528136848082     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.70476528136848082
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step          500
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.70476528136848082     
+ Color image maximum amplitude =   0.70476528136848082
  Color image created
 
  ******************************************************************
 Time step number     600   t =    2.3398 s out of    5000
  ******************************************************************
  We have done    11.9823961     % of the total
- Max norm of vector field in solid (elastic) =   0.702441871    
- Elapsed time in seconds =   0.73100018501281738     
+ Max norm of vector field in solid (elastic) =   0.702441871
+ Elapsed time in seconds =   0.73100018501281738
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
  Mean elapsed time per time step in seconds =    1.2183336416880289E-003
  Time steps remaining =         4400
- Estimated remaining time in seconds =    5.3606680234273272     
+ Estimated remaining time in seconds =    5.3606680234273272
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    6.0916682084401446     
+ Estimated total run time in seconds =    6.0916682084401446
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step          600
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.70446723222458163     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.70446723222458163
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step          600
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.69455789351082642     
+ Color image maximum amplitude =   0.69455789351082642
  Color image created
 
  Writing PostScript vector plot for time step          700
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.69961118378322595     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.69961118378322595
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step          700
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.69961118378322595     
+ Color image maximum amplitude =   0.69961118378322595
  Color image created
 
  ******************************************************************
 Time step number     800   t =    3.1211 s out of    5000
  ******************************************************************
  We have done    15.9831963     % of the total
- Max norm of vector field in solid (elastic) =   0.697968602    
- Elapsed time in seconds =   0.97200012207031250     
+ Max norm of vector field in solid (elastic) =   0.697968602
+ Elapsed time in seconds =   0.97200012207031250
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
  Mean elapsed time per time step in seconds =    1.2150001525878906E-003
  Time steps remaining =         4200
- Estimated remaining time in seconds =    5.1030006408691406     
+ Estimated remaining time in seconds =    5.1030006408691406
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    6.0750007629394531     
+ Estimated total run time in seconds =    6.0750007629394531
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step          800
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.69796070320590897     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.69796070320590897
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step          800
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.69796070320590897     
+ Color image maximum amplitude =   0.69796070320590897
  Color image created
 
  Writing PostScript vector plot for time step          900
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.69232020988022935     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.69232020988022935
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step          900
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.69232020988022935     
+ Color image maximum amplitude =   0.69232020988022935
  Color image created
 
  ******************************************************************
 Time step number    1000   t =    3.9023 s out of    5000
  ******************************************************************
  We have done    19.9839973     % of the total
- Max norm of vector field in solid (elastic) =   0.698526084    
- Elapsed time in seconds =    1.2140002250671387     
+ Max norm of vector field in solid (elastic) =   0.698526084
+ Elapsed time in seconds =    1.2140002250671387
  Elapsed time in hh:mm:ss =      0 h 00 m 01 s
  Mean elapsed time per time step in seconds =    1.2140002250671388E-003
  Time steps remaining =         4000
- Estimated remaining time in seconds =    4.8560009002685547     
+ Estimated remaining time in seconds =    4.8560009002685547
  Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    6.0700011253356934     
+ Estimated total run time in seconds =    6.0700011253356934
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         1000
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.69702152938361972     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.69702152938361972
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         1000
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.69702152938361972     
+ Color image maximum amplitude =   0.69702152938361972
  Color image created
 
  Writing PostScript vector plot for time step         1100
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.68376868614632336     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.68376868614632336
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         1100
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.66164501979383561     
+ Color image maximum amplitude =   0.66164501979383561
  Color image created
 
  ******************************************************************
 Time step number    1200   t =    4.6836 s out of    5000
  ******************************************************************
  We have done    23.9847965     % of the total
- Max norm of vector field in solid (elastic) =   0.705398083    
- Elapsed time in seconds =    1.4560000896453857     
+ Max norm of vector field in solid (elastic) =   0.705398083
+ Elapsed time in seconds =    1.4560000896453857
  Elapsed time in hh:mm:ss =      0 h 00 m 01 s
  Mean elapsed time per time step in seconds =    1.2133334080378214E-003
  Time steps remaining =         3800
- Estimated remaining time in seconds =    4.6106669505437212     
+ Estimated remaining time in seconds =    4.6106669505437212
  Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    6.0666670401891070     
+ Estimated total run time in seconds =    6.0666670401891070
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         1200
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.70317050332938080     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.70317050332938080
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         1200
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.67349267587264106     
+ Color image maximum amplitude =   0.67349267587264106
  Color image created
 
  Writing PostScript vector plot for time step         1300
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.70889399533645092     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.70889399533645092
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         1300
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.70889399533645092     
+ Color image maximum amplitude =   0.70889399533645092
  Color image created
 
  ******************************************************************
 Time step number    1400   t =    5.4648 s out of    5000
  ******************************************************************
  We have done    27.9855976     % of the total
- Max norm of vector field in solid (elastic) =   0.709117055    
- Elapsed time in seconds =    1.7030000686645508     
+ Max norm of vector field in solid (elastic) =   0.709117055
+ Elapsed time in seconds =    1.7030000686645508
  Elapsed time in hh:mm:ss =      0 h 00 m 01 s
  Mean elapsed time per time step in seconds =    1.2164286204746791E-003
  Time steps remaining =         3600
- Estimated remaining time in seconds =    4.3791430337088446     
+ Estimated remaining time in seconds =    4.3791430337088446
  Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    6.0821431023733954     
+ Estimated total run time in seconds =    6.0821431023733954
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         1400
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.70928879069103556     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.70928879069103556
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         1400
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.70928879069103556     
+ Color image maximum amplitude =   0.70928879069103556
  Color image created
 
  Writing PostScript vector plot for time step         1500
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.68762892972145540     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.68762892972145540
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         1500
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.68762892972145540     
+ Color image maximum amplitude =   0.68762892972145540
  Color image created
 
  ******************************************************************
 Time step number    1600   t =    6.2461 s out of    5000
  ******************************************************************
  We have done    31.9863968     % of the total
- Max norm of vector field in solid (elastic) =   0.706294596    
- Elapsed time in seconds =    1.9450001716613770     
+ Max norm of vector field in solid (elastic) =   0.706294596
+ Elapsed time in seconds =    1.9450001716613770
  Elapsed time in hh:mm:ss =      0 h 00 m 01 s
  Mean elapsed time per time step in seconds =    1.2156251072883606E-003
  Time steps remaining =         3400
- Estimated remaining time in seconds =    4.1331253647804260     
+ Estimated remaining time in seconds =    4.1331253647804260
  Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    6.0781255364418030     
+ Estimated total run time in seconds =    6.0781255364418030
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         1600
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.70784728374039008     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.70784728374039008
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         1600
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.70784728374039008     
+ Color image maximum amplitude =   0.70784728374039008
  Color image created
 
  Writing PostScript vector plot for time step         1700
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.69269923329558836     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.69269923329558836
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         1700
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.69269923329558836     
+ Color image maximum amplitude =   0.69269923329558836
  Color image created
 
  ******************************************************************
 Time step number    1800   t =    7.0273 s out of    5000
  ******************************************************************
  We have done    35.9871979     % of the total
- Max norm of vector field in solid (elastic) =   0.677322388    
- Elapsed time in seconds =    2.1850001811981201     
+ Max norm of vector field in solid (elastic) =   0.677322388
+ Elapsed time in seconds =    2.1850001811981201
  Elapsed time in hh:mm:ss =      0 h 00 m 02 s
  Mean elapsed time per time step in seconds =    1.2138889895545112E-003
  Time steps remaining =         3200
- Estimated remaining time in seconds =    3.8844447665744362     
+ Estimated remaining time in seconds =    3.8844447665744362
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    6.0694449477725563     
+ Estimated total run time in seconds =    6.0694449477725563
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         1800
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.67959283574682605     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.67959283574682605
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         1800
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.67959283574682605     
+ Color image maximum amplitude =   0.67959283574682605
  Color image created
 
  Writing PostScript vector plot for time step         1900
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =    1.7530520262960632     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =    1.7530520262960632
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         1900
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.2860822092953150     
+ Color image maximum amplitude =    1.2860822092953150
  Color image created
 
  ******************************************************************
 Time step number    2000   t =    7.8086 s out of    5000
  ******************************************************************
  We have done    39.9879990     % of the total
- Max norm of vector field in solid (elastic) =    1.31768954    
- Elapsed time in seconds =    2.4180002212524414     
+ Max norm of vector field in solid (elastic) =    1.31768954
+ Elapsed time in seconds =    2.4180002212524414
  Elapsed time in hh:mm:ss =      0 h 00 m 02 s
  Mean elapsed time per time step in seconds =    1.2090001106262206E-003
  Time steps remaining =         3000
- Estimated remaining time in seconds =    3.6270003318786621     
+ Estimated remaining time in seconds =    3.6270003318786621
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    6.0450005531311035     
+ Estimated total run time in seconds =    6.0450005531311035
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
  The run will finish approximately on: Fri May 19, 2017 10:29
 
 
  Writing PostScript vector plot for time step         2000
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =    1.3473879625232854     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =    1.3473879625232854
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         2000
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.91596390242968562     
+ Color image maximum amplitude =   0.91596390242968562
  Color image created
 
  Writing PostScript vector plot for time step         2100
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.61108168873846835     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.61108168873846835
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         2100
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.56358578162840733     
+ Color image maximum amplitude =   0.56358578162840733
  Color image created
 
  ******************************************************************
 Time step number    2200   t =    8.5898 s out of    5000
  ******************************************************************
  We have done    43.9887962     % of the total
- Max norm of vector field in solid (elastic) =   0.463712901    
- Elapsed time in seconds =    2.6670000553131104     
+ Max norm of vector field in solid (elastic) =   0.463712901
+ Elapsed time in seconds =    2.6670000553131104
  Elapsed time in hh:mm:ss =      0 h 00 m 02 s
  Mean elapsed time per time step in seconds =    1.2122727524150501E-003
  Time steps remaining =         2800
- Estimated remaining time in seconds =    3.3943637067621402     
+ Estimated remaining time in seconds =    3.3943637067621402
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    6.0613637620752510     
+ Estimated total run time in seconds =    6.0613637620752510
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         2200
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.46340715316243686     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.46340715316243686
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         2200
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.46340715316243686     
+ Color image maximum amplitude =   0.46340715316243686
  Color image created
 
  Writing PostScript vector plot for time step         2300
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.36285725854876905     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.36285725854876905
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         2300
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.36080750491259844     
+ Color image maximum amplitude =   0.36080750491259844
  Color image created
 
  ******************************************************************
 Time step number    2400   t =    9.3711 s out of    5000
  ******************************************************************
  We have done    47.9895973     % of the total
- Max norm of vector field in solid (elastic) =   0.361648619    
- Elapsed time in seconds =    2.9930000305175781     
+ Max norm of vector field in solid (elastic) =   0.361648619
+ Elapsed time in seconds =    2.9930000305175781
  Elapsed time in hh:mm:ss =      0 h 00 m 02 s
  Mean elapsed time per time step in seconds =    1.2470833460489909E-003
  Time steps remaining =         2600
- Estimated remaining time in seconds =    3.2424166997273760     
+ Estimated remaining time in seconds =    3.2424166997273760
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    6.2354167302449541     
+ Estimated total run time in seconds =    6.2354167302449541
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         2400
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.36101239198366308     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.36101239198366308
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         2400
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.36101239198366308     
+ Color image maximum amplitude =   0.36101239198366308
  Color image created
 
  Writing PostScript vector plot for time step         2500
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.30850475032504893     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.30850475032504893
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         2500
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.30596954171708146     
+ Color image maximum amplitude =   0.30596954171708146
  Color image created
 
  ******************************************************************
 Time step number    2600   t =   10.1523 s out of    5000
  ******************************************************************
  We have done    51.9903984     % of the total
- Max norm of vector field in solid (elastic) =   0.287133008    
- Elapsed time in seconds =    3.4290001392364502     
+ Max norm of vector field in solid (elastic) =   0.287133008
+ Elapsed time in seconds =    3.4290001392364502
  Elapsed time in hh:mm:ss =      0 h 00 m 03 s
  Mean elapsed time per time step in seconds =    1.3188462073986348E-003
  Time steps remaining =         2400
- Estimated remaining time in seconds =    3.1652308977567234     
+ Estimated remaining time in seconds =    3.1652308977567234
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    6.5942310369931736     
+ Estimated total run time in seconds =    6.5942310369931736
  Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         2600
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.28727785069765838     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.28727785069765838
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         2600
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.28401395831450060     
+ Color image maximum amplitude =   0.28401395831450060
  Color image created
 
  Writing PostScript vector plot for time step         2700
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.28137301094072353     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.28137301094072353
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         2700
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.28137301094072353     
+ Color image maximum amplitude =   0.28137301094072353
  Color image created
 
  ******************************************************************
 Time step number    2800   t =   10.9336 s out of    5000
  ******************************************************************
  We have done    55.9911995     % of the total
- Max norm of vector field in solid (elastic) =   0.271824390    
- Elapsed time in seconds =    4.0370001792907715     
+ Max norm of vector field in solid (elastic) =   0.271824390
+ Elapsed time in seconds =    4.0370001792907715
  Elapsed time in hh:mm:ss =      0 h 00 m 04 s
  Mean elapsed time per time step in seconds =    1.4417857783181327E-003
  Time steps remaining =         2200
- Estimated remaining time in seconds =    3.1719287122998918     
+ Estimated remaining time in seconds =    3.1719287122998918
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    7.2089288915906629     
+ Estimated total run time in seconds =    7.2089288915906629
  Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         2800
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.27298906867489547     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.27298906867489547
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         2800
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.27298906867489547     
+ Color image maximum amplitude =   0.27298906867489547
  Color image created
 
  Writing PostScript vector plot for time step         2900
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.26062660148420486     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.26062660148420486
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         2900
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.26062660148420486     
+ Color image maximum amplitude =   0.26062660148420486
  Color image created
 
  ******************************************************************
 Time step number    3000   t =   11.7148 s out of    5000
  ******************************************************************
  We have done    59.9919968     % of the total
- Max norm of vector field in solid (elastic) =   0.254204214    
- Elapsed time in seconds =    4.8060002326965332     
+ Max norm of vector field in solid (elastic) =   0.254204214
+ Elapsed time in seconds =    4.8060002326965332
  Elapsed time in hh:mm:ss =      0 h 00 m 04 s
  Mean elapsed time per time step in seconds =    1.6020000775655110E-003
  Time steps remaining =         2000
- Estimated remaining time in seconds =    3.2040001551310220     
+ Estimated remaining time in seconds =    3.2040001551310220
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    8.0100003878275547     
+ Estimated total run time in seconds =    8.0100003878275547
  Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         3000
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.25626960998929804     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.25626960998929804
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         3000
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.25626960998929804     
+ Color image maximum amplitude =   0.25626960998929804
  Color image created
 
  Writing PostScript vector plot for time step         3100
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.26294217693868904     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.26294217693868904
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         3100
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.21150897171073732     
+ Color image maximum amplitude =   0.21150897171073732
  Color image created
 
  ******************************************************************
 Time step number    3200   t =   12.4961 s out of    5000
  ******************************************************************
  We have done    63.9927979     % of the total
- Max norm of vector field in solid (elastic) =   0.248261631    
- Elapsed time in seconds =    5.7020001411437988     
+ Max norm of vector field in solid (elastic) =   0.248261631
+ Elapsed time in seconds =    5.7020001411437988
  Elapsed time in hh:mm:ss =      0 h 00 m 05 s
  Mean elapsed time per time step in seconds =    1.7818750441074371E-003
  Time steps remaining =         1800
- Estimated remaining time in seconds =    3.2073750793933868     
+ Estimated remaining time in seconds =    3.2073750793933868
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    8.9093752205371857     
+ Estimated total run time in seconds =    8.9093752205371857
  Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         3200
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.25098319525988755     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.25098319525988755
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         3200
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.25098319525988755     
+ Color image maximum amplitude =   0.25098319525988755
  Color image created
 
  Writing PostScript vector plot for time step         3300
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.26692472287546970     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.26692472287546970
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         3300
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.26692472287546970     
+ Color image maximum amplitude =   0.26692472287546970
  Color image created
 
  ******************************************************************
 Time step number    3400   t =   13.2773 s out of    5000
  ******************************************************************
  We have done    67.9935989     % of the total
- Max norm of vector field in solid (elastic) =   0.268007338    
- Elapsed time in seconds =    6.6810002326965332     
+ Max norm of vector field in solid (elastic) =   0.268007338
+ Elapsed time in seconds =    6.6810002326965332
  Elapsed time in hh:mm:ss =      0 h 00 m 06 s
  Mean elapsed time per time step in seconds =    1.9650000684401569E-003
  Time steps remaining =         1600
- Estimated remaining time in seconds =    3.1440001095042511     
+ Estimated remaining time in seconds =    3.1440001095042511
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    9.8250003422007843     
+ Estimated total run time in seconds =    9.8250003422007843
  Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         3400
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.26834195335109945     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.26834195335109945
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         3400
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.24189252464414071     
+ Color image maximum amplitude =   0.24189252464414071
  Color image created
 
  Writing PostScript vector plot for time step         3500
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.26671933492875805     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.26671933492875805
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         3500
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.26671933492875805     
+ Color image maximum amplitude =   0.26671933492875805
  Color image created
 
  ******************************************************************
 Time step number    3600   t =   14.0586 s out of    5000
  ******************************************************************
  We have done    71.9944000     % of the total
- Max norm of vector field in solid (elastic) =   0.257819384    
- Elapsed time in seconds =    7.7190001010894775     
+ Max norm of vector field in solid (elastic) =   0.257819384
+ Elapsed time in seconds =    7.7190001010894775
  Elapsed time in hh:mm:ss =      0 h 00 m 07 s
  Mean elapsed time per time step in seconds =    2.1441666947470770E-003
  Time steps remaining =         1400
- Estimated remaining time in seconds =    3.0018333726459079     
+ Estimated remaining time in seconds =    3.0018333726459079
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    10.720833473735386     
+ Estimated total run time in seconds =    10.720833473735386
  Estimated total run time in hh:mm:ss =      0 h 00 m 10 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         3600
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.25522845621172036     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.25522845621172036
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         3600
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.22603341099726412     
+ Color image maximum amplitude =   0.22603341099726412
  Color image created
 
  Writing PostScript vector plot for time step         3700
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.26824199550583727     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.26824199550583727
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         3700
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.26824199550583727     
+ Color image maximum amplitude =   0.26824199550583727
  Color image created
 
  ******************************************************************
 Time step number    3800   t =   14.8398 s out of    5000
  ******************************************************************
  We have done    75.9952011     % of the total
- Max norm of vector field in solid (elastic) =   0.271919727    
- Elapsed time in seconds =    8.7210001945495605     
+ Max norm of vector field in solid (elastic) =   0.271919727
+ Elapsed time in seconds =    8.7210001945495605
  Elapsed time in hh:mm:ss =      0 h 00 m 08 s
  Mean elapsed time per time step in seconds =    2.2950000511972528E-003
  Time steps remaining =         1200
- Estimated remaining time in seconds =    2.7540000614367033     
+ Estimated remaining time in seconds =    2.7540000614367033
  Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
- Estimated total run time in seconds =    11.475000255986263     
+ Estimated total run time in seconds =    11.475000255986263
  Estimated total run time in hh:mm:ss =      0 h 00 m 11 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         3800
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.27006726104342593     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.27006726104342593
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         3800
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.27006726104342593     
+ Color image maximum amplitude =   0.27006726104342593
  Color image created
 
  Writing PostScript vector plot for time step         3900
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.26505633681744356     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.26505633681744356
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         3900
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.26505633681744356     
+ Color image maximum amplitude =   0.26505633681744356
  Color image created
 
  ******************************************************************
 Time step number    4000   t =   15.6211 s out of    5000
  ******************************************************************
  We have done    79.9960022     % of the total
- Max norm of vector field in solid (elastic) =   0.273552984    
- Elapsed time in seconds =    9.7160000801086426     
+ Max norm of vector field in solid (elastic) =   0.273552984
+ Elapsed time in seconds =    9.7160000801086426
  Elapsed time in hh:mm:ss =      0 h 00 m 09 s
  Mean elapsed time per time step in seconds =    2.4290000200271607E-003
  Time steps remaining =         1000
- Estimated remaining time in seconds =    2.4290000200271606     
+ Estimated remaining time in seconds =    2.4290000200271606
  Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
- Estimated total run time in seconds =    12.145000100135803     
+ Estimated total run time in seconds =    12.145000100135803
  Estimated total run time in hh:mm:ss =      0 h 00 m 12 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         4000
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.27229115012029925     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.27229115012029925
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         4000
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.26489543863622139     
+ Color image maximum amplitude =   0.26489543863622139
  Color image created
 
  Writing PostScript vector plot for time step         4100
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.27725040294279091     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.27725040294279091
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         4100
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.27725040294279091     
+ Color image maximum amplitude =   0.27725040294279091
  Color image created
 
  ******************************************************************
 Time step number    4200   t =   16.4023 s out of    5000
  ******************************************************************
  We have done    83.9967957     % of the total
- Max norm of vector field in solid (elastic) =   0.279851407    
- Elapsed time in seconds =    10.746000051498413     
+ Max norm of vector field in solid (elastic) =   0.279851407
+ Elapsed time in seconds =    10.746000051498413
  Elapsed time in hh:mm:ss =      0 h 00 m 10 s
  Mean elapsed time per time step in seconds =    2.5585714408329556E-003
  Time steps remaining =          800
- Estimated remaining time in seconds =    2.0468571526663646     
+ Estimated remaining time in seconds =    2.0468571526663646
  Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
- Estimated total run time in seconds =    12.792857204164777     
+ Estimated total run time in seconds =    12.792857204164777
  Estimated total run time in hh:mm:ss =      0 h 00 m 12 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         4200
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.27953140048425179     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.27953140048425179
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         4200
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.27953140048425179     
+ Color image maximum amplitude =   0.27953140048425179
  Color image created
 
  Writing PostScript vector plot for time step         4300
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.27151949774424239     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.27151949774424239
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         4300
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.27144761611197704     
+ Color image maximum amplitude =   0.27144761611197704
  Color image created
 
  ******************************************************************
 Time step number    4400   t =   17.1836 s out of    5000
  ******************************************************************
  We have done    87.9975967     % of the total
- Max norm of vector field in solid (elastic) =   0.283761442    
- Elapsed time in seconds =    11.799000024795532     
+ Max norm of vector field in solid (elastic) =   0.283761442
+ Elapsed time in seconds =    11.799000024795532
  Elapsed time in hh:mm:ss =      0 h 00 m 11 s
  Mean elapsed time per time step in seconds =    2.6815909147262572E-003
  Time steps remaining =          600
- Estimated remaining time in seconds =    1.6089545488357544     
+ Estimated remaining time in seconds =    1.6089545488357544
  Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
- Estimated total run time in seconds =    13.407954573631287     
+ Estimated total run time in seconds =    13.407954573631287
  Estimated total run time in hh:mm:ss =      0 h 00 m 13 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         4400
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.28393605123436289     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.28393605123436289
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         4400
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.28393605123436289     
+ Color image maximum amplitude =   0.28393605123436289
  Color image created
 
  Writing PostScript vector plot for time step         4500
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.26811952147331836     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.26811952147331836
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         4500
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.26369726261229015     
+ Color image maximum amplitude =   0.26369726261229015
  Color image created
 
  ******************************************************************
 Time step number    4600   t =   17.9648 s out of    5000
  ******************************************************************
  We have done    91.9983978     % of the total
- Max norm of vector field in solid (elastic) =   0.301989317    
- Elapsed time in seconds =    12.823000192642212     
+ Max norm of vector field in solid (elastic) =   0.301989317
+ Elapsed time in seconds =    12.823000192642212
  Elapsed time in hh:mm:ss =      0 h 00 m 12 s
  Mean elapsed time per time step in seconds =    2.7876087375309157E-003
  Time steps remaining =          400
- Estimated remaining time in seconds =    1.1150434950123662     
+ Estimated remaining time in seconds =    1.1150434950123662
  Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
- Estimated total run time in seconds =    13.938043687654577     
+ Estimated total run time in seconds =    13.938043687654577
  Estimated total run time in hh:mm:ss =      0 h 00 m 13 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         4600
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.29616231633058826     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.29616231633058826
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         4600
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.29477485896457123     
+ Color image maximum amplitude =   0.29477485896457123
  Color image created
 
  Writing PostScript vector plot for time step         4700
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.20415751388841066     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.20415751388841066
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         4700
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.20415751388841066     
+ Color image maximum amplitude =   0.20415751388841066
  Color image created
 
  ******************************************************************
 Time step number    4800   t =   18.7461 s out of    5000
  ******************************************************************
  We have done    95.9991989     % of the total
- Max norm of vector field in solid (elastic) =   0.190460429    
- Elapsed time in seconds =    13.843000173568726     
+ Max norm of vector field in solid (elastic) =   0.190460429
+ Elapsed time in seconds =    13.843000173568726
  Elapsed time in hh:mm:ss =      0 h 00 m 13 s
  Mean elapsed time per time step in seconds =    2.8839583694934847E-003
  Time steps remaining =          200
- Estimated remaining time in seconds =   0.57679167389869690     
+ Estimated remaining time in seconds =   0.57679167389869690
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    14.419791847467422     
+ Estimated total run time in seconds =    14.419791847467422
  Estimated total run time in hh:mm:ss =      0 h 00 m 14 s
  The run will finish approximately on: Fri May 19, 2017 10:30
 
 
  Writing PostScript vector plot for time step         4800
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.19018023568494630     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.19018023568494630
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         4800
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.18882303733996372     
+ Color image maximum amplitude =   0.18882303733996372
  Color image created
 
  Writing PostScript vector plot for time step         4900
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.18674262538969358     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.18674262538969358
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         4900
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.18314854551123388     
+ Color image maximum amplitude =   0.18314854551123388
  Color image created
 
  ******************************************************************
 Time step number    5000   t =   19.5273 s out of    5000
  ******************************************************************
  We have done    100.000000     % of the total
- Max norm of vector field in solid (elastic) =   0.188569650    
- Elapsed time in seconds =    14.929000139236450     
+ Max norm of vector field in solid (elastic) =   0.188569650
+ Elapsed time in seconds =    14.929000139236450
  Elapsed time in hh:mm:ss =      0 h 00 m 14 s
  Mean elapsed time per time step in seconds =    2.9858000278472898E-003
  Time steps remaining =            0
- Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    14.929000139236450     
+ Estimated total run time in seconds =    14.929000139236450
  Estimated total run time in hh:mm:ss =      0 h 00 m 14 s
 
 
  Writing PostScript vector plot for time step         5000
  drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        19.000000000000000     
-   Z min, max =    0.0000000000000000        9.0000000000000018     
-   Max norm =   0.18889063206890844     
+   X min, max =    0.0000000000000000        19.000000000000000
+   Z min, max =    0.0000000000000000        9.0000000000000018
+   Max norm =   0.18889063206890844
    Interpolating the vector field...
  PostScript file written
 
  Creating color image of size          170  x           86  for time step         5000
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =   0.17763899501362856     
+ Color image maximum amplitude =   0.17763899501362856
  Color image created
 
 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Program SPECFEM2D: 
+ Program SPECFEM2D:
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
  Rayleigh wave in a homogeneous medium with crack
