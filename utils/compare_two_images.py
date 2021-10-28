@@ -76,12 +76,14 @@ except:
     raise Exception("Importing skimage.color rgb2gray failed")
 
 # imports rgba2rgb
-try:
-    from skimage.color import rgba2rgb
-except:
-    print("Error importing rgba2rgb from skimage.color, please install skimage package (scikit-image) first...")
-    sys.tracebacklimit=0
-    raise Exception("Importing skimage.color rgba2rgb failed")
+if new_version == 2:
+    # since versions >= 0.13.x
+    try:
+        from skimage.color import rgba2rgb
+    except:
+        print("Error importing rgba2rgb from skimage.color, please install skimage package (scikit-image) first...")
+        sys.tracebacklimit=0
+        raise Exception("Importing skimage.color rgba2rgb failed")
 
 # imports imread
 if new_version == 2:
@@ -151,6 +153,7 @@ def compare_images(imageA, imageB, title, show_plot=True):
     """
     computes the mean squared error and structural similarity
     """
+    global new_version
 
     # index values for mean squared error
     if VERBOSE: print("comparing mean squared error...")
@@ -158,8 +161,12 @@ def compare_images(imageA, imageB, title, show_plot=True):
 
     # convert the images to grayscale
     if VERBOSE: print("converting to greyscale...")
-    imageA_grey = rgb2gray(rgba2rgb(imageA))
-    imageB_grey = rgb2gray(rgba2rgb(imageB))
+    if new_version == 2:
+        imageA_grey = rgb2gray(rgba2rgb(imageA))
+        imageB_grey = rgb2gray(rgba2rgb(imageB))
+    else:
+        imageA_grey = rgb2gray(imageA)
+        imageB_grey = rgb2gray(imageB)
 
     # uses image copies to avoid runtime warning for ssim computation
     img1_grey = np.copy(imageA_grey)
