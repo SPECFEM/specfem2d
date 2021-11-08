@@ -408,6 +408,10 @@
 
   ! user output
   if (myrank == 0) then
+    ! statistics
+    final_distance_max = 0.d0
+
+    ! station infos
     do irec = 1, nrec
       ! best position infos
       rank_selected = islice_selected_rec(irec)
@@ -443,14 +447,9 @@
       if (show_station_output) then
         write(IMAIN,*)
         write(IMAIN,*) 'Station # ',irec,'    ',network_name(irec),station_name(irec)
-
-        if (final_distance_this_element == HUGEVAL) &
-          call exit_MPI(myrank,'Error locating receiver')
-
         write(IMAIN,*) '            original x: ',sngl(st_xval(irec))
         write(IMAIN,*) '            original z: ',sngl(st_zval(irec))
-        write(IMAIN,*) 'Closest estimate found: ',sngl(final_distance_this_element), &
-                      ' m away'
+        write(IMAIN,*) 'Closest estimate found: ',sngl(final_distance_this_element),' m away'
         write(IMAIN,*) ' in rank ', rank_selected
         write(IMAIN,*) ' in element ',ispec
         if (idomain == IDOMAIN_ACOUSTIC) then
@@ -465,11 +464,16 @@
         write(IMAIN,*) ' at xi,gamma coordinates = ',xi,gamma
         write(IMAIN,*) 'Distance from source: ',sngl(distance_receiver(irec)),' m'
         write(IMAIN,*)
+        call flush_IMAIN()
       endif
-    enddo
 
-    ! compute maximal distance for all the receivers
-    final_distance_max = maxval(gather_final_distance(:,:))
+      ! check
+      if (final_distance_this_element == HUGEVAL) &
+        call exit_MPI(myrank,'Error locating receiver')
+
+      ! compute maximal distance for all the receivers
+      if (final_distance_this_element > final_distance_max) final_distance_max = final_distance_this_element
+    enddo
 
     ! display maximum error for all the receivers
     write(IMAIN,*) 'maximum error in location of all the receivers: ',sngl(final_distance_max),' m'

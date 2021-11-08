@@ -531,7 +531,7 @@
   implicit none
 
   ! local parameters
-  integer :: nspec_ext,nspec_tmp
+  integer :: nspec_ext,nspec_tmp,nspec_all
   integer :: i,j,ispec,ier,imaterial
   ! temporary arrays for reading
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhoext,vsext,vpext
@@ -547,6 +547,9 @@
   double precision :: cpIsquare,cpIIsquare,cssquare,vpII
   double precision :: perm_xx,perm_xz,perm_zz
 
+  ! collects total number
+  call sum_all_i(nspec,nspec_all)
+
   ! The following line is important. For external model defined from tomography file ; material line in Par_file like that:
   ! model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
   ! because in that case MODEL = "default" but nspec_ext = nspec
@@ -556,7 +559,7 @@
   if (myrank == 0) then
     write(IMAIN,*) 'Material properties:'
     write(IMAIN,*) '  MODEL                 : ',trim(MODEL)
-    write(IMAIN,*) '  nspec                 : ',nspec
+    write(IMAIN,*) '  nspec                 : ',nspec_all
     write(IMAIN,*) '  assign external model : ',assign_external_model
     write(IMAIN,*)
     call flush_IMAIN()

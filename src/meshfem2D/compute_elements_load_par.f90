@@ -153,7 +153,6 @@ contains
 
     ! User output
     if (myrank == 0) then
-      write(IMAIN,*)
       write(IMAIN,*) '************ Computing elements load ************'
       write(IMAIN,*) 'Number of elastic elements :',nelem_elastic
       write(IMAIN,*) 'Number of acoustic elements :',nelem_acoustic

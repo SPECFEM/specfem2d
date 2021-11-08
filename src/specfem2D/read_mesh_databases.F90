@@ -44,6 +44,7 @@
 
   ! local parameters
   integer, external :: err_occurred
+  integer :: npgeo_all
   integer :: ier,int_dummy
   character(len=MAX_STRING_LEN) :: prname, dummy
 
@@ -318,6 +319,8 @@
   call process_seismotype_line()
 
   !-------- finish reading init section
+  ! collect infos from all
+  call sum_all_i(npgeo,npgeo_all)
 
   ! sets time step for time scheme
   deltat = real(DT,kind=CUSTOM_REAL)
@@ -338,7 +341,7 @@
     endif
 
     ! outputs parameters read
-    write(IMAIN,200) npgeo,NDIM
+    write(IMAIN,200) npgeo_all,NDIM
     write(IMAIN,600) NSTEP_BETWEEN_OUTPUT_INFO,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
     write(IMAIN,700) trim(seismotype),anglerec
     write(IMAIN,750) initialfield, &
@@ -698,7 +701,11 @@
   read(IIN) ninterface, max_interface_size
 
   ! user output
-  if (myrank == 0) write(IMAIN,*) '  number of interfaces         = ',ninterface
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of interfaces         = ',ninterface
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   ! allocates arrays for mpi/partition interfaces
   if (ninterface > 0) then
@@ -757,7 +764,6 @@
                 my_interfaces(3,ie,num_interface), my_interfaces(4,ie,num_interface)
 
       my_interfaces(1,ie,num_interface) = my_interfaces_read
-
     enddo
   enddo
 
@@ -822,7 +828,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  total number of absorbing elements = ',num_all
+    write(IMAIN,*) '  Total number of absorbing elements = ',num_all
     write(IMAIN,*)
     write(IMAIN,*) '  any absorbing boundary flag        = ',anyabs
     write(IMAIN,*) '  PML boundary flag                  = ',PML_BOUNDARY_CONDITIONS
@@ -1137,6 +1143,8 @@
     write(IMAIN,*) 'reading acoustic forcing...'
     write(IMAIN,*) '  acoustic forcing                             = ',ACOUSTIC_FORCING
     write(IMAIN,*) '  number of acoustic forcing boundary elements = ',nelem_acforcing
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   if (ACOUSTIC_FORCING) then
@@ -1374,14 +1382,21 @@
   integer :: fluid_solid_acoustic_ispec_read,fluid_solid_elastic_ispec_read, &
     fluid_poro_acoustic_ispec_read,fluid_poro_poro_ispec_read, &
     solid_poro_poro_ispec_read,solid_poro_elastic_ispec_read
+  integer :: num_fluid_solid_edges_all,num_fluid_poro_edges_all,num_solid_poro_edges_all
   integer :: ier
+
+  ! collects total number
+  call sum_all_i(num_fluid_solid_edges,num_fluid_solid_edges_all)
+  call sum_all_i(num_fluid_poro_edges,num_fluid_poro_edges_all)
+  call sum_all_i(num_solid_poro_edges,num_solid_poro_edges_all)
 
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) 'reading coupling surfaces...'
-    write(IMAIN,*) '  number of fluid-solid edges  = ',num_fluid_solid_edges
-    write(IMAIN,*) '  number of fluid-poro  edges  = ',num_fluid_poro_edges
-    write(IMAIN,*) '  number of solid-poro  edges  = ',num_solid_poro_edges
+    write(IMAIN,*) '  number of fluid-solid edges  = ',num_fluid_solid_edges_all
+    write(IMAIN,*) '  number of fluid-poro  edges  = ',num_fluid_poro_edges_all
+    write(IMAIN,*) '  number of solid-poro  edges  = ',num_solid_poro_edges_all
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
@@ -1504,13 +1519,17 @@
   implicit none
 
   ! local parameters
-  integer :: i,ier
+  integer :: i,ier,nnodes_tangential_curve_all
   logical :: any_tangential_curve
+
+  ! collects total number
+  call sum_all_i(nnodes_tangential_curve,nnodes_tangential_curve_all)
 
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) 'reading tangential curves...'
-    write(IMAIN,*) '  number of tangential curve nodes = ',nnodes_tangential_curve
+    write(IMAIN,*) '  number of tangential curve nodes = ',nnodes_tangential_curve_all
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
