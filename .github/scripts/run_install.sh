@@ -38,6 +38,16 @@ pip --version
 echo
 echo "numpy version : "
 python -c "import numpy; print(numpy.__version__)"
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+echo
+# enable matplotlib plotting w/out Xwindows
+#mkdir -p $HOME/.config $HOME/.config/matplotlib     # not needed for github actions
+#echo "backend: Agg" > $HOME/.config/matplotlib/matplotlibrc
+echo "matplotlib    : "
+python -c "import matplotlib; print(matplotlib.__version__); print('backend: ',matplotlib.get_backend())"
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 echo
 
 # compiler infos

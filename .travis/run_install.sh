@@ -16,15 +16,22 @@ echo
 # python script needs numpy
 # for distribution precise
 #sudo apt-get install -qq python-numpy #python-scipy
+#sudo apt-get install -qq python-matplotlib
 # trusty:
 # (Sep2017 update: adding flag --user : see https://github.com/travis-ci/travis-ci/issues/8382)
 #pip install --user --upgrade pip setuptools wheel
+#pip install --user --upgrade matplotlib
 #pip install --user --only-binary=numpy numpy
 # bionic:
 sudo apt-get install -qq python-numpy           # gets numpy version 1.13.3
+sudo apt-get install -qq python-matplotlib
 #pip install --user --upgrade pip setuptools wheel
+#pip install --user --upgrade matplotlib
 #pip install --user --only-binary=numpy numpy   # requirements misses ppc64 architecture
 #pip install --user numpy                       # installation takes quite long (~3-4min), gets numpy version 1.19.5
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 echo
 
 # version info
@@ -36,6 +43,16 @@ pip --version
 echo
 echo "numpy version : "
 python -c "import numpy; print(numpy.__version__)"
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+echo
+# enable matplotlib plotting w/out Xwindows
+mkdir -p $HOME/.config $HOME/.config/matplotlib
+echo "backend: Agg" > $HOME/.config/matplotlib/matplotlibrc
+echo "matplotlib    : "
+python -c "import matplotlib; print(matplotlib.__version__); print('backend: ',matplotlib.get_backend())"
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 echo
 
 # CPU architecture
