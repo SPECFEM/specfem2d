@@ -38,7 +38,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,TWO_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4,USE_A_STRONG_FORMULATION_FOR_E1
 
-  use specfem_par, only: nglob,num_abs_boundary_faces,it,any_acoustic, &
+  use specfem_par, only: nglob,num_abs_boundary_faces,anyabs,it,any_acoustic, &
                          ibool, &
                          abs_boundary_ispec,ispec_is_acoustic, &
                          codeabs,codeabs_corner, &
@@ -69,6 +69,7 @@
 
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
+  if (.not. anyabs) return
   if (.not. any_acoustic) return
 
   do ispecabs = 1,num_abs_boundary_faces
@@ -203,7 +204,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: nglob,num_abs_boundary_faces,it,NSTEP,any_acoustic, &
+  use specfem_par, only: nglob,num_abs_boundary_faces,anyabs,it,NSTEP,any_acoustic, &
                          ibool,abs_boundary_ispec,ispec_is_acoustic, &
                          codeabs,codeabs_corner, &
                          ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
@@ -224,6 +225,7 @@
 
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
+  if (.not. anyabs) return
   if (.not. any_acoustic) return
   if (NO_BACKWARD_RECONSTRUCTION) return
 

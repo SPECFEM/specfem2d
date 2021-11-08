@@ -782,7 +782,7 @@
   logical :: codeabsread(4)
 
   integer :: num_abs_boundary_faces_tot,nspec_left_tot,nspec_right_tot,nspec_bottom_tot,nspec_top_tot
-  integer :: ier
+  integer :: ier,num_all
   integer, dimension(:), allocatable :: numabs
 
   ! user output
@@ -798,6 +798,9 @@
   ! (making sure that num_abs_boundary_faces is zero if there are no boundary faces)
   num_abs_boundary_faces = nelemabs
 
+  ! gets total number of boundary faces/edges
+  call sum_all_i(num_abs_boundary_faces,num_all)
+
   ! determines flag for absorbing boundaries
   if (num_abs_boundary_faces <= 0) then
     anyabs = .false.
@@ -805,20 +808,25 @@
     anyabs = .true.
   endif
 
-  ! sets Stacey flag
-  if (anyabs .and. (.not. PML_BOUNDARY_CONDITIONS)) then
-    STACEY_ABSORBING_CONDITIONS = .true.
-  else
-    STACEY_ABSORBING_CONDITIONS = .false.
-  endif
+  ! note: below is commented out as it would overwrite the setting coming from Par_file and make this setting
+  !       local, i.e., different for different MPI slices. then, any MPI communication within an if-statement could
+  !       potentially stall the execution. thus, it's a dangerous handling. Instead, we could add a new, local flag
+  !       to make it more explicit when/when not to handle stacey routine calls - left as a possible todo in future.
+  !
+  ! sets (local) Stacey flag
+  !if (anyabs .and. (.not. PML_BOUNDARY_CONDITIONS)) then
+  !  STACEY_ABSORBING_CONDITIONS = .true.
+  !else
+  !  STACEY_ABSORBING_CONDITIONS = .false.
+  !endif
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  number of absorbing elements = ',num_abs_boundary_faces
+    write(IMAIN,*) '  total number of absorbing elements = ',num_all
     write(IMAIN,*)
-    write(IMAIN,*) '  any absorbing boundary flag  = ',anyabs
-    write(IMAIN,*) '  PML boundary flag            = ',PML_BOUNDARY_CONDITIONS
-    write(IMAIN,*) '  Stacey boundary flag         = ',STACEY_ABSORBING_CONDITIONS
+    write(IMAIN,*) '  any absorbing boundary flag        = ',anyabs
+    write(IMAIN,*) '  PML boundary flag                  = ',PML_BOUNDARY_CONDITIONS
+    write(IMAIN,*) '  Stacey boundary flag               = ',STACEY_ABSORBING_CONDITIONS
     write(IMAIN,*)
     call flush_IMAIN()
   endif

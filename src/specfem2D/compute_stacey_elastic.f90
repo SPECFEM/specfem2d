@@ -40,7 +40,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
     ZERO,ONE,TWO,TWO_THIRDS,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: nglob,num_abs_boundary_faces,it,any_elastic, &
+  use specfem_par, only: nglob,num_abs_boundary_faces,anyabs,it,any_elastic, &
                          ibool, &
                          abs_boundary_ispec,ispec_is_elastic, &
                          codeabs,codeabs_corner, &
@@ -85,6 +85,7 @@
 
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
+  if (.not. anyabs) return
   if (.not. any_elastic) return
 
   ! Clayton-Engquist condition if elastic
@@ -540,7 +541,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,any_elastic,ibool,ispec_is_elastic, &
-                         NSTEP,it,num_abs_boundary_faces, &
+                         NSTEP,it,num_abs_boundary_faces,anyabs, &
                          abs_boundary_ispec,codeabs, &
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top, &
@@ -556,6 +557,7 @@
 
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
+  if (.not. anyabs) return
   if (.not. any_elastic) return
   if (NO_BACKWARD_RECONSTRUCTION) return
 
