@@ -325,22 +325,6 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
 fi
 echo -en 'travis_fold:end:coverage.poroelastic_acoustic\\r'
 
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.simple_topo\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
-  ##
-  ## testing PML & MPI example
-  ##
-  echo "##################################################################"
-  echo "EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/"
-  echo
-  cd EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
-  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
-  ./run_this_example.sh
-  if [[ $? -ne 0 ]]; then exit 1; fi
-  # only for coverage, comparison would fail: my_test
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.simple_topo\\r'
 
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.rayleigh\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
@@ -494,6 +478,42 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.axisym\\r'
+
+## w/out MPI compilation
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.simple_topo\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
+  ##
+  ## testing PML & MPI example
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/"
+  echo
+  cd EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.simple_topo\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.tomo_ocean\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
+  ##
+  ## testing tomographic_ocean_model example
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/tomographic_ocean_model/"
+  echo
+  cd EXAMPLES/tomographic_ocean_model/
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.tomo_ocean\\r'
 
 
 # done

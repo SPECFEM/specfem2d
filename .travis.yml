@@ -49,11 +49,11 @@ env:
     # compilation w/ CUDA and MPI
     - TESTID=4 TESTDIR=1 TESTCOV=0 TESTFLAGS="--with-cuda=cuda5 --with-mpi" CUDA=true CUDA_VERSION=6.5-14
 
-    # debug flags
-    - TESTID=5 TESTDIR=1 TESTCOV=0 TESTFLAGS="--enable-debug" CUDA=false
+    # debug flags (tested on github actions)
+    #- TESTID=5 TESTDIR=1 TESTCOV=0 TESTFLAGS="--enable-debug" CUDA=false
 
-    # debug & double precision
-    - TESTID=6 TESTDIR=1 TESTCOV=0 TESTFLAGS="--enable-double-precision --enable-debug" CUDA=false
+    # debug & double precision (tested on github actions)
+    #- TESTID=6 TESTDIR=1 TESTCOV=0 TESTFLAGS="--enable-double-precision --enable-debug" CUDA=false
 
     # vectorization
     - TESTID=7 TESTDIR=1 TESTCOV=0 TESTFLAGS="--enable-vectorization --without-mpi" CUDA=false

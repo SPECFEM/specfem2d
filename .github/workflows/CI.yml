@@ -449,5 +449,77 @@ jobs:
       run: ./.github/scripts/run_tests.sh
       shell: bash
 
+  linuxTest_9:
+    name: Test run example 9 - simple_topography_and_also_a_simple_fluid_layer debug
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --enable-debug
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/simple_topography_and_also_a_simple_fluid_layer
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_10:
+    name: Test run example 10 - simple_topography_and_also_a_simple_fluid_layer debug double_precision
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --enable-double-precision --enable-debug
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/simple_topography_and_also_a_simple_fluid_layer
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+
+  linuxTest_11:
+    name: Test run example 11 - tomographic_ocean_model
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:      # default w/out MPI
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/tomographic_ocean_model
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
 
 

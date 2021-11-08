@@ -41,8 +41,6 @@
   ! local parameters
   integer :: b_nglob_acoustic,b_nglob_elastic,b_nglob_poroelastic
   integer :: b_nspec_acoustic,b_nspec_elastic
-
-
   integer :: ier
 
   ! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
