@@ -39,10 +39,10 @@
 
   implicit none
 
-  integer iin
-  logical ignore_junk
-  integer value_to_read
-  character(len=MAX_STRING_LEN) string_read
+  integer :: iin
+  logical :: ignore_junk
+  integer :: value_to_read
+  character(len=MAX_STRING_LEN) :: string_read
 
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,*) value_to_read
@@ -57,10 +57,10 @@
 
   implicit none
 
-  integer iin
-  logical ignore_junk
-  double precision value_to_read
-  character(len=MAX_STRING_LEN) string_read
+  integer :: iin
+  logical :: ignore_junk
+  double precision :: value_to_read
+  character(len=MAX_STRING_LEN) :: string_read
 
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,*) value_to_read
@@ -75,10 +75,10 @@
 
   implicit none
 
-  integer iin
-  logical ignore_junk
-  logical value_to_read
-  character(len=MAX_STRING_LEN) string_read
+  integer :: iin
+  logical :: ignore_junk
+  logical :: value_to_read
+  character(len=MAX_STRING_LEN) :: string_read
 
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,*) value_to_read
@@ -93,10 +93,10 @@
 
   implicit none
 
-  integer iin
-  logical ignore_junk
-  character(len=MAX_STRING_LEN) value_to_read
-  character(len=MAX_STRING_LEN) string_read
+  integer :: iin
+  logical :: ignore_junk
+  character(len=MAX_STRING_LEN) :: value_to_read
+  character(len=MAX_STRING_LEN) :: string_read
 
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,'(a)') value_to_read
@@ -111,10 +111,10 @@
 
   implicit none
 
-  integer iin
-  logical ignore_junk
-  double precision value_to_read_1,value_to_read_2
-  character(len=MAX_STRING_LEN) string_read
+  integer :: iin
+  logical :: ignore_junk
+  double precision :: value_to_read_1,value_to_read_2
+  character(len=MAX_STRING_LEN) :: string_read
 
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,*) value_to_read_1,value_to_read_2
@@ -129,10 +129,10 @@
 
   implicit none
 
-  logical ignore_junk
-  character(len=MAX_STRING_LEN) string_read
+  logical :: ignore_junk
+  character(len=MAX_STRING_LEN) :: string_read
 
-  integer ios,iin,index_equal_sign
+  integer :: ios,iin,index_equal_sign
 
   do
     ! daniel: actually MAX_STRING_LEN set to 512...
@@ -189,10 +189,10 @@
 
   implicit none
 
-  integer value_to_read
-  character(len=*) name
-  character(len=MAX_STRING_LEN) string_read
-  integer ierr
+  integer :: value_to_read
+  character(len=*) :: name
+  character(len=MAX_STRING_LEN) :: string_read
+  integer :: ierr
   common /param_err_common/ ierr
 
   call param_read(string_read, len(string_read), name, len(name), ierr)
@@ -209,10 +209,10 @@
 
   implicit none
 
-  double precision value_to_read
-  character(len=*) name
-  character(len=MAX_STRING_LEN) string_read
-  integer ierr
+  double precision :: value_to_read
+  character(len=*) :: name
+  character(len=MAX_STRING_LEN) :: string_read
+  integer :: ierr
   common /param_err_common/ ierr
 
   call param_read(string_read, len(string_read), name, len(name), ierr)
@@ -229,10 +229,10 @@
 
   implicit none
 
-  logical value_to_read
-  character(len=*) name
-  character(len=MAX_STRING_LEN) string_read
-  integer ierr
+  logical :: value_to_read
+  character(len=*) :: name
+  character(len=MAX_STRING_LEN) :: string_read
+  integer :: ierr
   common /param_err_common/ ierr
 
   call param_read(string_read, len(string_read), name, len(name), ierr)
@@ -249,10 +249,10 @@
 
   implicit none
 
-  character(len=*) value_to_read
-  character(len=*) name
-  character(len=MAX_STRING_LEN) string_read
-  integer ierr
+  character(len=*) :: value_to_read
+  character(len=*) :: name
+  character(len=MAX_STRING_LEN) :: string_read
+  integer :: ierr
   common /param_err_common/ ierr
 
   call param_read(string_read, len(string_read), name, len(name), ierr)
@@ -269,10 +269,10 @@
 
   implicit none
 
-  integer value_to_read
-  character(len=*) name
-  character(len=MAX_STRING_LEN) string_read
-  integer ierr
+  integer :: value_to_read
+  character(len=*) :: name
+  character(len=MAX_STRING_LEN) :: string_read
+  integer :: ierr
   common /param_err_common/ ierr
 
   call param_read_nextparam(string_read, len(string_read), name, len(name), ierr)
@@ -289,10 +289,10 @@
 
   implicit none
 
-  double precision value_to_read
-  character(len=*) name
-  character(len=MAX_STRING_LEN) string_read
-  integer ierr
+  double precision :: value_to_read
+  character(len=*) :: name
+  character(len=MAX_STRING_LEN) :: string_read
+  integer :: ierr
   common /param_err_common/ ierr
 
   call param_read_nextparam(string_read, len(string_read), name, len(name), ierr)
@@ -309,10 +309,10 @@
 
   implicit none
 
-  logical value_to_read
-  character(len=*) name
-  character(len=MAX_STRING_LEN) string_read
-  integer ierr
+  logical :: value_to_read
+  character(len=*) :: name
+  character(len=MAX_STRING_LEN) :: string_read
+  integer :: ierr
   common /param_err_common/ ierr
 
   call param_read_nextparam(string_read, len(string_read), name, len(name), ierr)
@@ -325,19 +325,19 @@
 !--------------------
 
   subroutine read_material_parameters_p(i,icodematread,val0read,val1read,val2read,val3read, &
-                         val4read,val5read,val6read,val7read,val8read,val9read,val10read, &
-                         val11read,val12read)
+                                        val4read,val5read,val6read,val7read,val8read,val9read,val10read, &
+                                        val11read,val12read)
 
   use constants, only: MAX_STRING_LEN
 
   implicit none
 
-  integer i,icodematread
-  double precision val0read,val1read,val2read,val3read,val4read,val5read,val6read,val7read, &
-                   val8read,val9read,val10read,val11read,val12read
+  integer :: i,icodematread
+  double precision :: val0read,val1read,val2read,val3read,val4read,val5read,val6read,val7read, &
+                      val8read,val9read,val10read,val11read,val12read
 
-  character(len=MAX_STRING_LEN) string_read
-  integer ierr
+  character(len=MAX_STRING_LEN) :: string_read
+  integer :: ierr
   common /param_err_common/ ierr
 
   call param_read_nextline(string_read, len(string_read), ierr)
@@ -346,7 +346,7 @@
   !print *,trim(string_read)
 
   read(string_read,*,iostat=ierr) i,icodematread,val0read,val1read,val2read,val3read,val4read,val5read, &
-                      val6read,val7read,val8read,val9read,val10read,val11read,val12read
+                                  val6read,val7read,val8read,val9read,val10read,val11read,val12read
 
   if (ierr /= 0) call stop_the_code('error reading material parameters line')
 
@@ -355,15 +355,15 @@
 !--------------------
 
   subroutine read_region_coordinates_p(value_to_read_1,value_to_read_2, &
-                          value_to_read_3,value_to_read_4,value_to_read_5)
+                                       value_to_read_3,value_to_read_4,value_to_read_5)
 
   use constants, only: MAX_STRING_LEN
 
   implicit none
 
-  integer value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
-  character(len=MAX_STRING_LEN) string_read
-  integer ierr
+  integer :: value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
+  character(len=MAX_STRING_LEN) :: string_read
+  integer :: ierr
   common /param_err_common/ ierr
 
   call param_read_nextline(string_read, len(string_read), ierr)
@@ -384,7 +384,7 @@
 
   implicit none
 
-  integer ierr
+  integer :: ierr
   common /param_err_common/ ierr
 
   err_occurred = ierr
