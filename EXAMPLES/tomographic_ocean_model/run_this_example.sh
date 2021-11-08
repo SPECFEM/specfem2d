@@ -7,17 +7,15 @@
 echo "running example: `date`"
 currentdir=`pwd`
 
+
 # sets up directory structure in current example directoy
 echo
 echo "setting up example..."
 echo
 
 mkdir -p OUTPUT_FILES
-
 # cleans output files
 rm -rf OUTPUT_FILES/*
-
-cd $currentdir
 
 # links executables
 mkdir -p bin
@@ -28,9 +26,12 @@ ln -s ../../../bin/xspecfem2D
 cd ../
 
 # scripts
-ln -s ../../../utils/createTomographyFile.py
-ln -s ../../utils/Visualization/plot_model_from_gll_or_binary_file.py
-
+if [ ! -e createTomographyFile.py ]; then
+  ln -s ../../utils/createTomographyFile.py
+fi
+if [ ! -e plot_model_from_gll_or_binary_file.py ]; then
+  ln -s ../../utils/Visualization/plot_model_from_gll_or_binary_file.py
+fi
 
 # creates tomography file
 echo
