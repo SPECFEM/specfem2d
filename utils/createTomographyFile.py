@@ -83,6 +83,7 @@ For the moment just one model can be read from an external file but it is not ve
 """
 from __future__ import print_function
 
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -107,45 +108,60 @@ vs  = np.zeros(nz) # In that case a fluid will be described : vs = 0 m/s everywh
 rho = np.zeros(nz) + DENSITY # Homogeneous density
 vp  = np.zeros(nz) # We will fill that array. !!WARNING!! if you want 2D variations you have to replace that by a 2D array.
 
-# Fill vp array : !!WARNING!! if you want 2D variations you have to add a loop over x. vp[ix,iz] = ...
-for i,zi in enumerate(z):
-    if zi > ZMIN:
-        vp[i]=d1*(zi-ZMIN)+vmin
-    else:
-        vp[i]=-d2*(zi-ZMIN)+vmin
-
-############## Writing tomography file under specfem format : ##############
-############## This format is described in specfem user manual #############
-
 x = np.linspace(orig_x,end_x,nx)
 z = np.linspace(orig_z,end_z,nz)
 
-# Plot vp as a function of depth:
-plt.plot(vp,z,'o-')
+# Fill vp array : !!WARNING!! if you want 2D variations you have to add a loop over x. vp[ix,iz] = ...
+for i,zi in enumerate(z):
+    if zi > ZMIN:
+        vp[i] = d1*(zi-ZMIN) + vmin
+    else:
+        vp[i] = -d2*(zi-ZMIN) + vmin
+
+
+############## Writing tomography file under specfem format : ##############
+############## This format is described in specfem user manual #############
 
 spacing_x = (end_x-orig_x)/(nx-1)
 spacing_z = (end_z-orig_z)/(nz-1)
 
 # Open a file in write mode
-fo = open("profile.xyz", "w+") # Name of the file it has to be set in the Par_file
-print("Name of the file: ", fo.name)
-line1 = str(orig_x)+" "+str(orig_z)+" "+str(end_x)+" "+str(end_z)+"\n"
-line2 = str(spacing_x)+" "+str(spacing_z)+"\n"
-line3 = str(nx)+" "+str(nz)+"\n"
-# line4 : vpMin vpMax vsMin vsMax rhoMin rhoMax
-line4 = str(min(vp))+" "+str(max(vp))+" "+str(min(vs))+" "+str(max(vs))+" "+str(min(rho))+" "+str(max(rho))+"\n"
-# Write a line at the end of the file.
-fo.write(line1)
-fo.write(line2)
-fo.write(line3)
-fo.write(line4)
-for iz in np.arange(nz):
-    for ix in np.arange(nx):
-        #!!WARNING!! if you want 2D variations you have to add a dependence of vp on x (vp[ix,iz]).
-        lineToWrite= str(x[ix])+" "+str(z[iz])+" "+str(vp[iz])+" "+str(vs[iz])+" "+str(rho[iz])+"\n" # x z vp vs rho
-        fo.write(lineToWrite)
+with open("profile.xyz", "w+") as f: # Name of the file it has to be set in the Par_file
+    print("Name of the file: ", f.name)
 
-plt.show()
-# Close opened file
-fo.close()
+    line1 = str(orig_x)+" "+str(orig_z)+" "+str(end_x)+" "+str(end_z)+"\n"
+    line2 = str(spacing_x)+" "+str(spacing_z)+"\n"
+    line3 = str(nx)+" "+str(nz)+"\n"
+
+    # line4 : vpMin vpMax vsMin vsMax rhoMin rhoMax
+    line4 = str(min(vp))+" "+str(max(vp))+" "+str(min(vs))+" "+str(max(vs))+" "+str(min(rho))+" "+str(max(rho))+"\n"
+
+    # Write a line at the end of the file.
+    f.write(line1)
+    f.write(line2)
+    f.write(line3)
+    f.write(line4)
+    for iz in np.arange(nz):
+        for ix in np.arange(nx):
+            #!!WARNING!! if you want 2D variations you have to add a dependence of vp on x (vp[ix,iz]).
+            lineToWrite= str(x[ix])+" "+str(z[iz])+" "+str(vp[iz])+" "+str(vs[iz])+" "+str(rho[iz])+"\n" # x z vp vs rho
+            f.write(lineToWrite)
+
+    print("  written to file: ",f.name)
+
+## plotting
+show_plot = False
+if len(sys.argv) >= 2: show_plot = ( int(sys.argv[1]) == 1 )
+
+# Plot vp as a function of depth:
+plt.clf()
+plt.title("Profile - Vp")
+plt.plot(vp,z,'o-')
+# save as png file
+plt.savefig("profile.png")
+print("  plotted: profile.png")
+# show plot in window in case called by: ./createTomographyFile.py 1
+if show_plot:
+    plt.show()
+
 
