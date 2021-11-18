@@ -231,6 +231,8 @@
 
   read(IIN) local_i ! NTSTEP_BETWEEN_COMPUTE_KERNELS
 
+  read(IIN) local_l ! APPROXIMATE_HESS_KL
+
   read(IIN) local_l ! NO_BACKWARD_RECONSTRUCTION
 
   read(IIN) local_l ! DRAW_SOURCES_AND_RECEIVERS

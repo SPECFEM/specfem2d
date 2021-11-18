@@ -141,9 +141,9 @@
 !!
 !!-----------------------------------------------------------
 
-! outputs diagonal Hessian for preconditioning
-  logical, parameter :: APPROXIMATE_HESS_KL = .false.
-
+! kernel debugging
+! flag to save GLL weights for kernel benchmark examples
+  logical,parameter :: SAVE_WEIGHTS = .true.
 
 !!-----------------------------------------------------------
 !!

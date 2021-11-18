@@ -188,6 +188,7 @@
     ! adjoint kernel
     call bcast_all_singlel(save_ASCII_kernels)
     call bcast_all_singlei(NTSTEP_BETWEEN_COMPUTE_KERNELS)
+    call bcast_all_singlel(APPROXIMATE_HESS_KL)
     call bcast_all_singlel(NO_BACKWARD_RECONSTRUCTION)
 
     ! boundary conditions
@@ -794,7 +795,7 @@
   call read_value_logical_p(save_ASCII_kernels, 'save_ASCII_kernels')
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'save_ASCII_kernels              = .true.'
+    write(*,'(a)') 'save_ASCII_kernels                  = .true.'
     write(*,*)
   endif
 
@@ -814,13 +815,19 @@
     endif
   endif
 
+  call read_value_logical_p(APPROXIMATE_HESS_KL, 'APPROXIMATE_HESS_KL')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'APPROXIMATE_HESS_KL                 = .true.'
+    write(*,*)
+  endif
+
   call read_value_logical_p(NO_BACKWARD_RECONSTRUCTION,'NO_BACKWARD_RECONSTRUCTION')
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
     write(*,'(a)') 'NO_BACKWARD_RECONSTRUCTIO           = .false.'
     write(*,*)
   endif
-
 
   !--------------------------------------------------------------------
   !

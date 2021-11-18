@@ -207,12 +207,13 @@
 
   subroutine read_forward_arrays_no_backward()
 
-  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,APPROXIMATE_HESS_KL,NDIM,CUSTOM_REAL
+  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,NDIM,CUSTOM_REAL
 
   use specfem_par, only: myrank,it,any_acoustic,any_elastic, &
     b_potential_acoustic,b_displ_elastic,b_accel_elastic, &
     nglob,no_backward_acoustic_buffer,no_backward_displ_buffer,no_backward_accel_buffer, &
-    no_backward_iframe,no_backward_Nframes,GPU_MODE,NSTEP
+    no_backward_iframe,no_backward_Nframes,GPU_MODE,NSTEP, &
+    APPROXIMATE_HESS_KL
 
   use specfem_par_gpu, only: Mesh_pointer
 

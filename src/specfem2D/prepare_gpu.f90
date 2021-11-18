@@ -33,7 +33,7 @@
 
   subroutine prepare_GPU()
 
-  use constants, only: IMAIN,APPROXIMATE_HESS_KL,USE_A_STRONG_FORMULATION_FOR_E1
+  use constants, only: IMAIN,USE_A_STRONG_FORMULATION_FOR_E1
   use specfem_par
   use specfem_par_gpu
   use moving_sources_par, only: init_moving_sources_GPU

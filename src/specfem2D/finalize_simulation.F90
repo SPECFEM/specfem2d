@@ -33,7 +33,7 @@
 
   subroutine finalize_simulation()
 
-  use constants, only: IMAIN,APPROXIMATE_HESS_KL,IOUT_ENERGY,ISTANDARD_OUTPUT
+  use constants, only: IMAIN,IOUT_ENERGY,ISTANDARD_OUTPUT
 
   use specfem_par
   use specfem_par_noise

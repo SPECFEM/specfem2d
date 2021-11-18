@@ -927,7 +927,7 @@
   subroutine prepare_timerun_kernels()
 
 
-  use constants, only: IMAIN,APPROXIMATE_HESS_KL
+  use constants, only: IMAIN
   use specfem_par
 
   implicit none

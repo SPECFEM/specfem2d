@@ -226,9 +226,8 @@ module shared_input_parameters
   !#-----------------------------------------------------------------------------
   ! kernel output in case of adjoint simulation
   logical :: save_ASCII_kernels
-
   integer :: NTSTEP_BETWEEN_COMPUTE_KERNELS
-
+  logical :: APPROXIMATE_HESS_KL
   logical :: NO_BACKWARD_RECONSTRUCTION
 
   !#-----------------------------------------------------------------------------

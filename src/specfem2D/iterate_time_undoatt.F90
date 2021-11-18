@@ -34,7 +34,7 @@
 
   subroutine iterate_time_undoatt()
 
-  use constants, only: IMAIN, APPROXIMATE_HESS_KL,USE_A_STRONG_FORMULATION_FOR_E1
+  use constants, only: IMAIN, USE_A_STRONG_FORMULATION_FOR_E1
   use specfem_par
   use specfem_par_gpu, only: Mesh_pointer
   use specfem_par_movie, only: MOVIE_SIMULATION

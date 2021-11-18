@@ -106,12 +106,13 @@
 
   subroutine save_forward_arrays_no_backward()
 
-  use constants, only: IOUT_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,APPROXIMATE_HESS_KL,NDIM,CUSTOM_REAL
+  use constants, only: IOUT_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,NDIM,CUSTOM_REAL
 
   use specfem_par, only: myrank,it,NSTEP, &
     any_acoustic,any_elastic,potential_acoustic,displ_elastic,accel_elastic,GPU_MODE, &
     no_backward_acoustic_buffer,no_backward_displ_buffer,no_backward_accel_buffer, &
-    no_backward_iframe,no_backward_Nframes,nglob
+    no_backward_iframe,no_backward_Nframes,nglob, &
+    APPROXIMATE_HESS_KL
 
   use specfem_par_gpu, only: Mesh_pointer
 

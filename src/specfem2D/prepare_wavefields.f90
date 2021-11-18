@@ -33,7 +33,7 @@
 
   subroutine prepare_wavefields()
 
-  use constants, only: IMAIN,APPROXIMATE_HESS_KL,USE_ENFORCE_FIELDS
+  use constants, only: IMAIN,USE_ENFORCE_FIELDS
   use specfem_par
 
   implicit none

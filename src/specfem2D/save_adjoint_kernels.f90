@@ -35,16 +35,11 @@
 
 ! saves adjoint sensitivity kernels to file
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,SAVE_WEIGHTS
 
   use specfem_par, only: myrank, any_acoustic, any_elastic, any_poroelastic
 
   implicit none
-
-  ! local parameters
-  ! kernel debugging
-  ! flag to save GLL weights for kernel benchmark examples
-  logical,parameter :: SAVE_WEIGHTS = .true.
 
   ! user output
   if (myrank == 0) then
@@ -76,7 +71,7 @@
   subroutine save_kernels_elastic()
 
   use constants, only: NGLLX,NGLLZ,IMAIN,CUSTOM_REAL,FOUR_THIRDS,TWO_THIRDS,TWO,MAX_STRING_LEN, &
-    APPROXIMATE_HESS_KL,OUTPUT_FILES
+    OUTPUT_FILES
 
   use specfem_par, only: myrank, nspec, ibool, coord, save_ASCII_kernels, &
                          rho_kl, kappa_kl, mu_kl, rhop_kl, alpha_kl, beta_kl, &
@@ -84,7 +79,8 @@
                          rhorho_el_Hessian_final1, rhorho_el_Hessian_final2, &
                          rhostore,mustore,kappastore, &
                          ispec_is_elastic, &
-                         deltat,NTSTEP_BETWEEN_COMPUTE_KERNELS
+                         deltat,NTSTEP_BETWEEN_COMPUTE_KERNELS, &
+                         APPROXIMATE_HESS_KL
 
   use specfem_par, only: ispec_is_anisotropic, c11_kl, c13_kl, c15_kl, c33_kl, c35_kl, c55_kl
 
@@ -414,11 +410,12 @@
 
   subroutine save_kernels_acoustic()
 
-  use constants, only: NGLLX,NGLLZ,IMAIN,CUSTOM_REAL,MAX_STRING_LEN,APPROXIMATE_HESS_KL,OUTPUT_FILES
+  use constants, only: NGLLX,NGLLZ,IMAIN,CUSTOM_REAL,MAX_STRING_LEN,OUTPUT_FILES
 
   use specfem_par, only: myrank, nspec, ibool, coord, save_ASCII_kernels, &
                          rho_ac_kl, kappa_ac_kl, alpha_ac_kl, rhop_ac_kl, &
-                         rhorho_ac_Hessian_final1, rhorho_ac_Hessian_final2
+                         rhorho_ac_Hessian_final1, rhorho_ac_Hessian_final2, &
+                         APPROXIMATE_HESS_KL
 
   implicit none
 

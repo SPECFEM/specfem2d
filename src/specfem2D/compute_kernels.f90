@@ -38,9 +38,8 @@
 ! see e.g. Tromp et al. (2005) for elastic calculation
 ! and Morency et al. (2009) for poroelastic calculation
 
-  use constants, only: APPROXIMATE_HESS_KL
-
-  use specfem_par, only: any_acoustic,any_elastic,any_poroelastic,it,NTSTEP_BETWEEN_COMPUTE_KERNELS
+  use specfem_par, only: any_acoustic,any_elastic,any_poroelastic,it,NTSTEP_BETWEEN_COMPUTE_KERNELS, &
+    APPROXIMATE_HESS_KL
 
   implicit none
 
@@ -683,7 +682,7 @@
 
   subroutine compute_kernels_Hessian()
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,APPROXIMATE_HESS_KL
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO
 
   use specfem_par, only: nglob,nspec,ibool,ispec_is_acoustic,ispec_is_elastic, &
                          rhostore, &
@@ -693,7 +692,8 @@
                          potential_acoustic,b_potential_acoustic, &
                          rhorho_el_Hessian_final1,rhorho_el_Hessian_final2, &
                          rhorho_ac_Hessian_final1,rhorho_ac_Hessian_final2, &
-                         deltat,GPU_MODE,NTSTEP_BETWEEN_COMPUTE_KERNELS
+                         deltat,GPU_MODE,NTSTEP_BETWEEN_COMPUTE_KERNELS, &
+                         APPROXIMATE_HESS_KL
 
   use specfem_par_gpu, only: Mesh_pointer
 
