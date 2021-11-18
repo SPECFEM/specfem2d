@@ -142,10 +142,8 @@ ifdef SCOTCH_INCDIR
 $O/scotch_partitioning.mesh.o: $(SCOTCH_INCDIR)/scotchf.h
 endif
 
-
 # Version file
 $O/meshfem2D.mesh.o: ${SETUP}/version.fh
-
 
 ####
 #### rule to build each .o file below
@@ -159,3 +157,4 @@ $O/%.mesh.o: $S/%.f90 ${SETUP}/constants.h $O/meshfem2D_par.mesh_module.o
 
 $O/%.mesh.o: $S/%.F90 ${SETUP}/constants.h $O/meshfem2D_par.mesh_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90_MESH} -c -o $@ $<
+
