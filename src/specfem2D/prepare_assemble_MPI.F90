@@ -49,7 +49,7 @@
 
   use constants, only: NGLLX,NGLLZ
 
-  use specfem_par, only: ibool, knods, ngnod, nglob, &
+  use specfem_par, only: ibool, knods, NGNOD, nglob, &
     ispec_is_elastic, ispec_is_poroelastic, ispec_is_acoustic
 
   use specfem_par, only: ninterface, my_nelmnts_neighbors, my_interfaces, &
@@ -76,7 +76,7 @@
   logical, dimension(nglob)  :: mask_ibool_ext_mesh
 
   integer  :: ixmin, ixmax, izmin, izmax, ix, iz
-  integer, dimension(ngnod)  :: n
+  integer, dimension(NGNOD)  :: n
   integer  :: e1, e2, itype, ispec, k, sens, iglob
   integer  :: nglob_interface_acoustic
   integer  :: nglob_interface_elastic
@@ -122,7 +122,7 @@
       itype = my_interfaces(2,ispec_interface,iinterface)
 
       ! element control node ids
-      do k = 1, ngnod
+      do k = 1, NGNOD
         n(k) = knods(k,ispec)
       enddo
 
@@ -130,7 +130,7 @@
       e1 = my_interfaces(3,ispec_interface,iinterface)
       e2 = my_interfaces(4,ispec_interface,iinterface)
 
-      call get_edge(ngnod, n, itype, e1, e2, ixmin, ixmax, izmin, izmax, sens)
+      call get_edge(NGNOD, n, itype, e1, e2, ixmin, ixmax, izmin, izmax, sens)
 
       ! sets interface points (all material domains)
       do iz = izmin, izmax, sens
@@ -229,14 +229,14 @@
 ! Get the points (ixmin, ixmax, izmin and izmax) on an node/edge for one element.
 ! 'sens' is used to have DO loops with increment equal to 'sens' (-/+1).
 !-----------------------------------------------
-  subroutine get_edge ( ngnod, n, itype, e1, e2, ixmin, ixmax, izmin, izmax, sens )
+  subroutine get_edge ( NGNOD, n, itype, e1, e2, ixmin, ixmax, izmin, izmax, sens )
 
   use constants, only: NGLLX,NGLLZ
 
   implicit none
 
-  integer, intent(in)  :: ngnod
-  integer, dimension(ngnod), intent(in)  :: n
+  integer, intent(in)  :: NGNOD
+  integer, dimension(NGNOD), intent(in)  :: n
   integer, intent(in)  :: itype, e1, e2
   integer, intent(out)  :: ixmin, ixmax, izmin, izmax
   integer, intent(out)  :: sens

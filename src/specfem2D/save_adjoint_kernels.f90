@@ -84,7 +84,7 @@
                          rhorho_el_Hessian_final1, rhorho_el_Hessian_final2, &
                          rhostore,mustore,kappastore, &
                          ispec_is_elastic, &
-                         deltat,NSTEP_BETWEEN_COMPUTE_KERNELS
+                         deltat,NTSTEP_BETWEEN_COMPUTE_KERNELS
 
   use specfem_par, only: ispec_is_anisotropic, c11_kl, c13_kl, c15_kl, c33_kl, c35_kl, c55_kl
 
@@ -131,11 +131,11 @@
           ! (see e.g. Peter et al. 2011, eq. 15, 18, 19)
 
           ! density kernel
-          rho_kl(i,j,ispec) =  - rhol * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * rho_kl(i,j,ispec)
+          rho_kl(i,j,ispec) =  - rhol * (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * rho_kl(i,j,ispec)
           ! shear modulus kernel
-          mu_kl(i,j,ispec) =  - TWO * mul * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * mu_kl(i,j,ispec)
+          mu_kl(i,j,ispec) =  - TWO * mul * (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * mu_kl(i,j,ispec)
           ! bulk modulus kernel
-          kappa_kl(i,j,ispec) = - kappal * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * kappa_kl(i,j,ispec)
+          kappa_kl(i,j,ispec) = - kappal * (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * kappa_kl(i,j,ispec)
 
           ! derived from "primary" kernels above...
           !
@@ -173,12 +173,12 @@
           do i = 1, NGLLX
             iglob = ibool(i,j,ispec)
             ! "primary" kernels
-            c11_kl(i,j,ispec) = - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * c11_kl(i,j,ispec)
-            c13_kl(i,j,ispec) = - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * c13_kl(i,j,ispec)
-            c15_kl(i,j,ispec) = - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * c15_kl(i,j,ispec)
-            c33_kl(i,j,ispec) = - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * c33_kl(i,j,ispec)
-            c35_kl(i,j,ispec) = - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * c35_kl(i,j,ispec)
-            c55_kl(i,j,ispec) = - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * c55_kl(i,j,ispec)
+            c11_kl(i,j,ispec) = - (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * c11_kl(i,j,ispec)
+            c13_kl(i,j,ispec) = - (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * c13_kl(i,j,ispec)
+            c15_kl(i,j,ispec) = - (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * c15_kl(i,j,ispec)
+            c33_kl(i,j,ispec) = - (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * c33_kl(i,j,ispec)
+            c35_kl(i,j,ispec) = - (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * c35_kl(i,j,ispec)
+            c55_kl(i,j,ispec) = - (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * c55_kl(i,j,ispec)
             ! rho prime kernel
             rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + c11_kl(i,j,ispec) + &
                                  c13_kl(i,j,ispec) + c15_kl(i,j,ispec) + c33_kl(i,j,ispec) + &

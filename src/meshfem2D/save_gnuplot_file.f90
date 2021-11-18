@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine save_gnuplot_file(ngnod,nx,nz,x,z)
+  subroutine save_gnuplot_file(NGNOD,nx,nz,x,z)
 
 ! creates a Gnuplot file that displays the grid
 
@@ -39,7 +39,7 @@
 
   implicit none
 
-  integer :: ngnod,nx,nz
+  integer :: NGNOD,nx,nz
   double precision, dimension(0:nx,0:nz) :: x,z
 
   ! local parameters
@@ -63,7 +63,7 @@
   ! draw horizontal lines of the grid
   if (myrank == 0) write(IMAIN,*) 'drawing horizontal lines of the grid'
   istepx = 1
-  if (ngnod == 4) then
+  if (NGNOD == 4) then
     istepz = 1
   else
     istepz = 2
@@ -78,7 +78,7 @@
 
   ! draw vertical lines of the grid
   if (myrank == 0) write(IMAIN,*) 'drawing vertical lines of the grid'
-  if (ngnod == 4) then
+  if (NGNOD == 4) then
     istepx = 1
   else
     istepx = 2

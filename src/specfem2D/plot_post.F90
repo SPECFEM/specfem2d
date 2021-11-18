@@ -52,7 +52,7 @@
                          nglob,nrec,NSOURCES, &
                          rhostore,rho_vpstore, &
                          pointsdisp, &
-                         nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
+                         nspec,NGNOD,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
                          any_acoustic,any_poroelastic, &
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
@@ -560,7 +560,7 @@
 
         xinterp(i,j) = 0.d0
         zinterp(i,j) = 0.d0
-        do in = 1,ngnod
+        do in = 1,NGNOD
           nnum = knods(in,ispec)
           xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
           zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
@@ -615,7 +615,7 @@
       coorg_send_ps_element_mesh(2,buffer_offset) = z1
     endif
 
-    if (ngnod == 4) then
+    if (NGNOD == 4) then
 
       ! draw straight lines if elements have 4 nodes
 
@@ -824,7 +824,7 @@
         if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
           nb_coorg_per_elem = nb_coorg_per_elem + 1
         endif
-        if (ngnod == 4) then
+        if (NGNOD == 4) then
           nb_coorg_per_elem = nb_coorg_per_elem + 4
         else
           nb_coorg_per_elem = nb_coorg_per_elem + 3*(pointsdisp-1)+(pointsdisp-2)
@@ -851,7 +851,7 @@
           buffer_offset = buffer_offset + 1
           write(24,*) 'mark'
           write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
-          if (ngnod == 4) then
+          if (NGNOD == 4) then
             buffer_offset = buffer_offset + 1
             write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
             buffer_offset = buffer_offset + 1
@@ -916,7 +916,7 @@
       if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
         nb_coorg_per_elem = nb_coorg_per_elem + 1
       endif
-      if (ngnod == 4) then
+      if (NGNOD == 4) then
         nb_coorg_per_elem = nb_coorg_per_elem + 4
       else
         nb_coorg_per_elem = nb_coorg_per_elem + 3*(pointsdisp-1)+(pointsdisp-2)
@@ -1507,7 +1507,7 @@
 
           xinterp(i,j) = 0.d0
           zinterp(i,j) = 0.d0
-          do in = 1,ngnod
+          do in = 1,NGNOD
             nnum = knods(in,ispec)
             xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
             zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)

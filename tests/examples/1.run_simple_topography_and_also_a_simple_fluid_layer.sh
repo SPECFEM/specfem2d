@@ -48,8 +48,8 @@ ln -s $EXAMPLES/$NAME/REF_SEIS
 # reduces file i/o (takes too long for travis to run the example otherwise)
 sed -i "s:^NPROC .*:NPROC      = 2:" DATA/Par_file
 sed -i "s:^NSTEP .*:NSTEP      = 500:" DATA/Par_file
-sed -i "s:^NSTEP_BETWEEN_OUTPUT_INFO .*:NSTEP_BETWEEN_OUTPUT_INFO      = 200:" DATA/Par_file
-sed -i "s:^NSTEP_BETWEEN_OUTPUT_IMAGES .*:NSTEP_BETWEEN_OUTPUT_IMAGES      = 1000:" DATA/Par_file
+sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO      = 200:" DATA/Par_file
+sed -i "s:^NTSTEP_BETWEEN_OUTPUT_IMAGES .*:NTSTEP_BETWEEN_OUTPUT_IMAGES      = 1000:" DATA/Par_file
 sed -i "s:^output_color_image .*:output_color_image      = .false.:" DATA/Par_file
 sed -i "s:^output_postscript_snapshot .*:output_postscript_snapshot      = .false.:" DATA/Par_file
 

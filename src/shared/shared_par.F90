@@ -100,10 +100,10 @@ module shared_input_parameters
   logical :: SAVE_FORWARD
 
   ! variables used for partitioning
-  integer :: NPROC, partitioning_method
+  integer :: NPROC, PARTITIONING_TYPE
 
   ! number of control nodes
-  integer :: ngnod
+  integer :: NGNOD
 
   ! number of time steps
   integer (kind=RegInt_K) :: NSTEP
@@ -186,12 +186,12 @@ module shared_input_parameters
   character(len=MAX_STRING_LEN) :: seismotype
 
   ! subsampling
-  integer :: subsamp_seismos
+  integer :: NTSTEP_BETWEEN_OUTPUT_SAMPLE ! depreated: subsamp_seismos, renamed to NTSTEP_BETWEEN_OUTPUT_SAMPLE
 
   ! for better accuracy of pressure output (uses 2nd time-derivatives of the initial source time function)
   logical :: USE_TRICK_FOR_BETTER_PRESSURE
 
-  integer :: NSTEP_BETWEEN_OUTPUT_SEISMOS
+  integer :: NTSTEP_BETWEEN_OUTPUT_SEISMOS ! deprecated: NSTEP_BETWEEN_OUTPUT_SEISMOS has been renamed
 
   ! Integrated energy field output
   logical :: COMPUTE_INTEGRATED_ENERGY_FIELD
@@ -227,7 +227,7 @@ module shared_input_parameters
   ! kernel output in case of adjoint simulation
   logical :: save_ASCII_kernels
 
-  integer :: NSTEP_BETWEEN_COMPUTE_KERNELS
+  integer :: NTSTEP_BETWEEN_COMPUTE_KERNELS
 
   logical :: NO_BACKWARD_RECONSTRUCTION
 
@@ -308,7 +308,7 @@ module shared_input_parameters
   !#
   !#-----------------------------------------------------------------------------
   ! general information during the computation and for information of the stability behavior during the simulation
-  integer :: NSTEP_BETWEEN_OUTPUT_INFO
+  integer :: NTSTEP_BETWEEN_OUTPUT_INFO
 
   ! for later check of the grid
   logical :: output_grid_Gnuplot,output_grid_ASCII
@@ -323,7 +323,7 @@ module shared_input_parameters
   !#
   !#-----------------------------------------------------------------------------
   ! time step interval for image output
-  integer :: NSTEP_BETWEEN_OUTPUT_IMAGES
+  integer :: NTSTEP_BETWEEN_OUTPUT_IMAGES
 
   ! threshold value
   double precision :: cutsnaps

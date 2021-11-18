@@ -37,7 +37,7 @@
 
   use constants, only: IMAIN,NGLLX,NGLLZ,NDIM,HUGEVAL,SMALLVALTOL,ZERO
 
-  use specfem_par, only: knods,ibool,shape2D,coorg,nglob,nspec,ngnod,myrank
+  use specfem_par, only: knods,ibool,shape2D,coorg,nglob,nspec,NGNOD,myrank
 
   implicit none
 
@@ -86,7 +86,7 @@
 
         xcor = zero
         ycor = zero
-        do in = 1,ngnod
+        do in = 1,NGNOD
           nnum = knods(in,ispec)
           xcor = xcor + shape2D(in,ix,iy)*coorg(1,nnum)
           ycor = ycor + shape2D(in,ix,iy)*coorg(2,nnum)

@@ -121,14 +121,14 @@
   read(IIN) local_l1, local_l2 ! output_grid_Gnuplot,interpol
   !print *,'debug: output_grid_Gnuplot,interpol',myrank,local_l1,local_l2
 
-  read(IIN) local_i ! NSTEP_BETWEEN_OUTPUT_INFO
-  !print *,'debug: NSTEP_BETWEEN_OUTPUT_INFO ',myrank,local_i
+  read(IIN) local_i ! NTSTEP_BETWEEN_OUTPUT_INFO
+  !print *,'debug: NTSTEP_BETWEEN_OUTPUT_INFO ',myrank,local_i
 
-  read(IIN) local_i ! NSTEP_BETWEEN_OUTPUT_SEISMOS
-  !print *,'debug: NSTEP_BETWEEN_OUTPUT_SEISMOS ',myrank,local_i
+  read(IIN) local_i ! NTSTEP_BETWEEN_OUTPUT_SEISMOS
+  !print *,'debug: NTSTEP_BETWEEN_OUTPUT_SEISMOS ',myrank,local_i
 
-  read(IIN) local_i ! NSTEP_BETWEEN_OUTPUT_IMAGES
-  !print *,'debug: NSTEP_BETWEEN_OUTPUT_IMAGES ',myrank,local_i
+  read(IIN) local_i ! NTSTEP_BETWEEN_OUTPUT_IMAGES
+  !print *,'debug: NTSTEP_BETWEEN_OUTPUT_IMAGES ',myrank,local_i
 
   read(IIN) local_l ! PML_BOUNDARY_CONDITIONS
   !print *,'debug: PML_BOUNDARY_CONDITIONS ',myrank,local_l
@@ -164,7 +164,7 @@
      do_rerun_mesher = .true.
    endif
 
-  read(IIN) local_i, local_i, local_i ! subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
+  read(IIN) local_i, local_i, local_i ! NTSTEP_BETWEEN_OUTPUT_SAMPLE,imagetype_JPEG,imagetype_wavefield_dumps
 
   read(IIN) local_l, local_l ! output_postscript_snapshot,output_color_image
 
@@ -229,7 +229,7 @@
 
   read(IIN) local_l ! save_ASCII_kernels
 
-  read(IIN) local_i ! NSTEP_BETWEEN_COMPUTE_KERNELS
+  read(IIN) local_i ! NTSTEP_BETWEEN_COMPUTE_KERNELS
 
   read(IIN) local_l ! NO_BACKWARD_RECONSTRUCTION
 
@@ -342,7 +342,7 @@
 
     ! outputs parameters read
     write(IMAIN,200) npgeo_all,NDIM
-    write(IMAIN,600) NSTEP_BETWEEN_OUTPUT_INFO,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
+    write(IMAIN,600) NTSTEP_BETWEEN_OUTPUT_INFO,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
     write(IMAIN,700) trim(seismotype),anglerec
     write(IMAIN,750) initialfield, &
                  add_Bielak_conditions_bottom,add_Bielak_conditions_right,add_Bielak_conditions_top,add_Bielak_conditions_left, &
@@ -363,7 +363,7 @@
   'Number of space dimensions. . . . . . . . . . (NDIM) =',i8)
 
 600 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
-  'Display frequency . . . .(NSTEP_BETWEEN_OUTPUT_INFO) = ',i6/ 5x, &
+  'Display frequency . . . (NTSTEP_BETWEEN_OUTPUT_INFO) = ',i6/ 5x, &
   'Color display . . . . . . . . . . . . . . . (colors) = ',i6/ 5x, &
   ' == 0     black and white display              ',  / 5x, &
   ' == 1     color display                        ',  /5x, &
@@ -526,7 +526,7 @@
   enddo
 
   !---- read the basic properties of the spectral elements
-  read(IIN) numat,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
+  read(IIN) numat,NGNOD,nspec,pointsdisp,plot_lowerleft_corner_only
 
   read(IIN) nelemabs,nelem_acforcing,nelem_acoustic_surface,num_fluid_solid_edges, &
               num_fluid_poro_edges,num_solid_poro_edges,nnodes_tangential_curve, &
@@ -541,7 +541,7 @@
   if (myrank == 0) then
     ! print element group main parameters
     write(IMAIN,107)
-    write(IMAIN,207) nspec_all,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat, &
+    write(IMAIN,207) nspec_all,NGNOD,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat, &
                      nelem_acforcing_all,nelem_acoustic_surface_all
     write(IMAIN,*)
     call flush_IMAIN()
@@ -569,7 +569,7 @@
 107 format(/1x,'-- Spectral Elements --',//)
 
 207 format(5x,'Number of spectral elements . . . . . . . . .  (nspec) =',i7,/5x, &
-               'Number of control nodes per element . . . . . (ngnod) =',i7,/5x, &
+               'Number of control nodes per element . . . . . (NGNOD) =',i7,/5x, &
                'Number of points in X-direction . . . . . . . (NGLLX) =',i7,/5x, &
                'Number of points in Y-direction . . . . . . . (NGLLZ) =',i7,/5x, &
                'Number of points per element. . . . . . (NGLLX*NGLLZ) =',i7,/5x, &
@@ -615,7 +615,7 @@
 
   use constants, only: IIN,IMAIN,myrank
 
-  use specfem_par, only: nspec,ngnod,kmato,knods,region_CPML,f0_source,numat
+  use specfem_par, only: nspec,NGNOD,kmato,knods,region_CPML,f0_source,numat
 
   implicit none
 
@@ -635,7 +635,7 @@
 
   ! elements
   allocate(kmato(nspec), &
-           knods(ngnod,nspec),stat=ier)
+           knods(NGNOD,nspec),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating kmato,.. array')
 
   ! initializes
@@ -644,7 +644,7 @@
   region_CPML(:) = 0
 
   ! temporary read array
-  allocate(knods_read(ngnod),stat=ier)
+  allocate(knods_read(NGNOD),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating temporary knods array')
 
   ! reads spectral macrobloc data
@@ -653,7 +653,7 @@
   n = 0
   do ispec = 1,nspec
     ! format: #element_id  #material_id #node_id1 #node_id2 #...
-    read(IIN) n,kmato_read,(knods_read(k),k = 1,ngnod),pml_read
+    read(IIN) n,kmato_read,(knods_read(k),k = 1,NGNOD),pml_read
 
     ! material association
     kmato(n) = kmato_read

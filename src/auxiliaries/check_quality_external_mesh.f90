@@ -88,8 +88,8 @@
 ! to check if any element with a negative Jacobian is found
 
 ! 2D shape functions and their derivatives at receiver
-  double precision :: shape2D(ngnod)
-  double precision :: dershape2D(NDIM,ngnod)
+  double precision :: shape2D(NGNOD)
+  double precision :: dershape2D(NDIM,NGNOD)
 
   double precision :: xxi,zxi,xgamma,zgamma,xelm,zelm
   double precision :: xi,gamma,jacobian
@@ -219,7 +219,7 @@
     xgamma = ZERO
     zgamma = ZERO
 
-    do ia = 1,ngnod
+    do ia = 1,NGNOD
       xelm = x(ibool(ia,ispec))
       zelm = y(ibool(ia,ispec))
 
@@ -240,7 +240,7 @@
         stop 'ia must be between 1 and NGNOD = 4'
       endif
 
-      call define_shape_functions(shape2D,dershape2D,xi,gamma,ngnod)
+      call define_shape_functions(shape2D,dershape2D,xi,gamma,NGNOD)
 
       xxi = xxi + dershape2D(1,ia)*xelm
       zxi = zxi + dershape2D(1,ia)*zelm
@@ -253,7 +253,7 @@
     ! the Jacobian is negative, this means that there is an error in the mesh
     if (jacobian <= ZERO) then
       print *,'element ',ispec,' has a negative Jacobian'
-      do ia = 1,ngnod
+      do ia = 1,NGNOD
         print *,x(ibool(ia,ispec)),y(ibool(ia,ispec))
       enddo
       print *,'Jacobian = ',jacobian

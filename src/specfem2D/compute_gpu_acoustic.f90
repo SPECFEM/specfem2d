@@ -383,7 +383,7 @@
 !          call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
 !                             xsrc,zsrc, &
 !                             ispec_selected_source(i_source),islice_selected_source(i_source), &
-!                             NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+!                             NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,NGNOD,npgeo, &
 !                             iglob_source(i_source),.true.)
 !
 !          call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)

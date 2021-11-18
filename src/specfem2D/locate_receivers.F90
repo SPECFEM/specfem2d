@@ -40,7 +40,7 @@
                               st_xval,st_zval,ispec_selected_rec, &
                               xi_receiver,gamma_receiver,station_name,network_name, &
                               x_source,z_source, &
-                              coorg,knods,ngnod,npgeo, &
+                              coorg,knods,NGNOD,npgeo, &
                               x_final_receiver, z_final_receiver)
 
   use constants, only: NDIM,NGLLX,NGLLZ,MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME, &
@@ -82,8 +82,8 @@
 
   double precision,intent(in) :: x_source,z_source
 
-  integer,intent(in) :: ngnod,npgeo
-  integer,intent(in) :: knods(ngnod,nspec)
+  integer,intent(in) :: NGNOD,npgeo
+  integer,intent(in) :: knods(NGNOD,nspec)
   double precision,intent(in) :: coorg(NDIM,npgeo)
 
   ! tangential detection
@@ -291,7 +291,7 @@
 
         ! compute coordinates of the new point and derivatives dxi/dx, dxi/dz
         call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                                                   coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
+                                                   coorg,knods,ispec,NGNOD,nspec,npgeo,.true.)
 
         ! compute distance to target location
         dx = - (x - st_xval(irec))
@@ -320,7 +320,7 @@
 
       ! compute final coordinates of point found
       call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                                                 coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
+                                                 coorg,knods,ispec,NGNOD,nspec,npgeo,.true.)
 
       ! compute final distance between asked and found
       final_distance_this_element = sqrt((st_xval(irec)-x)**2 + (st_zval(irec)-z)**2)

@@ -130,8 +130,8 @@
 
   ! only counts number of elements (nspec) for this partition (iproc)
   !   DK DK add support for using PML in MPI mode with external mesh
-  !   call write_partition_database(IOUT, iproc, nspec, num_material, ngnod, 1)
-  call write_partition_database(IOUT, iproc, nspec, num_material, region_pml_external_mesh, ngnod, 1)
+  !   call write_partition_database(IOUT, iproc, nspec, num_material, NGNOD, 1)
+  call write_partition_database(IOUT, iproc, nspec, num_material, region_pml_external_mesh, NGNOD, 1)
 
   ! file output
   ! note: older version used ascii-output and annotated all parameters
@@ -154,14 +154,14 @@
   ! 'output_grid_Gnuplot interpol'
   write(IOUT) output_grid_Gnuplot,interpol
 
-  ! 'NSTEP_BETWEEN_OUTPUT_INFO'
-  write(IOUT) NSTEP_BETWEEN_OUTPUT_INFO
+  ! 'NTSTEP_BETWEEN_OUTPUT_INFO'
+  write(IOUT) NTSTEP_BETWEEN_OUTPUT_INFO
 
-  ! 'NSTEP_BETWEEN_OUTPUT_SEISMOS'
-  write(IOUT) NSTEP_BETWEEN_OUTPUT_SEISMOS
+  ! 'NTSTEP_BETWEEN_OUTPUT_SEISMOS'
+  write(IOUT) NTSTEP_BETWEEN_OUTPUT_SEISMOS
 
-  ! 'NSTEP_BETWEEN_OUTPUT_IMAGES'
-  write(IOUT) NSTEP_BETWEEN_OUTPUT_IMAGES
+  ! 'NTSTEP_BETWEEN_OUTPUT_IMAGES'
+  write(IOUT) NTSTEP_BETWEEN_OUTPUT_IMAGES
 
   ! 'PML_BOUNDARY_CONDITIONS'
   write(IOUT) PML_BOUNDARY_CONDITIONS
@@ -193,8 +193,8 @@
   ! 'NELEM_PML_THICKNESS'
   write(IOUT) NELEM_PML_THICKNESS
 
-  ! 'subsamp_seismos imagetype_JPEG imagetype_wavefield_dumps'
-  write(IOUT) subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
+  ! 'NTSTEP_BETWEEN_OUTPUT_SAMPLE imagetype_JPEG imagetype_wavefield_dumps'
+  write(IOUT) NTSTEP_BETWEEN_OUTPUT_SAMPLE,imagetype_JPEG,imagetype_wavefield_dumps
 
   ! 'output_postscript_snapshot output_color_image'
   write(IOUT) output_postscript_snapshot,output_color_image
@@ -250,8 +250,8 @@
   ! 'save_ASCII_kernels'
   write(IOUT) save_ASCII_kernels
 
-  ! 'NSTEP_BETWEEN_COMPUTE_KERNELS'
-  write(IOUT) NSTEP_BETWEEN_COMPUTE_KERNELS
+  ! 'NTSTEP_BETWEEN_COMPUTE_KERNELS'
+  write(IOUT) NTSTEP_BETWEEN_COMPUTE_KERNELS
 
   ! 'NO_BACKWARD_RECONSTRUCTION'
   write(IOUT) NO_BACKWARD_RECONSTRUCTION
@@ -375,8 +375,8 @@
 
   call write_glob2loc_nodes_database(IOUT, iproc, npgeo, 2)
 
-  ! 'numat ngnod nspec pointsdisp plot_lowerleft_corner_only'
-  write(IOUT) nbmodels,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
+  ! 'numat NGNOD nspec pointsdisp plot_lowerleft_corner_only'
+  write(IOUT) nbmodels,NGNOD,nspec,pointsdisp,plot_lowerleft_corner_only
 
   ! counts number of absorbing elements
   if (any_abs) then
@@ -545,8 +545,8 @@
   ! 'Arrays kmato and knods for each bloc:'
 
 !   DK DK add support for using PML in MPI mode with external mesh
-!   call write_partition_database(IOUT, iproc, nspec, num_material, ngnod, 2)
-  call write_partition_database(IOUT, iproc, nspec, num_material, region_pml_external_mesh, ngnod, 2)
+!   call write_partition_database(IOUT, iproc, nspec, num_material, NGNOD, 2)
+  call write_partition_database(IOUT, iproc, nspec, num_material, region_pml_external_mesh, NGNOD, 2)
 
   end subroutine save_databases_materials
 
@@ -706,7 +706,7 @@
 
   use constants, only: MAX_STRING_LEN,SAVE_MESHFILES_VTK_FORMAT,OUTPUT_FILES,IMAIN,myrank
   use part_unstruct_par, only: part,elmnts,nodes_coords,nelmnts,nnodes
-  use shared_parameters, only: ngnod,num_material,NPROC
+  use shared_parameters, only: NGNOD,num_material,NPROC
 
   implicit none
 
@@ -730,8 +730,8 @@
   allocate(tmp_elmnts(NGNOD,nelmnts))
   allocate(tmp_elem_flag(nelmnts))
   do ispec = 1, nelmnts
-    do j = 1, ngnod
-      tmp_elmnts(j,ispec) = elmnts((ispec-1)*ngnod+(j-1))+1
+    do j = 1, NGNOD
+      tmp_elmnts(j,ispec) = elmnts((ispec-1)*NGNOD+(j-1))+1
     enddo
     tmp_elem_flag(ispec) = num_material(ispec)
   enddo
@@ -742,7 +742,7 @@
 
   ! materials
   filename = trim(OUTPUT_FILES)//'/mesh_materials.vtk'
-  call write_VTK_data_ngnod_elem_i(nelmnts,nnodes,ngnod,xstore_dummy,zstore_dummy, &
+  call write_VTK_data_ngnod_elem_i(nelmnts,nnodes,NGNOD,xstore_dummy,zstore_dummy, &
                                    tmp_elmnts,tmp_elem_flag,filename)
   ! user output
   if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename)
@@ -752,7 +752,7 @@
     tmp_elem_flag(ispec) = part(ispec-1)
   enddo
   filename = trim(OUTPUT_FILES)//'/mesh_partition_number.vtk'
-  call write_VTK_data_ngnod_elem_i(nelmnts,nnodes,ngnod,xstore_dummy,zstore_dummy, &
+  call write_VTK_data_ngnod_elem_i(nelmnts,nnodes,NGNOD,xstore_dummy,zstore_dummy, &
                                    tmp_elmnts,tmp_elem_flag,filename)
   ! user output
   if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename)
@@ -780,8 +780,8 @@
       do ispec = 1,nelmnts
         if (part(ispec-1) == iproc) then
           inum = inum + 1
-          do j = 1, ngnod
-            tmp_elmnts(j,inum) = elmnts((ispec-1)*ngnod+(j-1))+1
+          do j = 1, NGNOD
+            tmp_elmnts(j,inum) = elmnts((ispec-1)*NGNOD+(j-1))+1
           enddo
           tmp_elem_flag(inum) = iproc
         endif

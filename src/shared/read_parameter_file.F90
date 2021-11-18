@@ -100,7 +100,7 @@
 
         ! setup mesh array
         ! multiply by 2 if elements have 9 nodes
-        if (ngnod == 9) then
+        if (NGNOD == 9) then
           nx_elem_internal = nx_elem_internal * 2
           nz_elem_internal = nz_elem_internal * 2
           nz_layer(:) = nz_layer(:) * 2
@@ -128,8 +128,8 @@
     call bcast_all_singlel(SAVE_FORWARD)
 
     call bcast_all_singlei(NPROC)
-    call bcast_all_singlei(partitioning_method)
-    call bcast_all_singlei(ngnod)
+    call bcast_all_singlei(PARTITIONING_TYPE)
+    call bcast_all_singlei(NGNOD)
 
     call bcast_all_singlei(NSTEP)
     call bcast_all_singledp(DT)
@@ -172,9 +172,9 @@
 
     ! receivers
     call bcast_all_string(seismotype)
-    call bcast_all_singlei(subsamp_seismos)
+    call bcast_all_singlei(NTSTEP_BETWEEN_OUTPUT_SAMPLE)
     call bcast_all_singlel(USE_TRICK_FOR_BETTER_PRESSURE)
-    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_SEISMOS)
+    call bcast_all_singlei(NTSTEP_BETWEEN_OUTPUT_SEISMOS)
     call bcast_all_singledp(USER_T0)
     call bcast_all_singlel(save_ASCII_seismograms)
     call bcast_all_singlel(save_binary_seismograms_single)
@@ -187,7 +187,7 @@
 
     ! adjoint kernel
     call bcast_all_singlel(save_ASCII_kernels)
-    call bcast_all_singlei(NSTEP_BETWEEN_COMPUTE_KERNELS)
+    call bcast_all_singlei(NTSTEP_BETWEEN_COMPUTE_KERNELS)
     call bcast_all_singlel(NO_BACKWARD_RECONSTRUCTION)
 
     ! boundary conditions
@@ -235,7 +235,7 @@
     endif
 
     ! display parameters
-    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_INFO)
+    call bcast_all_singlei(NTSTEP_BETWEEN_OUTPUT_INFO)
     call bcast_all_singlel(output_grid_Gnuplot)
     call bcast_all_singlel(output_grid_ASCII)
     call bcast_all_singlel(OUTPUT_ENERGY)
@@ -243,7 +243,7 @@
     call bcast_all_singlel(COMPUTE_INTEGRATED_ENERGY_FIELD)
 
     ! movies/images/snapshots
-    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_IMAGES)
+    call bcast_all_singlei(NTSTEP_BETWEEN_OUTPUT_IMAGES)
     call bcast_all_singledp(cutsnaps)
 
     call bcast_all_singlel(output_color_image)
@@ -393,18 +393,36 @@
     write(*,*)
   endif
 
-  call read_value_integer_p(partitioning_method, 'partitioning_method')
+  ! deprecated: call read_value_integer_p(partitioning_method, 'partitioning_method')
+  call read_value_integer_p(PARTITIONING_TYPE, 'PARTITIONING_TYPE')
   if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'partitioning_method             = 3'
-    write(*,*)
+    ! old version
+    call read_value_integer_p(PARTITIONING_TYPE, 'partitioning_method')
+    if (err_occurred() == 0) then
+      ! deprecation warning
+      write(*,'(a)') 'Warning: Deprecated parameter partitioning_method found in Par_file.'
+      write(*,'(a)') '         Please use parameter PARTITIONING_TYPE in future...'
+    else
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'PARTITIONING_TYPE               = 3'
+      write(*,*)
+    endif
   endif
 
-  call read_value_integer_p(ngnod, 'ngnod')
+  ! deprecated: call read_value_integer_p(ngnod, 'ngnod')
+  call read_value_integer_p(NGNOD, 'NGNOD')
   if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'ngnod                           = 9'
-    write(*,*)
+    ! old version
+    call read_value_integer_p(NGNOD, 'ngnod')
+    if (err_occurred() == 0) then
+      ! deprecation warning
+      write(*,'(a)') 'Warning: Deprecated parameter ngnod found in Par_file.'
+      write(*,'(a)') '         Please use parameter NGNOD in future...'
+    else
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'NGNOD                           = 9'
+      write(*,*)
+    endif
   endif
 
   ! read time step parameters
@@ -663,11 +681,20 @@
     write(*,*)
   endif
 
-  call read_value_integer_p(subsamp_seismos, 'subsamp_seismos')
+  ! deprecated: call read_value_integer_p(subsamp_seismos, 'subsamp_seismos')
+  call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_SAMPLE, 'NTSTEP_BETWEEN_OUTPUT_SAMPLE')
   if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'subsamp_seismos                 = 1'
-    write(*,*)
+    ! old version
+    call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_SAMPLE, 'subsamp_seismos')
+    if (err_occurred() == 0) then
+      ! deprecation warning
+      write(*,'(a)') 'Warning: Deprecated parameter subsamp_seismos found in Par_file.'
+      write(*,'(a)') '         Please use parameter NTSTEP_BETWEEN_OUTPUT_SAMPLE in future...'
+    else
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'NTSTEP_BETWEEN_OUTPUT_SAMPLE   = 1'
+      write(*,*)
+    endif
   endif
 
   call read_value_logical_p(USE_TRICK_FOR_BETTER_PRESSURE, 'USE_TRICK_FOR_BETTER_PRESSURE')
@@ -677,11 +704,20 @@
     write(*,*)
   endif
 
-  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_SEISMOS, 'NSTEP_BETWEEN_OUTPUT_SEISMOS')
+  !deprecated: call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_SEISMOS, 'NSTEP_BETWEEN_OUTPUT_SEISMOS')
+  call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_SEISMOS, 'NTSTEP_BETWEEN_OUTPUT_SEISMOS')
   if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'NSTEP_BETWEEN_OUTPUT_SEISMOS    = 1000'
-    write(*,*)
+    ! old version
+    call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_SEISMOS, 'NSTEP_BETWEEN_OUTPUT_SEISMOS')
+    if (err_occurred() == 0) then
+      ! deprecation warning
+      write(*,'(a)') 'Warning: Deprecated parameter NSTEP_BETWEEN_OUTPUT_SEISMOS found in Par_file.'
+      write(*,'(a)') '         Please use parameter NTSTEP_BETWEEN_OUTPUT_SEISMOS in future...'
+    else
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 1000'
+      write(*,*)
+    endif
   endif
 
   call read_value_double_precision_p(USER_T0, 'USER_T0')
@@ -762,11 +798,20 @@
     write(*,*)
   endif
 
-  call read_value_integer_p(NSTEP_BETWEEN_COMPUTE_KERNELS, 'NSTEP_BETWEEN_COMPUTE_KERNELS')
+  ! deprecated: call read_value_integer_p(NSTEP_BETWEEN_COMPUTE_KERNELS, 'NSTEP_BETWEEN_COMPUTE_KERNELS')
+  call read_value_integer_p(NTSTEP_BETWEEN_COMPUTE_KERNELS, 'NTSTEP_BETWEEN_COMPUTE_KERNELS')
   if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'NSTEP_BETWEEN_COMPUTE_KERNELS             = 1'
-    write(*,*)
+    ! old version
+    call read_value_integer_p(NTSTEP_BETWEEN_COMPUTE_KERNELS, 'NSTEP_BETWEEN_COMPUTE_KERNELS')
+    if (err_occurred() == 0) then
+      ! deprecation warning
+      write(*,'(a)') 'Warning: Deprecated parameter NSTEP_BETWEEN_COMPUTE_KERNELS found in Par_file.'
+      write(*,'(a)') '         Please use parameter NTSTEP_BETWEEN_COMPUTE_KERNELS in future...'
+    else
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'NTSTEP_BETWEEN_COMPUTE_KERNELS            = 1'
+      write(*,*)
+    endif
   endif
 
   call read_value_logical_p(NO_BACKWARD_RECONSTRUCTION,'NO_BACKWARD_RECONSTRUCTION')
@@ -1055,11 +1100,20 @@
   !--------------------------------------------------------------------
 
   ! read display parameters
-  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_INFO, 'NSTEP_BETWEEN_OUTPUT_INFO')
+  ! deprecated: call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_INFO, 'NSTEP_BETWEEN_OUTPUT_INFO')
+  call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_INFO, 'NTSTEP_BETWEEN_OUTPUT_INFO')
   if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'NSTEP_BETWEEN_OUTPUT_INFO       = 100'
-    write(*,*)
+    ! old version
+    call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_INFO, 'NSTEP_BETWEEN_OUTPUT_INFO')
+    if (err_occurred() == 0) then
+      ! deprecation warning
+      write(*,'(a)') 'Warning: Deprecated parameter NSTEP_BETWEEN_OUTPUT_INFO found in Par_file.'
+      write(*,'(a)') '         Please use parameter NTSTEP_BETWEEN_OUTPUT_INFO in future...'
+    else
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'NTSTEP_BETWEEN_OUTPUT_INFO      = 100'
+      write(*,*)
+    endif
   endif
 
   call read_value_logical_p(output_grid_Gnuplot, 'output_grid_Gnuplot')
@@ -1103,11 +1157,20 @@
   !
   !--------------------------------------------------------------------
 
-  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_IMAGES, 'NSTEP_BETWEEN_OUTPUT_IMAGES')
+  ! deprecated: call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_IMAGES, 'NTSTEP_BETWEEN_OUTPUT_IMAGES')
+  call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_IMAGES, 'NTSTEP_BETWEEN_OUTPUT_IMAGES')
   if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'NSTEP_BETWEEN_OUTPUT_IMAGES     = 100'
-    write(*,*)
+    ! old version
+    call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_IMAGES, 'NSTEP_BETWEEN_OUTPUT_IMAGES')
+    if (err_occurred() == 0) then
+      ! deprecation warning
+      write(*,'(a)') 'Warning: Deprecated parameter NSTEP_BETWEEN_OUTPUT_IMAGES found in Par_file.'
+      write(*,'(a)') '         Please use parameter NTSTEP_BETWEEN_OUTPUT_IMAGES in future...'
+    else
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'NTSTEP_BETWEEN_OUTPUT_IMAGES     = 100'
+      write(*,*)
+    endif
   endif
 
   call read_value_double_precision_p(cutsnaps, 'cutsnaps')
@@ -1322,21 +1385,21 @@
     NSTEP = 2 * NSTEP - 1
   endif
 
-  ! make sure NSTEP is a multiple of subsamp_seismos
+  ! make sure NSTEP is a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE
   ! if not, increase it a little bit, to the next multiple
-  if (mod(NSTEP,subsamp_seismos) /= 0) then
+  if (mod(NSTEP,NTSTEP_BETWEEN_OUTPUT_SAMPLE) /= 0) then
     if (NOISE_TOMOGRAPHY /= 0) then
       if (myrank == 0) then
-        write(IMAIN,*) 'Noise simulation: Invalid number of NSTEP = ',NSTEP
-        write(IMAIN,*) 'Must be a multiple of subsamp_seismos = ',subsamp_seismos
+        write(IMAIN,*) 'Noise simulation: Invalid number of NSTEP          = ',NSTEP
+        write(IMAIN,*) 'Must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE = ',NTSTEP_BETWEEN_OUTPUT_SAMPLE
       endif
-      call stop_the_code('Error: NSTEP must be a multiple of subsamp_seismos')
+      call stop_the_code('Error: NSTEP must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE')
     else
-      NSTEP = (NSTEP/subsamp_seismos + 1)*subsamp_seismos
+      NSTEP = (NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE + 1)*NTSTEP_BETWEEN_OUTPUT_SAMPLE
       ! user output
       if (myrank == 0) then
         write(IMAIN,*)
-        write(IMAIN,*) 'NSTEP is not a multiple of subsamp_seismos'
+        write(IMAIN,*) 'NSTEP is not a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE'
         write(IMAIN,*) 'thus increasing it automatically to the next multiple, which is ',NSTEP
         write(IMAIN,*)
       endif
@@ -1344,15 +1407,15 @@
   endif
 
   ! output seismograms at least once at the end of the simulation
-  NSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP,NSTEP_BETWEEN_OUTPUT_SEISMOS)
+  NTSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
 
-  ! make sure NSTEP_BETWEEN_OUTPUT_SEISMOS is a multiple of subsamp_seismos
-  if (mod(NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos) /= 0) then
+  ! make sure NTSTEP_BETWEEN_OUTPUT_SEISMOS is a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE
+  if (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_OUTPUT_SAMPLE) /= 0) then
     if (myrank == 0) then
-      write(IMAIN,*) 'Invalid number of NSTEP_BETWEEN_OUTPUT_SEISMOS = ',NSTEP_BETWEEN_OUTPUT_SEISMOS
-      write(IMAIN,*) 'Must be a multiple of subsamp_seismos = ',subsamp_seismos
+      write(IMAIN,*) 'Invalid number of NTSTEP_BETWEEN_OUTPUT_SEISMOS    = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
+      write(IMAIN,*) 'Must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE = ',NTSTEP_BETWEEN_OUTPUT_SAMPLE
     endif
-    call stop_the_code('Error: NSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of subsamp_seismos')
+    call stop_the_code('Error: NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE')
   endif
 
   end subroutine read_parameter_file_only
@@ -1381,9 +1444,9 @@
   endif
 #endif
 
-  if (partitioning_method /= 1 .and. partitioning_method /= 3) then
+  if (PARTITIONING_TYPE /= 1 .and. PARTITIONING_TYPE /= 3) then
     print *, 'Error: Invalid partitioning method number.'
-    print *, 'Partitioning method ',partitioning_method,' was requested, but is not available.'
+    print *, 'Partitioning type ',PARTITIONING_TYPE,' was requested, but is not available.'
     print *, 'Support for the METIS graph partitioner has been discontinued, please use SCOTCH (option 3) instead.'
     call stop_the_code('Error invalid partitioning method')
   endif
@@ -1395,11 +1458,11 @@
   if (N_SLS < 2) &
     call stop_the_code('must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays')
 
-  if (ngnod /= 4 .and. ngnod /= 9) &
-    call stop_the_code('ngnod should be either 4 or 9!')
+  if (NGNOD /= 4 .and. NGNOD /= 9) &
+    call stop_the_code('NGNOD should be either 4 or 9!')
 
-  if (subsamp_seismos < 1) &
-    call stop_the_code('Error: subsamp_seismos must be >= 1')
+  if (NTSTEP_BETWEEN_OUTPUT_SAMPLE < 1) &
+    call stop_the_code('Error: NTSTEP_BETWEEN_OUTPUT_SAMPLE must be >= 1')
 
   if (output_color_image .and. USE_CONSTANT_MAX_AMPLITUDE .and. CONSTANT_MAX_AMPLITUDE_TO_USE < 0.d0) &
     call stop_the_code('CONSTANT_MAX_AMPLITUDE_TO_USE must be strictly positive')

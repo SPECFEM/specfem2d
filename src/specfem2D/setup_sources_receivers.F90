@@ -84,7 +84,7 @@
                          x_source,z_source,vx_source,vz_source,ispec_selected_source, &
                          xi_source,gamma_source,sourcearrays, &
                          islice_selected_source,iglob_source, &
-                         xigll,zigll,npgeo, NPROC,coorg,knods,ngnod, &
+                         xigll,zigll,npgeo, NPROC,coorg,knods,NGNOD, &
                          SOURCE_IS_MOVING,NSTEP,DT,t0,tshift_src
 
   implicit none
@@ -206,7 +206,7 @@
       call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
                          x_source(i_source),z_source(i_source), &
                          ispec_selected_source(i_source),islice_selected_source(i_source), &
-                         NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                         NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,NGNOD,npgeo, &
                          iglob_source(i_source),.true.) ! flag .true. indicates force source
 
       ! check
@@ -251,7 +251,7 @@
       call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
                          x_source(i_source),z_source(i_source), &
                          ispec_selected_source(i_source),islice_selected_source(i_source), &
-                         NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                         NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,NGNOD,npgeo, &
                          iglob_source(i_source),.false.) ! flag .false. indicates moment-tensor source
 
     else if (.not. initialfield) then
@@ -401,7 +401,7 @@
                         st_xval,st_zval,ispec_selected_rec, &
                         xi_receiver,gamma_receiver,station_name,network_name, &
                         x_source(1),z_source(1), &
-                        coorg,knods,ngnod,npgeo, &
+                        coorg,knods,NGNOD,npgeo, &
                         x_final_receiver,z_final_receiver)
 
 !! DK DK this below not supported in the case of MPI yet, we should do a MPI_GATHER() of the values
@@ -1141,7 +1141,7 @@
   use constants, only: ZERO
 
   use specfem_par, only: nrecloc,NSIGTYPE, &
-    NSTEP,NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos,nlength_seismogram, &
+    NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_OUTPUT_SAMPLE,nlength_seismogram, &
     sisux,sisuz,siscurl, &
     SU_FORMAT
 
@@ -1151,10 +1151,10 @@
   integer :: ier
 
   ! subsets used to save seismograms must not be larger than the whole time series
-  if (NSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
+  if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
 
   ! seismogram array length
-  nlength_seismogram = NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos
+  nlength_seismogram = NTSTEP_BETWEEN_OUTPUT_SEISMOS/NTSTEP_BETWEEN_OUTPUT_SAMPLE
 
   ! allocate seismogram arrays
   if (nrecloc > 0) then
@@ -1172,7 +1172,7 @@
   siscurl(:,:,:) = ZERO
 
   ! checks SU_FORMAT output length
-  if (SU_FORMAT .and. (NSTEP/subsamp_seismos > 32768)) then
+  if (SU_FORMAT .and. (NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE > 32768)) then
     print *
     print *,"!!! BEWARE !!! Two many samples for SU format ! The .su file created won't be usable"
     print *

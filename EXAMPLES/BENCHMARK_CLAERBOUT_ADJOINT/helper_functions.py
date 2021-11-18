@@ -415,7 +415,7 @@ class helper(object):
             # real(kind=4), dimension(30) :: header4
             # integer(kind=2) :: header2(2),header3(2)
             #
-            # ioffset = 4 * ((irec-1) * (NSTEP/subsamp_seismos + 60)) + 1
+            # ioffset = 4 * ((irec-1) * (NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE + 60)) + 1
             # write(12,pos=ioffset) header1,header2,header3,header4
 
             # read offset 1 - marker
@@ -468,7 +468,7 @@ class helper(object):
             if DEBUG: print("debug: header2 ",header2_values)
 
             # header2(1) = 0  ! dummy
-            # header2(2) = int(NSTEP/subsamp_seismos, kind=2)
+            # header2(2) = int(NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE, kind=2)
             num_samples = int(header2_values[1])
 
             if DEBUG: print("  trace number of samples ",num_samples)
@@ -496,7 +496,7 @@ class helper(object):
 
             # trace values
 
-            # ioffset = 4 * ((irec-1) * (NSTEP/subsamp_seismos + 60) + 60 + seismo_offset) + 1
+            # ioffset = 4 * ((irec-1) * (NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE + 60) + 60 + seismo_offset) + 1
             # write(12,pos=ioffset) single_precision_seismo
 
             # single header read
@@ -603,7 +603,7 @@ class helper(object):
             # real(kind=4), dimension(30) :: header4
             # integer(kind=2) :: header2(2),header3(2)
             #
-            # ioffset = 4 * ((irec-1) * (NSTEP/subsamp_seismos + 60)) + 1
+            # ioffset = 4 * ((irec-1) * (NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE + 60)) + 1
             # write(12,pos=ioffset) header1,header2,header3,header4
 
             # read offset 1 - marker
@@ -640,7 +640,7 @@ class helper(object):
             header2_values = array.array('h')    # signed short - 2 bytes
             header2_values.fromlist(np.zeros(2,dtype='h').tolist())
             # header2(1) = 0  ! dummy
-            # header2(2) = int(NSTEP/subsamp_seismos, kind=2)
+            # header2(2) = int(NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE, kind=2)
             header2_values[0] = 0
             header2_values[1] = num_samples
 

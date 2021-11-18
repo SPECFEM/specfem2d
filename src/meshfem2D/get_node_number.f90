@@ -49,7 +49,7 @@
   end function num
 
 
-!---  global node number (when ngnod==4).
+!---  global node number (when NGNOD==4).
   integer function num_4(i,j,nx)
 
   implicit none
@@ -61,7 +61,7 @@
   end function num_4
 
 
-!---  global node number (when ngnod==9).
+!---  global node number (when NGNOD==9).
   integer function num_9(i,j,nx,nz)
 
   implicit none

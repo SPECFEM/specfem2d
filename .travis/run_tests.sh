@@ -143,7 +143,7 @@ else
   # elastic kernel example Tromp2005_kernel/ w/ NO_BACKWARD_RECONSTRUCTION
   if [ "$TESTID" == "26" ]; then
     sed -i "s:^NO_BACKWARD_RECONSTRUCTION .*:NO_BACKWARD_RECONSTRUCTION = .true.:" DATA/Par_file
-    sed -i "s:^NSTEP_BETWEEN_COMPUTE_KERNELS .*:NSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
+    sed -i "s:^NTSTEP_BETWEEN_COMPUTE_KERNELS .*:NTSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
   fi
 
   # coverage run
@@ -393,7 +393,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd EXAMPLES/Tromp2005_kernel/
   sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   sed -i "s:^NO_BACKWARD_RECONSTRUCTION .*:NO_BACKWARD_RECONSTRUCTION = .true.:" DATA/Par_file
-  sed -i "s:^NSTEP_BETWEEN_COMPUTE_KERNELS .*:NSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_COMPUTE_KERNELS .*:NTSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
   ./run_this_example_kernel.sh
   if [[ $? -ne 0 ]]; then exit 1; fi
   # no kernel value testing: only execution failure

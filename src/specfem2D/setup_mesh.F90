@@ -219,7 +219,7 @@
         gamma = zigll(j)
 
         call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl, &
-                                                   coorg,knods,ispec,ngnod,nspec,npgeo, &
+                                                   coorg,knods,ispec,NGNOD,nspec,npgeo, &
                                                    .false.)
 
         if (jacobianl <= ZERO) found_a_negative_jacobian = .true.
@@ -244,7 +244,7 @@
 ! do not create OpenDX files if no negative Jacobian has been found, or if we are running in parallel
 ! (because writing OpenDX routines is much easier in serial)
   if (found_a_negative_jacobian .and. NPROC == 1) then
-    call save_openDX_jacobian(nspec,npgeo,ngnod,knods,coorg,xigll,zigll,AXISYM,is_on_the_axis,xiglj)
+    call save_openDX_jacobian(nspec,npgeo,NGNOD,knods,coorg,xigll,zigll,AXISYM,is_on_the_axis,xiglj)
   endif
 
   ! stop the code at the first negative element found, because such a mesh cannot be computed
@@ -264,7 +264,7 @@
           gamma = zigll(j)
 
           call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl, &
-                                                     coorg,knods,ispec,ngnod,nspec,npgeo, &
+                                                     coorg,knods,ispec,NGNOD,nspec,npgeo, &
                                                      .true.)
         enddo
       enddo

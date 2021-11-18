@@ -58,7 +58,7 @@
   double precision :: write_time_begin,write_time
 
   ! checks subsampling recurrence
-  if (mod(it-1,subsamp_seismos) == 0) then
+  if (mod(it-1,NTSTEP_BETWEEN_OUTPUT_SAMPLE) == 0) then
 
     ! update position in seismograms
     seismo_current = seismo_current + 1
@@ -160,10 +160,10 @@
       endif ! nrecloc
     enddo  ! loop on signal types (seismotype)
 
-  endif  ! subsamp_seismos
+  endif  ! NTSTEP_BETWEEN_OUTPUT_SAMPLE
 
   ! save temporary or final seismograms
-  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+  if (mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
     ! timing
     write_time_begin = wtime()
 
@@ -206,7 +206,7 @@
   use constants, only: NDIM,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME,OUTPUT_FILES, RegInt_K
 
   use specfem_par, only: station_name,network_name,NSTEP,islice_selected_rec,nrec,myrank,DT,t0, &
-                         subsamp_seismos,nrecloc,nlength_seismogram, &
+                         NTSTEP_BETWEEN_OUTPUT_SAMPLE,nrecloc,nlength_seismogram, &
                          P_SV,SU_FORMAT,save_ASCII_seismograms, &
                          save_binary_seismograms_single,save_binary_seismograms_double,x_source,z_source, &
                          WRITE_SEISMOGRAMS_BY_MAIN
@@ -468,7 +468,7 @@
             do isample = 1,seismo_current_l
 
               ! forward time
-              time_t = dble(seismo_offset_l + isample - 1) * DT * subsamp_seismos - t0
+              time_t = dble(seismo_offset_l + isample - 1) * DT * NTSTEP_BETWEEN_OUTPUT_SAMPLE - t0
 
               write(11,*) time_t,' ',buffer_binary(isample,irec,iorientation)
             enddo
@@ -481,7 +481,7 @@
         ! write binary seismogram
         if (save_binary_seismograms) then
 
-          ioffset = (irec-1) * NSTEP / subsamp_seismos + seismo_offset_l
+          ioffset = (irec-1) * NSTEP / NTSTEP_BETWEEN_OUTPUT_SAMPLE + seismo_offset_l
 
           if (save_binary_seismograms_single) then
             do isample = 1, seismo_current_l

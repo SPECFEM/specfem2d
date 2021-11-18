@@ -41,10 +41,10 @@
 
   implicit none
 
-  integer i,j,num2,i2,j2,ipos,ipos2,iloc,jloc,kloc
-  integer ngnodloc,ngnodother,nedgeloc,nedgeother,npedge,numelem,npcorn
+  integer :: i,j,num2,i2,j2,ipos,ipos2,iloc,jloc,kloc
+  integer :: ngnodloc,ngnodother,nedgeloc,nedgeother,npedge,numelem,npcorn
 
-  logical alreadyexist
+  logical :: alreadyexist
 
   integer, dimension(NEDGES) :: ngnod_begin,ngnod_end
 

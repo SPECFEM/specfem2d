@@ -434,7 +434,7 @@
   use specfem_par, only: myrank,it,coord,nspec,ibool,integrated_kinetic_energy_field,max_kinetic_energy_field, &
                          integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
                          potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
-                         total_effective_duration_field,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
+                         total_effective_duration_field,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
 
   implicit none
 
@@ -474,7 +474,7 @@
     !call synchronize_all() ! Wait for first proc to create directories
   endif
 
-  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+  if (mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
     ! write integrated kinetic energy field in external file
     write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/kinetic/integrated_kinetic_energy_field',myrank
     open(unit=IIN,file=trim(filename),status='unknown',action='write')
@@ -580,7 +580,7 @@
   !  write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'velocities',myrank
   !  open(unit=IIN,file=trim(filename),status='unknown',action='write')
   !
-  !  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+  !  if (mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
   !    ! loop over spectral elements
   !    do ispec = 1,nspec
   !      if (ispec_is_acoustic(ispec)) then

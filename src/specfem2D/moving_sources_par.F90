@@ -42,7 +42,7 @@ module moving_sources_par
                        IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC
 
   use specfem_par, only: SOURCE_IS_MOVING, AXISYM, is_on_the_axis, xiglj, nspec, &
-                         nglob, ibool, coord, xigll, zigll, ngnod, npgeo, knods, coorg, &
+                         nglob, ibool, coord, xigll, zigll, NGNOD, npgeo, knods, coorg, &
                          ispec_is_acoustic, ispec_is_elastic, ispec_is_poroelastic, &
                          CUSTOM_REAL
 
@@ -841,7 +841,7 @@ end subroutine init_moving_sources_GPU
 
       ! recompute jacobian for the new point
       call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                                                 coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
+                                                 coorg,knods,ispec,NGNOD,nspec,npgeo,.true.)
 
       ! compute distance to target location
       dx = - (x - x_source)
@@ -873,7 +873,7 @@ end subroutine init_moving_sources_GPU
 
     ! compute final coordinates of point found
     call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                                               coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
+                                               coorg,knods,ispec,NGNOD,nspec,npgeo,.true.)
 
     ! compute final distance between asked and found (using square value since taking the root is expensive)
     final_distance_this_element = (x_source-x)**2 + (z_source-z)**2

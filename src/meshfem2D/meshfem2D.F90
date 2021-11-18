@@ -415,7 +415,7 @@
       call flush_IMAIN()
 
       ! reads in mesh
-      call read_external_mesh_file(mesh_file, remove_min_to_start_at_zero, ngnod)
+      call read_external_mesh_file(mesh_file, remove_min_to_start_at_zero, NGNOD)
 
       ! reads in material defined in external file
       call read_external_materials_file(materials_file)
@@ -427,40 +427,40 @@
       write(IMAIN,*) 'Mesh from internal meshing:'
       call flush_IMAIN()
 
-      allocate(elmnts(0:ngnod*nelmnts-1),stat=ier)
+      allocate(elmnts(0:NGNOD*nelmnts-1),stat=ier)
       if (ier /= 0) call stop_the_code('Error allocating array elmnts')
       elmnts(:) = 0
 
       ! stores mesh point indices in array 'elmnts'
-      if (ngnod == 4) then
+      if (NGNOD == 4) then
         num_elmnt = 0
         do j = 1, nzread
            do i = 1, nxread
-              elmnts(num_elmnt*ngnod)   = (j-1)*(nxread+1) + (i-1)
-              elmnts(num_elmnt*ngnod+1) = (j-1)*(nxread+1) + (i-1) + 1
-              elmnts(num_elmnt*ngnod+2) = j*(nxread+1) + (i-1) + 1
-              elmnts(num_elmnt*ngnod+3) = j*(nxread+1) + (i-1)
+              elmnts(num_elmnt*NGNOD)   = (j-1)*(nxread+1) + (i-1)
+              elmnts(num_elmnt*NGNOD+1) = (j-1)*(nxread+1) + (i-1) + 1
+              elmnts(num_elmnt*NGNOD+2) = j*(nxread+1) + (i-1) + 1
+              elmnts(num_elmnt*NGNOD+3) = j*(nxread+1) + (i-1)
               num_elmnt = num_elmnt + 1
            enddo
         enddo
-      else if (ngnod == 9) then
+      else if (NGNOD == 9) then
         num_elmnt = 0
         do j = 1, nzread
            do i = 1, nxread
-              elmnts(num_elmnt*ngnod)   = (j-1)*(nxread+1) + (i-1)
-              elmnts(num_elmnt*ngnod+1) = (j-1)*(nxread+1) + (i-1) + 1
-              elmnts(num_elmnt*ngnod+2) = j*(nxread+1) + (i-1) + 1
-              elmnts(num_elmnt*ngnod+3) = j*(nxread+1) + (i-1)
-              elmnts(num_elmnt*ngnod+4) = (nxread+1)*(nzread+1) + (j-1)*nxread + (i-1)
-              elmnts(num_elmnt*ngnod+5) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2 + 2
-              elmnts(num_elmnt*ngnod+6) = (nxread+1)*(nzread+1) + j*nxread + (i-1)
-              elmnts(num_elmnt*ngnod+7) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2
-              elmnts(num_elmnt*ngnod+8) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2 + 1
+              elmnts(num_elmnt*NGNOD)   = (j-1)*(nxread+1) + (i-1)
+              elmnts(num_elmnt*NGNOD+1) = (j-1)*(nxread+1) + (i-1) + 1
+              elmnts(num_elmnt*NGNOD+2) = j*(nxread+1) + (i-1) + 1
+              elmnts(num_elmnt*NGNOD+3) = j*(nxread+1) + (i-1)
+              elmnts(num_elmnt*NGNOD+4) = (nxread+1)*(nzread+1) + (j-1)*nxread + (i-1)
+              elmnts(num_elmnt*NGNOD+5) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2 + 2
+              elmnts(num_elmnt*NGNOD+6) = (nxread+1)*(nzread+1) + j*nxread + (i-1)
+              elmnts(num_elmnt*NGNOD+7) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2
+              elmnts(num_elmnt*NGNOD+8) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2 + 1
               num_elmnt = num_elmnt + 1
            enddo
         enddo
       else
-        call stop_the_code('ngnod must be either 4 or 9')
+        call stop_the_code('NGNOD must be either 4 or 9')
       endif
 
       ! user output
@@ -503,7 +503,7 @@
     ! user output
     write(IMAIN,*) 'The mesh contains ',nelmnts,' elements'
     write(IMAIN,*)
-    write(IMAIN,*) 'Control elements have ',ngnod,' nodes'
+    write(IMAIN,*) 'Control elements have ',NGNOD,' nodes'
     write(IMAIN,*)
     call flush_IMAIN()
 
@@ -540,7 +540,7 @@
 
         ! rotate the elements that are located on the edges of the mesh if needed
         ! otherwise the plane wave and Bielak conditions may not be applied correctly
-        if (initialfield) call rotate_mesh_for_plane_wave(ngnod)
+        if (initialfield) call rotate_mesh_for_plane_wave(NGNOD)
       endif
 
       if (ACOUSTIC_FORCING) then
@@ -548,7 +548,7 @@
 
         ! rotate the elements that are located on the edges of the mesh if needed
         ! otherwise the plane wave and Bielak conditions may not be applied correctly
-        call rotate_mesh_for_acoustic_forcing(ngnod)
+        call rotate_mesh_for_acoustic_forcing(NGNOD)
       endif
 
     else
@@ -572,7 +572,7 @@
         ! we assume that the r axis is along the i direction;
         ! thus this routine fixes that by rotating the elements backwards if needed to make sure
         ! this assumption is always true
-        call rotate_mesh_for_axisym(ngnod)
+        call rotate_mesh_for_axisym(NGNOD)
 
       else
         ! internal meshing
@@ -629,7 +629,7 @@
 
     ! create a Gnuplot file that displays the grid
     if (output_grid_Gnuplot .and. .not. read_external_mesh) &
-      call save_gnuplot_file(ngnod,nx_elem_internal,nz_elem_internal,grid_point_x,grid_point_z)
+      call save_gnuplot_file(NGNOD,nx_elem_internal,nz_elem_internal,grid_point_x,grid_point_z)
 
     ! partitioning
     ! user output
@@ -644,7 +644,7 @@
       write(IMAIN,*) 'Absorbing boundaries:'
       call flush_IMAIN()
 
-      call merge_abs_boundaries(nbmodels, phi_read, num_material, ngnod)
+      call merge_abs_boundaries(nbmodels, phi_read, num_material, NGNOD)
     endif
 
     ! setting acoustic forcing boundaries by elements instead of edges
@@ -653,7 +653,7 @@
       write(IMAIN,*) 'Acoustic forcing boundaries:'
       call flush_IMAIN()
 
-      call merge_acoustic_forcing_boundaries(ngnod)
+      call merge_acoustic_forcing_boundaries(NGNOD)
     endif
 
     ! generate the databases for the solver

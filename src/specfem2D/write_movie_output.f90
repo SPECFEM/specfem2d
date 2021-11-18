@@ -46,7 +46,7 @@
     GPU_MODE,UNDO_ATTENUATION_AND_OR_PML,SIMULATION_TYPE,NO_BACKWARD_RECONSTRUCTION
 
   use shared_parameters, only: output_postscript_snapshot,output_color_image,output_wavefield_dumps, &
-    NSTEP_BETWEEN_OUTPUT_IMAGES
+    NTSTEP_BETWEEN_OUTPUT_IMAGES
 
   use specfem_par_gpu, only: Mesh_pointer,NGLOB_AB
 
@@ -108,7 +108,7 @@
   endif
 
   ! checks if anything to do
-  if (.not. (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP)) return
+  if (.not. (mod(it,NTSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP)) return
 
   ! checks plotting of backward wavefield
   if (UNDO_ATTENUATION_AND_OR_PML .and. get_b_wavefield .and. .not. NO_BACKWARD_RECONSTRUCTION) then

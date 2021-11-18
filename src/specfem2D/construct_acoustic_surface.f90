@@ -37,14 +37,14 @@
 
   subroutine construct_acoustic_surface ()
 
-  use specfem_par, only: ngnod, knods, nelem_acoustic_surface, acoustic_edges, acoustic_surface
+  use specfem_par, only: NGNOD, knods, nelem_acoustic_surface, acoustic_edges, acoustic_surface
 
   implicit none
 
   integer  :: i, k
   integer  :: ixmin, ixmax
   integer  :: izmin, izmax
-  integer, dimension(ngnod)  :: n
+  integer, dimension(NGNOD)  :: n
   integer  :: e1, e2
   integer  :: type_acoust
 
@@ -53,11 +53,11 @@
      type_acoust = acoustic_edges(2,i)
      e1 = acoustic_edges(3,i)
      e2 = acoustic_edges(4,i)
-     do k = 1, ngnod
+     do k = 1, NGNOD
         n(k) = knods(k,acoustic_surface(1,i))
      enddo
 
-     call get_acoustic_edge ( ngnod, n, type_acoust, e1, e2, ixmin, ixmax, izmin, izmax )
+     call get_acoustic_edge ( NGNOD, n, type_acoust, e1, e2, ixmin, ixmax, izmin, izmax )
 
      acoustic_surface(2,i) = ixmin
      acoustic_surface(3,i) = ixmax
@@ -72,14 +72,14 @@
 !-----------------------------------------------
 ! Get the points (ixmin, ixmax, izmin and izmax) on an node/edge for one element.
 !-----------------------------------------------
-  subroutine get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax )
+  subroutine get_acoustic_edge ( NGNOD, n, type, e1, e2, ixmin, ixmax, izmin, izmax )
 
   use constants, only: NGLLX,NGLLZ
 
   implicit none
 
-  integer, intent(in)  :: ngnod
-  integer, dimension(ngnod), intent(in)  :: n
+  integer, intent(in)  :: NGNOD
+  integer, dimension(NGNOD), intent(in)  :: n
   integer, intent(in)  :: type, e1, e2
   integer, intent(out)  :: ixmin, ixmax, izmin, izmax
 

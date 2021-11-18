@@ -116,10 +116,10 @@
   NSUBSET_ITERATIONS = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION) )
 
   ! get the maximum number of frames to save
-  if (NSTEP_BETWEEN_COMPUTE_KERNELS == 1) then
+  if (NTSTEP_BETWEEN_COMPUTE_KERNELS == 1) then
     size_buffer = NT_DUMP_ATTENUATION
   else
-    size_buffer = NT_DUMP_ATTENUATION / NSTEP_BETWEEN_COMPUTE_KERNELS + 1
+    size_buffer = NT_DUMP_ATTENUATION / NTSTEP_BETWEEN_COMPUTE_KERNELS + 1
   endif
 
   ! checks
@@ -232,7 +232,7 @@
         current_timeval = (it-1) * DT
 
         ! display time step and max of norm of displacement
-        if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) call check_stability()
+        if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) call check_stability()
 
         do i_stage = 1, stage_time_scheme ! is equal to 1 if Newmark because only one stage then
 
@@ -426,7 +426,7 @@
         enddo
 
         ! stores wavefield in buffers
-        if (mod(NSTEP-it+1,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0) then
+        if (mod(NSTEP-it+1,NTSTEP_BETWEEN_COMPUTE_KERNELS) == 0) then
 
           iframe_kernel = iframe_kernel + 1
 
@@ -461,7 +461,7 @@
       do it_of_this_subset = 1, it_subset_end
 
         it = it + 1
-        if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0) then
+        if (mod(it,NTSTEP_BETWEEN_COMPUTE_KERNELS) == 0) then
 
           iframe_kernel = iframe_kernel + 1
 
@@ -484,13 +484,13 @@
             endif
           endif
 
-        endif ! mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0
+        endif ! mod(it,NTSTEP_BETWEEN_COMPUTE_KERNELS) == 0
 
         ! compute current time
         current_timeval = (it-1) * DT
 
         ! display time step and max of norm of displacement
-        if ((.not. GPU_MODE) .and. mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
+        if ((.not. GPU_MODE) .and. mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
           call check_stability()
         endif
 

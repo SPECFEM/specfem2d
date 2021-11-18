@@ -37,7 +37,7 @@
 
   use constants, only: IMAIN,NGLLX,NGLLZ,OUTPUT_FILES
 
-  use specfem_par, only: knods,ibool,coorg,coord,ngnod,nspec
+  use specfem_par, only: knods,ibool,coorg,coord,NGNOD,nspec
 
   implicit none
 
@@ -135,14 +135,14 @@
 !----  plot the macrobloc mesh using Gnuplot
 !
   do ibloc = 1,nspec
-    do inode = 1,ngnod
+    do inode = 1,NGNOD
 
       xval(inode) = coorg(1,knods(inode,ibloc))
       zval(inode) = coorg(2,knods(inode,ibloc))
 
     enddo
 
-    if (ngnod == 4) then
+    if (NGNOD == 4) then
 !
 !----  4-node rectangular element
 !

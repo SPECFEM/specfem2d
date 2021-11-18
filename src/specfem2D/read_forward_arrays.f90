@@ -227,7 +227,7 @@
   ! transfer of a wavefield two iterations before this wavefield is actually needed by the kernel computation.
   ! Two iterations before, the wavefield is read from the disk.
   ! One iteration before, this wavefield is transfered from the RAM to the GPU.
-  ! In the text above, an iteration means NSTEP_BETWEEN_COMPUTE_KERNELS iterations of the timeloop.
+  ! In the text above, an iteration means NTSTEP_BETWEEN_COMPUTE_KERNELS iterations of the timeloop.
 
   no_backward_iframe = no_backward_iframe + 1
 

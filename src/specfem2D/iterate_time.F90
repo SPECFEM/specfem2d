@@ -110,8 +110,8 @@
       call exit_MPI(myrank,'timing for element weights should be done with at least 1000 time steps')
     if (NSTEP > 10000) &
       call exit_MPI(myrank,'timing for element weights does not need to be done with more than 10000 time steps')
-    if (NSTEP_BETWEEN_OUTPUT_INFO < NSTEP / 5) &
-      call exit_MPI(myrank,'timing for element weights should be done with NSTEP_BETWEEN_OUTPUT_INFO not smaller than NSTEP / 5')
+    if (NTSTEP_BETWEEN_OUTPUT_INFO < NSTEP / 5) &
+      call exit_MPI(myrank,'timing for element weights should be done with NTSTEP_BETWEEN_OUTPUT_INFO not smaller than NSTEP / 5')
     if (SIMULATION_TYPE /= 1) &
       call exit_MPI(myrank,'timing for element weights should be done with SIMULATION_TYPE = 1')
     if (.not. P_SV) &
@@ -148,7 +148,7 @@
     current_timeval = (it-1) * DT
 
     ! display time step and max of norm of displacement
-    if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
+    if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
       call check_stability()
     endif
 
@@ -488,10 +488,10 @@
     if (any_acoustic) then
       call transfer_kernels_ac_to_host(Mesh_pointer,rho_ac_kl,kappa_ac_kl,NSPEC_AB)
 
-      ! note: acoustic kernels in CPU-version add (delta * NSTEP_BETWEEN_COMPUTE_KERNELS) factors at each computation.
+      ! note: acoustic kernels in CPU-version add (delta * NTSTEP_BETWEEN_COMPUTE_KERNELS) factors at each computation.
       !       for the GPU-kernels, the NSTEP_** is still missing... adding it here
-      rho_ac_kl(:,:,:) = rho_ac_kl(:,:,:) * NSTEP_BETWEEN_COMPUTE_KERNELS
-      kappa_ac_kl(:,:,:) = kappa_ac_kl(:,:,:) * NSTEP_BETWEEN_COMPUTE_KERNELS
+      rho_ac_kl(:,:,:) = rho_ac_kl(:,:,:) * NTSTEP_BETWEEN_COMPUTE_KERNELS
+      kappa_ac_kl(:,:,:) = kappa_ac_kl(:,:,:) * NTSTEP_BETWEEN_COMPUTE_KERNELS
 
       rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
       alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
@@ -529,7 +529,7 @@
   ! writes in frame for further adjoint/kernels calculation
   if (SAVE_FORWARD) then
 
-    if (mod(NSTEP-it+1,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == NSTEP ) then
+    if (mod(NSTEP-it+1,NTSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == NSTEP ) then
 
       call save_forward_arrays_no_backward()
 
@@ -539,7 +539,7 @@
 
   if (SIMULATION_TYPE == 3) then
 
-    if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == 1 .or. it == NSTEP) then
+    if (mod(it,NTSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == 1 .or. it == NSTEP) then
 
       call read_forward_arrays_no_backward()
 
@@ -549,7 +549,7 @@
         call read_forward_arrays_no_backward()
 
       ! If the wavefield is requested at it=1, then we enforce another transfer
-      if (no_backward_iframe == 2 .and. NSTEP_BETWEEN_COMPUTE_KERNELS == 1) &
+      if (no_backward_iframe == 2 .and. NTSTEP_BETWEEN_COMPUTE_KERNELS == 1) &
         call read_forward_arrays_no_backward()
 
     endif

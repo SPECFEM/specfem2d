@@ -34,7 +34,7 @@
   subroutine write_output_SU(x_source,z_source,irec,buffer_binary,number_of_components,seismo_offset,seismo_current,seismotype_l)
 
   use specfem_par, only: NSTEP,nrec,DT,st_xval, &
-                         P_SV,st_zval,subsamp_seismos
+                         P_SV,st_zval,NTSTEP_BETWEEN_OUTPUT_SAMPLE
 
   implicit none
 
@@ -70,15 +70,15 @@
 
   ! time steps
   header2(1) = 0  ! dummy
-  if (NSTEP/subsamp_seismos < 32768) then
-    header2(2) = int(NSTEP/subsamp_seismos, kind=2)
+  if (NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE < 32768) then
+    header2(2) = int(NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE, kind=2)
   else
     print *,"!!! BEWARE !!! Two many samples for SU format ! The .su file created won't be usable"
     header2(2)=-9999
   endif
 
   ! time increment
-  sampling_deltat = DT*subsamp_seismos
+  sampling_deltat = DT*NTSTEP_BETWEEN_OUTPUT_SAMPLE
 
   ! INTEGER(kind=2) values range from -32,768 to 32,767
   ! adapts time step info
@@ -99,10 +99,10 @@
 
   ! output
   if (seismo_offset == 0) then
-    ioffset = 4 * ((irec-1) * (NSTEP/subsamp_seismos + 60)) + 1
+    ioffset = 4 * ((irec-1) * (NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE + 60)) + 1
     write(12,pos=ioffset) header1,header2,header3,header4
   endif
-  ioffset = 4 * ((irec-1) * (NSTEP/subsamp_seismos + 60) + 60 + seismo_offset) + 1
+  ioffset = 4 * ((irec-1) * (NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE + 60) + 60 + seismo_offset) + 1
   write(12,pos=ioffset) single_precision_seismo
 
   ! second component trace (not for pressure or membranes)
@@ -114,11 +114,11 @@
 
     ! output
     if (seismo_offset == 0) then
-      ioffset = 4 * ((irec-1) * (NSTEP/subsamp_seismos + 60)) + 1
+      ioffset = 4 * ((irec-1) * (NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE + 60)) + 1
       write(14,pos=ioffset) header1,header2,header3,header4
     endif
 
-    ioffset = 4 * ((irec-1)*(NSTEP/subsamp_seismos + 60) + 60 + seismo_offset) + 1
+    ioffset = 4 * ((irec-1)*(NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE + 60) + 60 + seismo_offset) + 1
     write(14,pos=ioffset) single_precision_seismo
   endif
 

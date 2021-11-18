@@ -89,7 +89,7 @@
 
   use source_file_par, only: source_surf,x_source,z_source
 
-  use shared_parameters, only: ngnod, &
+  use shared_parameters, only: NGNOD, &
     xinterface_coords,zinterface_coords,max_npoints_interface, &
     number_of_interfaces,npoints_of_interfaces, &
     number_of_layers,nz_layer, &
@@ -317,7 +317,7 @@
   if (ier /= 0) call stop_the_code('Error allocating nodes_coords array')
   nodes_coords(:,:) = 0.d0
 
-  if (ngnod == 4) then
+  if (NGNOD == 4) then
     do j = 0, nz_elem_internal
       do i = 0, nx_elem_internal
         num_node = num_4(i,j,nxread)
@@ -325,7 +325,7 @@
         nodes_coords(2, num_node) = grid_point_z(i,j)
       enddo
     enddo
-  else if (ngnod == 9) then
+  else if (NGNOD == 9) then
     do j = 0, nz_elem_internal
       do i = 0, nx_elem_internal
         num_node = num_9(i,j,nxread,nzread)
@@ -334,7 +334,7 @@
       enddo
     enddo
   else
-    call stop_the_code('ngnod should be either 4 or 9')
+    call stop_the_code('NGNOD should be either 4 or 9')
   endif
 
   end subroutine read_mesh_nodes_coords_from_interfaces

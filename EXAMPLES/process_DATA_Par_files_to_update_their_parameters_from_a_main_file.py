@@ -16,6 +16,7 @@ import collections
 # USER PARAMETERS
 
 # deprecated parameter names which have been renamed
+# format: <old_name> , <new_name>
 DEPRECATED_RENAMED_PARAMETERS = [ \
   ("enreg_surf_same_vertical", "record_at_surface_same_vertical"), \
   ("PERIODIC_horiz_dist","PERIODIC_HORIZ_DIST"), \
@@ -30,7 +31,14 @@ DEPRECATED_RENAMED_PARAMETERS = [ \
   ("ATTENUATION_FLUID","ATTENUATION_VISCOACOUSTIC"), \
   ("Q0","Q0_poroelastic"), \
   ("freq0","freq0_poroelastic"), \
-  ("UNDO_ATTENUATION","UNDO_ATTENUATION_AND_OR_PML") \
+  ("UNDO_ATTENUATION","UNDO_ATTENUATION_AND_OR_PML"), \
+  ("subsamp_seismos","NTSTEP_BETWEEN_OUTPUT_SAMPLE"), \
+  ("NSTEP_BETWEEN_OUTPUT_SEISMOS","NTSTEP_BETWEEN_OUTPUT_SEISMOS"), \
+  ("NSTEP_BETWEEN_COMPUTE_KERNELS","NTSTEP_BETWEEN_COMPUTE_KERNELS"), \
+  ("NSTEP_BETWEEN_OUTPUT_INFO","NTSTEP_BETWEEN_OUTPUT_INFO"), \
+  ("NSTEP_BETWEEN_OUTPUT_IMAGES","NTSTEP_BETWEEN_OUTPUT_IMAGES"), \
+  ("partitioning_method","PARTITIONING_TYPE"), \
+  ("ngnod","NGNOD") \
 ]
 
 # exclude other possible files with similar name, but with different format

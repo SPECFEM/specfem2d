@@ -39,7 +39,7 @@
                            x_source,z_source, &
                            ispec_selected_source,islice_selected_source, &
                            NPROC,myrank, &
-                           xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source,is_force_source)
+                           xi_source,gamma_source,coorg,knods,NGNOD,npgeo,iglob_source,is_force_source)
 
   use constants, only: NDIM,NGLLX,NGLLZ,IMAIN,HUGEVAL,TINYVAL,NUM_ITER,USE_BEST_LOCATION_FOR_SOURCE, &
     IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC
@@ -62,9 +62,9 @@
 
   double precision,intent(in) :: x_source,z_source
 
-  integer,intent(in) :: ngnod,npgeo
+  integer,intent(in) :: NGNOD,npgeo
 
-  integer,intent(in) :: knods(ngnod,nspec)
+  integer,intent(in) :: knods(NGNOD,nspec)
   double precision,intent(in) :: coorg(NDIM,npgeo)
 
   ! source information
@@ -244,7 +244,7 @@
 
       ! recompute jacobian for the new point
       call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                                                 coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
+                                                 coorg,knods,ispec,NGNOD,nspec,npgeo,.true.)
 
       ! compute distance to target location
       dx = - (x - x_source)
@@ -273,7 +273,7 @@
 
     ! compute final coordinates of point found
     call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                                               coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
+                                               coorg,knods,ispec,NGNOD,nspec,npgeo,.true.)
 
     ! compute final distance between asked and found
     final_distance_this_element = sqrt((x_source-x)**2 + (z_source-z)**2)

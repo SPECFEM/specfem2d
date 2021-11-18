@@ -121,7 +121,7 @@
   ! a wavefield in two iterations.
   ! At the first iteration, we transfer the wavefield from the GPU to the disk.
   ! At the second iteration, we write this wavefield on the disk from the RAM.
-  ! In the text above, an iteration means NSTEP_BETWEEN_COMPUTE_KERNELS iterations of the timeloop.
+  ! In the text above, an iteration means NTSTEP_BETWEEN_COMPUTE_KERNELS iterations of the timeloop.
   ! The buffer no_backward_acoustic_buffer is declared in only one dimension in
   ! order to allow the CUDA API to set it in pinned memory (HostRegister).
   ! To perform the async I/O, stream accesses are used for files, numerical

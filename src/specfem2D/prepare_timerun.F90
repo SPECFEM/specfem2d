@@ -336,7 +336,7 @@
       if (NOISE_MOVIE_OUTPUT) then
         write(IMAIN,*) '  noise movie'
       endif
-      write(IMAIN,*) '  number of steps between outputs       : ',NSTEP_BETWEEN_OUTPUT_IMAGES
+      write(IMAIN,*) '  number of steps between outputs       : ',NTSTEP_BETWEEN_OUTPUT_IMAGES
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -419,8 +419,8 @@
   endif
 
   ! arrays for display images
-  allocate(shape2D_display(ngnod,pointsdisp,pointsdisp), &
-           dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp),stat=ier)
+  allocate(shape2D_display(NGNOD,pointsdisp,pointsdisp), &
+           dershape2D_display(NDIM,NGNOD,pointsdisp,pointsdisp),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating shape arrays for display')
   shape2D_display(:,:,:) = 0.d0; dershape2D_display(:,:,:,:) = 0.d0
 
@@ -429,7 +429,7 @@
     do i = 1,pointsdisp
       xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
       gammarec  = 2.d0*dble(j-1)/dble(pointsdisp-1) - 1.d0
-      call define_shape_functions(shape2D_display(:,i,j),dershape2D_display(:,:,i,j),xirec,gammarec,ngnod)
+      call define_shape_functions(shape2D_display(:,i,j),dershape2D_display(:,:,i,j),xirec,gammarec,NGNOD)
     enddo
   enddo
 
@@ -489,7 +489,7 @@
   endif
 
   d1_coorg_send_ps_element_mesh=2
-  if (ngnod == 4) then
+  if (NGNOD == 4) then
     if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
       d2_coorg_send_ps_element_mesh=nspec*5
       if (DISPLAY_COLORS == 1) then
@@ -833,10 +833,10 @@
     !       as well as the minimum period resolved by the mesh.
     !       by comparison, we see that close-enough reconstructions (within ~90% accuracy) need about
     !       a stepping of the size of a quarter of the minimum period resolved.
-    !       this lower estimate can then be compared against the NSTEP_BETWEEN_COMPUTE_KERNELS setting.
+    !       this lower estimate can then be compared against the NTSTEP_BETWEEN_COMPUTE_KERNELS setting.
     write(IMAIN,*) '  estimated steps between compute kernels (for a fair reconstruction): ',int(mesh_T_min / DT / 4.0)
     write(IMAIN,*)
-    write(IMAIN,*) '  number of steps between compute kernels: ',NSTEP_BETWEEN_COMPUTE_KERNELS
+    write(IMAIN,*) '  number of steps between compute kernels: ',NTSTEP_BETWEEN_COMPUTE_KERNELS
     write(IMAIN,*)
     call flush_IMAIN()
   endif
@@ -1261,7 +1261,7 @@
   ! gets the number of frames to store/read in the NO BACKWARD RECONSTRUCTION
   ! database
   no_backward_nframes = 0
-  do while (no_backward_nframes * NSTEP_BETWEEN_COMPUTE_KERNELS <= NSTEP )
+  do while (no_backward_nframes * NTSTEP_BETWEEN_COMPUTE_KERNELS <= NSTEP )
     no_backward_nframes = no_backward_nframes + 1
   enddo
   no_backward_nframes = no_backward_nframes -1
@@ -1271,7 +1271,7 @@
     if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'Preparing NO_BACKWARD_RECONSTRUCTION :'
-      write(IMAIN,*) '  number of steps between compute kernels: ',NSTEP_BETWEEN_COMPUTE_KERNELS
+      write(IMAIN,*) '  number of steps between compute kernels: ',NTSTEP_BETWEEN_COMPUTE_KERNELS
       write(IMAIN,*) '  number of frames to save :',no_backward_nframes
       if (any_acoustic) then
         sizeval = dble(nglob) * dble(no_backward_nframes) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
