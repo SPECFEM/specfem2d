@@ -139,7 +139,7 @@ cubit.cmd('mesh surface 1 2')
 ### Define material properties
 cubit.cmd('####################### DEFINE MATERIAL PROPERTIES #######################')
 cubit.cmd('block 1 face in surface 1')
-cubit.cmd('block 1 name "Water"')             # acoustic region
+cubit.cmd('block 1 name "Water acoustic"')    # acoustic region
 cubit.cmd('block 1 attribute count 1')        # number of attributes
 cubit.cmd('block 1 attribute index 1 2')      # material index
 cubit.cmd('block 1 element type QUAD4')       # element type. Must be QUAD4 for cubit2specfem2d
