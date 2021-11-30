@@ -3,6 +3,16 @@
 # getting updated environment (CUDA_HOME, PATH, ..)
 if [ -f $HOME/.tmprc ]; then source $HOME/.tmprc; fi
 
+# checks if anything to do
+echo "run checks: $RUN_CHECKS"
+if [ "$RUN_CHECKS" == "0" ]; then
+  echo "  no run checks required, exiting..."
+  exit 0
+else
+  echo "  run checks required, start testing..."
+fi
+echo
+
 ###########################################################
 # setup
 ###########################################################
@@ -27,17 +37,20 @@ case "$TESTDIR" in
 16) dir=EXAMPLES/fluid_solid/fluid_solid_external_mesh/ ;;
 17) dir=EXAMPLES/poroelastic_semi_infinite_homogeneous/ ;;
 18) dir=EXAMPLES/initial_mode_LDDRK/ ;;
+19) dir=EXAMPLES/moving_sources_acoustic/ ;;
+20) dir=EXAMPLES/anisotropic_isotropic_model/ ;;
+21) dir=EXAMPLES/infinite_homogeneous_moment_tensor_vertical_dip_slip/ ;;
 *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
 esac
 
-
 # info
-echo $TRAVIS_BUILD_DIR
+#echo $TRAVIS_BUILD_DIR
 echo $WORKDIR
+echo `date`
 echo
 echo "**********************************************************"
 echo
-echo "configuration test: TESTID=${TESTID} TESTDIR=${TESTDIR} TESTCOV=${TESTCOV} TESTFLAGS=${TESTFLAGS}"
+echo "run test: TESTID=${TESTID} TESTDIR=${TESTDIR} TESTCOV=${TESTCOV}"
 echo
 echo "    test directory: $dir"
 echo
@@ -51,7 +64,7 @@ my_test(){
   ./compare_seismogram_correlations.py REF_SEIS/ OUTPUT_FILES/
   if [[ $? -ne 0 ]]; then exit 1; fi
   # correlations
-  ./compare_seismogram_correlations.py REF_SEIS/ OUTPUT_FILES/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
+  ./compare_seismogram_correlations.py REF_SEIS/ OUTPUT_FILES/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.999 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
   if [[ $? -ne 0 ]]; then exit 1; fi
   # L2 errors
   ./compare_seismogram_correlations.py REF_SEIS/ OUTPUT_FILES/ | grep min/max | cut -d \| -f 4 | awk '{print "L2 error:",$1; if ($1 > 0.01 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
@@ -80,57 +93,17 @@ my_test_kernel(){
 
 
 ###########################################################
-# configuration & compilation
-###########################################################
-# configuration
-echo 'Configure...' && echo -en 'travis_fold:start:configure\\r'
-echo "configuration:"
-
-if [ "$TESTCOV" == "1" ]; then
-  echo "configuration: for coverage"
-  ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS} FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0" CFLAGS="-coverage -O0"
-else
-  if [ "$CUDA" == "true" ]; then
-    if [ "$OPENCL" == "true" ]; then
-      echo "configuration: for opencl" # uses libOpenCL provided from CUDA package
-      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS} OCL_CPU_FLAGS="-g -Wall -std=c99 -DWITH_MPI" OCL_GPU_FLAGS="-Werror" OCL_INC="${CUDA_HOME}/include" OCL_LIB="${CUDA_HOME}/lib64" OCL_LIBS="-lOpenCL"
-    else
-      echo "configuration: for cuda"
-      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS} CUDA_LIB="${CUDA_HOME}/lib64" CUDA_INC="${CUDA_HOME}/include" CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable,-Wfatal-errors -g -G"
-    fi
-  else
-    echo "configuration: default"
-    ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS}
-  fi
-fi
-
-# (default already) we output to console
-#sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
-
-# Rayleigh wave and manual crack
-if [ "$TESTID" == "17" ]; then
-  sed -i "s:FAST_NUMBERING .*:FAST_NUMBERING = .false.:" setup/constants.h
-  sed -i "s:ADD_A_SMALL_CRACK_IN_THE_MEDIUM .*:ADD_A_SMALL_CRACK_IN_THE_MEDIUM = .true.:" setup/constants.h
-fi
-
-echo -en 'travis_fold:end:configure\\r'
-
-# compilation  (only cleaning)
-echo 'Build...' && echo -en 'travis_fold:start:build\\r'
-echo "compilation:"
-make clean; make -j2 all
-echo -en 'travis_fold:end:build\\r'
-
-
-###########################################################
 # test examples
 ###########################################################
+
 # testing internal mesher example (short & quick for all configuration)
+echo 'Tests...' && echo -en 'travis_fold:start:tests\\r'
+
 # runs test
 echo "test directory: $dir"
 echo
 cd $dir
-echo 'Tests...' && echo -en 'travis_fold:start:tests\\r'
+
 if [ "$TESTID" == "2" ]; then
   # runs default tests
   make tests
@@ -145,29 +118,51 @@ else
   fi
   if [ "$TESTDIR" == "9" ]; then
     sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
-    sed -i "s:^NSTEP .*:NSTEP    = 3000:" DATA/Par_file
+    #sed -i "s:^NSTEP .*:NSTEP    = 3000:" DATA/Par_file
   fi
+  # Rayleigh wave
+  if [ "$TESTDIR" == "10" ]; then
+    sed -i "s:^NPROC .*:NPROC    = 4:" DATA/Par_file
+  fi
+  if [ "$TESTDIR" == "11" ]; then
+    sed -i "s:^NPROC .*:NPROC    = 4:" DATA/Par_file
+  fi
+  # fluid-solid
   if [ "$TESTDIR" == "16" ]; then
     sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
   fi
+  # porous
   if [ "$TESTDIR" == "17" ]; then
     sed -i "s:^NSTEP .*:NSTEP    = 2000:" DATA/Par_file
   fi
+  # moving sources
+  if [ "$TESTDIR" == "19" ]; then
+    sed -i "s:^NSTEP .*:NSTEP    = 3000:" DATA/Par_file
+  fi
+
   # elastic kernel example Tromp2005_kernel/ w/ NO_BACKWARD_RECONSTRUCTION
   if [ "$TESTID" == "26" ]; then
     sed -i "s:^NO_BACKWARD_RECONSTRUCTION .*:NO_BACKWARD_RECONSTRUCTION = .true.:" DATA/Par_file
-    sed -i "s:^NSTEP_BETWEEN_COMPUTE_KERNELS .*:NSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
+    sed -i "s:^NTSTEP_BETWEEN_COMPUTE_KERNELS .*:NTSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
   fi
 
   # coverage run
   if [ "$TESTCOV" == "1" ]; then
-    sed -i "s:^NSTEP .*:NSTEP    = 400:" DATA/Par_file
+    sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   fi
 
-  # default
+  # default run script
   if [ "$TESTDIR" == "4" ] || [ "$TESTID" == "24" ]; then
     # kernel script
     ./run_this_example_kernel.sh
+    if [[ $? -ne 0 ]]; then exit 1; fi
+
+    # simulation done
+    echo
+    echo "simulation done: `pwd`"
+    echo `date`
+    echo
+
     # kernel comparison
     if [ "$TESTDIR" == "4" ]; then
       my_test_kernel
@@ -175,27 +170,48 @@ else
   else
     # default script
     ./run_this_example.sh
+    if [[ $? -ne 0 ]]; then exit 1; fi
+
+    # simulation done
+    echo
+    echo "simulation done: `pwd`"
+    echo `date`
+    echo
+
     # seismogram comparison
     my_test
   fi
-  cd $WORKDIR
 fi
-echo -en 'travis_fold:end:tests\\r'
+if [[ $? -ne 0 ]]; then exit 1; fi
 
+# simulation done
+echo
+echo "test done: `pwd`"
+echo `date`
+echo
+
+echo -en 'travis_fold:end:tests\\r'
+echo
 
 # code coverage: https://codecov.io/gh/geodynamics/specfem2d/
 # additional runs for coverage
 #
 # note: log becomes too long, trying to fold each test output
+cd $WORKDIR
+
 # first coverage tester (without mpi)
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.noise\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
   ##
   ## testing noise example
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/noise_uniform/"
+  echo
   cd EXAMPLES/noise_uniform/
-  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file_noise_1
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
@@ -206,13 +222,34 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
   ##
   ## testing Tape2007 example
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/Tape2007/"
+  echo
   cd EXAMPLES/Tape2007/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.tape\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.moment_tensor\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
+  ##
+  ## testing infinite_homogeneous_moment_tensor_vertical_dip_slip example
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/infinite_homogeneous_moment_tensor_vertical_dip_slip/"
+  echo
+  cd EXAMPLES/infinite_homogeneous_moment_tensor_vertical_dip_slip/
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.moment_tensor\\r'
 
 # second coverage tester (with mpi)
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.semi_infinite\\r'
@@ -220,10 +257,14 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing example with pml (longer testing only together with mpi and code coverage)
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/semi_infinite_homogeneous/"
+  echo
   cd EXAMPLES/semi_infinite_homogeneous/
   sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
   sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   my_test
   cd $WORKDIR
 fi
@@ -234,9 +275,13 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing external mesher example with mpi and stacey
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/Gmsh_example_Stacey_MPI/"
+  echo
   cd EXAMPLES/Gmsh_example_Stacey_MPI/
   sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # tests mesh quality output
   awk '{if(NR==1){dy=sqrt(($2-13.3242693)^2);if(dy>1.e-5){print $0,"failed",dy;exit 1;}else{print $0,"good",dy;exit 0;}}}' OUTPUT_FILES/mesh_quality_histogram.txt
   if [[ $? -ne 0 ]]; then exit 1; fi
@@ -250,9 +295,13 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing kernel example
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/Tromp2005_kernel/"
+  echo
   cd EXAMPLES/Tromp2005_kernel/
   sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   ./run_this_example_kernel.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # no kernel value testing: only execution failure
   #my_test_kernel
   cd $WORKDIR
@@ -264,59 +313,27 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing poroelastic example
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/poroelastic_acoustic/"
+  echo
   cd EXAMPLES/poroelastic_acoustic/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.poroelastic_acoustic\\r'
 
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.axisym\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
-  ##
-  ## testing axisymmetric example
-  ##
-  cd EXAMPLES/axisymmetric_case_AXISYM_option/
-  sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
-  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
-  ./run_this_example.sh
-  # only for coverage, comparison would fail: my_test
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.axisym\\r'
-
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.simple_topo\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
-  ##
-  ## testing PML & MPI example
-  ##
-  cd EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
-  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
-  ./run_this_example.sh
-  # only for coverage, comparison would fail: my_test
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.simple_topo\\r'
-
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.industrial\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
-  ##
-  ## testing MPI, SEP example
-  ##
-  cd EXAMPLES/Industrial_Format_SEP/
-  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
-  ./run_this_example.sh
-  # only for coverage, comparison would fail: my_test
-  cd $WORKDIR
-fi
-echo -en 'travis_fold:end:coverage.industrial\\r'
 
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.rayleigh\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing plane wave example
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/Rayleigh_wave_no_crack/"
+  echo
   cd EXAMPLES/Rayleigh_wave_no_crack/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   # coarser resolution
@@ -324,6 +341,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   sed -i "s:28:7:g" DATA/Par_file
   sed -i "s:28:7:g" DATA/interfaces_Rayleigh_flat.dat
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
@@ -334,9 +352,14 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing fluid solid w/ external mesh
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/fluid_solid/fluid_solid_external_mesh/"
+  echo
   cd EXAMPLES/fluid_solid/fluid_solid_external_mesh/
+  sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
@@ -347,9 +370,13 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing fluid solid w/ external mesh
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/initial_mode_LDDRK"
+  echo
   cd EXAMPLES/initial_mode_LDDRK
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
@@ -360,17 +387,137 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## elastic kernel example Tromp2005_kernel/ w/ NO_BACKWARD_RECONSTRUCTION
   ##
+  echo "##################################################################"
+  echo "EXAMPLES/Tromp2005_kernel/"
+  echo
   cd EXAMPLES/Tromp2005_kernel/
   sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   sed -i "s:^NO_BACKWARD_RECONSTRUCTION .*:NO_BACKWARD_RECONSTRUCTION = .true.:" DATA/Par_file
-  sed -i "s:^NSTEP_BETWEEN_COMPUTE_KERNELS .*:NSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
+  sed -i "s:^NTSTEP_BETWEEN_COMPUTE_KERNELS .*:NTSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
   ./run_this_example_kernel.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
   # no kernel value testing: only execution failure
   #my_test_kernel
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.no_backward\\r'
 
+
+
+#################################################################
+##
+## tested by github actions
+##
+#################################################################
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.moving_sources\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## moving sources
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/moving_sources_acoustic/"
+  echo
+  cd EXAMPLES/moving_sources_acoustic/
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.moving_sources\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.anisotropic_isotropic_model\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## anisotropy
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/anisotropic_isotropic_model/"
+  echo
+  cd EXAMPLES/anisotropic_isotropic_model/
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.anisotropic_isotropic_model\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.industrial\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## testing MPI, SEP example
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/Industrial_Format_SEP/"
+  echo
+  cd EXAMPLES/Industrial_Format_SEP/
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.industrial\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.axisym\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## testing axisymmetric example
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/axisymmetric_case_AXISYM_option/"
+  echo
+  cd EXAMPLES/axisymmetric_case_AXISYM_option/
+  sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.axisym\\r'
+
+## w/out MPI compilation
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.simple_topo\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
+  ##
+  ## testing PML & MPI example
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/"
+  echo
+  cd EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.simple_topo\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.tomo_ocean\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
+  ##
+  ## testing tomographic_ocean_model example
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/tomographic_ocean_model/"
+  echo
+  cd EXAMPLES/tomographic_ocean_model/
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.tomo_ocean\\r'
+
+
 # done
-echo "done `pwd`"
+echo "all done"
+echo `date`
+echo
 

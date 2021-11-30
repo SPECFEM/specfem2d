@@ -35,15 +35,15 @@
 
   use constants, only: IOUT_ENERGY,CUSTOM_REAL
 
-  use specfem_par, only: GPU_MODE,myrank,it,deltat,kinetic_energy,potential_energy,t0
+  use specfem_par, only: myrank,it,DT,kinetic_energy,potential_energy,t0,NTSTEP_BETWEEN_OUTPUT_ENERGY
 
   implicit none
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: kinetic_energy_total,potential_energy_total
 
-  ! safety check
-  if (GPU_MODE) call stop_the_code('Error computing energy for output is not implemented on GPUs yet')
+  ! checks if anything to do
+  if (mod(it,NTSTEP_BETWEEN_OUTPUT_ENERGY) /= 0) return
 
   ! computes energy
   call compute_energy()
@@ -54,7 +54,8 @@
 
   ! saves kinetic, potential and total energy for this time step in external file
   if (myrank == 0) then
-    write(IOUT_ENERGY,*) real(dble(it-1)*deltat - t0,4),real(kinetic_energy_total,4), &
+    ! format: #time  #E_kin(kinetic energy)  #E_pot(potential energy)  #E_tot(total energy)
+    write(IOUT_ENERGY,*) real(dble(it-1)*DT - t0,4),real(kinetic_energy_total,4), &
                          real(potential_energy_total,4),real(kinetic_energy_total + potential_energy_total,4)
   endif
 
@@ -70,27 +71,34 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM,ZERO,TWO
 
+  use specfem_par, only: AXISYM,is_on_the_axis,nspec,kinetic_energy,potential_energy, &
+                         ibool,hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz,jacobian,wxgll,wzgll, &
+                         mustore,rho_vpstore,rhostore, &
+                         phistore,tortstore,kappaarraystore,mufr_store,rhoarraystore, &
+                         ispec_is_poroelastic,ispec_is_elastic, &
+                         P_SV,ispec_is_PML, &
+                         GPU_MODE,any_acoustic,any_elastic,any_poroelastic
 
-  use specfem_par, only: AXISYM,is_on_the_axis,myrank,nspec,kinetic_energy,potential_energy, &
-    ibool,hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz,jacobian,wxgll,wzgll, &
-    displ_elastic,veloc_elastic, &
-    displs_poroelastic,displw_poroelastic,velocs_poroelastic,velocw_poroelastic,potential_acoustic, &
-    potential_dot_acoustic,potential_dot_dot_acoustic,mustore,rho_vpstore,rhostore, &
-    poroelastcoef,density,kmato,assign_external_model, &
-    ispec_is_poroelastic,ispec_is_elastic,P_SV,ispec_is_PML
+  ! wavefields
+  use specfem_par, only: displ_elastic,veloc_elastic,accel_elastic, &
+                         displs_poroelastic,displw_poroelastic,velocs_poroelastic,velocw_poroelastic, &
+                         potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic
+
+  use specfem_par_gpu, only: Mesh_pointer,NGLOB_AB
 
   implicit none
 
 ! local variables
   integer :: i,j,k,ispec
-  real(kind=CUSTOM_REAL) :: cpl,kappal
+  real(kind=CUSTOM_REAL) :: cpl
   real(kind=CUSTOM_REAL) :: mu_G,lambdal_G,lambdalplus2mul_G
 
   ! Jacobian matrix and determinant
   double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
   double precision :: rhol
   ! to evaluate cpI, cpII, and cs, and rI (poroelastic medium)
-  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
+  double precision :: phi,tort,mu_fr,kappa_s,kappa_f,kappa_fr
+  double precision :: rho_s,rho_f,rho_bar
   double precision :: D_biot,H_biot,C_biot,M_biot
   double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
 
@@ -103,15 +111,35 @@
   ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: pressure_element
 
-!! DK DK March 2018: restored this initialization that someone had removed for some reason, thus making the calculation wrong
-!! DK DK March 2018: please do *NOT* remove it
+  ! transfers fields
+  if (GPU_MODE) then
+    ! a simple workaround to avoid implementing the following routine in CUDA.
+    ! be aware that these memory transfers will go through the bottleneck of memory bandwidth between CPU & GPU,
+    ! thus slow down the simulation
+    ! acoustic domains
+    if (any_acoustic) then
+      call transfer_fields_ac_from_device(NGLOB_AB,potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
+                                          Mesh_pointer)
+    endif
+    ! elastic domains
+    if (any_elastic) then
+      call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_elastic,veloc_elastic,accel_elastic,Mesh_pointer)
+    endif
+    ! poroelastic domains
+    if (any_poroelastic) then
+      stop 'Poroelastic domain transfers for GPU_MODE in compute_energy() not implemented yet'
+    endif
+  endif
+
+  ! initialization
+  ! please do *NOT* remove it
   kinetic_energy = 0._CUSTOM_REAL
   potential_energy = 0._CUSTOM_REAL
 
   ! loop over spectral elements
   do ispec = 1,nspec
 
-!! DK DK March 2018: only compute energy in the main domain, not in the PMLs, in which it is not physical
+    ! only compute energy in the main domain, not in the PMLs, in which it is not physical
     if (ispec_is_PML(ispec)) cycle
 
     !---
@@ -119,30 +147,16 @@
     !---
     if (ispec_is_elastic(ispec)) then
 
-      ! checks wave type
-      if (.not. P_SV) then
-        call exit_MPI(myrank,'output energy for SH waves not implemented yet')
-      endif
-
-      ! get relaxed elastic parameters of current spectral element
-      lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-      mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-      lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec))
-
-      rhol  = density(1,kmato(ispec))
-
       ! double loop over GLL points
       do j = 1,NGLLZ
         do i = 1,NGLLX
+          ! get elastic parameters of current grid point
+          mul_unrelaxed_elastic = mustore(i,j,ispec)
+          rhol = rhostore(i,j,ispec)
+          cpl = rho_vpstore(i,j,ispec) / rhol
 
-          !--- if external medium, get elastic parameters of current grid point
-          if (assign_external_model) then
-            mul_unrelaxed_elastic = mustore(i,j,ispec)
-            rhol = rhostore(i,j,ispec)
-            cpl = rho_vpstore(i,j,ispec)/rhol
-            lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO*mul_unrelaxed_elastic
-            lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic
-          endif
+          lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO * mul_unrelaxed_elastic
+          lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO * mul_unrelaxed_elastic
 
           ! derivative along x and along z
           dux_dxi = 0._CUSTOM_REAL
@@ -153,8 +167,8 @@
 
           ! first double loop over GLL points to compute and store gradients
           ! we can merge the two loops because NGLLX == NGLLZ
-
           if (AXISYM) then
+            ! axisymmetric case
             if (is_on_the_axis(ispec)) then
               do k = 1,NGLJ
                 dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
@@ -167,6 +181,7 @@
               enddo
             endif
           else
+            ! default, non-axisymmetric case
             do k = 1,NGLLX
               dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
               duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
@@ -191,18 +206,62 @@
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-          ! compute kinetic energy ! TODO ABAB This integral over space should be adapted for axisym geometries if needed
-          kinetic_energy = kinetic_energy  &
-              + rhol * (veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) &
-              *wxgll(i)*wzgll(j)*jacobianl / TWO
+          ! elastic medium
+          ! kinetic energy:
+          !   E_kin = 1/2 * m * v**2
+          !           -> 1/2 * rho * (v_x**2 + v_z**2) * w_i * w_j * J_ij
+          !
+          ! potential energy:
+          !   E_pot = 1/2 * stress * strain
+          !         = 1/2 * ( T_xx * eps_xx
+          !                 + T_zz * eps_zz
+          !                 + 2 T_xz * eps_xz)                  (since T_xz == T_zx and eps_xz == eps_zx)
+          !         = 1/2 * ( [(lambda + 2 mu) eps_xx + lambda eps_zz] * eps_xx
+          !                 + [(lambda + 2 mu) eps_zz + lambda eps_xx] * eps_zz
+          !                 + 2 [mu 2 eps_xz] * eps_xz  )       (note: eps_xz = 1/2 (duz_dx + dux_dz))
+          !         = 1/2 * ( (lambda + 2 mu)*dux_dx * dux_dx
+          !                 + (lambda + 2 mu)*duz_dx * duz_dz
+          !                 + 2 lambda * dux_dx * duz_dz
+          !                 + 2 mu * (dux_dz + duz_dx) * 1/2 (dux_dz + duz_dx) )
+          !
+          if (P_SV) then
+            ! P-SV waves
+            ! compute kinetic energy
+            ! TODO ABAB This integral over space should be adapted for axisym geometries if needed
+            kinetic_energy = kinetic_energy  &
+                + rhol * (veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) &
+                * wxgll(i) * wzgll(j) * jacobianl / TWO
 
-          ! compute potential energy ! TODO ABAB This integral over space should be adapted for axisym geometries if needed
-          potential_energy = potential_energy &
-              + (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
-              + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
-              + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
-              + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2)*wxgll(i)*wzgll(j)*jacobianl / TWO
+            ! compute potential energy
+            ! TODO ABAB This integral over space should be adapted for axisym geometries if needed
+            potential_energy = potential_energy &
+                + ( lambdaplus2mu_unrelaxed_elastic * dux_dxl**2 &
+                  + lambdaplus2mu_unrelaxed_elastic * duz_dzl**2 &
+                  + TWO*lambdal_unrelaxed_elastic * dux_dxl*duz_dzl &
+                  + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2 ) &
+                * wxgll(i) * wzgll(j) * jacobianl / TWO
+          else
+            ! SH-waves
+            ! compute kinetic energy
+            ! note: only component array(1,..) is non-zero for SH waves and corresponds to y-direction displacement
+            kinetic_energy = kinetic_energy  &
+                + rhol * (veloc_elastic(1,ibool(i,j,ispec))**2 ) &
+                * wxgll(i) * wzgll(j) * jacobianl / TWO
 
+            ! compute potential energy
+            ! note: T_xy = T_yx = mu 2 eps_yx = mu (duy_dx + dux_dy) = mu duy_dx     (sets dux_dy == 0)
+            !       T_zy = T_yz = mu 2 eps_yz = mu (duy_dz + duz_dy) = mu duy_dz
+            !
+            !      -> E_pot = 1/2 * stress * strain
+            !               = 1/2 * (T_yx * eps_yx + T_yz * eps_yz)
+            !               = 1/2 * (mu duy_dx * 1/2 duy_dx + mu duy_dz * 1/2 duy_dz)
+            !               = 1/2 * (mu (duy_dx**2 + duy_dz**2) / 2 )
+            !
+            ! reuses variable names from P-SV case, here: dux_dx == duy_dx and dux_dz == duy_dz
+            potential_energy = potential_energy &
+                + ( mul_unrelaxed_elastic * (dux_dxl**2 + dux_dzl**2) / TWO )&
+                * wxgll(i) * wzgll(j) * jacobianl / TWO
+          endif
         enddo
       enddo
 
@@ -214,24 +273,9 @@
       ! get unrelaxed elastic parameters of current spectral element
       !for now replaced by solid, fluid, and frame parameters of current spectral element
 
-      ! gets poroelastic material
-      call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
-
-      ! Biot coefficients for the input phi
-      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
-
-      !The RHS has the form : div T -phi/c div T_f + phi/ceta_fk^-1.partial t w
-      !where T = G:grad u_s + C div w I
-      !and T_f = C div u_s I + M div w I
-      !we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
-      mu_G = mu_fr
-      lambdal_G = H_biot - TWO*mu_fr
-      lambdalplus2mul_G = lambdal_G + TWO*mu_G
-
       ! first double loop over GLL points to compute and store gradients
       do j = 1,NGLLZ
         do i = 1,NGLLX
-
           ! derivative along x and along z
           dux_dxi = ZERO
           duz_dxi = ZERO
@@ -278,6 +322,29 @@
 
           dwz_dxl = dwz_dxi*xixl + dwz_dgamma*gammaxl
           dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
+
+          ! gets poroelastic material
+          phi = phistore(i,j,ispec)
+          tort = tortstore(i,j,ispec)
+          kappa_s = kappaarraystore(1,i,j,ispec)
+          kappa_f = kappaarraystore(2,i,j,ispec)
+          kappa_fr = kappaarraystore(3,i,j,ispec)
+          mu_fr = mufr_store(i,j,ispec)
+
+          ! Biot coefficients for the input phi
+          call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
+          !The RHS has the form : div T -phi/c div T_f + phi/ceta_fk^-1.partial t w
+          !where T = G:grad u_s + C div w I
+          !and T_f = C div u_s I + M div w I
+          !we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
+          mu_G = mu_fr
+          lambdal_G = H_biot - TWO*mu_fr
+          lambdalplus2mul_G = lambdal_G + TWO*mu_G
+
+          rho_s = rhoarraystore(1,i,j,ispec)
+          rho_f = rhoarraystore(2,i,j,ispec)
+          rho_bar = (1.d0 - phi)*rho_s + phi * rho_f
 
           ! compute potential energy
           potential_energy = potential_energy &
@@ -330,23 +397,12 @@
       ! compute velocity vector field in this element
       call compute_vector_one_element(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
 
-      ! get velocity and density in current spectral element
-      if (.not. assign_external_model) then
-        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-        rhol  = density(1,kmato(ispec))
-        kappal  = lambdal_unrelaxed_elastic
-        cpl = sqrt(kappal/rhol)
-      endif
-
       ! double loop over GLL points
       do j = 1,NGLLZ
         do i = 1,NGLLX
-
-          !--- if external medium, get density of current grid point
-          if (assign_external_model) then
-            rhol = rhostore(i,j,ispec)
-            cpl = rho_vpstore(i,j,ispec)/rhol
-          endif
+          ! get elastic parameters of current grid point
+          rhol = rhostore(i,j,ispec)
+          cpl = rho_vpstore(i,j,ispec)/rhol
 
           jacobianl = jacobian(i,j,ispec)
 
@@ -357,7 +413,6 @@
           ! compute potential energy
           potential_energy = potential_energy &
               + (pressure_element(i,j)**2)*wxgll(i)*wzgll(j)*jacobianl / (TWO * rhol * cpl**2)
-
         enddo
       enddo
 
@@ -370,22 +425,204 @@
 !----------------------------------------------------------------------------------------
 !
 
+  subroutine compute_integrated_energy_field_and_output()
+
+  ! compute int_0^t v^2 dt and write it on file if needed
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IIN,MAX_STRING_LEN,OUTPUT_FILES
+
+  use specfem_par, only: myrank,it,coord,nspec,ibool,integrated_kinetic_energy_field,max_kinetic_energy_field, &
+                         integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
+                         potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
+                         total_effective_duration_field,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
+
+  implicit none
+
+  ! local variables
+  integer :: ispec,iglob
+!!!! DK DK commenting this out for now because "call execute_command_line" is Fortran 2008
+!!!! DK DK and some older compilers do not support it yet. We can probably put it back in a few years.
+  !integer :: statMkdir
+  character(len=MAX_STRING_LEN)  :: filename
+
+  !! ABAB Uncomment to write the velocity profile in acoustic part
+  !real(kind=CUSTOM_REAL) :: cpl
+  !double precision :: rhol
+  !double precision :: lambdal_unrelaxed_elastic
+  !! ABAB
+
+  ! computes maximum energy and integrated energy fields
+  call compute_energy_fields()
+
+  ! Create directories
+  if (it == 1) then
+    if (myrank == 0) then
+!!!! DK DK commenting this out for now because "call execute_command_line" is Fortran 2008
+!!!! DK DK and some older compilers do not support it yet. We can probably put it back in a few years.
+     !call execute_command_line('mkdir -p '//trim(OUTPUT_FILES)//'energyFields',wait = .true.,cmdstat = statMkdir)
+     !if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create '//trim(OUTPUT_FILES)//'energyFields')
+
+     !call execute_command_line('mkdir -p '//trim(OUTPUT_FILES)//'energyFields/kinetic',wait = .true.,cmdstat = statMkdir)
+     !if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create '//trim(OUTPUT_FILES)//'energyFields/kinetic')
+
+     !call execute_command_line('mkdir -p '//trim(OUTPUT_FILES)//'energyFields/potential',wait = .true.,cmdstat = statMkdir)
+     !if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create '//trim(OUTPUT_FILES)//'energyFields/potential')
+
+     !call execute_command_line('mkdir -p '//trim(OUTPUT_FILES)//'energyFields/total',wait = .true.,cmdstat = statMkdir)
+     !if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create '//trim(OUTPUT_FILES)//'energyFields/total')
+    endif
+    !call synchronize_all() ! Wait for first proc to create directories
+  endif
+
+  if (mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+    ! write integrated kinetic energy field in external file
+    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/kinetic/integrated_kinetic_energy_field',myrank
+    open(unit=IIN,file=trim(filename),status='unknown',action='write')
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(integrated_kinetic_energy_field(ispec),4)
+    enddo
+    close(IIN)
+
+    ! write max kinetic energy field in external file
+    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/kinetic/max_kinetic_energy_field',myrank
+    open(unit=IIN,file=trim(filename),status='unknown',action='write')
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(max_kinetic_energy_field(ispec),4)
+    enddo
+    close(IIN)
+
+    ! write integrated potential energy field in external file
+    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/potential/integrated_potential_energy_field',myrank
+    open(unit=IIN,file=trim(filename),status='unknown',action='write')
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(integrated_potential_energy_field(ispec),4)
+    enddo
+    close(IIN)
+
+    ! write max potential energy field in external file
+    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/potential/max_potential_energy_field',myrank
+    open(unit=IIN,file=trim(filename),status='unknown',action='write')
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(max_potential_energy_field(ispec),4)
+    enddo
+    close(IIN)
+
+    ! write potential effective duration field in external file
+    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/potential/potential_effective_duration_field',myrank
+    open(unit=IIN,file=trim(filename),status='unknown',action='write')
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(potential_effective_duration_field(ispec),4)
+    enddo
+    close(IIN)
+
+   ! write kinetic effective duration field in external file
+    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/kinetic/kinetic_effective_duration_field',myrank
+    open(unit=IIN,file=trim(filename),status='unknown',action='write')
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(kinetic_effective_duration_field(ispec),4)
+    enddo
+    close(IIN)
+
+    ! write total integrated energy field in external file
+    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/total/total_integrated_energy_field',myrank
+    open(unit=IIN,file=trim(filename),status='unknown',action='write')
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(total_integrated_energy_field(ispec),4)
+    enddo
+    close(IIN)
+
+    ! write max total energy field in external file
+    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/total/max_total_energy_field',myrank
+    open(unit=IIN,file=trim(filename),status='unknown',action='write')
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(max_total_energy_field(ispec),4)
+    enddo
+    close(IIN)
+
+    ! write total effective duration field in external file
+    write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/total/total_effective_duration_field',myrank
+    open(unit=IIN,file=trim(filename),status='unknown',action='write')
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(total_effective_duration_field(ispec),4)
+    enddo
+    close(IIN)
+  endif
+
+  ! ABAB Uncomment to write the velocity profile in the acoustic part in file
+  !
+  !  write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'velocities',myrank
+  !  open(unit=IIN,file=trim(filename),status='unknown',action='write')
+  !
+  !  if (mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+  !    ! loop over spectral elements
+  !    do ispec = 1,nspec
+  !      if (ispec_is_acoustic(ispec)) then
+  !        ! get density of current grid point
+  !        cpl = rho_vpstore(2,2,ispec)/rhostore(2,2,ispec)
+  !        iglob = ibool(2,2,ispec)
+  !        write(IIN,*) real(coord(2,iglob),4),cpl
+  !      endif
+  !    enddo
+  !  endif
+  !  close(IIN)
+
+  end subroutine compute_integrated_energy_field_and_output
+
+!
+!----------------------------------------------------------------------------------------
+!
+
   subroutine compute_energy_fields()
 
   ! computes maximum, integrated energy and duration fields
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,TWO,ZERO
 
-  use specfem_par, only: AXISYM,is_on_the_axis,nspec,ibool,deltat,veloc_elastic,potential_dot_acoustic,ispec_is_elastic, &
-                        ispec_is_poroelastic,integrated_kinetic_energy_field,max_kinetic_energy_field, &
-                        integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
-                        potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
-                        total_effective_duration_field,velocs_poroelastic, &
-                        poroelastcoef,mustore,rho_vpstore,rhostore, &
-                        density,kmato,assign_external_model,jacobian,displ_elastic, &
-                        hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz, &
-                        displs_poroelastic,displw_poroelastic, &
-                        potential_dot_dot_acoustic,potential_acoustic
+  use specfem_par, only: AXISYM,is_on_the_axis,nspec,ibool,deltat, &
+                         ispec_is_elastic,ispec_is_poroelastic, &
+                         integrated_kinetic_energy_field,max_kinetic_energy_field, &
+                         integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
+                         potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
+                         total_effective_duration_field, &
+                         mustore,rho_vpstore,rhostore, &
+                         jacobian, &
+                         hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz, &
+                         GPU_MODE,any_acoustic,any_elastic,any_poroelastic, &
+                         P_SV
+
+  ! wavefields
+  use specfem_par, only: displ_elastic,veloc_elastic,accel_elastic, &
+                         displs_poroelastic,displw_poroelastic,velocs_poroelastic, &
+                         potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic
+
+  use specfem_par_gpu, only: Mesh_pointer,NGLOB_AB
 
   implicit none
 
@@ -405,6 +642,26 @@
   ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: pressure_element
 
+  ! transfers fields
+  if (GPU_MODE) then
+    ! a simple workaround to avoid implementing the following routine in CUDA.
+    ! be aware that these memory transfers will go through the bottleneck of memory bandwidth between CPU & GPU,
+    ! thus slow down the simulation
+    ! acoustic domains
+    if (any_acoustic) then
+      call transfer_fields_ac_from_device(NGLOB_AB,potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
+                                          Mesh_pointer)
+    endif
+    ! elastic domains
+    if (any_elastic) then
+      call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_elastic,veloc_elastic,accel_elastic,Mesh_pointer)
+    endif
+    ! poroelastic domains
+    if (any_poroelastic) then
+      stop 'Poroelastic domain transfers for GPU_MODE in compute_energy_fields() not implemented yet'
+    endif
+  endif
+
   ! We save the value at the GLL point:
   i=2
   j=2
@@ -417,21 +674,13 @@
     !---
     if (ispec_is_elastic(ispec)) then
 
-      ! get relaxed elastic parameters of current spectral element
-      lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-      mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-      lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec))
+      ! get elastic parameters of current grid point
+      mul_unrelaxed_elastic = mustore(i,j,ispec)
+      rhol = rhostore(i,j,ispec)
+      cpl = rho_vpstore(i,j,ispec)/rhol
 
-      rhol  = density(1,kmato(ispec))
-
-      !--- if external medium, get elastic parameters of current grid point
-      if (assign_external_model) then
-        mul_unrelaxed_elastic = mustore(i,j,ispec)
-        rhol = rhostore(i,j,ispec)
-        cpl = rho_vpstore(i,j,ispec)/rhol
-        lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO*mul_unrelaxed_elastic
-        lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic
-      endif
+      lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO * mul_unrelaxed_elastic
+      lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO * mul_unrelaxed_elastic
 
       ! derivative along x and along z
       dux_dxi = 0._CUSTOM_REAL
@@ -443,6 +692,7 @@
       ! first double loop over GLL points to compute and store gradients
       ! we can merge the two loops because NGLLX == NGLLZ
       if (AXISYM) then
+        ! axisymmetric case
         if (is_on_the_axis(ispec)) then
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
@@ -455,6 +705,7 @@
           enddo
         endif
       else
+        ! default, non-axisymmetric case
         do k = 1,NGLLX
           dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
           duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
@@ -480,31 +731,65 @@
 
       ! compute total integrated energy
       ! We record just one point per element (i=2, j=2)
-      integrated_kinetic_energy_field(ispec) = integrated_kinetic_energy_field(ispec)  &
-          +  rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * deltat / TWO
 
-      if (max_kinetic_energy_field(ispec) < rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) / &
-          TWO) then
-        max_kinetic_energy_field(ispec) = rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) / TWO
+      ! kinetic energy
+      if (P_SV) then
+        ! P-SV waves
+        integrated_kinetic_energy_field(ispec) = integrated_kinetic_energy_field(ispec)  &
+            +  rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * deltat * 0.5_CUSTOM_REAL
+
+        ! maximum value
+        if (max_kinetic_energy_field(ispec) <&
+              rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * 0.5_CUSTOM_REAL) then
+          max_kinetic_energy_field(ispec) = &
+              rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) * 0.5_CUSTOM_REAL
+        endif
+      else
+        ! SH waves
+        integrated_kinetic_energy_field(ispec) = integrated_kinetic_energy_field(ispec)  &
+            +  rhol*(veloc_elastic(1,ibool(i,j,ispec))**2) * deltat * 0.5_CUSTOM_REAL
+
+        ! maximum value
+        if (max_kinetic_energy_field(ispec) <&
+              rhol*(veloc_elastic(1,ibool(i,j,ispec))**2) * 0.5_CUSTOM_REAL) then
+          max_kinetic_energy_field(ispec) = &
+              rhol*(veloc_elastic(1,ibool(i,j,ispec))**2) * 0.5_CUSTOM_REAL
+        endif
       endif
 
+      ! maximum E_kin
       if (max_kinetic_energy_field(ispec) > ZERO) then
         kinetic_effective_duration_field(ispec) = TWO*integrated_kinetic_energy_field(ispec)/max_kinetic_energy_field(ispec)
       endif
 
-      integrated_potential_energy_field(ispec) = integrated_potential_energy_field(ispec) &
-              + (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
+      ! potential energy
+      if (P_SV) then
+        ! P-SV waves
+        integrated_potential_energy_field(ispec) = integrated_potential_energy_field(ispec) &
+                + (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
+                + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
+                + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
+                + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) * deltat * 0.5_CUSTOM_REAL
+
+        ! maximum value
+        if (max_potential_energy_field(ispec) < (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
               + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
               + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
-              + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) * deltat / TWO
-      if (max_potential_energy_field(ispec) < (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
+              + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO) then
+          max_potential_energy_field(ispec) = (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
             + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
             + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
-            + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO) then
-        max_potential_energy_field(ispec) = (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
-          + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
-          + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
-          + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO
+            + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO
+        endif
+      else
+        ! SH waves
+        integrated_potential_energy_field(ispec) = integrated_potential_energy_field(ispec) &
+                + (mul_unrelaxed_elastic * (dux_dxl**2 + dux_dzl**2) / TWO ) * deltat * 0.5_CUSTOM_REAL
+
+        ! maximum value
+        if (max_potential_energy_field(ispec) < (mul_unrelaxed_elastic * (dux_dxl**2 + dux_dzl**2) / TWO ) / TWO ) then
+          max_potential_energy_field(ispec) = (mul_unrelaxed_elastic * (dux_dxl**2 + dux_dzl**2) / TWO ) / TWO
+        endif
       endif
 
       if (max_potential_energy_field(ispec) > ZERO) then
@@ -512,16 +797,27 @@
                                                     max_potential_energy_field(ispec)
       endif
 
-      if (max_total_energy_field(ispec) < (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
-            + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
-            + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
-            + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO + &
-            rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) / TWO) then
-        max_total_energy_field(ispec) = (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
-            + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
-            + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
-            + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO + &
-            rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) / TWO
+      ! maximum total energy
+      if (P_SV) then
+        ! P-SV waves
+        if (max_total_energy_field(ispec) < (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
+              + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
+              + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
+              + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO + &
+              rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) / TWO) then
+          max_total_energy_field(ispec) = (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
+              + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
+              + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
+              + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO + &
+              rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) / TWO
+        endif
+      else
+        ! SH waves
+        if (max_total_energy_field(ispec) < (mul_unrelaxed_elastic * (dux_dxl**2 + dux_dzl**2) / TWO ) / TWO + &
+                rhol*(veloc_elastic(1,ibool(i,j,ispec))**2) / TWO) then
+            max_total_energy_field(ispec) = (mul_unrelaxed_elastic * (dux_dxl**2 + dux_dzl**2) / TWO ) / TWO + &
+                rhol*(veloc_elastic(1,ibool(i,j,ispec))**2) / TWO
+        endif
       endif
 
     !---
@@ -544,24 +840,20 @@
       call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic, &
                                         potential_dot_dot_acoustic,potential_acoustic)
 
-      !--- if external medium, get density of current grid point
-      if (assign_external_model) then
-        rhol = rhostore(i,j,ispec)
-        cpl = rho_vpstore(i,j,ispec)/rhol
-      else
-        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-        rhol  = density(1,kmato(ispec))
-        cpl = sqrt(lambdal_unrelaxed_elastic/rhol) !lambdal_unrelaxed_elastic = kappal
-      endif
+      ! get density of current grid point
+      rhol = rhostore(i,j,ispec)
+      cpl = rho_vpstore(i,j,ispec) / rhol
 
       jacobianl = jacobian(i,j,ispec)
 
       ! compute total integrated energy ! = int_0^t v^2 dt
       integrated_kinetic_energy_field(ispec) = integrated_kinetic_energy_field(ispec)  &
-           +  rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) * deltat / TWO
+           +  rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) * deltat * 0.5_CUSTOM_REAL
 
-      if (max_kinetic_energy_field(ispec) < rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) / TWO) then
-        max_kinetic_energy_field(ispec) = rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) / TWO
+      if (max_kinetic_energy_field(ispec) <&
+            rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) * 0.5_CUSTOM_REAL) then
+        max_kinetic_energy_field(ispec) = &
+            rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) * 0.5_CUSTOM_REAL
       endif
 
       if (max_kinetic_energy_field(ispec) > ZERO) then

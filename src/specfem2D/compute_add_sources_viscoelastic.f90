@@ -73,8 +73,9 @@
           do j = 1,NGLLZ
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(i_source,1,i,j) * stf_used
-              accel_elastic(2,iglob) = accel_elastic(2,iglob) + sourcearrays(i_source,2,i,j) * stf_used
+              ! 2D: x-component uses array(1,..) and z-component (2,..)
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(1,i,j,i_source) * stf_used  ! x-direction
+              accel_elastic(2,iglob) = accel_elastic(2,iglob) + sourcearrays(2,i,j,i_source) * stf_used  ! z-direction
             enddo
           enddo
         else
@@ -82,9 +83,8 @@
           do j = 1,NGLLZ
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
-
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(i_source,1,i,j) * stf_used
-
+              ! 2D: y-component uses array(1,..)
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(1,i,j,i_source) * stf_used  ! y-direction
             enddo
           enddo
         endif
@@ -107,8 +107,8 @@
                          NSOURCES,source_time_function, &
                          islice_selected_source,ispec_selected_source,sourcearrays, &
                          ibool,coord,nspec,nglob,xigll,zigll,NPROC, &
-                         xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source, &
-                         vx_source,vz_source,deltat,t0,myrank, &
+                         xi_source,gamma_source,coorg,knods,NGNOD,npgeo,iglob_source,x_source,z_source, &
+                         vx_source,vz_source,DT,t0,myrank, &
                          time_stepping_scheme,hxis_store,hgammas_store,tshift_src,source_type,ispec_is_acoustic, &
                          hxis,hpxis,hgammas,hpgammas,anglesource,ispec_is_poroelastic,Mxx,Mxz,Mzz,gammax,gammaz,xix,xiz, &
                          AXISYM,xiglj,is_on_the_axis,initialfield,SOURCE_IS_MOVING
@@ -133,29 +133,34 @@
 
   if (time_stepping_scheme == 1) then
     ! Newmark
-    timeval = (it-1)*deltat
+    timeval = (it-1)*DT
   else
     call exit_MPI(myrank,'Only Newmark time scheme is implemented for moving sources (3)')
   endif
 
-  if ((myrank == 0) .and. (it < 5)) then
+  if ((myrank == 0) .and. (it == 1)) then
+    write(IMAIN,*)
+    write(IMAIN,*) '****************************************************************************************'
+    write(IMAIN,*) 'Your are using elastic moving source capabilities. Please cite:'
+    write(IMAIN,*) 'Bottero (2018) Full-wave numerical simulation of T-waves and of moving acoustic sources'
+    write(IMAIN,*) 'PhD thesis'
+    write(IMAIN,*) 'https://tel.archives-ouvertes.fr/tel-01893011'
+    write(IMAIN,*) '****************************************************************************************'
+    write(IMAIN,*)
+    write(IMAIN,*) 'Note: subroutine compute_add_sources_viscoelastic_moving_sources can be greatly'
+    write(IMAIN,*) 'optimized. See what is done in init_moving_sources (in moving_sources_par.f90).'
+    write(IMAIN,*) 'This is easy to do and would probably greatly improve the computational time'
+    write(IMAIN,*)
+    ! timing warning
     do i_source = 1,NSOURCES
-      write(IMAIN,*)
-      write(IMAIN,*) 'Your are using moving source capabilities. Please cite:'
-      write(IMAIN,*) 'Bottero (2018) Full-wave numerical simulation of T-waves and of moving acoustic sources'
-      write(IMAIN,*) 'PhD thesis'
-      write(IMAIN,*) 'https://tel.archives-ouvertes.fr/tel-01893011'
-      write(IMAIN,*)
-      write(IMAIN,*) 'Note: subroutine compute_add_sources_viscoelastic_moving_sources can be greatly'
-      write(IMAIN,*) 'optimized. See what is done in init_moving_sources (in moving_sources_par.f90).'
-      write(IMAIN,*) 'This is easy to do and would probably greatly improve the computational time'
       if ((abs(tshift_src(i_source)) > 0.0d0) .or. (abs(t0) > 0.0d0)) then
-        write(IMAIN,*)
+        write(IMAIN,*) 'Source #',i_source
         write(IMAIN,*) ' !! BEWARE !! Parameters tshift and/or t0 are used with moving source !'
         write(IMAIN,*) ' The time step for the moving source is: '
-        write(IMAIN,*) '    t_used = (it_l-1)*deltat-t0-tshift_src(i_source)'
+        write(IMAIN,*) '    t_used = (it_l-1)*DT-t0-tshift_src(i_source)'
         write(IMAIN,*) ' And the source position is calculated like:'
         write(IMAIN,*) '  xsrc = x_source + vx_source*t_used'
+        write(IMAIN,*)
       endif
     enddo
   endif
@@ -175,7 +180,7 @@
         call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
                            xsrc,zsrc, &
                            ispec_selected_source(i_source),islice_selected_source(i_source), &
-                           NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                           NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,NGNOD,npgeo, &
                            iglob_source(i_source),.true.)
 
       else if (source_type(i_source) == 2) then
@@ -183,7 +188,7 @@
         call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
                            xsrc,zsrc, &
                            ispec_selected_source(i_source),islice_selected_source(i_source), &
-                           NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                           NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,NGNOD,npgeo, &
                            iglob_source(i_source),.false.)
 
       else if (.not. initialfield) then
@@ -282,7 +287,7 @@
         end select
 
         ! stores sourcearray for all sources
-        sourcearrays(i_source,:,:,:) = sourcearray(:,:,:)
+        sourcearrays(:,:,:,i_source) = sourcearray(:,:,:)
 
       endif
     endif
@@ -311,10 +316,8 @@
           do j = 1,NGLLZ
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
-                                       sourcearrays(i_source,1,i,j) * stf_used
-              accel_elastic(2,iglob) = accel_elastic(2,iglob) + &
-                                       sourcearrays(i_source,2,i,j) * stf_used
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(1,i,j,i_source) * stf_used
+              accel_elastic(2,iglob) = accel_elastic(2,iglob) + sourcearrays(2,i,j,i_source) * stf_used
             enddo
           enddo
         else
@@ -323,15 +326,12 @@
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
 
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
-                                       sourcearrays(i_source,1,i,j) * stf_used
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(1,i,j,i_source) * stf_used
 
-              ! daniel debug source contribution
+              ! debugging source contribution
               !if (iglob == 37905) &
-              !write(1234,*) it, dble(sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)), &
-              !              accel_elastic(1,iglob),source_time_function(i_source,it,i_stage),sourcearrays(i_source,1,i,j)
-
-
+              !write(1234,*) it, dble(sourcearrays(1,i,j,i_source) * source_time_function(i_source,it,i_stage)), &
+              !              accel_elastic(1,iglob),source_time_function(i_source,it,i_stage),sourcearrays(1,i,j,i_source)
             enddo
           enddo
         endif
@@ -360,6 +360,7 @@
   !local variables
   integer :: irec_local,i,j,iglob,ispec
   integer :: it_tmp
+  real(kind=CUSTOM_REAL) :: stfx,stfz
 
   ! time step index
   it_tmp = NSTEP - it + 1
@@ -376,10 +377,12 @@
         do j = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec)
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) + real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
-                                        source_adjoint(irec_local,it_tmp,1),kind=CUSTOM_REAL)
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) + real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
-                                        source_adjoint(irec_local,it_tmp,2),kind=CUSTOM_REAL)
+
+            stfx = xir_store_loc(irec_local,i) * gammar_store_loc(irec_local,j) * source_adjoint(irec_local,it_tmp,1)
+            stfz = xir_store_loc(irec_local,i) * gammar_store_loc(irec_local,j) * source_adjoint(irec_local,it_tmp,2)
+
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) + stfx
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) + stfz
           enddo
         enddo
       else
@@ -387,8 +390,10 @@
         do j = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec)
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) +  real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
-                                        source_adjoint(irec_local,it_tmp,1),kind=CUSTOM_REAL)
+
+            stfx = xir_store_loc(irec_local,i) * gammar_store_loc(irec_local,j) * source_adjoint(irec_local,it_tmp,1)
+
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) + stfx
           enddo
         enddo
       endif

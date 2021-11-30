@@ -732,8 +732,8 @@ end subroutine Calculate_Weigth_Burst
       accel_elastic(1,iglob) = 0.0d0
     else
       ! We set what we want
-      accel_elastic(2,iglob) = factor*(TWO*PI*f0)**2*sin(TWO*PI*f0*(it-1)*deltat)
-      accelOld(2) = factor*(TWO*PI*f0)**2*sin(TWO*PI*f0*(it-2)*deltat)
+      accel_elastic(2,iglob) = factor * (TWO*PI*f0)**2 * sin(TWO*PI*f0*(it-1)*deltat)
+      accelOld(2) = factor * (TWO*PI*f0)**2 * sin(TWO*PI*f0*(it-2)*deltat)
       accel_elastic(1,iglob) = 0.0d0
       accelOld(1) = 0.0d0
 

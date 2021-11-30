@@ -44,20 +44,20 @@
     ORIG_X,ORIG_Z,PI,RPERCENTX,RPERCENTZ,STABILITY_THRESHOLD, &
     DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT,OUTPUT_FILES
 
-  use specfem_par, only: coord,x_source,z_source,st_xval,st_zval,it,deltat,coorg,density, &
+  use specfem_par, only: coord,x_source,z_source,st_xval,st_zval,it,DT,coorg, &
                          AXISYM,is_on_the_axis,flagrange_GLJ, &
-                         poroelastcoef,knods,kmato,ibool, &
+                         knods,kmato,ibool, &
                          num_abs_boundary_faces,abs_boundary_ispec,codeabs,abs_boundary_type,anyabs, &
                          nelem_acoustic_surface, acoustic_edges, &
                          nglob,nrec,NSOURCES, &
-                         assign_external_model,rhostore,rho_vpstore, &
+                         rhostore,rho_vpstore, &
                          pointsdisp, &
-                         nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
+                         nspec,NGNOD,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
                          any_acoustic,any_poroelastic, &
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
-                         ispec_is_poroelastic,myrank,NPROC
+                         myrank,NPROC
 
   use shared_parameters, only: subsamp_postscript,imagetype_postscript,interpol, &
     meshvect,modelvect, &
@@ -103,19 +103,15 @@
 
   double precision, dimension(:,:), allocatable  :: coorg_send
   double precision, dimension(:,:), allocatable  :: coorg_recv
-  integer :: k,j,ispec,material,is,ir,imat,icol,l,line_length
+  integer :: k,j,ispec,is,ir,imat,icol,l,line_length
   integer :: index_char,ii,ipoin,in,nnum,inum,ideb,ifin,iedge
   integer :: ier
 
   ! for the file name
   character(len=100) :: file_name
   integer  :: buffer_offset, RGB_offset
-  double precision convert,x1,cpIloc,xa,za,xb,zb,lambdaplus2mu,denst
+  double precision convert,x1,cpIloc,xa,za,xb,zb
   double precision z1,x2,z2,d,d1,d2,dummy,theta,thetaup,thetadown
-  double precision :: cpIsquare
-
-  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
-  double precision :: D_biot,H_biot,C_biot,M_biot
 
   double precision ratio_page,dispmax,xmin,zmin
   logical :: anyabs_glob, coupled_acoustic_elastic_glob, coupled_acoustic_poro_glob, &
@@ -130,7 +126,6 @@
   equivalence (postscript_line,ch1)
   logical :: first
 
-  double precision :: afactor,bfactor,cfactor
   double precision :: xmax,zmax,height,xw,zw,usoffset,sizex,sizez,timeval
   ! for MPI collection
   double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
@@ -311,7 +306,7 @@
     write(24,*) '%'
 
     write(24,*) '24. CM 1.95 CM MV'
-    timeval = it*deltat
+    timeval = it*DT
     if (timeval >= 1.d-3 .and. timeval < 1000.d0) then
       write(24,600) usoffset,timeval
     else
@@ -408,44 +403,9 @@
         do j = 1,NGLLX-subsamp_postscript,subsamp_postscript
 
           if ((vpImax-vpImin)/vpImin > 0.02d0) then
-
-            if (assign_external_model) then
-
-              x1 = (rho_vpstore(i,j,ispec)/rhostore(i,j,ispec) - vpImin) / (vpImax-vpImin)
-
-            else
-
-              material = kmato(ispec)
-
-              if (ispec_is_poroelastic(ispec)) then
-
-                ! poroelastic material
-
-                ! get elastic parameters of current spectral element
-                call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
-
-                ! Biot coefficients for the input phi
-                call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
-
-                ! Approximated velocities (no viscous dissipation)
-                afactor = rho_bar - phi/tort*rho_f
-                bfactor = H_biot + phi*rho_bar/(tort*rho_f)*M_biot - 2.d0*phi/tort*C_biot
-                cfactor = phi/(tort*rho_f)*(H_biot*M_biot - C_biot*C_biot)
-                cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-                cpIloc = sqrt(cpIsquare)
-
-              else
-
-                lambdaplus2mu  = poroelastcoef(3,1,material)
-                denst = density(1,material)
-                cpIloc = sqrt(lambdaplus2mu/denst)
-
-              endif
-
-              x1 = (cpIloc-vpImin) / (vpImax-vpImin)
-
-            endif
-
+            ! acoustic/elastic/poroelastic material property
+            cpIloc = rho_vpstore(i,j,ispec) / rhostore(i,j,ispec)
+            x1 = (cpIloc - vpImin) / (vpImax-vpImin)
           else
             x1 = 0.5d0
           endif
@@ -528,7 +488,7 @@
 #ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
 
           call recv_singlei(nspec_recv, iproc, 42)
@@ -600,7 +560,7 @@
 
         xinterp(i,j) = 0.d0
         zinterp(i,j) = 0.d0
-        do in = 1,ngnod
+        do in = 1,NGNOD
           nnum = knods(in,ispec)
           xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
           zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
@@ -655,7 +615,7 @@
       coorg_send_ps_element_mesh(2,buffer_offset) = z1
     endif
 
-    if (ngnod == 4) then
+    if (NGNOD == 4) then
 
       ! draw straight lines if elements have 4 nodes
 
@@ -856,7 +816,7 @@
 #ifdef WITH_MPI
   if (NPROC > 1) then
     if (myrank == 0) then
-      ! master collects
+      ! main collects
       do iproc = 1, NPROC-1
         call recv_singlei(nspec_recv,iproc,43)
 
@@ -864,7 +824,7 @@
         if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
           nb_coorg_per_elem = nb_coorg_per_elem + 1
         endif
-        if (ngnod == 4) then
+        if (NGNOD == 4) then
           nb_coorg_per_elem = nb_coorg_per_elem + 4
         else
           nb_coorg_per_elem = nb_coorg_per_elem + 3*(pointsdisp-1)+(pointsdisp-2)
@@ -891,7 +851,7 @@
           buffer_offset = buffer_offset + 1
           write(24,*) 'mark'
           write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
-          if (ngnod == 4) then
+          if (NGNOD == 4) then
             buffer_offset = buffer_offset + 1
             write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
             buffer_offset = buffer_offset + 1
@@ -956,7 +916,7 @@
       if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
         nb_coorg_per_elem = nb_coorg_per_elem + 1
       endif
-      if (ngnod == 4) then
+      if (NGNOD == 4) then
         nb_coorg_per_elem = nb_coorg_per_elem + 4
       else
         nb_coorg_per_elem = nb_coorg_per_elem + 3*(pointsdisp-1)+(pointsdisp-2)
@@ -1065,7 +1025,7 @@
 #ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
           call recv_singlei(nspec_recv,iproc, 44)
           if (nspec_recv > 0) then
@@ -1153,7 +1113,7 @@
 #ifdef WITH_MPI
   if (NPROC > 1) then
     if (myrank == 0) then
-      ! master collects
+      ! main collects
       do iproc = 1, NPROC-1
         call recv_singlei(nspec_recv, iproc, 44)
         if (nspec_recv > 0) then
@@ -1251,7 +1211,7 @@
 #ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
           call recv_singlei(nspec_recv, iproc, 45)
           if (nspec_recv > 0) then
@@ -1352,7 +1312,7 @@
 #ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
           call recv_singlei(nspec_recv, iproc, 45)
           if (nspec_recv > 0) then
@@ -1454,7 +1414,7 @@
 #ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! master collects
+        ! main collects
         do iproc = 1, NPROC-1
           call recv_singlei(nspec_recv, iproc, 45)
           if (nspec_recv > 0) then
@@ -1547,7 +1507,7 @@
 
           xinterp(i,j) = 0.d0
           zinterp(i,j) = 0.d0
-          do in = 1,ngnod
+          do in = 1,NGNOD
             nnum = knods(in,ispec)
             xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
             zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
@@ -1654,7 +1614,7 @@
 
 #ifdef WITH_MPI
     if (myrank == 0) then
-      ! master collects
+      ! main collects
       do iproc = 1, NPROC-1
         call recv_singlei(nspec_recv, iproc, 46)
         if (nspec_recv > 0) then
@@ -1786,7 +1746,7 @@
 
 #ifdef WITH_MPI
     if (myrank == 0) then
-      ! master collects
+      ! main collects
       do iproc = 1, NPROC-1
         call recv_singlei(nspec_recv, iproc, 47)
 

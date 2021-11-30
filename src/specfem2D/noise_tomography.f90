@@ -163,23 +163,23 @@
   implicit none
 
   ! local parameters
-  integer :: ier,irec_master
+  integer :: ier,irec_main
 
-  ! master noise source angle (in rad) use for P_SV-case: 0 for vertical along z-direction
+  ! main noise source angle (in rad) use for P_SV-case: 0 for vertical along z-direction
   angle_noise = 0._CUSTOM_REAL
 
-  !define master receiver
-  open(unit=IIN,file='NOISE_TOMOGRAPHY/irec_master_noise',status='old',action='read',iostat=ier)
+  ! define main receiver
+  open(unit=IIN,file='NOISE_TOMOGRAPHY/irec_main_noise',status='old',action='read',iostat=ier)
   if (ier /= 0) then
     ! we will be strict on input format
     print *
-    write(*,*) 'Error opening NOISE_TOMOGRAPHY/irec_master_noise file'
+    write(*,*) 'Error opening NOISE_TOMOGRAPHY/irec_main_noise file'
     write(*,*) 'Please make sure all noise setup files exist in NOISE_TOMOGRAPHY/ directory...'
     print *
-    call stop_the_code('Error opening NOISE_TOMOGRAPHY/irec_master_noise file')
+    call stop_the_code('Error opening NOISE_TOMOGRAPHY/irec_main_noise file')
   endif
 
-  read(IIN,*) irec_master
+  read(IIN,*) irec_main
   close(IIN)
 
   ! user output
@@ -187,7 +187,7 @@
     write(IMAIN,*) '  noise simulation type           = ',NOISE_TOMOGRAPHY
     write(IMAIN,*) '  noise source time function type = ',noise_source_time_function_type
     write(IMAIN,*)
-    write(IMAIN,*) '  master station is #',irec_master,': ',trim(network_name(irec_master))//'.'//trim(station_name(irec_master))
+    write(IMAIN,*) '  main station is #',irec_main,': ',trim(network_name(irec_main))//'.'//trim(station_name(irec_main))
     if (P_SV) then
       write(IMAIN,*) '  using P_SV waves'
       write(IMAIN,*) '  angle of the noise source is ',angle_noise * 180./PI,'degrees (0=vertical)'
@@ -201,12 +201,12 @@
   endif
 
   ! checks value
-  if ((NOISE_TOMOGRAPHY == 1) .and. (irec_master > nrec .or. irec_master < 1) ) &
-    call exit_MPI(myrank,'irec_master out of range of given number of receivers. Exiting.')
+  if ((NOISE_TOMOGRAPHY == 1) .and. (irec_main > nrec .or. irec_main < 1) ) &
+    call exit_MPI(myrank,'irec_main out of range of given number of receivers. Exiting.')
 
-  xi_noise    = xi_receiver(irec_master)
-  gamma_noise = gamma_receiver(irec_master)
-  ispec_noise = ispec_selected_rec(irec_master)
+  xi_noise    = xi_receiver(irec_main)
+  gamma_noise = gamma_receiver(irec_main)
+  ispec_noise = ispec_selected_rec(irec_main)
 
   ! check simulation parameters
   if ((NOISE_TOMOGRAPHY /= 0) .and. (P_SV)) write(*,*) 'Warning: For P-SV case, noise tomography subroutines not yet fully tested'
@@ -270,7 +270,7 @@
 
   use shared_parameters, only: noise_source_time_function_type
 
-  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,P_SV,NSTEP,deltat, &
+  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,P_SV,NSTEP,DT, &
                          xigll,zigll,myrank
 
   use specfem_par_noise
@@ -292,7 +292,7 @@
 
   ! noise simulations use cross-correlation wavefields, with duration between [-T,T]
   ! mid-time becomes zero time t0
-  t0 = ((NSTEP-1)/2.0_CUSTOM_REAL) * deltat
+  t0 = ((NSTEP-1)/2.0_CUSTOM_REAL) * DT
 
   if (myrank == 0) then
     write(IMAIN,*) '  noise source array:'
@@ -368,7 +368,7 @@
       write(IMAIN,*) '  Ricker (second derivative) noise source'
     endif
     do it = 1,NSTEP
-      t = it*deltat
+      t = it * DT
       noise_src(it) = - factor_noise * 2.0 * a_val * (1.0 - 2.0 * a_val * (t-t0)**2) * exp(-a_val * (t-t0)**2)
     enddo
 
@@ -379,7 +379,7 @@
       write(IMAIN,*) '  Ricker (first derivative) noise source'
     endif
     do it = 1,NSTEP
-      t = it * deltat
+      t = it * DT
       noise_src(it) = - factor_noise * (2.0 * a_val * (t-t0)) * exp(-a_val * (t-t0)**2)
     enddo
 
@@ -390,7 +390,7 @@
       write(IMAIN,*) '  Gaussian noise source'
     endif
     do it = 1,NSTEP
-      t = it*deltat
+      t = it * DT
       noise_src(it) = factor_noise * exp(-a_val * (t-t0)**2)
     enddo
 
@@ -401,7 +401,7 @@
       write(IMAIN,*) '  Figure 2a noise source'
     endif
     do it = 1,NSTEP
-      t = it*deltat
+      t = it * DT
       noise_src(it) = factor_noise * 4.0 * a_val**2 * (3.0 - 12.0 * a_val * (t-t0)**2 + 4.0 * a_val**2 * (t-t0)**4) * &
                       exp(-a_val * (t-t0)**2)
     enddo
@@ -414,7 +414,7 @@
   open(IOUT,file=trim(OUTPUT_FILES)//'plot_source_time_function_noise.txt',status='unknown',iostat=ier)
   if (ier /= 0) call stop_the_code('Error opening noise source time function text-file')
   do it = 1,NSTEP
-    t = it * deltat
+    t = it * DT
     write(IOUT,*) (t-t0),noise_src(it)
   enddo
   close(IOUT)
@@ -432,7 +432,7 @@
 
   call lagrange_any(gamma_noise,NGLLZ,zigll,hgamma,hpgamma)
 
-  ! master station for noise source: located in element ispec_noise
+  ! main station for noise source: located in element ispec_noise
   noise_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
   if (P_SV) then
     ! P-SV simulation
@@ -507,7 +507,7 @@
   use specfem_par, only: myrank,it,NOISE_TOMOGRAPHY,GPU_MODE, &
     ibool,nglob,nspec, &
     accel_elastic,b_displ_elastic, &
-    rho_k,rho_kl
+    rho_kl
 
   use specfem_par_noise, only: mask_noise, &
     noise_surface_movie_y_or_z,noise_output_rhokl,noise_output_array,noise_output_ncol, &
@@ -515,8 +515,9 @@
 
   implicit none
   ! local parameters
-  integer :: ier
+  integer :: iglob,ier
   logical :: ex,is_opened
+  real(kind=CUSTOM_REAL) :: rho_k_loc
   character(len=MAX_STRING_LEN) :: noise_output_file
 
   ! checks if anything to do
@@ -544,8 +545,11 @@
     noise_output_array(2,:) = b_displ_elastic(1,:)
     noise_output_array(3,:) = accel_elastic(1,:)
 
-    ! rho kernel on global nodes
-    noise_output_array(4,:) = rho_k(:)
+    ! rho kernel contribution on global nodes
+    do iglob = 1,nglob
+      rho_k_loc =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) + accel_elastic(2,iglob)*b_displ_elastic(2,iglob)
+      noise_output_array(4,iglob) = rho_k_loc
+    enddo
 
     ! rho kernel on global nodes from local kernel (for comparison)
     noise_output_array(5,:) = noise_output_rhokl(:)
@@ -650,10 +654,12 @@
 
   use constants, only: CUSTOM_REAL,NDIM,IMAIN,OUTPUT_FILES
 
-  use specfem_par, only: myrank,it,NSTEP,nglob,P_SV,displ_elastic,nglob_elastic,NOISE_TOMOGRAPHY, &
+  use specfem_par, only: myrank,it,NSTEP,nglob,P_SV, &
+    displ_elastic,veloc_elastic,accel_elastic, &
+    nglob_elastic,NOISE_TOMOGRAPHY, &
     any_elastic,GPU_MODE
 
-  use specfem_par_gpu, only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
+  use specfem_par_gpu, only: Mesh_pointer,NGLOB_AB
 
   implicit none
 
@@ -672,9 +678,7 @@
   if (GPU_MODE) then
     ! elastic domains
     if (any_elastic) then
-      call transfer_fields_el_from_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
-      displ_elastic(1,:) = tmp_displ_2D(1,:)
-      displ_elastic(2,:) = tmp_displ_2D(2,:)
+      call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_elastic,veloc_elastic,accel_elastic,Mesh_pointer)
     endif
   endif
 

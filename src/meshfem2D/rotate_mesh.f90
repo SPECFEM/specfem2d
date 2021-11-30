@@ -38,13 +38,13 @@
   ! that we use to impose the plane wave and Bielak boundary conditions.
   !-----------------------------------------------
 
-  subroutine rotate_mesh_for_plane_wave(ngnod)
+  subroutine rotate_mesh_for_plane_wave(NGNOD)
 
   use part_unstruct_par, only: elmnts,nelmnts,nelemabs,abs_surface
 
   implicit none
 
-  integer, intent(in)  :: ngnod
+  integer, intent(in)  :: NGNOD
 
   ! local parameters
   integer :: i,j,ispec,i1,i2,inode,iswap
@@ -55,8 +55,8 @@
   integer :: index_rotation1,index_rotation2,index_rotation3,index_rotation4, &
              index_rotation5,index_rotation6,index_rotation7,index_rotation8,index_edge
 
-  allocate(ibool(ngnod,nelmnts))
-  allocate(ibool_rotated(ngnod,nelmnts))
+  allocate(ibool(NGNOD,nelmnts))
+  allocate(ibool_rotated(NGNOD,nelmnts))
 
  ! At the end of the loop, thank to ibool we can access to the global number of
  ! each node from the ispec of the element to which it belongs and from its
@@ -70,23 +70,23 @@
  !            1 . . 5 . . 2
  ! --> we just create a copy in an easier format for ease of use in this routine
   do ispec = 1, nelmnts
-    if (ngnod == 4) then
-      ibool(1,ispec) = elmnts((ispec-1)*ngnod)
-      ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
-      ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
-      ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)
-    else if (ngnod == 9) then
-      ibool(1,ispec) = elmnts((ispec-1)*ngnod)
-      ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
-      ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
-      ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)
-      ibool(5,ispec) = elmnts((ispec-1)*ngnod+4)
-      ibool(6,ispec) = elmnts((ispec-1)*ngnod+5)
-      ibool(7,ispec) = elmnts((ispec-1)*ngnod+6)
-      ibool(8,ispec) = elmnts((ispec-1)*ngnod+7)
-      ibool(9,ispec) = elmnts((ispec-1)*ngnod+8)
+    if (NGNOD == 4) then
+      ibool(1,ispec) = elmnts((ispec-1)*NGNOD)
+      ibool(2,ispec) = elmnts((ispec-1)*NGNOD+1)
+      ibool(3,ispec) = elmnts((ispec-1)*NGNOD+2)
+      ibool(4,ispec) = elmnts((ispec-1)*NGNOD+3)
+    else if (NGNOD == 9) then
+      ibool(1,ispec) = elmnts((ispec-1)*NGNOD)
+      ibool(2,ispec) = elmnts((ispec-1)*NGNOD+1)
+      ibool(3,ispec) = elmnts((ispec-1)*NGNOD+2)
+      ibool(4,ispec) = elmnts((ispec-1)*NGNOD+3)
+      ibool(5,ispec) = elmnts((ispec-1)*NGNOD+4)
+      ibool(6,ispec) = elmnts((ispec-1)*NGNOD+5)
+      ibool(7,ispec) = elmnts((ispec-1)*NGNOD+6)
+      ibool(8,ispec) = elmnts((ispec-1)*NGNOD+7)
+      ibool(9,ispec) = elmnts((ispec-1)*NGNOD+8)
     else
-      call stop_the_code('error, ngnod should be either 4 or 9 for external meshes')
+      call stop_the_code('error, NGNOD should be either 4 or 9 for external meshes')
     endif
   enddo
 
@@ -159,7 +159,7 @@
       if (index_edge == abs_surface(5,i)) then
         ispec = abs_surface(1,i) + 1  !!!! be careful: ispec from abs_surface(1,i) start at zero
         found_this_point = .false.
-        do inode = 1,ngnod
+        do inode = 1,NGNOD
           if (ibool(inode,ispec) == abs_surface(3,i)) then
             i1 = inode
             found_this_point = .true.
@@ -197,7 +197,7 @@
           ibool_rotated(1,ispec) = ibool(2,ispec)
           ibool_rotated(2,ispec) = ibool(3,ispec)
           ibool_rotated(3,ispec) = ibool(4,ispec)
-          if (ngnod == 9) then
+          if (NGNOD == 9) then
             ibool_rotated(8,ispec) = ibool(5,ispec)
             ibool_rotated(5,ispec) = ibool(6,ispec)
             ibool_rotated(6,ispec) = ibool(7,ispec)
@@ -211,7 +211,7 @@
           ibool_rotated(4,ispec) = ibool(2,ispec)
           ibool_rotated(1,ispec) = ibool(3,ispec)
           ibool_rotated(2,ispec) = ibool(4,ispec)
-          if (ngnod == 9) then
+          if (NGNOD == 9) then
             ibool_rotated(7,ispec) = ibool(5,ispec)
             ibool_rotated(8,ispec) = ibool(6,ispec)
             ibool_rotated(5,ispec) = ibool(7,ispec)
@@ -225,7 +225,7 @@
           ibool_rotated(3,ispec) = ibool(2,ispec)
           ibool_rotated(4,ispec) = ibool(3,ispec)
           ibool_rotated(1,ispec) = ibool(4,ispec)
-          if (ngnod == 9) then
+          if (NGNOD == 9) then
             ibool_rotated(6,ispec) = ibool(5,ispec)
             ibool_rotated(7,ispec) = ibool(6,ispec)
             ibool_rotated(8,ispec) = ibool(7,ispec)
@@ -241,23 +241,23 @@
 
 ! here we put the result back in the not-so-easy to use format at the end of the routine
   do ispec = 1, nelmnts
-    if (ngnod == 4) then
-      elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
-      elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
-      elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
-      elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)
-    else if (ngnod == 9) then
-      elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
-      elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
-      elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
-      elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)
-      elmnts((ispec-1)*ngnod+4) = ibool_rotated(5,ispec)
-      elmnts((ispec-1)*ngnod+5) = ibool_rotated(6,ispec)
-      elmnts((ispec-1)*ngnod+6) = ibool_rotated(7,ispec)
-      elmnts((ispec-1)*ngnod+7) = ibool_rotated(8,ispec)
-      elmnts((ispec-1)*ngnod+8) = ibool_rotated(9,ispec)
+    if (NGNOD == 4) then
+      elmnts((ispec-1)*NGNOD)   = ibool_rotated(1,ispec)
+      elmnts((ispec-1)*NGNOD+1) = ibool_rotated(2,ispec)
+      elmnts((ispec-1)*NGNOD+2) = ibool_rotated(3,ispec)
+      elmnts((ispec-1)*NGNOD+3) = ibool_rotated(4,ispec)
+    else if (NGNOD == 9) then
+      elmnts((ispec-1)*NGNOD)   = ibool_rotated(1,ispec)
+      elmnts((ispec-1)*NGNOD+1) = ibool_rotated(2,ispec)
+      elmnts((ispec-1)*NGNOD+2) = ibool_rotated(3,ispec)
+      elmnts((ispec-1)*NGNOD+3) = ibool_rotated(4,ispec)
+      elmnts((ispec-1)*NGNOD+4) = ibool_rotated(5,ispec)
+      elmnts((ispec-1)*NGNOD+5) = ibool_rotated(6,ispec)
+      elmnts((ispec-1)*NGNOD+6) = ibool_rotated(7,ispec)
+      elmnts((ispec-1)*NGNOD+7) = ibool_rotated(8,ispec)
+      elmnts((ispec-1)*NGNOD+8) = ibool_rotated(9,ispec)
     else
-      call stop_the_code('error, ngnod should be either 4 or 9 for external meshes')
+      call stop_the_code('error, NGNOD should be either 4 or 9 for external meshes')
     endif
   enddo
 
@@ -267,7 +267,7 @@
 !---------------------------------------------------------------------------------------
 !
 
-  subroutine rotate_mesh_for_axisym(ngnod)
+  subroutine rotate_mesh_for_axisym(NGNOD)
 
 ! This routine is almost the same than the one above with index_edge = 4 (left side of the model)
 ! It allows us to know that if i == 1 (first GLL point) we are on the axis.
@@ -309,14 +309,14 @@
 
   implicit none
 
-  integer, intent(in)  :: ngnod
+  integer, intent(in)  :: NGNOD
   integer :: i,ispec,i1,i2,inode,iswap
   logical :: found_this_point
   integer, dimension(:,:), allocatable :: ibool,ibool_rotated
   !! DK DK be careful here, "ibool" applies to the mesh corners (4 or 9 points) only,
 
-  allocate(ibool(ngnod,nelmnts))
-  allocate(ibool_rotated(ngnod,nelmnts))
+  allocate(ibool(NGNOD,nelmnts))
+  allocate(ibool_rotated(NGNOD,nelmnts))
 
   do ispec = 1, nelmnts ! Loop on the elements
   ! At the end of the loop, thank to ibool we can access to the global number of
@@ -330,23 +330,23 @@
   !            .           .
   !            1 . . 5 . . 2
   ! --> we just create a copy in an easier format for ease of use in this routine
-    if (ngnod == 4) then
-      ibool(1,ispec) = elmnts((ispec-1)*ngnod)    ! Have to be zero if ispec is on the axis
-      ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
-      ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
-      ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)  ! Have to be zero if ispec is on the axis
-    else if (ngnod == 9) then
-      ibool(1,ispec) = elmnts((ispec-1)*ngnod)    ! Have to be zero if ispec is on the axis
-      ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
-      ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
-      ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)  ! Have to be zero if ispec is on the axis
-      ibool(5,ispec) = elmnts((ispec-1)*ngnod+4)
-      ibool(6,ispec) = elmnts((ispec-1)*ngnod+5)
-      ibool(7,ispec) = elmnts((ispec-1)*ngnod+6)
-      ibool(8,ispec) = elmnts((ispec-1)*ngnod+7)
-      ibool(9,ispec) = elmnts((ispec-1)*ngnod+8)
+    if (NGNOD == 4) then
+      ibool(1,ispec) = elmnts((ispec-1)*NGNOD)    ! Have to be zero if ispec is on the axis
+      ibool(2,ispec) = elmnts((ispec-1)*NGNOD+1)
+      ibool(3,ispec) = elmnts((ispec-1)*NGNOD+2)
+      ibool(4,ispec) = elmnts((ispec-1)*NGNOD+3)  ! Have to be zero if ispec is on the axis
+    else if (NGNOD == 9) then
+      ibool(1,ispec) = elmnts((ispec-1)*NGNOD)    ! Have to be zero if ispec is on the axis
+      ibool(2,ispec) = elmnts((ispec-1)*NGNOD+1)
+      ibool(3,ispec) = elmnts((ispec-1)*NGNOD+2)
+      ibool(4,ispec) = elmnts((ispec-1)*NGNOD+3)  ! Have to be zero if ispec is on the axis
+      ibool(5,ispec) = elmnts((ispec-1)*NGNOD+4)
+      ibool(6,ispec) = elmnts((ispec-1)*NGNOD+5)
+      ibool(7,ispec) = elmnts((ispec-1)*NGNOD+6)
+      ibool(8,ispec) = elmnts((ispec-1)*NGNOD+7)
+      ibool(9,ispec) = elmnts((ispec-1)*NGNOD+8)
     else
-      call stop_the_code('rotate_mesh_for_axisym: error, ngnod should be either 4 or 9 for external meshes')
+      call stop_the_code('rotate_mesh_for_axisym: error, NGNOD should be either 4 or 9 for external meshes')
     endif
   enddo
 
@@ -404,7 +404,7 @@
       ibool_rotated(1,ispec) = ibool(2,ispec)
       ibool_rotated(2,ispec) = ibool(3,ispec)
       ibool_rotated(3,ispec) = ibool(4,ispec)
-      if (ngnod == 9) then
+      if (NGNOD == 9) then
         ibool_rotated(8,ispec) = ibool(5,ispec)
         ibool_rotated(5,ispec) = ibool(6,ispec)
         ibool_rotated(6,ispec) = ibool(7,ispec)
@@ -417,7 +417,7 @@
       ibool_rotated(4,ispec) = ibool(2,ispec)
       ibool_rotated(1,ispec) = ibool(3,ispec)
       ibool_rotated(2,ispec) = ibool(4,ispec)
-      if (ngnod == 9) then
+      if (NGNOD == 9) then
         ibool_rotated(7,ispec) = ibool(5,ispec)
         ibool_rotated(8,ispec) = ibool(6,ispec)
         ibool_rotated(5,ispec) = ibool(7,ispec)
@@ -430,7 +430,7 @@
       ibool_rotated(3,ispec) = ibool(2,ispec)
       ibool_rotated(4,ispec) = ibool(3,ispec)
       ibool_rotated(1,ispec) = ibool(4,ispec)
-      if (ngnod == 9) then
+      if (NGNOD == 9) then
         ibool_rotated(6,ispec) = ibool(5,ispec)
         ibool_rotated(7,ispec) = ibool(6,ispec)
         ibool_rotated(8,ispec) = ibool(7,ispec)
@@ -444,23 +444,23 @@
 
   ! Here we put the result back in the not-so-easy to use format at the end of the routine
   do ispec = 1, nelmnts
-    if (ngnod == 4) then
-      elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
-      elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
-      elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
-      elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)
-    else if (ngnod == 9) then
-      elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
-      elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
-      elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
-      elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)
-      elmnts((ispec-1)*ngnod+4) = ibool_rotated(5,ispec)
-      elmnts((ispec-1)*ngnod+5) = ibool_rotated(6,ispec)
-      elmnts((ispec-1)*ngnod+6) = ibool_rotated(7,ispec)
-      elmnts((ispec-1)*ngnod+7) = ibool_rotated(8,ispec)
-      elmnts((ispec-1)*ngnod+8) = ibool_rotated(9,ispec)
+    if (NGNOD == 4) then
+      elmnts((ispec-1)*NGNOD)   = ibool_rotated(1,ispec)
+      elmnts((ispec-1)*NGNOD+1) = ibool_rotated(2,ispec)
+      elmnts((ispec-1)*NGNOD+2) = ibool_rotated(3,ispec)
+      elmnts((ispec-1)*NGNOD+3) = ibool_rotated(4,ispec)
+    else if (NGNOD == 9) then
+      elmnts((ispec-1)*NGNOD)   = ibool_rotated(1,ispec)
+      elmnts((ispec-1)*NGNOD+1) = ibool_rotated(2,ispec)
+      elmnts((ispec-1)*NGNOD+2) = ibool_rotated(3,ispec)
+      elmnts((ispec-1)*NGNOD+3) = ibool_rotated(4,ispec)
+      elmnts((ispec-1)*NGNOD+4) = ibool_rotated(5,ispec)
+      elmnts((ispec-1)*NGNOD+5) = ibool_rotated(6,ispec)
+      elmnts((ispec-1)*NGNOD+6) = ibool_rotated(7,ispec)
+      elmnts((ispec-1)*NGNOD+7) = ibool_rotated(8,ispec)
+      elmnts((ispec-1)*NGNOD+8) = ibool_rotated(9,ispec)
     else
-      call stop_the_code('rotate_mesh_for_axisym: error, ngnod should be either 4 or 9 for external meshes')
+      call stop_the_code('rotate_mesh_for_axisym: error, NGNOD should be either 4 or 9 for external meshes')
     endif
   enddo
 
@@ -470,7 +470,7 @@
 !---------------------------------------------------------------------------------------
 !
 
-  subroutine rotate_mesh_for_acoustic_forcing(ngnod)
+  subroutine rotate_mesh_for_acoustic_forcing(NGNOD)
 
 ! This routine is almost the same than the one at the top but for the acoustic forced elements
 ! Ex :
@@ -508,7 +508,7 @@
 
   implicit none
 
-  integer, intent(in)  :: ngnod
+  integer, intent(in)  :: NGNOD
 
   ! local parameters
   integer :: i,j,ispec,i1,i2,inode,iswap
@@ -519,8 +519,8 @@
   integer :: index_rotation1,index_rotation2,index_rotation3,index_rotation4, &
              index_rotation5,index_rotation6,index_rotation7,index_rotation8,index_edge
 
-  allocate(ibool(ngnod,nelmnts))
-  allocate(ibool_rotated(ngnod,nelmnts))
+  allocate(ibool(NGNOD,nelmnts))
+  allocate(ibool_rotated(NGNOD,nelmnts))
 
  ! At the end of the loop, thank to ibool we can access to the global number of
  ! each node from the ispec of the element to which it belongs and from its
@@ -534,23 +534,23 @@
  !            1 . . 5 . . 2
  ! --> we just create a copy in an easier format for ease of use in this routine
   do ispec = 1, nelmnts
-    if (ngnod == 4) then
-      ibool(1,ispec) = elmnts((ispec-1)*ngnod)
-      ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
-      ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
-      ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)
-    else if (ngnod == 9) then
-      ibool(1,ispec) = elmnts((ispec-1)*ngnod)
-      ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
-      ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
-      ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)
-      ibool(5,ispec) = elmnts((ispec-1)*ngnod+4)
-      ibool(6,ispec) = elmnts((ispec-1)*ngnod+5)
-      ibool(7,ispec) = elmnts((ispec-1)*ngnod+6)
-      ibool(8,ispec) = elmnts((ispec-1)*ngnod+7)
-      ibool(9,ispec) = elmnts((ispec-1)*ngnod+8)
+    if (NGNOD == 4) then
+      ibool(1,ispec) = elmnts((ispec-1)*NGNOD)
+      ibool(2,ispec) = elmnts((ispec-1)*NGNOD+1)
+      ibool(3,ispec) = elmnts((ispec-1)*NGNOD+2)
+      ibool(4,ispec) = elmnts((ispec-1)*NGNOD+3)
+    else if (NGNOD == 9) then
+      ibool(1,ispec) = elmnts((ispec-1)*NGNOD)
+      ibool(2,ispec) = elmnts((ispec-1)*NGNOD+1)
+      ibool(3,ispec) = elmnts((ispec-1)*NGNOD+2)
+      ibool(4,ispec) = elmnts((ispec-1)*NGNOD+3)
+      ibool(5,ispec) = elmnts((ispec-1)*NGNOD+4)
+      ibool(6,ispec) = elmnts((ispec-1)*NGNOD+5)
+      ibool(7,ispec) = elmnts((ispec-1)*NGNOD+6)
+      ibool(8,ispec) = elmnts((ispec-1)*NGNOD+7)
+      ibool(9,ispec) = elmnts((ispec-1)*NGNOD+8)
     else
-      call stop_the_code('error, ngnod should be either 4 or 9 for external meshes')
+      call stop_the_code('error, NGNOD should be either 4 or 9 for external meshes')
     endif
   enddo
 
@@ -623,7 +623,7 @@
       if (index_edge == acforcing_surface(5,i)) then
         ispec = acforcing_surface(1,i) + 1  !!!! be careful: ispec from acforcing_surface(1,i) start at zero
         found_this_point = .false.
-        do inode = 1,ngnod
+        do inode = 1,NGNOD
           if (ibool(inode,ispec) == acforcing_surface(3,i)) then
             i1 = inode
             found_this_point = .true.
@@ -661,7 +661,7 @@
           ibool_rotated(1,ispec) = ibool(2,ispec)
           ibool_rotated(2,ispec) = ibool(3,ispec)
           ibool_rotated(3,ispec) = ibool(4,ispec)
-          if (ngnod == 9) then
+          if (NGNOD == 9) then
             ibool_rotated(8,ispec) = ibool(5,ispec)
             ibool_rotated(5,ispec) = ibool(6,ispec)
             ibool_rotated(6,ispec) = ibool(7,ispec)
@@ -675,7 +675,7 @@
           ibool_rotated(4,ispec) = ibool(2,ispec)
           ibool_rotated(1,ispec) = ibool(3,ispec)
           ibool_rotated(2,ispec) = ibool(4,ispec)
-          if (ngnod == 9) then
+          if (NGNOD == 9) then
             ibool_rotated(7,ispec) = ibool(5,ispec)
             ibool_rotated(8,ispec) = ibool(6,ispec)
             ibool_rotated(5,ispec) = ibool(7,ispec)
@@ -689,7 +689,7 @@
           ibool_rotated(3,ispec) = ibool(2,ispec)
           ibool_rotated(4,ispec) = ibool(3,ispec)
           ibool_rotated(1,ispec) = ibool(4,ispec)
-          if (ngnod == 9) then
+          if (NGNOD == 9) then
             ibool_rotated(6,ispec) = ibool(5,ispec)
             ibool_rotated(7,ispec) = ibool(6,ispec)
             ibool_rotated(8,ispec) = ibool(7,ispec)
@@ -705,23 +705,23 @@
 
 ! here we put the result back in the not-so-easy to use format at the end of the routine
   do ispec = 1, nelmnts
-    if (ngnod == 4) then
-      elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
-      elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
-      elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
-      elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)
-    else if (ngnod == 9) then
-      elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
-      elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
-      elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
-      elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)
-      elmnts((ispec-1)*ngnod+4) = ibool_rotated(5,ispec)
-      elmnts((ispec-1)*ngnod+5) = ibool_rotated(6,ispec)
-      elmnts((ispec-1)*ngnod+6) = ibool_rotated(7,ispec)
-      elmnts((ispec-1)*ngnod+7) = ibool_rotated(8,ispec)
-      elmnts((ispec-1)*ngnod+8) = ibool_rotated(9,ispec)
+    if (NGNOD == 4) then
+      elmnts((ispec-1)*NGNOD)   = ibool_rotated(1,ispec)
+      elmnts((ispec-1)*NGNOD+1) = ibool_rotated(2,ispec)
+      elmnts((ispec-1)*NGNOD+2) = ibool_rotated(3,ispec)
+      elmnts((ispec-1)*NGNOD+3) = ibool_rotated(4,ispec)
+    else if (NGNOD == 9) then
+      elmnts((ispec-1)*NGNOD)   = ibool_rotated(1,ispec)
+      elmnts((ispec-1)*NGNOD+1) = ibool_rotated(2,ispec)
+      elmnts((ispec-1)*NGNOD+2) = ibool_rotated(3,ispec)
+      elmnts((ispec-1)*NGNOD+3) = ibool_rotated(4,ispec)
+      elmnts((ispec-1)*NGNOD+4) = ibool_rotated(5,ispec)
+      elmnts((ispec-1)*NGNOD+5) = ibool_rotated(6,ispec)
+      elmnts((ispec-1)*NGNOD+6) = ibool_rotated(7,ispec)
+      elmnts((ispec-1)*NGNOD+7) = ibool_rotated(8,ispec)
+      elmnts((ispec-1)*NGNOD+8) = ibool_rotated(9,ispec)
     else
-      call stop_the_code('error, ngnod should be either 4 or 9 for external meshes')
+      call stop_the_code('error, NGNOD should be either 4 or 9 for external meshes')
     endif
   enddo
 

@@ -48,24 +48,19 @@
   double precision :: vpIImax_local,vpIImin_local
   double precision :: vsmin,vsmax,densmin,densmax,vpImax_local,vpImin_local,vsmin_local,vsmax_local
 
-  double precision :: kappa_s,kappa_f,kappa_fr,mu_s,mu_fr,rho_s,rho_f,eta_f,phi,tort,rho_bar
-  double precision :: D_biot,H_biot,C_biot,M_biot
-
   double precision :: cpIloc,cpIIloc,csloc
-  double precision :: cpIsquare,cpIIsquare,cssquare
-  double precision :: f0,f0max,w_c,perm_xx
-  double precision :: denst
-  double precision :: lambdaplus2mu,mu
+  double precision :: f0,f0max
+  double precision :: mul,rhol
   double precision :: distance_min,distance_max,distance_min_local,distance_max_local
   double precision :: courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaPIImin,lambdaPIImax,lambdaSmin,lambdaSmax
   double precision :: distance_1,distance_2,distance_3,distance_4
 
-! for the stability condition
-! maximum polynomial degree for which we can compute the stability condition
+  ! for the stability condition
+  ! maximum polynomial degree for which we can compute the stability condition
   integer, parameter :: NGLLX_MAX_STABILITY = 15
   double precision :: percent_GLL(NGLLX_MAX_STABILITY)
 
-! for slice totals
+  ! for slice totals
   double precision :: vpImin_glob,vpImax_glob,vsmin_glob,vsmax_glob,densmin_glob,densmax_glob
   double precision :: vpIImin_glob,vpIImax_glob
   double precision :: distance_min_glob,distance_max_glob
@@ -77,9 +72,9 @@
   double precision :: dt_suggested,dt_suggested_glob
   double precision :: avg_distance,vel_min,vel_max
 
-  integer :: i,j,ispec,material
+  integer :: i,j,ispec
 
-! for histogram of number of points per wavelength
+  ! for histogram of number of points per wavelength
   logical :: any_fluid_histo,any_fluid_histo_glob
   logical :: create_wavelength_histogram
   double precision :: lambdaPmin_in_fluid_histo,lambdaPmax_in_fluid_histo
@@ -102,11 +97,11 @@
     call flush_IMAIN()
   endif
 
-! define percentage of smallest distance between GLL points for NGLLX points
-! percentages were computed by calling the GLL points routine for each degree
+  ! define percentage of smallest distance between GLL points for NGLLX points
+  ! percentages were computed by calling the GLL points routine for each degree
   call check_grid_setup_GLLper(percent_GLL,NGLLX_MAX_STABILITY)
 
-!---- compute parameters for the spectral elements
+  !---- compute parameters for the spectral elements
   vpImin = HUGEVAL
   vpImax = -HUGEVAL
 
@@ -162,37 +157,7 @@
 
   do ispec = 1,nspec
 
-    if (ispec_is_poroelastic(ispec)) then
-      ! gets poroelastic material
-      call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
-      denst = rho_s
-
-      ! Biot coefficients for the input phi
-      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
-
-      ! permeability xx
-      perm_xx = permeability(1,kmato(ispec))
-
-      ! computes velocities
-      call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                                      tort,rho_s,rho_f,eta_f,perm_xx, &
-                                      f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
-
-      cpIloc = sqrt(cpIsquare)
-      cpIIloc = sqrt(cpIIsquare)
-      csloc = sqrt(cssquare)
-    else
-      ! acoustic/elastic
-      material = kmato(ispec)
-      mu = poroelastcoef(2,1,material)
-      lambdaplus2mu  = poroelastcoef(3,1,material)
-      denst = density(1,material)
-
-      cpIloc = sqrt(lambdaplus2mu/denst)
-      cpIIloc = 0.d0
-      csloc = sqrt(mu/denst)
-    endif
-
+    ! min/max values for vpI,vpII,vs
     vpImax_local = -HUGEVAL
     vpImin_local = HUGEVAL
     vpIImax_local = -HUGEVAL
@@ -205,12 +170,19 @@
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
-        !--- if heterogeneous formulation with external velocity model
-        if (assign_external_model) then
-          mu = mustore(i,j,ispec)
-          denst = rhostore(i,j,ispec)
-          cpIloc = rho_vpstore(i,j,ispec)/denst
-          csloc = sqrt(mu/denst)
+        ! velocity model
+        mul = mustore(i,j,ispec)
+        rhol = rhostore(i,j,ispec)
+        cpIloc = rho_vpstore(i,j,ispec) / rhol
+        csloc = sqrt(mul/rhol)
+
+        ! vpII
+        if (ispec_is_poroelastic(ispec)) then
+          ! poroelastic material
+          cpIIloc = vpIIstore(i,j,ispec)
+        else
+          ! acoustic/elastic element
+          cpIIloc = 0.d0
         endif
 
         !--- compute min and max of velocity and density models
@@ -225,8 +197,8 @@
         if (csloc > TINYVAL) vsmin = min(vsmin,csloc)
         vsmax = max(vsmax,csloc)
 
-        densmin = min(densmin,denst)
-        densmax = max(densmax,denst)
+        densmin = min(densmin,rhol)
+        densmax = max(densmax,rhol)
 
         vpImax_local = max(vpImax_local,cpIloc)
         vpImin_local = min(vpImin_local,cpIloc)
@@ -464,7 +436,7 @@
     endif
   endif
 
-  ! master sends to all others
+  ! main sends to all others
   call bcast_all_singledp(lambdaPmin_in_fluid_histo)
   call bcast_all_singledp(lambdaPmax_in_fluid_histo)
   call bcast_all_singledp(lambdaSmin_histo)
@@ -482,7 +454,6 @@
     call check_grid_create_histogram(any_fluid_histo_glob,lambdaPmin_in_fluid_histo,lambdaPmax_in_fluid_histo, &
                                          lambdaSmin_histo,lambdaSmax_histo,f0max)
   endif
-
 
   ! creates a PostScript file with stability condition
   if (output_postscript_snapshot) then
@@ -519,18 +490,12 @@
   ! local parameters
   double precision :: vpImin_local,vpIImin_local,vsmin_local
 
-  double precision :: kappa_s,kappa_f,kappa_fr,mu_s,mu_fr,rho_s,rho_f,eta_f,phi,tort,rho_bar
-  double precision :: D_biot,H_biot,C_biot,M_biot
-
   double precision :: cpIloc,cpIIloc,csloc
-  double precision :: cpIsquare,cpIIsquare,cssquare
-  double precision :: w_c,perm_xx
-  double precision :: denst
-  double precision :: lambdaplus2mu,mu
+  double precision :: mul,rhol
   double precision :: distance_min_local,distance_max_local
   double precision :: distance_1,distance_2,distance_3,distance_4
 
-  integer :: i,j,ispec,material
+  integer :: i,j,ispec
 
 ! for histogram of number of points per wavelength
   double precision :: min_nb_of_points_per_wavelength,max_nb_of_points_per_wavelength,nb_of_points_per_wavelength, &
@@ -576,57 +541,31 @@
     ! loop on all the elements
     do ispec = 1,nspec
 
-      material = kmato(ispec)
-
-      if (ispec_is_poroelastic(ispec)) then
-
-        ! gets poroelastic material
-        call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
-        denst = rho_s
-
-        ! Biot coefficients for the input phi
-        call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
-
-        ! permeability xx
-        perm_xx = permeability(1,kmato(ispec))
-
-        ! computes velocities
-        call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                                        tort,rho_s,rho_f,eta_f,perm_xx, &
-                                        f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
-
-        cpIloc = sqrt(cpIsquare)
-        cpIIloc = sqrt(cpIIsquare)
-        csloc = sqrt(cssquare)
-      else
-        mu = poroelastcoef(2,1,material)
-        lambdaplus2mu  = poroelastcoef(3,1,material)
-        denst = density(1,material)
-
-        cpIloc = sqrt(lambdaplus2mu/denst)
-        cpIIloc = 0.d0
-        csloc = sqrt(mu/denst)
-      endif
-
+      ! minimum values vp,vs
       vpImin_local = HUGEVAL
       vpIImin_local = HUGEVAL
       vsmin_local = HUGEVAL
 
       do j = 1,NGLLZ
         do i = 1,NGLLX
+          ! velocity model
+          mul = mustore(i,j,ispec)
+          rhol = rhostore(i,j,ispec)
+          cpIloc = rho_vpstore(i,j,ispec) / rhol
+          csloc = sqrt(mul/rhol)
 
-          !--- if heterogeneous formulation with external velocity model
-          if (assign_external_model) then
-            mu = mustore(i,j,ispec)
-            denst = rhostore(i,j,ispec)
-            cpIloc = rho_vpstore(i,j,ispec)/denst
-            csloc = sqrt(mu/denst)
+          ! vpII
+          if (ispec_is_poroelastic(ispec)) then
+            ! poroelastic material
+            cpIIloc = vpIIstore(i,j,ispec)
+          else
+            ! acoustic/elastic element
+            cpIIloc = 0.d0
           endif
 
           vpImin_local = min(vpImin_local,cpIloc)
           vpIImin_local = min(vpIImin_local,cpIIloc)
           vsmin_local = min(vsmin_local,csloc)
-
         enddo
       enddo
 
@@ -865,14 +804,8 @@
 
   ! local parameters
   double precision :: vpImax_local,vpImin_local,vsmin_local
-  double precision :: kappa_s,kappa_f,kappa_fr,mu_s,mu_fr,rho_s,rho_f,eta_f,phi,tort,rho_bar
-  double precision :: D_biot,H_biot,C_biot,M_biot
-
   double precision :: cpIloc,csloc
-  double precision :: cpIsquare,cpIIsquare,cssquare
-  double precision :: w_c,perm_xx
-  double precision :: denst
-  double precision :: lambdaplus2mu,mu
+  double precision :: mul,rhol
   double precision :: lambdaS_local,lambdaPI_local
 
   double precision :: distance_min_local,distance_max_local
@@ -904,7 +837,7 @@
   integer :: nspec_recv
   integer :: num_ispec
   integer :: iproc
-  integer :: i,j,ispec,material
+  integer :: i,j,ispec
   integer :: is,ir,in,nnum
   integer :: UPPER_LIMIT_DISPLAY
 
@@ -932,7 +865,7 @@
   ! percentages were computed by calling the GLL points routine for each degree
   call check_grid_setup_GLLper(percent_GLL,NGLLX_MAX_STABILITY)
 
-! A4 or US letter paper
+  ! A4 or US letter paper
   if (US_LETTER) then
     usoffset = 1.75d0
     sizex = 27.94d0
@@ -943,10 +876,10 @@
     sizez = 21.d0
   endif
 
-! height of domain numbers in centimeters
+  ! height of domain numbers in centimeters
   height = 0.25d0
 
-! get minimum and maximum values of mesh coordinates
+  ! get minimum and maximum values of mesh coordinates
   xmin = minval(coord(1,:))
   zmin = minval(coord(2,:))
   xmax = maxval(coord(1,:))
@@ -961,7 +894,7 @@
   zmin = zmin_glob
   zmax = zmax_glob
 
-! ratio of physical page size/size of the domain meshed
+  ! ratio of physical page size/size of the domain meshed
   ratio_page = min(RPERCENTZ*sizez/(zmax-zmin),RPERCENTX*sizex/(xmax-xmin)) / 100.d0
 
 
@@ -1086,7 +1019,7 @@
       do j = 1,pointsdisp
         xinterp(i,j) = 0.d0
         zinterp(i,j) = 0.d0
-        do in = 1,ngnod
+        do in = 1,NGNOD
           nnum = knods(in,ispec)
           xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
           zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
@@ -1162,50 +1095,19 @@
       coorg_send(2,(ispec-1)*5+5) = z2
     endif
 
-
-    if (ispec_is_poroelastic(ispec)) then
-      ! poroelastic material
-      call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
-      denst = rho_s
-
-      ! Biot coefficients for the input phi
-      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
-
-      ! permeability xx
-      perm_xx = permeability(1,kmato(ispec))
-
-      ! computes velocities
-      call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                                      tort,rho_s,rho_f,eta_f,perm_xx, &
-                                      f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
-
-      cpIloc = sqrt(cpIsquare)
-    else
-      material = kmato(ispec)
-
-      lambdaplus2mu  = poroelastcoef(3,1,material)
-      denst = density(1,material)
-
-      cpIloc = sqrt(lambdaplus2mu/denst)
-    endif
-
+    ! maximum vp
     vpImax_local = -HUGEVAL
-
     do j = 1,NGLLZ
       do i = 1,NGLLX
-
-        !--- if heterogeneous formulation with external velocity model
-        if (assign_external_model) then
-          denst = rhostore(i,j,ispec)
-          cpIloc = rho_vpstore(i,j,ispec)/denst
-        endif
+        ! velocity model
+        rhol = rhostore(i,j,ispec)
+        cpIloc = rho_vpstore(i,j,ispec) / rhol
 
         vpImax_local = max(vpImax_local,cpIloc)
-
       enddo
     enddo
 
-! compute minimum and maximum size of edges of this grid cell
+    ! compute minimum and maximum size of edges of this grid cell
     distance_1 = sqrt((coord(1,ibool(1,1,ispec)) - coord(1,ibool(NGLLX,1,ispec)))**2 + &
              (coord(2,ibool(1,1,ispec)) - coord(2,ibool(NGLLX,1,ispec)))**2)
 
@@ -1430,7 +1332,7 @@
       do j = 1,pointsdisp
         xinterp(i,j) = 0.d0
         zinterp(i,j) = 0.d0
-        do in = 1,ngnod
+        do in = 1,NGNOD
           nnum = knods(in,ispec)
           xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
           zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
@@ -1506,47 +1408,17 @@
        coorg_send(2,(ispec-1)*5+5) = z2
     endif
 
-    if (ispec_is_poroelastic(ispec)) then
-      ! gets poroelastic material
-      call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
-      denst = rho_s
-
-      ! Biot coefficients for the input phi
-      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
-
-      ! permeability xx
-      perm_xx = permeability(1,kmato(ispec))
-
-      ! computes velocities
-      call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                                      tort,rho_s,rho_f,eta_f,perm_xx, &
-                                      f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
-
-      cpIloc = sqrt(cpIsquare)
-      csloc = sqrt(cssquare)
-    else
-      material = kmato(ispec)
-      mu = poroelastcoef(2,1,material)
-      lambdaplus2mu  = poroelastcoef(3,1,material)
-      denst = density(1,material)
-
-      cpIloc = sqrt(lambdaplus2mu/denst)
-      csloc = sqrt(mu/denst)
-    endif
-
+    ! gets min/max values vp,vs
     vpImax_local = -HUGEVAL
     vpImin_local = HUGEVAL
     vsmin_local = HUGEVAL
-
     do j = 1,NGLLZ
       do i = 1,NGLLX
-!--- if heterogeneous formulation with external velocity model
-        if (assign_external_model) then
-          mu = mustore(i,j,ispec)
-          denst = rhostore(i,j,ispec)
-          cpIloc = rho_vpstore(i,j,ispec)/denst
-          csloc = sqrt(mu/denst)
-        endif
+        ! velocity model
+        mul = mustore(i,j,ispec)
+        rhol = rhostore(i,j,ispec)
+        cpIloc = rho_vpstore(i,j,ispec) / rhol
+        csloc = sqrt(mul/rhol)
 
         vpImax_local = max(vpImax_local,cpIloc)
         vpImin_local = min(vpImin_local,cpIloc)
@@ -1554,7 +1426,7 @@
       enddo
     enddo
 
-! compute minimum and maximum size of edges of this grid cell
+    ! compute minimum and maximum size of edges of this grid cell
     distance_1 = sqrt((coord(1,ibool(1,1,ispec)) - coord(1,ibool(NGLLX,1,ispec)))**2 + &
                  (coord(2,ibool(1,1,ispec)) - coord(2,ibool(NGLLX,1,ispec)))**2)
 
@@ -1570,15 +1442,15 @@
     distance_min_local = min(distance_1,distance_2,distance_3,distance_4)
     distance_max_local = max(distance_1,distance_2,distance_3,distance_4)
 
-! display mesh dispersion for S waves if there is at least one elastic element in the mesh
+    ! display mesh dispersion for S waves if there is at least one elastic element in the mesh
     if (ELASTIC_SIMULATION .or. POROELASTIC_SIMULATION) then
 
-! ignore fluid regions with Vs = 0
+      ! ignore fluid regions with Vs = 0
       if (vsmin_local > TINYVAL) then
 
         lambdaS_local = vsmin_local / (distance_max_local / (NGLLX - 1))
 
-! display very good elements that are above the threshold in red
+        ! display very good elements that are above the threshold in red
         if (lambdaS_local >= THRESHOLD_POSTSCRIPT * lambdaSmax) then
           if (myrank == 0) then
             write(24,*) '1 0 0 RG GF 0 setgray ST'
@@ -1586,7 +1458,7 @@
             RGB_send(ispec) = 1
           endif
 
-! display bad elements that are below the threshold in blue
+        ! display bad elements that are below the threshold in blue
         else if (lambdaS_local <= (1. + (1. - THRESHOLD_POSTSCRIPT)) * lambdaSmin) then
           if (myrank == 0) then
             write(24,*) '0 0 1 RG GF 0 setgray ST'
@@ -1595,7 +1467,7 @@
           endif
 
         else
-! do not color the elements if not close to the threshold
+          ! do not color the elements if not close to the threshold
           if (myrank == 0) then
             write(24,*) 'ST'
           else
@@ -1604,7 +1476,7 @@
         endif
 
       else
-! do not color the elements if S-wave velocity undefined
+        ! do not color the elements if S-wave velocity undefined
         if (myrank == 0) then
           write(24,*) 'ST'
         else
@@ -1612,12 +1484,12 @@
         endif
       endif
 
-! display mesh dispersion for P waves if there is no elastic element in the mesh
+    ! display mesh dispersion for P waves if there is no elastic element in the mesh
     else
 
       lambdaPI_local = vpImin_local / (distance_max_local / (NGLLX - 1))
 
-! display very good elements that are above the threshold in red
+      ! display very good elements that are above the threshold in red
       if (lambdaPI_local >= THRESHOLD_POSTSCRIPT * lambdaPImax) then
         if (myrank == 0) then
           write(24,*) '1 0 0 RG GF 0 setgray ST'
@@ -1625,7 +1497,7 @@
           RGB_send(ispec) = 1
         endif
 
-! display bad elements that are below the threshold in blue
+      ! display bad elements that are below the threshold in blue
       else if (lambdaPI_local <= (1. + (1. - THRESHOLD_POSTSCRIPT)) * lambdaPImin) then
         if (myrank == 0) then
           write(24,*) '0 0 1 RG GF 0 setgray ST'
@@ -1634,7 +1506,7 @@
         endif
 
       else
-! do not color the elements if not close to the threshold
+        ! do not color the elements if not close to the threshold
         if (myrank == 0) then
           write(24,*) 'ST'
         else
@@ -1818,7 +1690,7 @@
       do j = 1,pointsdisp
         xinterp(i,j) = 0.d0
         zinterp(i,j) = 0.d0
-        do in = 1,ngnod
+        do in = 1,NGNOD
           nnum = knods(in,ispec)
           xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
           zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
@@ -1895,48 +1767,21 @@
     endif
 
     if ((vpImax-vpImin)/vpImin > 0.02d0) then
-      if (assign_external_model) then
-        ! use lower-left corner
-        x1 = (rho_vpstore(1,1,ispec)/rhostore(1,1,ispec) - vpImin) / (vpImax-vpImin)
-      else
-        if (ispec_is_poroelastic(ispec)) then
-          ! gets poroelastic material
-          call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
-          denst = rho_s
-
-          ! Biot coefficients for the input phi
-          call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
-
-          ! permeability xx
-          perm_xx = permeability(1,kmato(ispec))
-
-          ! computes velocities
-          call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                                          tort,rho_s,rho_f,eta_f,perm_xx, &
-                                          f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
-
-          cpIloc = sqrt(cpIsquare)
-        else
-          material = kmato(ispec)
-
-          lambdaplus2mu  = poroelastcoef(3,1,material)
-          denst = density(1,material)
-          cpIloc = sqrt(lambdaplus2mu/denst)
-        endif
-        x1 = (cpIloc-vpImin)/(vpImax-vpImin)
-      endif
+      ! uses lower-left corner value
+      cpIloc = rho_vpstore(1,1,ispec)/rhostore(1,1,ispec)
+      x1 = (cpIloc - vpImin) / (vpImax - vpImin)
     else
       x1 = 0.5d0
     endif
 
-! rescale to avoid very dark gray levels
+    ! rescale to avoid very dark gray levels
     x1 = x1*0.7 + 0.2
     if (x1 > 1.d0) x1=1.d0
 
-! invert scale: white = vpmin, dark gray = vpmax
+    ! invert scale: white = vpmin, dark gray = vpmax
     x1 = 1.d0 - x1
 
-! display P-velocity model using gray levels
+    ! display P-velocity model using gray levels
     if (myrank == 0) then
       write(24,*) sngl(x1),' setgray GF 0 setgray ST'
     else
@@ -2114,7 +1959,7 @@
       do j = 1,pointsdisp
         xinterp(i,j) = 0.d0
         zinterp(i,j) = 0.d0
-        do in = 1,ngnod
+        do in = 1,NGNOD
           nnum = knods(in,ispec)
           xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
           zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)

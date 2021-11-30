@@ -1,0 +1,16 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This default example creates an ocean model with an elastic crustal layer at the bottom and a tomographic acoustic layer on top, 
+with topography variations.
+
+The tomographic file will be created by script createTomographyFile.py provided in utils/ directory.
+
+To run this example, type:
+   ./run_this_example.sh
+
+
+Check the output files in the local directory OUTPUT_FILES/. Reference solutions are provided in directory REF_SEIS/
+
+

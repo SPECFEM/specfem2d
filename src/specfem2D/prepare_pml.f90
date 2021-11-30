@@ -91,6 +91,9 @@
       call flush_IMAIN()
     endif
 
+    ! PML boundary points on absorbing boundaries
+    call determine_boundary_abs_points_PML()
+
     ! allocates arrays
     if ((.not. NO_BACKWARD_RECONSTRUCTION) .and. &
         ((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)) then

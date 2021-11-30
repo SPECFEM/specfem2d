@@ -38,7 +38,7 @@
   use constants, only: IMAIN,IGNORE_JUNK,NLINES_PER_SOURCE,TINYVAL,PI, &
     mygroup,IN_DATA_FILES,myrank
 
-  use shared_parameters, only: DT
+  use shared_parameters, only: DT,initialfield
 
   use source_file_par
 
@@ -96,7 +96,7 @@
   Mxz(:) = 0.d0
   Mzz(:) = 0.d0
 
-  ! only master process reads file
+  ! only main process reads file
   if (myrank == 0) then
     source_filename = trim(IN_DATA_FILES)//'SOURCE'
 
@@ -124,16 +124,23 @@
         string_read = string_read(1:len_trim(string_read))
 
         ! if the line is not empty and is not a comment, count it
-        if (len_trim(string_read) > 0 .and. (index(string_read,'#') == 0 .or. index(string_read,'#') > 1)) &
+        if (len_trim(string_read) > 0 .and. (index(string_read,'#') == 0 .or. index(string_read,'#') > 1)) then
+          ! increases number of lines
           icounter = icounter + 1
+          ! debug
+          !print *,'debug: SOURCE line: ',trim(string_read)
+        endif
       endif
     enddo
     close(IIN_SOURCE)
 
     ! checks counter
-    if (mod(icounter,NLINES_PER_SOURCE) /= 0) &
-      call stop_the_code('total number of non blank and non comment lines in SOURCE file &
+    if (mod(icounter,NLINES_PER_SOURCE) /= 0) then
+      print *,'Error: invalid number of (non-blank and non-comment) lines per source ',icounter
+      print *,'       should be a multiple of NLINES_PER_SOURCE = ',NLINES_PER_SOURCE
+      call stop_the_code('total number of non-blank and non-comment lines in SOURCE file &
                           &should be a multiple of NLINES_PER_SOURCE')
+    endif
 
     ! total number of sources
     num_sources = icounter / NLINES_PER_SOURCE
@@ -193,9 +200,6 @@
       call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,vx_source(i_source))
       call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,vz_source(i_source))
 
-      ! Read flag for writing moving source databases
-      call read_value_logical(IIN_SOURCE,IGNORE_JUNK,writeMovingDatabases)
-
       ! Set flag SOURCE_IS_MOVING
       if (any(abs(vx_source) > TINYVAL) .or. any(abs(vz_source) > TINYVAL)) then
         SOURCE_IS_MOVING = .true.
@@ -231,8 +235,12 @@
       write(IMAIN,*)
 
       ! source type
-      write(IMAIN,*) '  Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, &
-                     &5=plane incident S): ',source_type(i_source)
+      if (initialfield) then
+        write(IMAIN,*) '  Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, &
+                       &5=plane incident S,6=mode): ',source_type(i_source)
+      else
+        write(IMAIN,*) '  Source type (1=force, 2=moment tensor): ',source_type(i_source)
+      endif
       select case (source_type(i_source))
       case (1)
         ! force
@@ -266,7 +274,7 @@
 
       ! STF
       write(IMAIN,*) '  Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, &
-                     &8=Read from file, 9=burst):',time_function_type(i_source)
+                     &6,7=ocean type, 8=Read from file, 9=burst, 10=Sinusoidal, 11=Ormsby):',time_function_type(i_source)
       select case (time_function_type(i_source))
       case (1)
         write(IMAIN,*) '  Ricker wavelet (second-derivative):'
@@ -291,7 +299,7 @@
         write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
       case (8)
         write(IMAIN,*) '  External source time function file:'
-        write(IMAIN,*) '  Source read from file:',trim(name_of_source_file(i_source))
+        write(IMAIN,*) '  Source read from file: ',trim(name_of_source_file(i_source))
       case (9)
         write(IMAIN,*) '  Burst wavelet:'
         write(IMAIN,*) '  Burst band width: ',burst_band_width(i_source)
@@ -333,7 +341,6 @@
     call bcast_all_l(source_surf,NSOURCES)
 
     call bcast_all_string_array(name_of_source_file,NSOURCES)
-    call bcast_all_singlel(writeMovingDatabases)
     call bcast_all_singlel(SOURCE_IS_MOVING)
   endif
 

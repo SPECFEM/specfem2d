@@ -33,31 +33,69 @@
 
 ! elastic solver
 
-  subroutine compute_forces_viscoelastic_GPU()
+  subroutine compute_forces_viscoelastic_GPU(compute_b_wavefield)
 
   use constants, only: CUSTOM_REAL,NGLLX,NDIM
 
   use specfem_par, only: myrank,NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
     my_neighbors,ninterface_elastic,inum_interfaces_elastic,ibool_interfaces_ext_mesh, &
-    num_fluid_solid_edges,nspec_bottom,nspec_left,nspec_right,nspec_top, &
-    STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS,any_poroelastic,any_acoustic,SIMULATION_TYPE,ATTENUATION_VISCOELASTIC
+    num_fluid_solid_edges,UNDO_ATTENUATION_AND_OR_PML, &
+    STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS, &
+    coupled_acoustic_elastic,coupled_elastic_poro, &
+    SIMULATION_TYPE,ATTENUATION_VISCOELASTIC, &
+    deltat,deltatover2,b_deltatover2
 
-  use specfem_par, only: nspec_outer_elastic,nspec_inner_elastic,any_anisotropy
+  use specfem_par, only: nspec_outer_elastic,nspec_inner_elastic,any_anisotropy,NO_BACKWARD_RECONSTRUCTION
 
   use specfem_par_gpu, only: Mesh_pointer, &
-    deltatf,deltatover2f,b_deltatover2f, &
     buffer_send_vector_gpu,buffer_recv_vector_gpu, &
     b_buffer_send_vector_gpu,b_buffer_recv_vector_gpu, &
     request_send_recv_vector_gpu,b_request_send_recv_vector_gpu
 
   implicit none
 
+  logical,intent(in) :: compute_b_wavefield
+
   ! local parameters
   integer:: iphase
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_bottom) :: b_absorb_elastic_bottom_slice
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_left) :: b_absorb_elastic_left_slice
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_right) :: b_absorb_elastic_right_slice
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_top) :: b_absorb_elastic_top_slice
+
+  logical :: compute_wavefield_1    ! forward wavefield (forward or adjoint for SIMULATION_TYPE > 1)
+  logical :: compute_wavefield_2    ! backward/reconstructed wavefield (b_** arrays)
+
+  ! determines which wavefields to compute
+  if ((.not. UNDO_ATTENUATION_AND_OR_PML) .and. (SIMULATION_TYPE == 1 .or. NO_BACKWARD_RECONSTRUCTION) ) then
+    ! forward wavefield only
+    compute_wavefield_1 = .true.
+    compute_wavefield_2 = .false.
+  else if ((.not. UNDO_ATTENUATION_AND_OR_PML) .and. SIMULATION_TYPE == 3) then
+    ! forward & backward wavefields
+    compute_wavefield_1 = .true.
+    compute_wavefield_2 = .true.
+  else if (UNDO_ATTENUATION_AND_OR_PML .and. compute_b_wavefield) then
+    ! only backward wavefield
+    compute_wavefield_1 = .false.
+    compute_wavefield_2 = .true.
+  else
+    ! default forward wavefield only
+    compute_wavefield_1 = .true.
+    compute_wavefield_2 = .false.
+  endif
+
+  ! coupled simulation
+  ! requires different coupling terms for forward/adjoint and backpropagated wavefields
+  if (coupled_acoustic_elastic) then
+    if (SIMULATION_TYPE == 3) then
+      if (compute_b_wavefield) then
+        ! only backward wavefield
+        compute_wavefield_1 = .false.
+        compute_wavefield_2 = .true.
+      else
+        ! only forward/adjoint wavefield
+        compute_wavefield_1 = .true.
+        compute_wavefield_2 = .false.
+      endif
+    endif
+  endif
 
   ! check
   if (PML_BOUNDARY_CONDITIONS ) &
@@ -68,10 +106,11 @@
 
     ! elastic term
     ! contains both forward SIM_TYPE==1 and backward SIM_TYPE==3 simulations
-    call compute_forces_viscoelastic_cuda(Mesh_pointer, iphase, deltatf, &
+    call compute_forces_viscoelastic_cuda(Mesh_pointer, iphase, deltat, &
                                           nspec_outer_elastic, &
                                           nspec_inner_elastic, &
-                                          any_anisotropy,ATTENUATION_VISCOELASTIC)
+                                          any_anisotropy,ATTENUATION_VISCOELASTIC, &
+                                          compute_wavefield_1,compute_wavefield_2)
 
 
     ! while inner elements compute "Kernel_2", we wait for MPI to
@@ -79,21 +118,23 @@
     if (NPROC > 1) then
       if (iphase == 2) then
         !daniel: todo - this avoids calling the Fortran vector send from CUDA routine
-        ! wait for asynchronous copy to finish
-        call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_vector_gpu)
+        if (compute_wavefield_1) then
+          ! wait for asynchronous copy to finish
+          call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_vector_gpu)
 
-        ! sends MPI buffers
-        call assemble_MPI_vector_send_cuda(NPROC, &
-                    buffer_send_vector_gpu,buffer_recv_vector_gpu, &
-                    ninterface,max_nibool_interfaces_ext_mesh, &
-                    nibool_interfaces_ext_mesh, &
-                    my_neighbors, &
-                    request_send_recv_vector_gpu,ninterface_elastic,inum_interfaces_elastic)
+          ! sends MPI buffers
+          call assemble_MPI_vector_send_cuda(NPROC, &
+                                             buffer_send_vector_gpu,buffer_recv_vector_gpu, &
+                                             ninterface,max_nibool_interfaces_ext_mesh, &
+                                             nibool_interfaces_ext_mesh, &
+                                             my_neighbors, &
+                                             request_send_recv_vector_gpu,ninterface_elastic,inum_interfaces_elastic)
 
-        ! transfers MPI buffers onto GPU
-        call transfer_boundary_to_device(NPROC,Mesh_pointer,buffer_recv_vector_gpu, &
-                    ninterface,max_nibool_interfaces_ext_mesh, &
-                    request_send_recv_vector_gpu,ninterface_elastic,inum_interfaces_elastic)
+          ! transfers MPI buffers onto GPU
+          call transfer_boundary_to_device(NPROC,Mesh_pointer,buffer_recv_vector_gpu, &
+                                           ninterface,max_nibool_interfaces_ext_mesh, &
+                                           request_send_recv_vector_gpu,ninterface_elastic,inum_interfaces_elastic)
+        endif
       endif ! inner elements
     endif
 
@@ -101,41 +142,39 @@
     if (iphase == 1) then
       ! adds elastic absorbing boundary term to acceleration (Stacey conditions)
       if (STACEY_ABSORBING_CONDITIONS) then
-        call compute_stacey_viscoelastic_GPU(iphase,b_absorb_elastic_bottom_slice,b_absorb_elastic_left_slice, &
-                                             b_absorb_elastic_right_slice,b_absorb_elastic_top_slice)
+        call compute_stacey_viscoelastic_GPU(iphase,compute_wavefield_1,compute_wavefield_2)
       endif
 
       ! acoustic coupling
-      if (any_acoustic) then
-        if (num_fluid_solid_edges > 0) then
-          call compute_coupling_el_ac_cuda(Mesh_pointer,iphase, &
-                                           num_fluid_solid_edges)
-        endif
+      if (coupled_acoustic_elastic) then
+        if (compute_wavefield_1) &
+          call compute_coupling_el_ac_cuda(Mesh_pointer,iphase,num_fluid_solid_edges,1) ! 1 == forward/adjoint
+        if (compute_wavefield_2) &
+          call compute_coupling_el_ac_cuda(Mesh_pointer,iphase,num_fluid_solid_edges,3) ! 3 == backward
       endif
 
       ! poroelastic coupling
-      ! poroelastic coupling
-      if (any_poroelastic) then
+      if (coupled_elastic_poro) then
         call stop_the_code('Error GPU simulation: poroelastic coupling not implemented yet')
       endif
 
       ! adds source term (single-force/moment-tensor solution)
-      call compute_add_sources_viscoelastic_GPU(iphase)
+      call compute_add_sources_viscoelastic_GPU(iphase,compute_wavefield_1,compute_wavefield_2)
     endif
 
     ! assemble all the contributions between slices using MPI
     if (NPROC > 1) then
       if (iphase == 1) then
         ! sends accel values to corresponding MPI interface neighbors
-
-        ! transfers boundary region to host asynchronously. The
-        ! MPI-send is done from within compute_forces_viscoelastic_cuda,
-        ! once the inner element kernels are launched, and the
-        ! memcpy has finished. see compute_forces_viscoelastic_cuda: ~ line 1655
-        call transfer_boundary_from_device_a(Mesh_pointer)
-
+        if (compute_wavefield_1) then
+          ! transfers boundary region to host asynchronously. The
+          ! MPI-send is done from within compute_forces_viscoelastic_cuda,
+          ! once the inner element kernels are launched, and the
+          ! memcpy has finished. see compute_forces_viscoelastic_cuda: ~ line 1655
+          call transfer_boundary_from_device_a(Mesh_pointer)
+        endif
         ! adjoint simulations
-        if (SIMULATION_TYPE == 3) then
+        if (compute_wavefield_2) then
            call transfer_boun_accel_from_device(Mesh_pointer, &
                         b_buffer_send_vector_gpu, &
                         3) ! -- 3 == adjoint b_accel
@@ -149,15 +188,16 @@
 
       else
         ! waits for send/receive requests to be completed and assembles values
-        call assemble_MPI_vector_write_cuda(NPROC,Mesh_pointer, &
-                                            buffer_recv_vector_gpu,ninterface, &
-                                            max_nibool_interfaces_ext_mesh, &
-                                            nibool_interfaces_ext_mesh,ibool_interfaces_ext_mesh, &
-                                            request_send_recv_vector_gpu, &
-                                            1,ninterface_elastic,inum_interfaces_elastic)
-
+        if (compute_wavefield_1) then
+          call assemble_MPI_vector_write_cuda(NPROC,Mesh_pointer, &
+                                              buffer_recv_vector_gpu,ninterface, &
+                                              max_nibool_interfaces_ext_mesh, &
+                                              nibool_interfaces_ext_mesh,ibool_interfaces_ext_mesh, &
+                                              request_send_recv_vector_gpu, &
+                                              1,ninterface_elastic,inum_interfaces_elastic)
+        endif
         ! adjoint simulations
-        if (SIMULATION_TYPE == 3) then
+        if (compute_wavefield_2) then
           call assemble_MPI_vector_write_cuda(NPROC,Mesh_pointer, &
                                               b_buffer_recv_vector_gpu,ninterface, &
                                               max_nibool_interfaces_ext_mesh, &
@@ -171,7 +211,7 @@
   enddo
 
   ! multiplies with inverse of mass matrix (note: rmass has been inverted already)
-  call kernel_3_a_cuda(Mesh_pointer,deltatover2f,b_deltatover2f)
+  call kernel_3_a_cuda(Mesh_pointer,deltatover2,b_deltatover2,compute_wavefield_1,compute_wavefield_2)
 
   end subroutine compute_forces_viscoelastic_GPU
 
@@ -181,22 +221,25 @@
 
 ! absorbing boundary term for elastic media (Stacey conditions)
 
-  subroutine compute_stacey_viscoelastic_GPU(iphase,b_absorb_elastic_bottom_slice,b_absorb_elastic_left_slice, &
-                                             b_absorb_elastic_right_slice, b_absorb_elastic_top_slice)
+  subroutine compute_stacey_viscoelastic_GPU(iphase,compute_wavefield_1,compute_wavefield_2)
 
   use constants, only: CUSTOM_REAL,NGLLX,NDIM
 
-  use specfem_par, only: nspec_bottom,nspec_left,nspec_top,nspec_right,b_absorb_elastic_left,b_absorb_elastic_right, &
-                          b_absorb_elastic_bottom, b_absorb_elastic_top,SIMULATION_TYPE,SAVE_FORWARD,NSTEP,it, &
-                          num_abs_boundary_faces,NO_BACKWARD_RECONSTRUCTION
+  use specfem_par, only: nspec_bottom,nspec_left,nspec_top,nspec_right, &
+                         b_absorb_elastic_left,b_absorb_elastic_right, &
+                         b_absorb_elastic_bottom, b_absorb_elastic_top, &
+                         SIMULATION_TYPE,SAVE_FORWARD,NSTEP,it, &
+                         num_abs_boundary_faces,NO_BACKWARD_RECONSTRUCTION,UNDO_ATTENUATION_AND_OR_PML
 
   use specfem_par_gpu, only: Mesh_pointer
 
   implicit none
 
   ! communication overlap
-  integer :: iphase
+  integer,intent(in) :: iphase
+  logical,intent(in) :: compute_wavefield_1,compute_wavefield_2
 
+  ! local parameters
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_bottom) :: b_absorb_elastic_bottom_slice
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_left) :: b_absorb_elastic_left_slice
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_right) :: b_absorb_elastic_right_slice
@@ -208,32 +251,25 @@
 
   if (SIMULATION_TYPE == 3) then
     ! gets absorbing contribution buffers
-    b_absorb_elastic_bottom_slice(1,:,:) = b_absorb_elastic_bottom(1,:,:,NSTEP-it+1)
-    b_absorb_elastic_left_slice(1,:,:) = b_absorb_elastic_left(1,:,:,NSTEP-it+1)
-    b_absorb_elastic_right_slice(1,:,:) = b_absorb_elastic_right(1,:,:,NSTEP-it+1)
-    b_absorb_elastic_top_slice(1,:,:) = b_absorb_elastic_top(1,:,:,NSTEP-it+1)
-
-    b_absorb_elastic_bottom_slice(2,:,:) = b_absorb_elastic_bottom(2,:,:,NSTEP-it+1)
-    b_absorb_elastic_left_slice(2,:,:) = b_absorb_elastic_left(2,:,:,NSTEP-it+1)
-    b_absorb_elastic_right_slice(2,:,:) = b_absorb_elastic_right(2,:,:,NSTEP-it+1)
-    b_absorb_elastic_top_slice(2,:,:) = b_absorb_elastic_top(2,:,:,NSTEP-it+1)
+    b_absorb_elastic_bottom_slice(:,:,:) = b_absorb_elastic_bottom(:,:,:,NSTEP-it+1)
+    b_absorb_elastic_left_slice(:,:,:) = b_absorb_elastic_left(:,:,:,NSTEP-it+1)
+    b_absorb_elastic_right_slice(:,:,:) = b_absorb_elastic_right(:,:,:,NSTEP-it+1)
+    b_absorb_elastic_top_slice(:,:,:) = b_absorb_elastic_top(:,:,:,NSTEP-it+1)
   endif
 
-  call compute_stacey_viscoelastic_cuda(Mesh_pointer,iphase,b_absorb_elastic_left_slice, &
-                   b_absorb_elastic_right_slice,b_absorb_elastic_top_slice,b_absorb_elastic_bottom_slice)
+  call compute_stacey_viscoelastic_cuda(Mesh_pointer,iphase, &
+                                        b_absorb_elastic_left_slice,b_absorb_elastic_right_slice, &
+                                        b_absorb_elastic_top_slice,b_absorb_elastic_bottom_slice, &
+                                        compute_wavefield_1,compute_wavefield_2, &
+                                        UNDO_ATTENUATION_AND_OR_PML)
 
   ! adjoint simulations: stores absorbed wavefield part
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
     ! writes out absorbing boundary value only when second phase is running
-    b_absorb_elastic_bottom(1,:,:,it) = b_absorb_elastic_bottom_slice(1,:,:)
-    b_absorb_elastic_right(1,:,:,it) = b_absorb_elastic_right_slice(1,:,:)
-    b_absorb_elastic_top(1,:,:,it) = b_absorb_elastic_top_slice(1,:,:)
-    b_absorb_elastic_left(1,:,:,it) = b_absorb_elastic_left_slice(1,:,:)
-
-    b_absorb_elastic_bottom(2,:,:,it) = b_absorb_elastic_bottom_slice(2,:,:)
-    b_absorb_elastic_right(2,:,:,it) = b_absorb_elastic_right_slice(2,:,:)
-    b_absorb_elastic_top(2,:,:,it) = b_absorb_elastic_top_slice(2,:,:)
-    b_absorb_elastic_left(2,:,:,it) = b_absorb_elastic_left_slice(2,:,:)
+    b_absorb_elastic_bottom(:,:,:,it) = b_absorb_elastic_bottom_slice(:,:,:)
+    b_absorb_elastic_right(:,:,:,it) = b_absorb_elastic_right_slice(:,:,:)
+    b_absorb_elastic_top(:,:,:,it) = b_absorb_elastic_top_slice(:,:,:)
+    b_absorb_elastic_left(:,:,:,it) = b_absorb_elastic_left_slice(:,:,:)
   endif
 
   end subroutine compute_stacey_viscoelastic_GPU
@@ -244,7 +280,7 @@
 
 ! for elastic solver on GPU
 
-  subroutine compute_add_sources_viscoelastic_GPU(iphase)
+  subroutine compute_add_sources_viscoelastic_GPU(iphase,compute_wavefield_1,compute_wavefield_2)
 
   use specfem_par, only: NSTEP,SIMULATION_TYPE,nadj_rec_local,it
 
@@ -253,16 +289,23 @@
   implicit none
 
   integer,intent(in) :: iphase
+  logical,intent(in) :: compute_wavefield_1,compute_wavefield_2
+
+  ! local parameters
+  integer :: it_tmp
 
   ! forward simulations
   if (SIMULATION_TYPE == 1) call compute_add_sources_el_cuda(Mesh_pointer,iphase,it)
 
   ! adjoint simulations
-  if (SIMULATION_TYPE == 3 .and. nadj_rec_local > 0 .and. it < NSTEP) then
-    call add_sources_el_sim_type_2_or_3(Mesh_pointer,iphase, NSTEP -it + 1, nadj_rec_local,NSTEP)
-  endif
+  ! time step index
+  it_tmp = NSTEP - it + 1
 
-  ! adjoint simulations
-  if (SIMULATION_TYPE == 3) call compute_add_sources_el_s3_cuda(Mesh_pointer,iphase,NSTEP -it + 1)
+  ! adds adjoint sources
+  if (SIMULATION_TYPE /= 1 .and. nadj_rec_local > 0 .and. compute_wavefield_1) &
+    call add_sources_el_sim_type_2_or_3(Mesh_pointer, iphase, it_tmp, nadj_rec_local, NSTEP)
+
+  ! kernel simulations w/ backward/reconstructed sources
+  if (compute_wavefield_2) call compute_add_sources_el_s3_cuda(Mesh_pointer, iphase, it_tmp)
 
   end subroutine compute_add_sources_viscoelastic_GPU

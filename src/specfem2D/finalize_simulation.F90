@@ -33,7 +33,7 @@
 
   subroutine finalize_simulation()
 
-  use constants, only: IMAIN,APPROXIMATE_HESS_KL,IOUT_ENERGY,ISTANDARD_OUTPUT
+  use constants, only: IMAIN,IOUT_ENERGY,ISTANDARD_OUTPUT
 
   use specfem_par
   use specfem_par_noise
@@ -62,9 +62,7 @@
 
   ! frees memory
   if (GPU_MODE) then
-    ! frees temporary arrays
-    if (any_elastic) deallocate(tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D)
-
+    ! frees arrays
     deallocate(request_send_recv_scalar_gpu,b_request_send_recv_scalar_gpu)
     deallocate(request_send_recv_vector_gpu,b_request_send_recv_vector_gpu)
     deallocate(buffer_send_scalar_gpu,b_buffer_send_scalar_gpu)
@@ -102,7 +100,6 @@
   endif
 
   ! frees arrays (not complete, but at least a few...)
-  deallocate(seismo_current)
   deallocate(sisux,sisuz,siscurl)
 
   ! wavefields
@@ -118,7 +115,6 @@
   if (.not. NO_BACKWARD_RECONSTRUCTION) then
     deallocate(b_potential_dot_acoustic,b_potential_dot_dot_acoustic)
   endif
-  deallocate(b_displ_ac,b_accel_ac,accel_ac)
 
   ! noise
   if (allocated(noise_sourcearray)) deallocate(noise_sourcearray)

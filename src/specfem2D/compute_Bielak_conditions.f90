@@ -33,18 +33,17 @@
 
 ! compute analytical initial plane wave for Bielak's conditions
 
-  subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                                       x0_source, z0_source, A_plane, B_plane, C_plane, anglesource, anglesource_refl, &
+  subroutine compute_Bielak_conditions(iglob,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                                       x0_source, z0_source, A_plane, B_plane, C_plane, &
+                                       anglesource, anglesource_refl, &
                                        c_inc, c_refl, time_offset,f0)
 
   use constants, only: NDIM
+  use specfem_par, only: DT,it,coord
 
   implicit none
 
-  integer, intent(in) :: iglob,nglob,it
-
-  double precision, dimension(NDIM,nglob), intent(in) :: coord
-  double precision, intent(in) :: deltat
+  integer, intent(in) :: iglob
 
   double precision, intent(out) :: dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert
   double precision, intent(in) :: x0_source, z0_source
@@ -62,9 +61,9 @@
   x = coord(1,iglob) - x0_source
   z = z0_source - coord(2,iglob)
 
-! times for velocity and traction are staggered i.e. separated by deltat/2.d0
-  time_veloc = (it-1)*deltat + deltat/2.d0 + time_offset
-  time_traction = time_veloc + deltat/2.d0
+! times for velocity and traction are staggered i.e. separated by DT/2.d0
+  time_veloc = (it-1)*DT + DT/2.d0 + time_offset
+  time_traction = time_veloc + DT/2.d0
 
   t = time_traction
 

@@ -40,7 +40,7 @@
     potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
     displ_elastic,veloc_elastic,accel_elastic, &
     e1,e11,e13,dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old, &
-    e1_acous_sf,sum_forces_old,GPU_MODE,nspec_ATT_ac,nglob
+    e1_acous_sf,sum_forces_old,GPU_MODE,nspec_ATT_ac,nspec_ATT_el,nglob
 
   use specfem_par_gpu, only: Mesh_pointer
 
@@ -84,6 +84,9 @@
     write(IOUT_UNDO_ATT) displ_elastic
 
     if (ATTENUATION_VISCOELASTIC) then
+      if (GPU_MODE) call transfer_viscoelastic_var_from_device(NGLLX*NGLLZ*nspec_ATT_el, &
+                                                               e1,e11,e13,dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old, &
+                                                               Mesh_pointer)
       write(IOUT_UNDO_ATT) e1
       write(IOUT_UNDO_ATT) e11
       write(IOUT_UNDO_ATT) e13
@@ -103,12 +106,13 @@
 
   subroutine save_forward_arrays_no_backward()
 
-  use constants, only: IOUT_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,APPROXIMATE_HESS_KL,NDIM,CUSTOM_REAL
+  use constants, only: IOUT_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,NDIM,CUSTOM_REAL
 
   use specfem_par, only: myrank,it,NSTEP, &
     any_acoustic,any_elastic,potential_acoustic,displ_elastic,accel_elastic,GPU_MODE, &
     no_backward_acoustic_buffer,no_backward_displ_buffer,no_backward_accel_buffer, &
-    no_backward_iframe,no_backward_Nframes,nglob
+    no_backward_iframe,no_backward_Nframes,nglob, &
+    APPROXIMATE_HESS_KL
 
   use specfem_par_gpu, only: Mesh_pointer
 
@@ -118,7 +122,7 @@
   ! a wavefield in two iterations.
   ! At the first iteration, we transfer the wavefield from the GPU to the disk.
   ! At the second iteration, we write this wavefield on the disk from the RAM.
-  ! In the text above, an iteration means NSTEP_BETWEEN_COMPUTE_KERNELS iterations of the timeloop.
+  ! In the text above, an iteration means NTSTEP_BETWEEN_COMPUTE_KERNELS iterations of the timeloop.
   ! The buffer no_backward_acoustic_buffer is declared in only one dimension in
   ! order to allow the CUDA API to set it in pinned memory (HostRegister).
   ! To perform the async I/O, stream accesses are used for files, numerical

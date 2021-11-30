@@ -66,7 +66,7 @@
   call setup_mesh_acoustic_forcing_edges()
 
   ! reads in external models and re-assigns material properties
-  call setup_mesh_external_models()
+  call setup_mesh_material_properties()
 
   ! checks domain flags
   call setup_mesh_basic_check()
@@ -219,7 +219,7 @@
         gamma = zigll(j)
 
         call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl, &
-                                                   coorg,knods,ispec,ngnod,nspec,npgeo, &
+                                                   coorg,knods,ispec,NGNOD,nspec,npgeo, &
                                                    .false.)
 
         if (jacobianl <= ZERO) found_a_negative_jacobian = .true.
@@ -244,7 +244,7 @@
 ! do not create OpenDX files if no negative Jacobian has been found, or if we are running in parallel
 ! (because writing OpenDX routines is much easier in serial)
   if (found_a_negative_jacobian .and. NPROC == 1) then
-    call save_openDX_jacobian(nspec,npgeo,ngnod,knods,coorg,xigll,zigll,AXISYM,is_on_the_axis,xiglj)
+    call save_openDX_jacobian(nspec,npgeo,NGNOD,knods,coorg,xigll,zigll,AXISYM,is_on_the_axis,xiglj)
   endif
 
   ! stop the code at the first negative element found, because such a mesh cannot be computed
@@ -264,7 +264,7 @@
           gamma = zigll(j)
 
           call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl, &
-                                                     coorg,knods,ispec,ngnod,nspec,npgeo, &
+                                                     coorg,knods,ispec,NGNOD,nspec,npgeo, &
                                                      .true.)
         enddo
       enddo
@@ -521,7 +521,7 @@
 !-----------------------------------------------------------------------------------
 !
 
-  subroutine setup_mesh_external_models()
+  subroutine setup_mesh_material_properties()
 
 ! external models
 
@@ -531,80 +531,89 @@
   implicit none
 
   ! local parameters
-  integer :: nspec_ext,ier
-  integer :: i,j,ispec
+  integer :: nspec_ext,nspec_tmp,nspec_all
+  integer :: i,j,ispec,ier,imaterial
   ! temporary arrays for reading
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhoext,vsext,vpext
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: QKappa_attenuationext,Qmu_attenuationext
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: c11ext,c12ext,c13ext,c15ext,c22ext,c23ext,c25ext, &
+                                                           c33ext,c35ext,c55ext
 
   ! for shifting of velocities if needed in the case of viscoelasticity
   double precision :: vp,vs,rhol,mul,lambdal,kappal,qmul,qkappal
+  double precision :: phi,tort,kappa_s,kappa_f,kappa_fr,mu_s,mu_fr
+  double precision :: rho_s,rho_f,rho_bar,eta_f,w_c
+  double precision :: D_biot,H_biot,C_biot,M_biot
+  double precision :: cpIsquare,cpIIsquare,cssquare,vpII
+  double precision :: perm_xx,perm_xz,perm_zz
+
+  ! collects total number
+  call sum_all_i(nspec,nspec_all)
 
   ! The following line is important. For external model defined from tomography file ; material line in Par_file like that:
   ! model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
   ! because in that case MODEL = "default" but nspec_ext = nspec
   if (tomo_material > 0) MODEL = 'tomo'
 
-  ! allocates material arrays for c11 c13 c15 c33 c35 c55 c12 c23 c25 c22
-  if (trim(MODEL) == 'external' .or. trim(MODEL) == 'tomo' .or. trim(MODEL) == 'binary_voigt' ) then
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'Material properties:'
+    write(IMAIN,*) '  MODEL                 : ',trim(MODEL)
+    write(IMAIN,*) '  nspec                 : ',nspec_all
+    write(IMAIN,*) '  assign external model : ',assign_external_model
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! allocates material arrays
+  if (assign_external_model) then
     nspec_ext = nspec
   else
     ! dummy allocations
     nspec_ext = 1
   endif
 
-  ! allocates material arrays for vp vs rho QKappa Qmu
+  ! allocates temporary material arrays for reading external model values (vp vs rho QKappa Qmu)
+  allocate(vpext(NGLLX,NGLLZ,nspec_ext), &
+           vsext(NGLLX,NGLLZ,nspec_ext), &
+           rhoext(NGLLX,NGLLZ,nspec_ext), &
+           QKappa_attenuationext(NGLLX,NGLLZ,nspec_ext), &
+           Qmu_attenuationext(NGLLX,NGLLZ,nspec_ext),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating external model arrays for vp vs rho attenuation')
+  vpext(:,:,:) = 0.0_CUSTOM_REAL; vsext(:,:,:) = 0.0_CUSTOM_REAL; rhoext(:,:,:) = 0.0_CUSTOM_REAL
+  QKappa_attenuationext(:,:,:) = 0.0_CUSTOM_REAL
+  Qmu_attenuationext(:,:,:) = 0.0_CUSTOM_REAL
+
+  ! allocates temporary material arrays for c11 c13 c15 c33 c35 c55 c12 c23 c25 c22
+  allocate(c11ext(NGLLX,NGLLZ,nspec_ext), &
+           c13ext(NGLLX,NGLLZ,nspec_ext), &
+           c15ext(NGLLX,NGLLZ,nspec_ext), &
+           c33ext(NGLLX,NGLLZ,nspec_ext), &
+           c35ext(NGLLX,NGLLZ,nspec_ext), &
+           c55ext(NGLLX,NGLLZ,nspec_ext), &
+           c12ext(NGLLX,NGLLZ,nspec_ext), &
+           c23ext(NGLLX,NGLLZ,nspec_ext), &
+           c25ext(NGLLX,NGLLZ,nspec_ext), &
+           c22ext(NGLLX,NGLLZ,nspec_ext),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating external model arrays for anisotropy')
+  c11ext(:,:,:) = 0.0_CUSTOM_REAL; c13ext(:,:,:) = 0.0_CUSTOM_REAL; c15ext(:,:,:) = 0.0_CUSTOM_REAL
+  c33ext(:,:,:) = 0.0_CUSTOM_REAL; c35ext(:,:,:) = 0.0_CUSTOM_REAL; c55ext(:,:,:) = 0.0_CUSTOM_REAL
+  c12ext(:,:,:) = 0.0_CUSTOM_REAL; c23ext(:,:,:) = 0.0_CUSTOM_REAL; c25ext(:,:,:) = 0.0_CUSTOM_REAL
+  c22ext(:,:,:) = 0.0_CUSTOM_REAL
+
+  ! reads in external models
   if (assign_external_model) then
-    allocate(vpext(NGLLX,NGLLZ,nspec), &
-             vsext(NGLLX,NGLLZ,nspec), &
-             rhoext(NGLLX,NGLLZ,nspec), &
-             QKappa_attenuationext(NGLLX,NGLLZ,nspec), &
-             Qmu_attenuationext(NGLLX,NGLLZ,nspec),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating external model arrays for vp vs rho attenuation')
-
-    ! allocates material arrays for c11 c13 c15 c33 c35 c55 c12 c23 c25 c22
-    allocate(c11ext(NGLLX,NGLLZ,nspec_ext), &
-             c13ext(NGLLX,NGLLZ,nspec_ext), &
-             c15ext(NGLLX,NGLLZ,nspec_ext), &
-             c33ext(NGLLX,NGLLZ,nspec_ext), &
-             c35ext(NGLLX,NGLLZ,nspec_ext), &
-             c55ext(NGLLX,NGLLZ,nspec_ext), &
-             c12ext(NGLLX,NGLLZ,nspec_ext), &
-             c23ext(NGLLX,NGLLZ,nspec_ext), &
-             c25ext(NGLLX,NGLLZ,nspec_ext), &
-             c22ext(NGLLX,NGLLZ,nspec_ext),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating external model arrays for anisotropy')
-
-    ! reads in external models
+    ! user output
     if (myrank == 0) then
-      write(IMAIN,*) 'Assigning an external velocity and density model'
+      write(IMAIN,*) '  assigning an external velocity and density model'
       call flush_IMAIN()
     endif
 
     call read_external_model(rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext, &
                              nspec_ext,c11ext,c12ext,c13ext,c15ext,c22ext,c23ext,c25ext,c33ext,c35ext,c55ext)
-
-  else
-    ! dummy
-    allocate(vpext(1,1,1), &
-             vsext(1,1,1), &
-             rhoext(1,1,1), &
-             QKappa_attenuationext(1,1,1), &
-             Qmu_attenuationext(1,1,1),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating external model arrays for vp vs rho attenuation')
-    allocate(c11ext(1,1,1), &
-             c13ext(1,1,1), &
-             c15ext(1,1,1), &
-             c33ext(1,1,1), &
-             c35ext(1,1,1), &
-             c55ext(1,1,1), &
-             c12ext(1,1,1), &
-             c23ext(1,1,1), &
-             c25ext(1,1,1), &
-             c22ext(1,1,1),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating external model arrays for anisotropy')
   endif
 
-  ! allocates material arrays
+  ! allocates material arrays (acoustic/elastic/poroelastic - isotropic)
   allocate(kappastore(NGLLX,NGLLZ,nspec), &
            mustore(NGLLX,NGLLZ,nspec), &
            rhostore(NGLLX,NGLLZ,nspec), &
@@ -614,17 +623,52 @@
            rho_vsstore(NGLLX,NGLLZ,nspec),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating material arrays')
 
-  ! sets new material properties
-  ! note: velocities might have been shifted by attenuation
+  kappastore(:,:,:) = 0.0_CUSTOM_REAL
+  mustore(:,:,:) = 0.0_CUSTOM_REAL
+  rhostore(:,:,:) = 0.0_CUSTOM_REAL
+  qkappa_attenuation_store(:,:,:) = 0.0_CUSTOM_REAL
+  qmu_attenuation_store(:,:,:) = 0.0_CUSTOM_REAL
+  rho_vpstore(:,:,:) = 0.0_CUSTOM_REAL
+  rho_vsstore(:,:,:) = 0.0_CUSTOM_REAL
+
+  ! poroelastic materials
+  if (any_poroelastic) then
+    nspec_tmp = nspec
+  else
+    nspec_tmp = 1  ! for dummy allocation
+  endif
+
+  ! allocates arrays (needed if poroelastic domains present in this slice)
+  allocate(tortstore(NGLLX,NGLLZ,nspec_tmp), &
+           phistore(NGLLX,NGLLZ,nspec_tmp), &
+           rhoarraystore(2,NGLLX,NGLLZ,nspec_tmp), &
+           kappaarraystore(3,NGLLX,NGLLZ,nspec_tmp), &
+           permstore(3,NGLLX,NGLLZ,nspec_tmp), &
+           etastore(NGLLX,NGLLZ,nspec_tmp), &
+           vpIIstore(NGLLX,NGLLZ,nspec_tmp), &
+           mufr_store(NGLLX,NGLLZ,nspec_tmp),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating poroelastic material arrays')
+  tortstore(:,:,:) = 0.0_CUSTOM_REAL
+  phistore(:,:,:) = 0.0_CUSTOM_REAL
+  rhoarraystore(:,:,:,:) = 0.0_CUSTOM_REAL
+  kappaarraystore(:,:,:,:) = 0.0_CUSTOM_REAL
+  permstore(:,:,:,:) = 0.0_CUSTOM_REAL
+  etastore(:,:,:) = 0.0_CUSTOM_REAL
+  vpIIstore(:,:,:) = 0.0_CUSTOM_REAL
+  mufr_store(:,:,:) = 0.0_CUSTOM_REAL
+
+  ! user output
   if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'setup material arrays'
+    write(IMAIN,*) '  setting up material arrays'
     call flush_IMAIN()
   endif
 
+  ! sets new material properties
+  ! note: velocities might have been shifted by attenuation
   do ispec = 1,nspec
     do j = 1,NGLLZ
       do i = 1,NGLLX
+        ! gets material values
         if (assign_external_model) then
           ! external model
           rhol = rhoext(i,j,ispec)
@@ -633,7 +677,7 @@
           ! determins mu and kappa
           mul = rhol * vs * vs
           if (AXISYM) then ! CHECK kappa
-            kappal = rhol * vp * vp - FOUR_THIRDS * mul
+            kappal = rhol * vp * vp - FOUR_THIRDS * mul   ! kappa derived from vp,vs
           else
             kappal = rhol * vp * vp - mul
           endif
@@ -658,19 +702,71 @@
           qkappal = QKappa_attenuationext(i,j,ispec)
         else
           ! internal mesh
-          rhol = density(1,kmato(ispec))
-          lambdal = poroelastcoef(1,1,kmato(ispec))
-          mul = poroelastcoef(2,1,kmato(ispec))
+          imaterial = kmato(ispec)
+
+          rhol = density(1,imaterial)
+          lambdal = poroelastcoef(1,1,imaterial)
+          mul = poroelastcoef(2,1,imaterial)
+
           if (AXISYM) then ! CHECK kappa
-            kappal = lambdal + TWO_THIRDS * mul
+            kappal = lambdal + TWO_THIRDS * mul           ! kappa derived from lame parameters lambda,mu
             vp = sqrt((kappal + FOUR_THIRDS * mul)/rhol)
           else
             kappal = lambdal + mul
             vp = sqrt((kappal + mul)/rhol)
           endif
           ! attenuation
-          qmul = Qmu_attenuationcoef(kmato(ispec))
-          qkappal = Qkappa_attenuationcoef(kmato(ispec))
+          qmul = Qmu_attenuationcoef(imaterial)
+          qkappal = Qkappa_attenuationcoef(imaterial)
+        endif
+
+        ! note: poroelastic materials are only defined using internal meshes so far, no external model defines it yet.
+        !       in future, this might change and the corresponding arrays might have to be taken below.
+
+        ! overimposes values for poroelastic elements
+        if (ispec_is_poroelastic(ispec)) then
+          ! poroelastic material
+          call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
+
+          ! Biot coefficients for the input phi
+          call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
+          ! permeability
+          perm_xx = permeability(1,kmato(ispec))
+          perm_xz = permeability(2,kmato(ispec))
+          perm_zz = permeability(3,kmato(ispec))
+
+          ! computes velocities
+          call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
+                                          tort,rho_s,rho_f,eta_f,perm_xx, &
+                                          f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+
+          vp = sqrt(cpIsquare)    ! vpI
+          vpII = sqrt(cpIIsquare) ! vpII
+          vs = sqrt(cssquare)
+
+          rhol = rho_s            ! for density array rhostore used in check_grid()
+          mul = rhol * vs * vs    ! for shear modulus used in check_grid()
+
+          ! stores specific poroelastic properties
+          phistore(i,j,ispec) = phi
+          tortstore(i,j,ispec) = tort
+
+          rhoarraystore(1,i,j,ispec) = rho_s    ! density for solid part
+          rhoarraystore(2,i,j,ispec) = rho_f    ! density for fluid part
+
+          kappaarraystore(1,i,j,ispec) = kappa_s  ! solid
+          kappaarraystore(2,i,j,ispec) = kappa_f  ! fluid
+          kappaarraystore(3,i,j,ispec) = kappa_fr ! frame
+
+          mufr_store(i,j,ispec) = mu_fr   ! frame
+          etastore(i,j,ispec) = eta_f     ! fluid
+
+          permstore(1,i,j,ispec) = perm_xx
+          permstore(2,i,j,ispec) = perm_xz
+          permstore(3,i,j,ispec) = perm_zz
+
+          vpIIstore(i,j,ispec) = vpII           ! for stacey and check_grid() routines
         endif
 
         ! stores moduli
@@ -690,40 +786,58 @@
     enddo
   enddo
 
-  ! free memory
-  deallocate(rhoext,vpext,vsext)
-
   ! anisotropy
   if (any_anisotropy .or. nspec_ext == nspec) then
+    nspec_tmp = nspec
+  else
+    nspec_tmp = 1  ! for dummy allocation
+  endif
+
+  ! allocates arrays in case of anisotropy (needed if anisotropic elements present in this slice)
+  allocate(c11store(NGLLX,NGLLZ,nspec_tmp), &
+           c12store(NGLLX,NGLLZ,nspec_tmp), &
+           c13store(NGLLX,NGLLZ,nspec_tmp), &
+           c15store(NGLLX,NGLLZ,nspec_tmp), &
+           c22store(NGLLX,NGLLZ,nspec_tmp), &
+           c23store(NGLLX,NGLLZ,nspec_tmp), &
+           c25store(NGLLX,NGLLZ,nspec_tmp), &
+           c33store(NGLLX,NGLLZ,nspec_tmp), &
+           c35store(NGLLX,NGLLZ,nspec_tmp), &
+           c55store(NGLLX,NGLLZ,nspec_tmp),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating aniso material arrays')
+  c11store(:,:,:) = 0.0_CUSTOM_REAL
+  c12store(:,:,:) = 0.0_CUSTOM_REAL
+  c13store(:,:,:) = 0.0_CUSTOM_REAL
+  c15store(:,:,:) = 0.0_CUSTOM_REAL
+  c22store(:,:,:) = 0.0_CUSTOM_REAL
+  c23store(:,:,:) = 0.0_CUSTOM_REAL
+  c25store(:,:,:) = 0.0_CUSTOM_REAL
+  c33store(:,:,:) = 0.0_CUSTOM_REAL
+  c35store(:,:,:) = 0.0_CUSTOM_REAL
+  c55store(:,:,:) = 0.0_CUSTOM_REAL
+
+  ! sets anisotropic parameters
+  if (any_anisotropy .or. nspec_tmp == nspec) then
     ! user output
     if (myrank == 0) then
       write(IMAIN,*) '  setting up anisotropic arrays'
       call flush_IMAIN()
     endif
 
-    allocate(c11store(NGLLX,NGLLZ,NSPEC), &
-             c12store(NGLLX,NGLLZ,NSPEC), &
-             c13store(NGLLX,NGLLZ,NSPEC), &
-             c15store(NGLLX,NGLLZ,NSPEC), &
-             c22store(NGLLX,NGLLZ,NSPEC), &
-             c23store(NGLLX,NGLLZ,NSPEC), &
-             c25store(NGLLX,NGLLZ,NSPEC), &
-             c33store(NGLLX,NGLLZ,NSPEC), &
-             c35store(NGLLX,NGLLZ,NSPEC), &
-             c55store(NGLLX,NGLLZ,NSPEC),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating aniso material arrays')
-    c11store(:,:,:) = 0.0_CUSTOM_REAL
-    c12store(:,:,:) = 0.0_CUSTOM_REAL
-    c13store(:,:,:) = 0.0_CUSTOM_REAL
-    c15store(:,:,:) = 0.0_CUSTOM_REAL
-    c22store(:,:,:) = 0.0_CUSTOM_REAL
-    c23store(:,:,:) = 0.0_CUSTOM_REAL
-    c25store(:,:,:) = 0.0_CUSTOM_REAL
-    c33store(:,:,:) = 0.0_CUSTOM_REAL
-    c35store(:,:,:) = 0.0_CUSTOM_REAL
-    c55store(:,:,:) = 0.0_CUSTOM_REAL
-
     do ispec = 1,nspec
+      ! checks anisotropic flag only valid for elastic elements
+      if (.not. ispec_is_elastic(ispec)) then
+        if (ispec_is_anisotropic(ispec)) then
+          print *,'Error: element ',ispec,' has anisotropy but is not elastic! this is not supported yet!'
+          print *,'  element ',ispec,' has flags acoustic: ',ispec_is_acoustic(ispec), &
+                  'elastic: ',ispec_is_elastic(ispec),' poroelastic: ',ispec_is_poroelastic(ispec)
+          stop 'Invalid anisotropy flag for non-elastic element'
+        endif
+      endif
+
+      ! fills anisotropic store
+      ! there's no need to distinguish between elastic and non-elastic elements
+      ! for non-elastic elements, the values in arrays c11ext,.. or anistropycoef(..) are just zero
       do j = 1,NGLLZ
         do i = 1,NGLLX
           if (assign_external_model) then
@@ -738,32 +852,38 @@
             c35store(i,j,ispec) = c35ext(i,j,ispec)
             c55store(i,j,ispec) = c55ext(i,j,ispec)
           else
-            c11store(i,j,ispec) = sngl(anisotropycoef(1,kmato(ispec)))
-            c13store(i,j,ispec) = sngl(anisotropycoef(2,kmato(ispec)))
-            c15store(i,j,ispec) = sngl(anisotropycoef(3,kmato(ispec)))
-            c33store(i,j,ispec) = sngl(anisotropycoef(4,kmato(ispec)))
-            c35store(i,j,ispec) = sngl(anisotropycoef(5,kmato(ispec)))
-            c55store(i,j,ispec) = sngl(anisotropycoef(6,kmato(ispec)))
-            c12store(i,j,ispec) = sngl(anisotropycoef(7,kmato(ispec)))
-            c23store(i,j,ispec) = sngl(anisotropycoef(8,kmato(ispec)))
-            c25store(i,j,ispec) = sngl(anisotropycoef(9,kmato(ispec)))
-            c22store(i,j,ispec) = sngl(anisotropycoef(10,kmato(ispec))) ! for AXISYM
+            c11store(i,j,ispec) = real(anisotropycoef(1,kmato(ispec)),kind=CUSTOM_REAL)  ! c11
+            c13store(i,j,ispec) = real(anisotropycoef(2,kmato(ispec)),kind=CUSTOM_REAL)  ! c13
+            c15store(i,j,ispec) = real(anisotropycoef(3,kmato(ispec)),kind=CUSTOM_REAL)  ! c15
+            c33store(i,j,ispec) = real(anisotropycoef(4,kmato(ispec)),kind=CUSTOM_REAL)  ! c33
+            c35store(i,j,ispec) = real(anisotropycoef(5,kmato(ispec)),kind=CUSTOM_REAL)  ! c35
+            c55store(i,j,ispec) = real(anisotropycoef(6,kmato(ispec)),kind=CUSTOM_REAL)  ! c55
+            c12store(i,j,ispec) = real(anisotropycoef(7,kmato(ispec)),kind=CUSTOM_REAL)  ! c12
+            c23store(i,j,ispec) = real(anisotropycoef(8,kmato(ispec)),kind=CUSTOM_REAL)  ! c23
+            c25store(i,j,ispec) = real(anisotropycoef(9,kmato(ispec)),kind=CUSTOM_REAL)  ! c25
+            c22store(i,j,ispec) = real(anisotropycoef(10,kmato(ispec)),kind=CUSTOM_REAL) ! c22 for AXISYM
           endif
         enddo
       enddo
     enddo
-  else
-    ! dummy allocations
-    allocate(c11store(1,1,1),c12store(1,1,1),c13store(1,1,1),c15store(1,1,1), &
-             c22store(1,1,1),c23store(1,1,1),c25store(1,1,1), &
-             c33store(1,1,1),c35store(1,1,1),c55store(1,1,1),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating dummy aniso material arrays')
+  endif
+
+  ! free temporary arrays
+  deallocate(rhoext,vpext,vsext)
+  deallocate(QKappa_attenuationext,Qmu_attenuationext)
+  deallocate(c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext)
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  all material arrays done'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! synchronizes all processes
   call synchronize_all()
 
-  end subroutine setup_mesh_external_models
+  end subroutine setup_mesh_material_properties
 
 !
 !-----------------------------------------------------------------------------------
@@ -822,22 +942,26 @@
   implicit none
 
   ! local parameters
-  integer :: nspec_acoustic_all,nspec_elastic_all,nspec_poroelastic_all
+  integer :: nspec_acoustic_all,nspec_elastic_all,nspec_poroelastic_all,nspec_anisotropic_all
   integer :: nspec_total,nspec_in_domains
 
   ! re-counts domain elements
   call get_simulation_domain_counts()
 
-  ! gets total numbers for all slices (collected on master only)
+  ! gets total numbers for all slices (collected on main only)
   call sum_all_i(nspec_acoustic,nspec_acoustic_all)
   call sum_all_i(nspec_elastic,nspec_elastic_all)
   call sum_all_i(nspec_poroelastic,nspec_poroelastic_all)
+  call sum_all_i(nspec_aniso,nspec_anisotropic_all)
 
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) 'Domains:'
     write(IMAIN,*) '  total number of acoustic elements        = ',nspec_acoustic_all
     write(IMAIN,*) '  total number of elastic elements         = ',nspec_elastic_all
+    if (nspec_anisotropic_all > 0) then
+      write(IMAIN,*) '    with number of anisotropic elements         = ',nspec_anisotropic_all
+    endif
     write(IMAIN,*) '  total number of poroelastic elements     = ',nspec_poroelastic_all
   endif
 

@@ -46,7 +46,7 @@
   ! initializes
   call read_parameter_file_init()
 
-  ! only master process reads in Par_file
+  ! only main process reads in Par_file
   if (myrank == 0) then
 
     ! user output
@@ -100,7 +100,7 @@
 
         ! setup mesh array
         ! multiply by 2 if elements have 9 nodes
-        if (ngnod == 9) then
+        if (NGNOD == 9) then
           nx_elem_internal = nx_elem_internal * 2
           nz_elem_internal = nz_elem_internal * 2
           nz_layer(:) = nz_layer(:) * 2
@@ -118,7 +118,7 @@
     call close_parameter_file()
   endif
 
-  ! master process broadcasts to all
+  ! main process broadcasts to all
   ! note: this is only needed at the moment for the solver to setup a simulation run
   if (BROADCAST_AFTER_READ) then
 
@@ -128,8 +128,8 @@
     call bcast_all_singlel(SAVE_FORWARD)
 
     call bcast_all_singlei(NPROC)
-    call bcast_all_singlei(partitioning_method)
-    call bcast_all_singlei(ngnod)
+    call bcast_all_singlei(PARTITIONING_TYPE)
+    call bcast_all_singlei(NGNOD)
 
     call bcast_all_singlei(NSTEP)
     call bcast_all_singledp(DT)
@@ -168,12 +168,13 @@
     call bcast_all_singlel(add_Bielak_conditions_left)
     call bcast_all_singlel(ACOUSTIC_FORCING)
     call bcast_all_singlei(noise_source_time_function_type)
+    call bcast_all_singlel(write_moving_sources_database)
 
     ! receivers
     call bcast_all_string(seismotype)
-    call bcast_all_singlei(subsamp_seismos)
+    call bcast_all_singlei(NTSTEP_BETWEEN_OUTPUT_SAMPLE)
     call bcast_all_singlel(USE_TRICK_FOR_BETTER_PRESSURE)
-    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_SEISMOS)
+    call bcast_all_singlei(NTSTEP_BETWEEN_OUTPUT_SEISMOS)
     call bcast_all_singledp(USER_T0)
     call bcast_all_singlel(save_ASCII_seismograms)
     call bcast_all_singlel(save_binary_seismograms_single)
@@ -186,7 +187,8 @@
 
     ! adjoint kernel
     call bcast_all_singlel(save_ASCII_kernels)
-    call bcast_all_singlei(NSTEP_BETWEEN_COMPUTE_KERNELS)
+    call bcast_all_singlei(NTSTEP_BETWEEN_COMPUTE_KERNELS)
+    call bcast_all_singlel(APPROXIMATE_HESS_KL)
     call bcast_all_singlel(NO_BACKWARD_RECONSTRUCTION)
 
     ! boundary conditions
@@ -234,7 +236,7 @@
     endif
 
     ! display parameters
-    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_INFO)
+    call bcast_all_singlei(NTSTEP_BETWEEN_OUTPUT_INFO)
     call bcast_all_singlel(output_grid_Gnuplot)
     call bcast_all_singlel(output_grid_ASCII)
     call bcast_all_singlel(OUTPUT_ENERGY)
@@ -242,7 +244,7 @@
     call bcast_all_singlel(COMPUTE_INTEGRATED_ENERGY_FIELD)
 
     ! movies/images/snapshots
-    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_IMAGES)
+    call bcast_all_singlei(NTSTEP_BETWEEN_OUTPUT_IMAGES)
     call bcast_all_singledp(cutsnaps)
 
     call bcast_all_singlel(output_color_image)
@@ -332,7 +334,7 @@
 
 ! reads only parameters without receiver-line section and material tables
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,myrank
   use shared_parameters
 
   implicit none
@@ -392,18 +394,36 @@
     write(*,*)
   endif
 
-  call read_value_integer_p(partitioning_method, 'partitioning_method')
+  ! deprecated: call read_value_integer_p(partitioning_method, 'partitioning_method')
+  call read_value_integer_p(PARTITIONING_TYPE, 'PARTITIONING_TYPE')
   if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'partitioning_method             = 3'
-    write(*,*)
+    ! old version
+    call read_value_integer_p(PARTITIONING_TYPE, 'partitioning_method')
+    if (err_occurred() == 0) then
+      ! deprecation warning
+      write(*,'(a)') 'Warning: Deprecated parameter partitioning_method found in Par_file.'
+      write(*,'(a)') '         Please use parameter PARTITIONING_TYPE in future...'
+    else
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'PARTITIONING_TYPE               = 3'
+      write(*,*)
+    endif
   endif
 
-  call read_value_integer_p(ngnod, 'ngnod')
+  ! deprecated: call read_value_integer_p(ngnod, 'ngnod')
+  call read_value_integer_p(NGNOD, 'NGNOD')
   if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'ngnod                           = 9'
-    write(*,*)
+    ! old version
+    call read_value_integer_p(NGNOD, 'ngnod')
+    if (err_occurred() == 0) then
+      ! deprecation warning
+      write(*,'(a)') 'Warning: Deprecated parameter ngnod found in Par_file.'
+      write(*,'(a)') '         Please use parameter NGNOD in future...'
+    else
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'NGNOD                           = 9'
+      write(*,*)
+    endif
   endif
 
   ! read time step parameters
@@ -640,6 +660,14 @@
     write(*,*)
   endif
 
+  ! moving sources
+  call read_value_logical_p(write_moving_sources_database, 'write_moving_sources_database')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'write_moving_sources_database = .false.'
+    write(*,*)
+  endif
+
   !--------------------------------------------------------------------
   !
   ! receivers
@@ -654,11 +682,20 @@
     write(*,*)
   endif
 
-  call read_value_integer_p(subsamp_seismos, 'subsamp_seismos')
+  ! deprecated: call read_value_integer_p(subsamp_seismos, 'subsamp_seismos')
+  call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_SAMPLE, 'NTSTEP_BETWEEN_OUTPUT_SAMPLE')
   if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'subsamp_seismos                 = 1'
-    write(*,*)
+    ! old version
+    call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_SAMPLE, 'subsamp_seismos')
+    if (err_occurred() == 0) then
+      ! deprecation warning
+      write(*,'(a)') 'Warning: Deprecated parameter subsamp_seismos found in Par_file.'
+      write(*,'(a)') '         Please use parameter NTSTEP_BETWEEN_OUTPUT_SAMPLE in future...'
+    else
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'NTSTEP_BETWEEN_OUTPUT_SAMPLE   = 1'
+      write(*,*)
+    endif
   endif
 
   call read_value_logical_p(USE_TRICK_FOR_BETTER_PRESSURE, 'USE_TRICK_FOR_BETTER_PRESSURE')
@@ -668,11 +705,20 @@
     write(*,*)
   endif
 
-  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_SEISMOS, 'NSTEP_BETWEEN_OUTPUT_SEISMOS')
+  !deprecated: call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_SEISMOS, 'NSTEP_BETWEEN_OUTPUT_SEISMOS')
+  call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_SEISMOS, 'NTSTEP_BETWEEN_OUTPUT_SEISMOS')
   if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'NSTEP_BETWEEN_OUTPUT_SEISMOS    = 1000'
-    write(*,*)
+    ! old version
+    call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_SEISMOS, 'NSTEP_BETWEEN_OUTPUT_SEISMOS')
+    if (err_occurred() == 0) then
+      ! deprecation warning
+      write(*,'(a)') 'Warning: Deprecated parameter NSTEP_BETWEEN_OUTPUT_SEISMOS found in Par_file.'
+      write(*,'(a)') '         Please use parameter NTSTEP_BETWEEN_OUTPUT_SEISMOS in future...'
+    else
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 1000'
+      write(*,*)
+    endif
   endif
 
   call read_value_double_precision_p(USER_T0, 'USER_T0')
@@ -749,14 +795,30 @@
   call read_value_logical_p(save_ASCII_kernels, 'save_ASCII_kernels')
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'save_ASCII_kernels              = .true.'
+    write(*,'(a)') 'save_ASCII_kernels                  = .true.'
     write(*,*)
   endif
 
-  call read_value_integer_p(NSTEP_BETWEEN_COMPUTE_KERNELS, 'NSTEP_BETWEEN_COMPUTE_KERNELS')
+  ! deprecated: call read_value_integer_p(NSTEP_BETWEEN_COMPUTE_KERNELS, 'NSTEP_BETWEEN_COMPUTE_KERNELS')
+  call read_value_integer_p(NTSTEP_BETWEEN_COMPUTE_KERNELS, 'NTSTEP_BETWEEN_COMPUTE_KERNELS')
+  if (err_occurred() /= 0) then
+    ! old version
+    call read_value_integer_p(NTSTEP_BETWEEN_COMPUTE_KERNELS, 'NSTEP_BETWEEN_COMPUTE_KERNELS')
+    if (err_occurred() == 0) then
+      ! deprecation warning
+      write(*,'(a)') 'Warning: Deprecated parameter NSTEP_BETWEEN_COMPUTE_KERNELS found in Par_file.'
+      write(*,'(a)') '         Please use parameter NTSTEP_BETWEEN_COMPUTE_KERNELS in future...'
+    else
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'NTSTEP_BETWEEN_COMPUTE_KERNELS            = 1'
+      write(*,*)
+    endif
+  endif
+
+  call read_value_logical_p(APPROXIMATE_HESS_KL, 'APPROXIMATE_HESS_KL')
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'NSTEP_BETWEEN_COMPUTE_KERNELS             = 1'
+    write(*,'(a)') 'APPROXIMATE_HESS_KL                 = .true.'
     write(*,*)
   endif
 
@@ -766,7 +828,6 @@
     write(*,'(a)') 'NO_BACKWARD_RECONSTRUCTIO           = .false.'
     write(*,*)
   endif
-
 
   !--------------------------------------------------------------------
   !
@@ -1046,11 +1107,20 @@
   !--------------------------------------------------------------------
 
   ! read display parameters
-  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_INFO, 'NSTEP_BETWEEN_OUTPUT_INFO')
+  ! deprecated: call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_INFO, 'NSTEP_BETWEEN_OUTPUT_INFO')
+  call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_INFO, 'NTSTEP_BETWEEN_OUTPUT_INFO')
   if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'NSTEP_BETWEEN_OUTPUT_INFO       = 100'
-    write(*,*)
+    ! old version
+    call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_INFO, 'NSTEP_BETWEEN_OUTPUT_INFO')
+    if (err_occurred() == 0) then
+      ! deprecation warning
+      write(*,'(a)') 'Warning: Deprecated parameter NSTEP_BETWEEN_OUTPUT_INFO found in Par_file.'
+      write(*,'(a)') '         Please use parameter NTSTEP_BETWEEN_OUTPUT_INFO in future...'
+    else
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'NTSTEP_BETWEEN_OUTPUT_INFO      = 100'
+      write(*,*)
+    endif
   endif
 
   call read_value_logical_p(output_grid_Gnuplot, 'output_grid_Gnuplot')
@@ -1094,11 +1164,20 @@
   !
   !--------------------------------------------------------------------
 
-  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_IMAGES, 'NSTEP_BETWEEN_OUTPUT_IMAGES')
+  ! deprecated: call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_IMAGES, 'NTSTEP_BETWEEN_OUTPUT_IMAGES')
+  call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_IMAGES, 'NTSTEP_BETWEEN_OUTPUT_IMAGES')
   if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'NSTEP_BETWEEN_OUTPUT_IMAGES     = 100'
-    write(*,*)
+    ! old version
+    call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_IMAGES, 'NSTEP_BETWEEN_OUTPUT_IMAGES')
+    if (err_occurred() == 0) then
+      ! deprecation warning
+      write(*,'(a)') 'Warning: Deprecated parameter NSTEP_BETWEEN_OUTPUT_IMAGES found in Par_file.'
+      write(*,'(a)') '         Please use parameter NTSTEP_BETWEEN_OUTPUT_IMAGES in future...'
+    else
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'NTSTEP_BETWEEN_OUTPUT_IMAGES     = 100'
+      write(*,*)
+    endif
   endif
 
   call read_value_double_precision_p(cutsnaps, 'cutsnaps')
@@ -1304,14 +1383,47 @@
     endif
   enddo
 
+  ! checks input parameters
+  call check_parameters()
+
   ! noise simulations:
   if (NOISE_TOMOGRAPHY /= 0) then
     ! double the number of time steps, if running noise simulations (+/- branches)
     NSTEP = 2 * NSTEP - 1
   endif
 
-  ! checks input parameters
-  call check_parameters()
+  ! make sure NSTEP is a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE
+  ! if not, increase it a little bit, to the next multiple
+  if (mod(NSTEP,NTSTEP_BETWEEN_OUTPUT_SAMPLE) /= 0) then
+    if (NOISE_TOMOGRAPHY /= 0) then
+      if (myrank == 0) then
+        write(IMAIN,*) 'Noise simulation: Invalid number of NSTEP          = ',NSTEP
+        write(IMAIN,*) 'Must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE = ',NTSTEP_BETWEEN_OUTPUT_SAMPLE
+      endif
+      call stop_the_code('Error: NSTEP must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE')
+    else
+      NSTEP = (NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE + 1)*NTSTEP_BETWEEN_OUTPUT_SAMPLE
+      ! user output
+      if (myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) 'NSTEP is not a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE'
+        write(IMAIN,*) 'thus increasing it automatically to the next multiple, which is ',NSTEP
+        write(IMAIN,*)
+      endif
+    endif
+  endif
+
+  ! output seismograms at least once at the end of the simulation
+  NTSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
+
+  ! make sure NTSTEP_BETWEEN_OUTPUT_SEISMOS is a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE
+  if (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_OUTPUT_SAMPLE) /= 0) then
+    if (myrank == 0) then
+      write(IMAIN,*) 'Invalid number of NTSTEP_BETWEEN_OUTPUT_SEISMOS    = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
+      write(IMAIN,*) 'Must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE = ',NTSTEP_BETWEEN_OUTPUT_SAMPLE
+    endif
+    call stop_the_code('Error: NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE')
+  endif
 
   end subroutine read_parameter_file_only
 
@@ -1327,40 +1439,37 @@
 
   ! checks partitioning
   if (NPROC <= 0) then
-     print *, 'Error: Number of processes (NPROC) must be greater than or equal to one.'
-     call stop_the_code('Error invalid NPROC value')
+    print *, 'Error: Number of processes (NPROC) must be greater than or equal to one.'
+    call stop_the_code('Error invalid NPROC value')
   endif
 
 #ifndef WITH_MPI
   if (NPROC > 1) then
-     print *, 'Error: Number of processes (NPROC) must be equal to one when not using MPI.'
-     print *, 'Please recompile with -DWITH_MPI in order to enable use of MPI.'
-     call stop_the_code('Error invalid NPROC value')
+    print *, 'Error: Number of processes (NPROC) must be equal to one when not using MPI.'
+    print *, 'Please recompile with -DWITH_MPI in order to enable use of MPI.'
+    call stop_the_code('Error invalid NPROC value')
   endif
 #endif
 
-  if (partitioning_method /= 1 .and. partitioning_method /= 3) then
-     print *, 'Error: Invalid partitioning method number.'
-     print *, 'Partitioning method ',partitioning_method,' was requested, but is not available.'
-     print *, 'Support for the METIS graph partitioner has been discontinued, please use SCOTCH (option 3) instead.'
-     call stop_the_code('Error invalid partitioning method')
+  if (PARTITIONING_TYPE /= 1 .and. PARTITIONING_TYPE /= 3) then
+    print *, 'Error: Invalid partitioning method number.'
+    print *, 'Partitioning type ',PARTITIONING_TYPE,' was requested, but is not available.'
+    print *, 'Support for the METIS graph partitioner has been discontinued, please use SCOTCH (option 3) instead.'
+    call stop_the_code('Error invalid partitioning method')
   endif
 
-  ! simulation parameters
-  if (SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /= 3) &
-    call stop_the_code('SIMULATION_TYPE can only be set to 1 or 3 in the Par_file; exiting')
-
+  ! checks simulation parameters
   if (NOISE_TOMOGRAPHY < 0 .or. NOISE_TOMOGRAPHY > 3) &
     call stop_the_code('NOISE_TOMOGRAPHY can only be set to 0, 1, 2 or 3 in the Par_file; exiting')
 
   if (N_SLS < 2) &
     call stop_the_code('must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays')
 
-  if (ngnod /= 4 .and. ngnod /= 9) &
-    call stop_the_code('ngnod should be either 4 or 9!')
+  if (NGNOD /= 4 .and. NGNOD /= 9) &
+    call stop_the_code('NGNOD should be either 4 or 9!')
 
-  if (subsamp_seismos < 1) &
-    call stop_the_code('Error: subsamp_seismos must be >= 1')
+  if (NTSTEP_BETWEEN_OUTPUT_SAMPLE < 1) &
+    call stop_the_code('Error: NTSTEP_BETWEEN_OUTPUT_SAMPLE must be >= 1')
 
   if (output_color_image .and. USE_CONSTANT_MAX_AMPLITUDE .and. CONSTANT_MAX_AMPLITUDE_TO_USE < 0.d0) &
     call stop_the_code('CONSTANT_MAX_AMPLITUDE_TO_USE must be strictly positive')
@@ -1448,26 +1557,6 @@
   if (reread_rec_normal_to_surface .neqv. rec_normal_to_surface) &
     call stop_the_code('Invalid re-reading of rec_normal_to_surface parameter')
 
-  ! only valid if at least 1 receiver line is specified
-  if (nreceiversets < 1) &
-    call stop_the_code('number of receiver sets must be greater than 1')
-
-  ! allocate receiver line arrays
-  allocate(nrec_line(nreceiversets))
-  allocate(xdeb(nreceiversets))
-  allocate(zdeb(nreceiversets))
-  allocate(xfin(nreceiversets))
-  allocate(zfin(nreceiversets))
-  allocate(record_at_surface_same_vertical(nreceiversets),stat=ier)
-  if (ier /= 0 ) call stop_the_code('Error allocating receiver lines')
-
-  nrec_line(:) = 0
-  xdeb(:) = 0.d0
-  zdeb(:) = 0.d0
-  xfin(:) = 0.d0
-  zfin(:) = 0.d0
-  record_at_surface_same_vertical(:) = .false.
-
   ! reads in receiver sets
   if (use_existing_STATIONS) then
     ! checks if STATIONS file exisits
@@ -1495,7 +1584,17 @@
     nrec = 0
     do while(ier == 0)
       read(IIN,"(a)",iostat=ier) dummystring
-      if (ier == 0) nrec = nrec + 1
+      if (ier == 0) then
+        ! skip empty lines
+        if (len_trim(dummystring) == 0) cycle
+
+        ! skip comment lines
+        dummystring = adjustl(dummystring)
+        if (dummystring(1:1) == "#") cycle
+
+        ! increase counter
+        nrec = nrec + 1
+      endif
     enddo
     close(IIN)
 
@@ -1504,6 +1603,27 @@
     write(IMAIN,*)
 
   else
+    ! receiver lines specified in Par_file
+    ! only valid if at least 1 receiver line is specified
+    if (nreceiversets < 1) &
+      call stop_the_code('number of receiver sets must be greater than 1')
+
+    ! allocate receiver line arrays
+    allocate(nrec_line(nreceiversets))
+    allocate(xdeb(nreceiversets))
+    allocate(zdeb(nreceiversets))
+    allocate(xfin(nreceiversets))
+    allocate(zfin(nreceiversets))
+    allocate(record_at_surface_same_vertical(nreceiversets),stat=ier)
+    if (ier /= 0 ) call stop_the_code('Error allocating receiver lines')
+
+    nrec_line(:) = 0
+    xdeb(:) = 0.d0
+    zdeb(:) = 0.d0
+    xfin(:) = 0.d0
+    zfin(:) = 0.d0
+    record_at_surface_same_vertical(:) = .false.
+
     ! loop on all the receiver lines
     do ireceiverlines = 1,nreceiversets
       call read_value_integer_next_p(nrec_line(ireceiverlines),'nrec')
@@ -1578,7 +1698,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine open_parameter_file_from_master_only()
+  subroutine open_parameter_file_from_main_only()
 
   use constants, only: MAX_STRING_LEN,IN_DATA_FILES
 
@@ -1591,7 +1711,7 @@
   filename_main = IN_DATA_FILES(1:len_trim(IN_DATA_FILES))//'Par_file'
 
 ! also see if we are running several independent runs in parallel
-! to do so, add the right directory for that run for the master process only here
+! to do so, add the right directory for that run for the main process only here
   filename_run0001 = 'run0001/'//filename_main(1:len_trim(filename_main))
   call param_open(filename_main, len(filename_main), ier)
   if (ier == 0) then
@@ -1624,7 +1744,7 @@
     endif
   endif
 
-  end subroutine open_parameter_file_from_master_only
+  end subroutine open_parameter_file_from_main_only
 
 !
 !-------------------------------------------------------------------------------------------------

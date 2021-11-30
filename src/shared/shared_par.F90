@@ -100,10 +100,10 @@ module shared_input_parameters
   logical :: SAVE_FORWARD
 
   ! variables used for partitioning
-  integer :: NPROC, partitioning_method
+  integer :: NPROC, PARTITIONING_TYPE
 
   ! number of control nodes
-  integer :: ngnod
+  integer :: NGNOD
 
   ! number of time steps
   integer (kind=RegInt_K) :: NSTEP
@@ -174,6 +174,9 @@ module shared_input_parameters
   ! noise simulations - source time function type
   integer :: noise_source_time_function_type
 
+  ! Flag for writing moving source databases or not
+  logical :: write_moving_sources_database
+
   !#-----------------------------------------------------------------------------
   !#
   !# receivers
@@ -183,12 +186,12 @@ module shared_input_parameters
   character(len=MAX_STRING_LEN) :: seismotype
 
   ! subsampling
-  integer :: subsamp_seismos
+  integer :: NTSTEP_BETWEEN_OUTPUT_SAMPLE ! depreated: subsamp_seismos, renamed to NTSTEP_BETWEEN_OUTPUT_SAMPLE
 
   ! for better accuracy of pressure output (uses 2nd time-derivatives of the initial source time function)
   logical :: USE_TRICK_FOR_BETTER_PRESSURE
 
-  integer :: NSTEP_BETWEEN_OUTPUT_SEISMOS
+  integer :: NTSTEP_BETWEEN_OUTPUT_SEISMOS ! deprecated: NSTEP_BETWEEN_OUTPUT_SEISMOS has been renamed
 
   ! Integrated energy field output
   logical :: COMPUTE_INTEGRATED_ENERGY_FIELD
@@ -223,9 +226,8 @@ module shared_input_parameters
   !#-----------------------------------------------------------------------------
   ! kernel output in case of adjoint simulation
   logical :: save_ASCII_kernels
-
-  integer :: NSTEP_BETWEEN_COMPUTE_KERNELS
-
+  integer :: NTSTEP_BETWEEN_COMPUTE_KERNELS
+  logical :: APPROXIMATE_HESS_KL
   logical :: NO_BACKWARD_RECONSTRUCTION
 
   !#-----------------------------------------------------------------------------
@@ -305,7 +307,7 @@ module shared_input_parameters
   !#
   !#-----------------------------------------------------------------------------
   ! general information during the computation and for information of the stability behavior during the simulation
-  integer :: NSTEP_BETWEEN_OUTPUT_INFO
+  integer :: NTSTEP_BETWEEN_OUTPUT_INFO
 
   ! for later check of the grid
   logical :: output_grid_Gnuplot,output_grid_ASCII
@@ -320,7 +322,7 @@ module shared_input_parameters
   !#
   !#-----------------------------------------------------------------------------
   ! time step interval for image output
-  integer :: NSTEP_BETWEEN_OUTPUT_IMAGES
+  integer :: NTSTEP_BETWEEN_OUTPUT_IMAGES
 
   ! threshold value
   double precision :: cutsnaps
@@ -389,11 +391,6 @@ module shared_parameters
   ! for interpolated snapshot
   logical :: plot_lowerleft_corner_only
 
-  ! material file for changing the model parameter for inner mesh or updating the
-  ! the material for an existed mesh
-  ! (obsolete in Par_file now...)
-  !logical :: assign_external_model, READ_EXTERNAL_SEP_FILE
-
   ! to store density and velocity model
   integer, dimension(:),allocatable :: num_material
   integer, dimension(:),allocatable :: icodemat
@@ -429,7 +426,7 @@ module shared_parameters
   integer, dimension(:), allocatable :: nz_layer
 
   ! seismogram output
-  logical, parameter :: WRITE_SEISMOGRAMS_BY_MASTER = .true.
+  logical, parameter :: WRITE_SEISMOGRAMS_BY_MAIN = .true.
 
 end module shared_parameters
 
@@ -468,9 +465,6 @@ module source_file_par
 
   ! File name can't exceed MAX_STRING_LEN characters
   character(len=MAX_STRING_LEN), dimension(:),allocatable :: name_of_source_file
-
-  ! Flag for writing moving source databases or not
-  logical :: writeMovingDatabases
 
   ! Flag for moving sources
   logical :: SOURCE_IS_MOVING

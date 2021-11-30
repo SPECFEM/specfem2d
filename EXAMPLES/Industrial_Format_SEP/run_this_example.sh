@@ -33,6 +33,9 @@ ln -s ../../../bin/xmeshfem2D
 ln -s ../../../bin/xspecfem2D
 cd ../
 
+# backup
+cp -v DATA/Par_file DATA/Par_file.bak
+
 
 echo
 echo "compiling xinterpolate..."
@@ -52,6 +55,9 @@ if [[ $? -ne 0 ]]; then exit 1; fi
 # stores setup
 cp DATA/Par_file OUTPUT_FILES/
 cp DATA/SOURCE OUTPUT_FILES/
+
+# restores original Par_file
+cp -v DATA/Par_file.bak DATA/Par_file
 
 echo
 echo "see results in directory: OUTPUT_FILES/"

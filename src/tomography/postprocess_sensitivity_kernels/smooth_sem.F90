@@ -85,7 +85,7 @@ program smooth_sem
 
   logical :: GPU_MODE
 
-  character(len=MAX_STRING_LEN) :: kernel_names(MAX_KERNEL_NAMES)
+  character(len=MAX_STRING_LEN),dimension(:),allocatable :: kernel_names
   character(len=MAX_STRING_LEN) :: kernel_names_comma_delimited
   integer :: nker
 
@@ -111,7 +111,7 @@ program smooth_sem
 
   ! timing
   double precision, external :: wtime
-  real :: t1,t2
+  double precision :: t1,t2
 
   ! MPI initialization
   call init_mpi()
@@ -132,6 +132,12 @@ program smooth_sem
   ! synchronizes all processes
   call synchronize_all()
 
+  ! allocates array
+  allocate(kernel_names(MAX_KERNEL_NAMES), stat=ier)
+  if (ier /= 0) stop 'Error allocating kernel_names array'
+  kernel_names(:) = ''
+
+  ! parse command line arguments
   do i = 1, NARGS
     call get_command_argument(i,arg(i), status=ier)
   enddo
@@ -448,9 +454,9 @@ program smooth_sem
   t2 = wtime()
 
   if (GPU_Mode) then
-    print *,'Computation time with GPU:',t2-t1
+    print *,'Computation time with GPU:',sngl(t2-t1)
   else
-    print *,'Computation time with CPU:',t2-t1
+    print *,'Computation time with CPU:',sngl(t2-t1)
   endif
 
   if (myrank == 0) close(IIN)

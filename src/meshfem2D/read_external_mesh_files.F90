@@ -40,7 +40,7 @@
   ! 'nelmnts' is the number of elements, 'nnodes' is the number of nodes in the mesh.
   !-----------------------------------------------
 
-  subroutine read_external_mesh_file(filename, remove_min_to_start_at_zero, ngnod)
+  subroutine read_external_mesh_file(filename, remove_min_to_start_at_zero, NGNOD)
 
   use constants, only: MAX_STRING_LEN,IMAIN,myrank
   use part_unstruct_par, only: elmnts,nelmnts,nnodes
@@ -49,14 +49,14 @@
 
   character(len=MAX_STRING_LEN), intent(in)  :: filename
   integer, intent(out)  :: remove_min_to_start_at_zero
-  integer, intent(in)  :: ngnod
+  integer, intent(in)  :: NGNOD
 
   integer  :: i,ier
 
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '  Reading data from external mesh file: ',trim(filename)
-    write(IMAIN,*) '    NGNOD = ',ngnod
+    write(IMAIN,*) '    NGNOD = ',NGNOD
     call flush_IMAIN()
   endif
 
@@ -76,31 +76,31 @@
   read(990,*) nelmnts
 #endif
 
-  allocate(elmnts(0:ngnod*nelmnts-1),stat=ier)
+  allocate(elmnts(0:NGNOD*nelmnts-1),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating elmnts array')
   elmnts(:) = -1
 
   do i = 0, nelmnts-1
-    if (ngnod == 4) then
+    if (NGNOD == 4) then
       ! linear elements
       ! 4 corner nodal points
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-      read(990) elmnts(i*ngnod), elmnts(i*ngnod+1), elmnts(i*ngnod+2), elmnts(i*ngnod+3)
+      read(990) elmnts(i*NGNOD), elmnts(i*NGNOD+1), elmnts(i*NGNOD+2), elmnts(i*NGNOD+3)
 #else
-      read(990,*) elmnts(i*ngnod), elmnts(i*ngnod+1), elmnts(i*ngnod+2), elmnts(i*ngnod+3)
+      read(990,*) elmnts(i*NGNOD), elmnts(i*NGNOD+1), elmnts(i*NGNOD+2), elmnts(i*NGNOD+3)
 #endif
-    else if (ngnod == 9) then
+    else if (NGNOD == 9) then
       ! quadratic elements
       ! 4 corners + 4 edge mid-points + 1 center nodal point
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-      read(990) elmnts(i*ngnod), elmnts(i*ngnod+1), elmnts(i*ngnod+2), elmnts(i*ngnod+3), &
-                  elmnts(i*ngnod+4), elmnts(i*ngnod+5), elmnts(i*ngnod+6), elmnts(i*ngnod+7), elmnts(i*ngnod+8)
+      read(990) elmnts(i*NGNOD), elmnts(i*NGNOD+1), elmnts(i*NGNOD+2), elmnts(i*NGNOD+3), &
+                  elmnts(i*NGNOD+4), elmnts(i*NGNOD+5), elmnts(i*NGNOD+6), elmnts(i*NGNOD+7), elmnts(i*NGNOD+8)
 #else
-      read(990,*) elmnts(i*ngnod), elmnts(i*ngnod+1), elmnts(i*ngnod+2), elmnts(i*ngnod+3), &
-                  elmnts(i*ngnod+4), elmnts(i*ngnod+5), elmnts(i*ngnod+6), elmnts(i*ngnod+7), elmnts(i*ngnod+8)
+      read(990,*) elmnts(i*NGNOD), elmnts(i*NGNOD+1), elmnts(i*NGNOD+2), elmnts(i*NGNOD+3), &
+                  elmnts(i*NGNOD+4), elmnts(i*NGNOD+5), elmnts(i*NGNOD+6), elmnts(i*NGNOD+7), elmnts(i*NGNOD+8)
 #endif
     else
-      call stop_the_code('error, ngnod should be either 4 or 9 for external meshes')
+      call stop_the_code('error, NGNOD should be either 4 or 9 for external meshes')
     endif
   enddo
 

@@ -130,7 +130,7 @@
                 if (any(iglob == ibool_interfaces_ext_mesh(:,kk))) dump_duplicate_recv(icounter) = .true.
               enddo
             else
-              ! Send data to master
+              ! Send data to main
               dump_send(1,icounter) = coord(1,iglob)
               dump_send(2,icounter) = coord(2,iglob)
               do kk = 1, ninterface
@@ -145,7 +145,7 @@
 #ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
-        ! Master collects.
+        ! main collects.
         ! Collect first receive counts to allocate gather array.
         dump_recv_counts(0) = icounter
         do iproc = 1, NPROC-1
@@ -186,7 +186,7 @@
         call mask_write_matrix()
 
       else
-        ! sends to master
+        ! sends to main
         call send_singlei(icounter, 0, 43 )
         call send_dp(dump_send(1,1), 2*icounter, 0, 44)
         call send_l(dump_duplicate_send(1), icounter, 0, 45)
@@ -266,11 +266,12 @@
 #ifdef WITH_MPI
   if (NPROC > 1) then
     if (myrank == 0) then
-      ! Master collects
+      ! main collects
       ! Start gathering with proc 0 data
       dump_gather(:,1:dump_recv_counts(0)) = dump_recv(:,1:dump_recv_counts(0))
       gcounter = dump_recv_counts(0)
-      ! The receiver counts dump_recv_counts has already been found and stored and these does not change from first to subsequent dumps.
+      ! The receiver counts dump_recv_counts has already been found and stored
+      ! and these does not change from first to subsequent dumps.
       do iproc = 1, NPROC-1
         call recv_dp(dump_recv(1,1),2*dump_recv_counts(iproc), iproc, 43)
         dump_gather(:,gcounter+1:gcounter+dump_recv_counts(iproc)) = dump_recv(:,1:dump_recv_counts(iproc))
@@ -281,7 +282,7 @@
       call mask_write_matrix()
 
     else
-      ! Send collected vector field to master
+      ! Send collected vector field to main
       call send_dp(dump_send(1,1), 2*icounter, 0, 43)
     endif ! if (myrank == 0)
   else

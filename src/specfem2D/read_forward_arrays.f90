@@ -39,7 +39,7 @@
 !          and adjoint sources will become more complicated
 !          that is, index it for adjoint sources will match index NSTEP - 1 for backward/reconstructed wavefields
 
-  use constants, only: OUTPUT_FILES
+  use constants, only: OUTPUT_FILES,IIN
   use specfem_par
   use specfem_par_gpu
 
@@ -52,21 +52,18 @@
   ! acoustic medium
   if (any_acoustic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
-    open(unit=55,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
+    open(unit=IIN,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_acoustic**.bin')
-    else
-      read(55) b_potential_acoustic
-      read(55) b_potential_dot_acoustic
-      read(55) b_potential_dot_dot_acoustic
-      close(55)
     endif
+    read(IIN) b_potential_acoustic
+    read(IIN) b_potential_dot_acoustic
+    read(IIN) b_potential_dot_dot_acoustic
+    close(IIN)
 
     if (GPU_MODE) then
       ! transfers fields onto GPU
-      call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
-                                          b_potential_dot_acoustic, &
-                                          b_potential_dot_dot_acoustic, &
+      call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
                                           Mesh_pointer)
     else
       ! free surface for an acoustic medium
@@ -77,15 +74,14 @@
   ! elastic medium
   if (any_elastic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
-    open(unit=55,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
+    open(unit=IIN,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_elastic**.bin')
-    else
-      read(55) b_displ_elastic
-      read(55) b_veloc_elastic
-      read(55) b_accel_elastic
-      close(55)
     endif
+    read(IIN) b_displ_elastic
+    read(IIN) b_veloc_elastic
+    read(IIN) b_accel_elastic
+    close(IIN)
 
     !SH (membrane) waves
     if (.not. P_SV) then
@@ -96,50 +92,32 @@
     endif
 
     if (GPU_MODE) then
-      ! prepares wavefields for transfering
-      if (P_SV) then
-        tmp_displ_2D(1,:) = b_displ_elastic(1,:)
-        tmp_displ_2D(2,:) = b_displ_elastic(2,:)
-        tmp_veloc_2D(1,:) = b_veloc_elastic(1,:)
-        tmp_veloc_2D(2,:) = b_veloc_elastic(2,:)
-        tmp_accel_2D(1,:) = b_accel_elastic(1,:)
-        tmp_accel_2D(2,:) = b_accel_elastic(2,:)
-      else
-        ! SH waves
-        tmp_displ_2D(1,:) = b_displ_elastic(1,:)
-        tmp_displ_2D(2,:) = 0._CUSTOM_REAL
-        tmp_veloc_2D(1,:) = b_veloc_elastic(1,:)
-        tmp_veloc_2D(2,:) = 0._CUSTOM_REAL
-        tmp_accel_2D(1,:) = b_accel_elastic(1,:)
-        tmp_accel_2D(2,:) = 0._CUSTOM_REAL
-      endif
-      call transfer_b_fields_to_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
+      ! transfers fields onto GPU
+      call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_elastic,b_veloc_elastic,b_accel_elastic,Mesh_pointer)
     endif
   endif
 
   ! poroelastic medium
   if (any_poroelastic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
-    open(unit=55,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
+    open(unit=IIN,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_poroelastic_s**.bin')
-    else
-      read(55) b_displs_poroelastic
-      read(55) b_velocs_poroelastic
-      read(55) b_accels_poroelastic
-      close(55)
     endif
+    read(IIN) b_displs_poroelastic
+    read(IIN) b_velocs_poroelastic
+    read(IIN) b_accels_poroelastic
+    close(IIN)
 
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
-    open(unit=56,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
+    open(unit=IIN,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_poroelastic_w**.bin')
-    else
-      read(56) b_displw_poroelastic
-      read(56) b_velocw_poroelastic
-      read(56) b_accelw_poroelastic
-      close(56)
     endif
+    read(IIN) b_displw_poroelastic
+    read(IIN) b_velocw_poroelastic
+    read(IIN) b_accelw_poroelastic
+    close(IIN)
 
     ! safety check
     if (GPU_MODE) then
@@ -164,7 +142,7 @@
     b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
     b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_e1,b_e11,b_e13, &
     b_dux_dxl_old,b_duz_dzl_old,b_dux_dzl_plus_duz_dxl_old,b_e1_acous_sf,b_sum_forces_old, &
-    GPU_MODE,nspec_ATT_ac,nglob
+    GPU_MODE,nspec_ATT_ac,nspec_ATT_el,nglob
 
   use specfem_par_gpu, only: Mesh_pointer
 
@@ -204,6 +182,8 @@
     read(IIN_UNDO_ATT) b_accel_elastic
     read(IIN_UNDO_ATT) b_veloc_elastic
     read(IIN_UNDO_ATT) b_displ_elastic
+    if (GPU_MODE) call transfer_b_fields_to_device(nglob,b_displ_elastic,b_veloc_elastic, &
+                                                   b_accel_elastic,Mesh_pointer)
 
     if (ATTENUATION_VISCOELASTIC) then
       read(IIN_UNDO_ATT) b_e1
@@ -212,6 +192,8 @@
       read(IIN_UNDO_ATT) b_dux_dxl_old
       read(IIN_UNDO_ATT) b_duz_dzl_old
       read(IIN_UNDO_ATT) b_dux_dzl_plus_duz_dxl_old
+      if (GPU_MODE) call transfer_viscoelastic_b_var_to_device(NGLLX*NGLLZ*nspec_ATT_el,b_e1,b_e11,b_e13, &
+                                                               b_dux_dxl_old,b_duz_dzl_old,b_dux_dzl_plus_duz_dxl_old,Mesh_pointer)
     endif
   endif
 
@@ -225,12 +207,13 @@
 
   subroutine read_forward_arrays_no_backward()
 
-  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,APPROXIMATE_HESS_KL,NDIM,CUSTOM_REAL
+  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,NDIM,CUSTOM_REAL
 
   use specfem_par, only: myrank,it,any_acoustic,any_elastic, &
     b_potential_acoustic,b_displ_elastic,b_accel_elastic, &
     nglob,no_backward_acoustic_buffer,no_backward_displ_buffer,no_backward_accel_buffer, &
-    no_backward_iframe,no_backward_Nframes,GPU_MODE,NSTEP
+    no_backward_iframe,no_backward_Nframes,GPU_MODE,NSTEP, &
+    APPROXIMATE_HESS_KL
 
   use specfem_par_gpu, only: Mesh_pointer
 
@@ -245,7 +228,7 @@
   ! transfer of a wavefield two iterations before this wavefield is actually needed by the kernel computation.
   ! Two iterations before, the wavefield is read from the disk.
   ! One iteration before, this wavefield is transfered from the RAM to the GPU.
-  ! In the text above, an iteration means NSTEP_BETWEEN_COMPUTE_KERNELS iterations of the timeloop.
+  ! In the text above, an iteration means NTSTEP_BETWEEN_COMPUTE_KERNELS iterations of the timeloop.
 
   no_backward_iframe = no_backward_iframe + 1
 

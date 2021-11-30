@@ -35,28 +35,28 @@
 ! Compute also the global coordinates of the point defined by: (xi,gamma,ispec).
 
   subroutine recompute_jacobian_with_negative_stop(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                                                   coorg,knods,ispec,ngnod,nspec,npgeo, &
+                                                   coorg,knods,ispec,NGNOD,nspec,npgeo, &
                                                    stop_if_negative_jacobian)
 
   use constants, only: NDIM,ZERO
 
   implicit none
 
-  integer,intent(in) :: ispec,ngnod,nspec,npgeo
+  integer,intent(in) :: ispec,NGNOD,nspec,npgeo
   double precision, intent(in) :: xi,gamma
   double precision, intent(out) :: x,z
   double precision, intent(out) :: xix,xiz,gammax,gammaz
   double precision, intent(out) :: jacobian
 
-  integer, intent(in) :: knods(ngnod,nspec)
+  integer, intent(in) :: knods(NGNOD,nspec)
   double precision, intent(in) :: coorg(NDIM,npgeo)
 
   logical, intent(in) :: stop_if_negative_jacobian
 
   ! local parameters
 ! 2D shape functions and their derivatives at receiver
-  double precision :: shape2D(ngnod)
-  double precision :: dershape2D(NDIM,ngnod)
+  double precision :: shape2D(NGNOD)
+  double precision :: dershape2D(NDIM,NGNOD)
 
   double precision :: xxi,zxi,xgamma,zgamma,xelm,zelm
 
@@ -68,7 +68,7 @@
 ! recompute jacobian for any (xi,gamma) point, not necessarily a GLL point
 
 ! create the 2D shape functions and then the Jacobian
-  call define_shape_functions(shape2D,dershape2D,xi,gamma,ngnod)
+  call define_shape_functions(shape2D,dershape2D,xi,gamma,NGNOD)
 
 ! compute coordinates and jacobian matrix
   x = ZERO
@@ -79,7 +79,7 @@
   xgamma = ZERO
   zgamma = ZERO
 
-  do ia = 1,ngnod
+  do ia = 1,NGNOD
 
     nnum = knods(ia,ispec)
 
@@ -105,8 +105,8 @@
 
 ! print the coordinates of the mesh points of this element
     print *, 'ispec = ', ispec
-    print *, 'ngnod = ', ngnod
-    do ia = 1,ngnod
+    print *, 'NGNOD = ', NGNOD
+    do ia = 1,NGNOD
       nnum = knods(ia,ispec)
       xelm = coorg(1,nnum)
       zelm = coorg(2,nnum)
@@ -117,8 +117,8 @@
     open(unit=11,file='DX_first_element_with_negative_jacobian.dx',status='unknown')
 
 ! output the points (the mesh is flat therefore the third coordinate is zero)
-    write(11,*) 'object 1 class array type float rank 1 shape 3 items ',ngnod,' data follows'
-    do ia = 1,ngnod
+    write(11,*) 'object 1 class array type float rank 1 shape 3 items ',NGNOD,' data follows'
+    do ia = 1,NGNOD
       nnum = knods(ia,ispec)
       xelm = coorg(1,nnum)
       zelm = coorg(2,nnum)

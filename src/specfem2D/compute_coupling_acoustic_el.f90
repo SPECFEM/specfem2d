@@ -33,7 +33,7 @@
 
 ! for acoustic solver
 
-  subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic,dot_e1)
+  subroutine compute_coupling_acoustic_el()
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
     CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE,ALPHA_LDDRK,BETA_LDDRK,USE_A_STRONG_FORMULATION_FOR_E1
@@ -43,21 +43,19 @@
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                          fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
-                         rmemory_fsb_displ_elastic,deltat, &
+                         rmemory_fsb_displ_elastic,DT,deltat, &
                          rmemory_fsb_displ_elastic_LDDRK,i_stage,time_stepping_scheme, &
-                         nglob_acoustic,nglob_elastic,iglob_is_forced, &
-                         ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_att
+                         iglob_is_forced, &
+                         ATTENUATION_VISCOACOUSTIC
+
+  use specfem_par, only: displ_elastic,accel_elastic,potential_dot_dot_acoustic, &
+                         displ_elastic_old,dot_e1,SIMULATION_TYPE
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML,nspec_PML,spec_to_PML,region_CPML, &
                          K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   implicit none
-
-  real(kind=CUSTOM_REAL),dimension(NDIM,nglob_elastic) :: displ_elastic,displ_elastic_old
-  real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_dot_dot_acoustic
-
-  real(kind=CUSTOM_REAL),dimension(nglob_att,N_SLS) :: dot_e1
 
   !local variable
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
@@ -88,13 +86,32 @@
       j = jvalue_inverse(ipoin1D,iedge_elastic)
       iglob = ibool(i,j,ispec_elastic)
 
-      displ_x = displ_elastic(1,iglob)
-      displ_z = displ_elastic(2,iglob)
+      if (SIMULATION_TYPE /= 3) then
+        ! forward and pure adjoint simulations
+        ! coupling term:
+        !   1/rho grad(chi) * n = n * u
+        ! uses normal component of displacement
+        displ_x = displ_elastic(1,iglob)
+        displ_z = displ_elastic(2,iglob)
+      else
+        ! coupling for kernel adjoint wavefields
+        !
+        ! note: handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+        !       adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
+        !       (see Luo et al. 2013, eq. A-22)
+        !
+        ! coupling term:
+        !   1/rho grad(chi^adj) * n = - n * \partial_t^2 u^adj
+        !
+        ! coupling with adjoint wavefields uses normal component of negative acceleration
+        displ_x = - accel_elastic(1,iglob)       ! accel_elastic_adj_coupling
+        displ_z = - accel_elastic(2,iglob)
+      endif
 
       ! PML elements
       ! overwrites displ_x and displ_z
       if (PML_BOUNDARY_CONDITIONS) then
-        if (ispec_is_PML(ispec_elastic) .and. nspec_PML > 0) then
+        if (nspec_PML > 0 .and. ispec_is_PML(ispec_elastic)) then
           ispec_PML = spec_to_PML(ispec_elastic)
           CPML_region_local = region_CPML(ispec_elastic)
           kappa_x = K_x_store(i,j,ispec_PML)
@@ -108,11 +125,11 @@
 
           if (CPML_region_local == CPML_X_ONLY) then
             !ZN needed to be change in case of viscoelastic medium
-            call lik_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+            call lik_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                            CPML_region_local,13,A8,A9,A10,bb_xz_1,bb_xz_2, &
                                            coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
           else if (CPML_region_local == CPML_Z_ONLY) then
-            call lik_parameter_computation(deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
+            call lik_parameter_computation(DT,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
                                            CPML_region_local,31,A8,A9,A10,bb_xz_1,bb_xz_2, &
                                            coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
 
@@ -245,10 +262,12 @@
 
       ! compute dot product
       displ_n = displ_x*nx + displ_z*nz
+
 !! DK DK QUENTIN visco begin ici comme tu disais il faudrait coupler la composante tangentielle
 !! DK DK QUENTIN en plus de la composante normale je suppose
       if (.not. iglob_is_forced(iglob)) then
         potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+
         if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1 ) &
           dot_e1(iglob,:) = dot_e1(iglob,:) + weight*displ_n
       endif
@@ -262,7 +281,7 @@
 !========================================================================
 ! for acoustic solver: backward simulation in adjoint inversion
 
-  subroutine compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)
+  subroutine compute_coupling_acoustic_el_backward()
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
     CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
@@ -271,13 +290,11 @@
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                          fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
-                         AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
-                         nglob_acoustic,nglob_elastic
+                         AXISYM,coord,is_on_the_axis,xiglj,wxglj
+
+  use specfem_par, only: b_displ_elastic,b_potential_dot_dot_acoustic
 
   implicit none
-
-  real(kind=CUSTOM_REAL),dimension(NDIM,nglob_elastic) :: b_displ_elastic
-  real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: b_potential_dot_dot_acoustic
 
   !local variable
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
@@ -304,7 +321,8 @@
       j = jvalue_inverse(ipoin1D,iedge_elastic)
       iglob = ibool(i,j,ispec_elastic)
 
-
+      ! coupling term: 1/rho grad(chi) * n = n * u
+      ! for backward wavefields
       displ_x = b_displ_elastic(1,iglob)
       displ_z = b_displ_elastic(2,iglob)
 

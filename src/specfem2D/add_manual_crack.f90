@@ -37,7 +37,7 @@
     NDIM,IMAIN,ADD_A_SMALL_CRACK_IN_THE_MEDIUM,NB_POINTS_TO_ADD_TO_NPGEO,FAST_NUMBERING,myrank
 
   use specfem_par, only: &
-    NPROC,nspec,kmato,knods,coorg,ngnod,npgeo
+    NPROC,nspec,kmato,knods,coorg,NGNOD,npgeo
 
   implicit none
 
@@ -60,8 +60,8 @@
   endif
 
   ! safety checks
-  if (ngnod /= 4) &
-    call stop_the_code('must currently have ngnod == 4 when adding a crack manually')
+  if (NGNOD /= 4) &
+    call stop_the_code('must currently have NGNOD == 4 when adding a crack manually')
   if (FAST_NUMBERING) &
     call stop_the_code('must not have FAST_NUMBERING when adding a crack manually')
 
@@ -166,7 +166,7 @@
         do ispec2 = 1,nspec
 ! do this only for elements that define the left vertical edge of the crack
           if (kmato(ispec2) /= 2) cycle
-          do ignod = 1,ngnod
+          do ignod = 1,NGNOD
             if (knods(ignod,ispec2) == original_value) then
               knods(ignod,ispec2) = current_last_point
               coorg(:,current_last_point) = coorg(:,original_value)
@@ -188,7 +188,7 @@
         do ispec2 = 1,nspec
 ! do this only for elements that define the left vertical edge of the crack
           if (kmato(ispec2) /= 2) cycle
-          do ignod = 1,ngnod
+          do ignod = 1,NGNOD
             if (knods(ignod,ispec2) == original_value) then
               knods(ignod,ispec2) = current_last_point
               coorg(:,current_last_point) = coorg(:,original_value)

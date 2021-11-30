@@ -37,7 +37,8 @@
 
     ! ----------------------------------------------------------------------
 
-  subroutine compute_attenuation_acoustic_integration(potential_acoustic,ispec_is_acoustic,PML_BOUNDARY_CONDITIONS,iphase,dot_e1)
+  subroutine compute_attenuation_acoustic_integration(potential_acoustic,ispec_is_acoustic, &
+                                                      PML_BOUNDARY_CONDITIONS,iphase,dot_e1)
 
   ! updates memory variable in viscoacoustic simulation
 
@@ -46,9 +47,9 @@
 
   use specfem_par, only: nglob,nspec,N_SLS, &
                          ibool,xix,xiz,gammax,gammaz,hprime_xx,hprime_zz,ispec_is_PML, &
-                         NGLJ, assign_external_model,AXISYM, &
+                         NGLJ, AXISYM, &
                          nspec_inner_acoustic, nspec_outer_acoustic, &
-                         kmato, phase_ispec_inner_acoustic,jacobian,rhostore,density, &
+                         phase_ispec_inner_acoustic,jacobian,rhostore, &
                          is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,hprimewgll_zz,hprimewgll_xx, &
                          wxgll,wzgll,wxglj,xiglj,coord,iglob_is_forced,nglob_att
 
@@ -117,10 +118,8 @@
     if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. ispec_is_PML(ispec)))) then
 
     ! gets local potential for element
-    rhol = density(1,kmato(ispec))
     do j = 1,NGLLZ
       do i = 1,NGLLX
-
         ! convention to indicate that Q = 9999 i.e. that there is no viscoacousticity at that GLL point
         !if (inv_tau_sigma_nu1(i,j,ispec,i_sls) < 0.) cycle
 
@@ -136,12 +135,8 @@
 
         !! EQ:theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu
 
-        ! if external density model
-        if (assign_external_model) then
-          rhol = rhostore(i,j,ispec)
-        endif
+        rhol = rhostore(i,j,ispec)
         deriv(6,i,j) = jacobian(i,j,ispec) / rhol
-
       enddo
     enddo
 
@@ -443,8 +438,8 @@
 ! For cases in which a value of tau_sigma is small, then its inverse is large,
 ! which may result in a in stiff ordinary differential equation to solve;
 ! in such a case, resorting to the convolution formulation is better.
-!! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
-      !temp = exp(- 0.5d0 * tauinvnu1 * deltat)
+!! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu1,DT,coef0,coef1,coef2)
+      !temp = exp(- 0.5d0 * tauinvnu1 * DT)
       !coef1 = (1.d0 - temp) / tauinvnu1
 
       e1_acous(:,i_sls) = (A_newmark_e1(:,i_sls)**2) * e1_acous(:,i_sls) &

@@ -7,7 +7,7 @@ set output "comparison_with_analytical_solution.pdf"
 
 set xrange [1.3:2.1]
 
-# in the original paper from the year 2000 http://komatitsch.free.fr/preprints/geophysics_fluid_solid_Dirichlet_added.pdf
+# in the original paper from the year 2000 https://specfem.github.io/komatitsch.free.fr/published_papers/geophysics_fluid_solid_Dirichlet_added.pdf
 # we did not subtract the t0 of the source from the seismograms, and t0 is 0.104 for this test, thus we add it here
 # in the Gnuplot script because the current version of SPECFEM2D subtracts it from seismograms automatically
 

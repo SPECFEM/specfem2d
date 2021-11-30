@@ -58,16 +58,19 @@
   double precision :: write_time_begin,write_time
 
   ! checks subsampling recurrence
-  if (mod(it-1,subsamp_seismos) == 0) then
+  if (mod(it-1,NTSTEP_BETWEEN_OUTPUT_SAMPLE) == 0) then
+
+    ! update position in seismograms
+    seismo_current = seismo_current + 1
+
+    ! check for edge effects
+    if (seismo_current < 1 .or. seismo_current > nlength_seismogram) then
+      print *,'Error: seismo_current ',seismo_current,' should be between 1 and ',nlength_seismogram
+      call stop_the_code('Error: seismo_current out of bounds in recording of seismograms')
+    endif
 
     do i_sig = 1,NSIGTYPE
       seismotype_l = seismotypeVec(i_sig)
-      ! update position in seismograms
-      seismo_current(i_sig) = seismo_current(i_sig) + 1
-
-      ! check for edge effects
-      if (seismo_current(i_sig) < 1 .or. seismo_current(i_sig) > NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos) &
-        call stop_the_code('Error: seismo_current out of bounds in recording of seismograms')
 
       ! updates local receiver records
       if (nrecloc > 0) then
@@ -129,55 +132,53 @@
             ! rotate seismogram components if needed, except if recording pressure, which is a scalar
             if (seismotype_l == 4 .or. seismotype_l == 6) then
               ! pressure/potential type has only single component
-              sisux(seismo_current(i_sig),irecloc,i_sig) = valux
-              sisuz(seismo_current(i_sig),irecloc,i_sig) = ZERO
+              sisux(seismo_current,irecloc,i_sig) = valux
+              sisuz(seismo_current,irecloc,i_sig) = ZERO
             else
               if (P_SV) then
-                sisux(seismo_current(i_sig),irecloc,i_sig) =   cosrot_irec(irecloc)*valux + sinrot_irec(irecloc)*valuz
-                sisuz(seismo_current(i_sig),irecloc,i_sig) = - sinrot_irec(irecloc)*valux + cosrot_irec(irecloc)*valuz
+                sisux(seismo_current,irecloc,i_sig) =   cosrot_irec(irecloc)*valux + sinrot_irec(irecloc)*valuz
+                sisuz(seismo_current,irecloc,i_sig) = - sinrot_irec(irecloc)*valux + cosrot_irec(irecloc)*valuz
               else
-                sisux(seismo_current(i_sig),irecloc,i_sig) = valux
-                sisuz(seismo_current(i_sig),irecloc,i_sig) = ZERO
+                sisux(seismo_current,irecloc,i_sig) = valux
+                sisuz(seismo_current,irecloc,i_sig) = ZERO
               endif
               ! additional curl case
-              if (seismotype_l == 5) siscurl(seismo_current(i_sig),irecloc,i_sig) = valcurl
+              if (seismotype_l == 5) siscurl(seismo_current,irecloc,i_sig) = valcurl
             endif
           enddo ! irecloc
 
         else
           ! on GPU
           ! Simulating seismograms
-          if (USE_TRICK_FOR_BETTER_PRESSURE) then
-            call compute_seismograms_cuda(Mesh_pointer,i_sig,sisux(:,:,i_sig),sisuz(:,:,i_sig),seismo_current(i_sig), &
-                                                       NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
-                                                       ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,1,it,NSTEP)
-          else
-            call compute_seismograms_cuda(Mesh_pointer,i_sig,sisux(:,:,i_sig),sisuz(:,:,i_sig),seismo_current(i_sig), &
-                                                       NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
-                                                       ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,0,it,NSTEP)
-          endif
+          call compute_seismograms_cuda(Mesh_pointer,i_sig,sisux(:,:,i_sig),sisuz(:,:,i_sig), &
+                                        seismo_current,nlength_seismogram, &
+                                        ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,USE_TRICK_FOR_BETTER_PRESSURE, &
+                                        ATTENUATION_VISCOELASTIC, &
+                                        it,NSTEP)
           ! note: curl not implemented yet
         endif ! GPU_MODE
       endif ! nrecloc
     enddo  ! loop on signal types (seismotype)
 
-  endif  ! subsamp_seismos
+  endif  ! NTSTEP_BETWEEN_OUTPUT_SAMPLE
 
   ! save temporary or final seismograms
-  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+  if (mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
     ! timing
     write_time_begin = wtime()
 
-    do i_sig = 1,NSIGTYPE ! Loop on signal types
+    ! Loop on signal types
+    do i_sig = 1,NSIGTYPE
       seismotype_l = seismotypeVec(i_sig)
 
-      call write_seismograms_to_file(sisux(:,:,i_sig),sisuz(:,:,i_sig),siscurl(:,:,i_sig),seismotype_l,seismo_current(i_sig), &
-                                     seismo_offset(i_sig))
+      call write_seismograms_to_file(sisux(:,:,i_sig),sisuz(:,:,i_sig),siscurl(:,:,i_sig),seismotype_l,seismo_current, &
+                                     seismo_offset)
 
-      ! updates current seismogram offsets
-      seismo_offset(i_sig) = seismo_offset(i_sig) + seismo_current(i_sig)
-      seismo_current(i_sig) = 0
     enddo ! loop on signal types (seismotype)
+
+    ! updates current seismogram offsets
+    seismo_offset = seismo_offset + seismo_current
+    seismo_current = 0
 
     ! user output
     if (myrank == 0) then
@@ -185,9 +186,9 @@
       write_time = wtime() - write_time_begin
       ! output
       write(IMAIN,*)
-      write(IMAIN,*) 'Total number of time steps written: ', it-it_begin+1
-      if (WRITE_SEISMOGRAMS_BY_MASTER) then
-        write(IMAIN,*) 'Writing the seismograms by master proc alone took ',sngl(write_time),' seconds'
+      write(IMAIN,*) 'Total number of time steps done: ', it-it_begin+1
+      if (WRITE_SEISMOGRAMS_BY_MAIN) then
+        write(IMAIN,*) 'Writing the seismograms by main proc alone took ',sngl(write_time),' seconds'
       else
         write(IMAIN,*) 'Writing the seismograms in parallel took ',sngl(write_time),' seconds'
       endif
@@ -204,15 +205,15 @@
 
   use constants, only: NDIM,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME,OUTPUT_FILES, RegInt_K
 
-  use specfem_par, only: station_name,network_name,NSTEP,islice_selected_rec,nrec,myrank,deltat,t0, &
-                         NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos,nrecloc, &
+  use specfem_par, only: station_name,network_name,NSTEP,islice_selected_rec,nrec,myrank,DT,t0, &
+                         NTSTEP_BETWEEN_OUTPUT_SAMPLE,nrecloc,nlength_seismogram, &
                          P_SV,SU_FORMAT,save_ASCII_seismograms, &
                          save_binary_seismograms_single,save_binary_seismograms_double,x_source,z_source, &
-                         WRITE_SEISMOGRAMS_BY_MASTER
+                         WRITE_SEISMOGRAMS_BY_MAIN
 
   implicit none
 
-  double precision,dimension(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc),intent(in) :: sisux_l,sisuz_l,siscurl_l
+  double precision,dimension(nlength_seismogram,nrecloc),intent(in) :: sisux_l,sisuz_l,siscurl_l
   integer,intent(in) :: seismotype_l,seismo_current_l,seismo_offset_l
 
   ! local parameters
@@ -244,7 +245,7 @@
   file_unit_17_has_been_opened = .false.
 
   ! safety stop
-  if (.not. WRITE_SEISMOGRAMS_BY_MASTER) &
+  if (.not. WRITE_SEISMOGRAMS_BY_MAIN) &
     stop 'Error writing seismograms in parallel not supported yet!'
 
 ! write seismograms
@@ -282,7 +283,7 @@
   buffer_binary(:,:,:) = 0.d0
 
   ! see if we need to save any seismogram in binary format
-  save_binary_seismograms = save_binary_seismograms_single .or. save_binary_seismograms_double
+  save_binary_seismograms = ( save_binary_seismograms_single .or. save_binary_seismograms_double )
 
   ! binary file output
   if ( (save_binary_seismograms .or. SU_FORMAT) .and. myrank == 0) then
@@ -369,8 +370,8 @@
 #ifdef WITH_MPI
       else
         ! gets from other processes
-        if (WRITE_SEISMOGRAMS_BY_MASTER) then
-          ! collects seismogram components on master
+        if (WRITE_SEISMOGRAMS_BY_MAIN) then
+          ! collects seismogram components on main
           call recv_dp(buffer_binary(1,irec,1), seismo_current_l, islice_selected_rec(irec), irec)
 
           if (number_of_components == 2) then
@@ -388,9 +389,9 @@
 
 #ifdef WITH_MPI
     else
-      ! slave processes (myrank > 0)
-      if (WRITE_SEISMOGRAMS_BY_MASTER) then
-        ! sends seismogram values to master
+      ! secondary processes (myrank > 0)
+      if (WRITE_SEISMOGRAMS_BY_MAIN) then
+        ! sends seismogram values to main
         if (myrank == islice_selected_rec(irec)) then
           irecloc = irecloc + 1
           call send_dp(sisux_l(1,irecloc), seismo_current_l, 0, irec)
@@ -467,7 +468,7 @@
             do isample = 1,seismo_current_l
 
               ! forward time
-              time_t = dble(seismo_offset_l + isample - 1) * deltat * subsamp_seismos - t0
+              time_t = dble(seismo_offset_l + isample - 1) * DT * NTSTEP_BETWEEN_OUTPUT_SAMPLE - t0
 
               write(11,*) time_t,' ',buffer_binary(isample,irec,iorientation)
             enddo
@@ -480,7 +481,7 @@
         ! write binary seismogram
         if (save_binary_seismograms) then
 
-          ioffset = (irec-1) * NSTEP / subsamp_seismos + seismo_offset_l
+          ioffset = (irec-1) * NSTEP / NTSTEP_BETWEEN_OUTPUT_SAMPLE + seismo_offset_l
 
           if (save_binary_seismograms_single) then
             do isample = 1, seismo_current_l

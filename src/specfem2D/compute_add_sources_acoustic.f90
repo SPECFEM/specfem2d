@@ -71,7 +71,7 @@
               iglob = ibool(i,j,ispec)
 
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
-                                  real(sourcearrays(i_source,1,i,j) * stf_used / kappastore(i,j,ispec),kind=CUSTOM_REAL)
+                                  real(sourcearrays(1,i,j,i_source) * stf_used / kappastore(i,j,ispec),kind=CUSTOM_REAL)
             enddo
           enddo
 
@@ -99,9 +99,9 @@
   use specfem_par, only: ispec_is_acoustic,nglob_acoustic, &
                          NSOURCES,source_type,source_time_function, &
                          islice_selected_source,ispec_selected_source, &
-                         hxis_store,hgammas_store,ibool,kappastore,myrank,deltat,t0,tshift_src, &
+                         hxis_store,hgammas_store,ibool,kappastore,myrank,DT,t0,tshift_src, &
                          coord,nspec,nglob,xigll,zigll,NPROC,xi_source, &
-                         gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source, &
+                         gamma_source,coorg,knods,NGNOD,npgeo,iglob_source,x_source,z_source, &
                          vx_source,vz_source, time_stepping_scheme, &
                          SOURCE_IS_MOVING, &
                          hxis,hpxis,hgammas,hpgammas
@@ -124,29 +124,35 @@
 
   if (time_stepping_scheme == 1) then
     ! Newmark
-    timeval = (it-1)*deltat
+    timeval = (it-1)*DT
   else
     call exit_MPI(myrank,'Only Newmark time scheme is implemented for moving sources (2)')
   endif
 
-  if ((myrank == 0) .and. (it < 5)) then
+  ! user output
+  if ((myrank == 0) .and. (it == 1)) then
+    write(IMAIN,*)
+    write(IMAIN,*) '****************************************************************************************'
+    write(IMAIN,*) 'Your are using acoustic moving source capabilities. Please cite:'
+    write(IMAIN,*) 'Bottero (2018) Full-wave numerical simulation of T-waves and of moving acoustic sources'
+    write(IMAIN,*) 'PhD thesis'
+    write(IMAIN,*) 'https://tel.archives-ouvertes.fr/tel-01893011'
+    write(IMAIN,*) '****************************************************************************************'
+    write(IMAIN,*)
+    write(IMAIN,*) 'Note: subroutine compute_add_sources_acoustic_moving_sources can be greatly'
+    write(IMAIN,*) 'optimized. See what is done in init_moving_sources (in moving_sources_par.f90).'
+    write(IMAIN,*) 'This is easy to do and would probably greatly improve the computational time'
+    write(IMAIN,*)
+    ! timing warning
     do i_source = 1,NSOURCES
-      write(IMAIN,*)
-      write(IMAIN,*) 'Your are using moving source capabilities. Please cite:'
-      write(IMAIN,*) 'Bottero (2018) Full-wave numerical simulation of T-waves and of moving acoustic sources'
-      write(IMAIN,*) 'PhD thesis'
-      write(IMAIN,*) 'https://tel.archives-ouvertes.fr/tel-01893011'
-      write(IMAIN,*)
-      write(IMAIN,*) 'Note: subroutine compute_add_sources_acoustic_moving_sources can be greatly'
-      write(IMAIN,*) 'optimized. See what is done in init_moving_sources (in moving_sources_par.f90).'
-      write(IMAIN,*) 'This is easy to do and would probably greatly improve the computational time'
       if ((abs(tshift_src(i_source)) > 0.0d0) .or. (abs(t0) > 0.0d0)) then
-        write(IMAIN,*)
+        write(IMAIN,*) 'Source #',i_source
         write(IMAIN,*) ' !! BEWARE !! Parameters tshift and/or t0 are used with moving source !'
         write(IMAIN,*) ' The time step for the moving source is: '
-        write(IMAIN,*) '    t_used = (it_l-1)*deltat-t0-tshift_src(i_source)'
+        write(IMAIN,*) '    t_used = (it_l-1)*DT-t0-tshift_src(i_source)'
         write(IMAIN,*) ' And the source position is calculated like:'
         write(IMAIN,*) '  xsrc = x_source + vx_source*t_used'
+        write(IMAIN,*)
       endif
     enddo
   endif
@@ -166,7 +172,7 @@
       call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
                          xsrc,zsrc, &
                          ispec_selected_source(i_source),islice_selected_source(i_source), &
-                         NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                         NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,NGNOD,npgeo, &
                          iglob_source(i_source),.true.)
 
       ! print *,ispec_selected_source(i_source) > nspec, "xmin:", &
@@ -244,12 +250,13 @@
 
   use specfem_par, only: potential_dot_dot_acoustic,ispec_is_acoustic,NSTEP,it, &
                          nrecloc,ispec_selected_rec_loc, &
-                         ibool,kappastore,source_adjoint,xir_store_loc,gammar_store_loc
+                         ibool,source_adjoint,xir_store_loc,gammar_store_loc
   implicit none
 
   !local variables
   integer :: irec_local,i,j,iglob,ispec
   integer :: it_tmp
+  real(kind=CUSTOM_REAL) :: stf
 
   ! time step index
   it_tmp = NSTEP - it + 1
@@ -265,14 +272,16 @@
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
 
-          !ZN Zinan Xie, Year 2012:
-          !ZN be careful, the following line is newly added, thus when doing a comparison
-          !ZN of the new code with the old code, you will have a big difference if you
-          !ZN do not adjust the amplitude of the adjoint source
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-                                              real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
-                                              source_adjoint(irec_local,it_tmp,1),kind=CUSTOM_REAL) &
-                                              / kappastore(i,j,ispec)
+          ! adjoint source of Peter et al. (A8):
+          !   f^adj = - sum_i \partial_t^2 (p^syn - p^obs)(T-t) \delta(x - x_i)
+          ! note that using the adjoint source derived from the optimization problem, there is no 1/kappa term applied
+          ! to the adjoint source. the negative sign also is part of the construction of the adjoint source.
+          !
+          ! since we don't know which formulation of adjoint source is used for the input, we add the adjoint source as is,
+          ! without 1/kappa factor, and with a positive sign.
+          stf = xir_store_loc(irec_local,i) * gammar_store_loc(irec_local,j) * source_adjoint(irec_local,it_tmp,1)
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + stf
+
         enddo
       enddo
     endif ! if element acoustic

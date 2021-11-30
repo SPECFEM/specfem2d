@@ -47,14 +47,20 @@ def plot_correlations(syn_file,ref_file):
     print("|%-30s| %13s| %13s|" % ('kernel name', 'corr', 'err'))
     print("|------------------------------------------------------------|")
 
+    # build reference and synthetics file names
+    # specfem file: proc******_rhop_alpha_beta_kernel.dat
+    fname = os.path.basename(syn_file)
+    names = str.split(fname,"_")
+
+    # debug
+    #print("kernel names: ",names)  #['proc000000', 'rho', 'kappa', 'kernel.dat']
+
+    # number of kernels
+    num_kernel_names = len(names) - 1
+
     # counter
     n = 0
-    for i in range(1,4):
-        # build reference and synthetics file names
-        # specfem file: proc******_rhop_alpha_beta_kernel.dat
-        fname = os.path.basename(syn_file)
-        names = str.split(fname,"_")
-
+    for i in range(1,num_kernel_names):
         # trace
         kernel = names[i]
 

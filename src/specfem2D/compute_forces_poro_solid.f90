@@ -41,6 +41,7 @@
     ALPHA_LDDRK,BETA_LDDRK,ALPHA_RK4,BETA_RK4
 
   use specfem_par, only: nglob,nspec,nglob_poroelastic,b_nspec_poroelastic, &
+                         phistore,tortstore,kappaarraystore,mufr_store, &
                          ATTENUATION_VISCOELASTIC,deltat, &
                          ibool,ispec_is_poroelastic, &
                          xix,xiz,gammax,gammaz,jacobian, &
@@ -89,7 +90,7 @@
   real(kind=CUSTOM_REAL) :: mu_relaxed_viscoelastic,lambda_relaxed_viscoelastic,lambdalplus2mu_relaxed_viscoel
   real(kind=CUSTOM_REAL) :: mu_G,lambdal_G,lambdalplus2mul_G
 
-  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
+  double precision :: phi,tort,kappa_s,kappa_f,kappa_fr,mu_fr
   double precision :: D_biot,H_biot,C_biot,M_biot
 
 ! for attenuation
@@ -146,11 +147,11 @@
               ! Newmark
               bb = tauinvnu2; coef0 = exp(-bb * deltat)
               if (abs(bb) > 1e-5_CUSTOM_REAL) then
-                 coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
-                 coef2 = (1._CUSTOM_REAL - exp(-bb* deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL)/ bb
+                 coef1 = (1._CUSTOM_REAL - exp(-bb * deltat * 0.5_CUSTOM_REAL)) / bb
+                 coef2 = (1._CUSTOM_REAL - exp(-bb * deltat * 0.5_CUSTOM_REAL)) * exp(-bb * deltat * 0.5_CUSTOM_REAL)/ bb
               else
-                 coef1 = deltat / 2._CUSTOM_REAL
-                 coef2 = deltat / 2._CUSTOM_REAL
+                 coef1 = deltat * 0.5_CUSTOM_REAL
+                 coef2 = deltat * 0.5_CUSTOM_REAL
               endif
 
               e11(i_sls,i,j,ispec) = coef0 * e11(i_sls,i,j,ispec) + &
@@ -248,19 +249,6 @@
 
     if (.not. ispec_is_poroelastic(ispec)) cycle
 
-    ! get poroelastic parameters of current spectral element
-    call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
-
-    ! Biot coefficients for the input phi
-    call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
-
-    !The RHS has the form : div T -phi/c div T_f + phi/ceta_fk^-1.partial t w
-    !where T = G:grad u_s + C_biot div w I
-    !and T_f = C_biot div u_s I + M_biot div w I
-    mu_G = mu_fr
-    lambdal_G = H_biot - 2._CUSTOM_REAL*mu_fr
-    lambdalplus2mul_G = lambdal_G + TWO*mu_G
-
     ! first double loop over GLL points to compute and store gradients
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -308,6 +296,23 @@
 
         dwz_dxl = dwz_dxi*xixl + dwz_dgamma*gammaxl
         dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
+
+        ! get poroelastic parameters of current spectral element
+        phi = phistore(i,j,ispec)
+        kappa_s = kappaarraystore(1,i,j,ispec)
+        kappa_f = kappaarraystore(2,i,j,ispec)
+        kappa_fr = kappaarraystore(3,i,j,ispec)
+        mu_fr = mufr_store(i,j,ispec)
+
+        ! Biot coefficients for the input phi
+        call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
+        !The RHS has the form : div T -phi/c div T_f + phi/ceta_fk^-1.partial t w
+        !where T = G:grad u_s + C_biot div w I
+        !and T_f = C_biot div u_s I + M_biot div w I
+        mu_G = mu_fr
+        lambdal_G = H_biot - 2._CUSTOM_REAL*mu_fr
+        lambdalplus2mul_G = lambdal_G + TWO*mu_G
 
         ! compute stress tensor (include attenuation or anisotropy if needed)
         if (ATTENUATION_VISCOELASTIC) then
@@ -429,6 +434,10 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
+
+        ! get poroelastic parameters of current spectral element
+        phi = phistore(i,j,ispec)
+        tort = tortstore(i,j,ispec)
 
         ! along x direction and z direction
         ! and assemble the contributions

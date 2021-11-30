@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine define_shape_functions(shape2D,dershape2D,xi,gamma,ngnod)
+  subroutine define_shape_functions(shape2D,dershape2D,xi,gamma,NGNOD)
 
 !=======================================================================
 !
@@ -59,10 +59,10 @@
 
   implicit none
 
-  integer,intent(in) :: ngnod
+  integer,intent(in) :: NGNOD
 
-  double precision,intent(out) :: shape2D(ngnod)
-  double precision,intent(out) :: dershape2D(NDIM,ngnod)
+  double precision,intent(out) :: shape2D(NGNOD)
+  double precision,intent(out) :: dershape2D(NDIM,NGNOD)
   double precision,intent(in) :: xi,gamma
 
   ! local parameters
@@ -75,7 +75,7 @@
   t  = gamma
 
 !----    4-node element
-  if (ngnod == 4) then
+  if (NGNOD == 4) then
        sp = s + ONE
        sm = s - ONE
        tp = t + ONE
@@ -98,7 +98,7 @@
        dershape2D(2,4) = - QUARTER * sm
 
 !----    9-node element
-  else if (ngnod == 9) then
+  else if (NGNOD == 9) then
 
        sp = s + ONE
        sm = s - ONE

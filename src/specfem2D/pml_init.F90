@@ -35,7 +35,7 @@
 
 ! Rough strategy to select the PML damping parameters:
 
-! In order to achieve absorbing for gradient incident wave for zPML:
+! In order to achieve absorbing for gradient incident wave for CPML:
 ! we need to set K>1 to bending the wavefront aside from its tangential propagation direction.
 ! Then a bigger damping factor d and alpha could help damping out the
 ! bended wave along its propagation close to normal direction.
@@ -80,18 +80,22 @@
         ! mark any elements on the boundary as PML and list their corners
         do ispecabs = 1,num_abs_boundary_faces
           ispec = abs_boundary_ispec(ispecabs)
+
           !array to know which PML it is
-          which_PML_elem(ibound,ispec)=codeabs(ibound,ispecabs)
+          which_PML_elem(ibound,ispec) = codeabs(ibound,ispecabs)
+
           if (codeabs(ibound,ispecabs)) then ! we are on the good absorbing boundary
-            do j = 1,NGLLZ,NGLLZ-1; do i = 1,NGLLX,NGLLX-1
-              iglob=ibool(i,j,ispec)
-              k=1
-              do while(k <= ncorner .and. icorner_iglob(k) /= iglob)
-                k=k+1
+            do j = 1,NGLLZ,NGLLZ-1
+              do i = 1,NGLLX,NGLLX-1
+                iglob = ibool(i,j,ispec)
+                k = 1
+                do while(k <= ncorner .and. icorner_iglob(k) /= iglob)
+                  k = k+1
+                enddo
+                ncorner = ncorner+1
+                icorner_iglob(ncorner) = iglob
               enddo
-              ncorner=ncorner+1
-              icorner_iglob(ncorner) = iglob
-            enddo; enddo
+            enddo
           endif ! we are on the good absorbing boundary
         enddo
       endif
@@ -100,11 +104,11 @@
       !we take 4 elements for the PML thickness
       do i_coef = 2,NELEM_PML_THICKNESS
 
-        do ispec= 1,nspec
+        do ispec = 1,nspec
           if (.not. which_PML_elem(ibound,ispec)) then
             do j = 1,NGLLZ,NGLLZ-1
               do i = 1,NGLLX,NGLLX-1
-                iglob=ibool(i,j,ispec)
+                iglob = ibool(i,j,ispec)
                 do k = 1,ncorner
                   if (iglob == icorner_iglob(k)) which_PML_elem(ibound,ispec) = .true.
                 enddo
@@ -118,7 +122,7 @@
         icorner_iglob = 0
         nspec_PML = 0
 
-        do ispec= 1,nspec
+        do ispec = 1,nspec
           if (which_PML_elem(ibound,ispec)) then
             ispec_is_PML(ispec) = .true.
             do j = 1,NGLLZ,NGLLZ-1
@@ -140,8 +144,8 @@
 
       if (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) then
 
-        do i_coef=NELEM_PML_THICKNESS,NELEM_PML_THICKNESS+1
-          do ispec= 1,nspec
+        do i_coef = NELEM_PML_THICKNESS,NELEM_PML_THICKNESS+1
+          do ispec = 1,nspec
             if (.not. which_PML_elem(ibound,ispec)) then
               do j = 1,NGLLZ,NGLLZ-1
                 do i = 1,NGLLX,NGLLX-1
@@ -190,7 +194,7 @@
       enddo
     endif
 
-    do ispec= 1,nspec
+    do ispec = 1,nspec
       if (ispec_is_PML(ispec)) then
         ! element is in the left cpml layer
         if ((which_PML_elem(ILEFT,ispec) .eqv. .true.) .and. (which_PML_elem(IRIGHT,ispec) .eqv. .false.) .and. &
@@ -250,7 +254,7 @@
     ispec_is_PML(:) = .false.
     which_PML_elem(:,:) = .false.
     nspec_PML = 0
-    spec_to_PML=0
+    spec_to_PML = 0
     mask_ibool_PML(:) = .false.
 
     do ispec = 1,nspec
@@ -272,7 +276,7 @@
 
     nglob_interface = 0
     if (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) then
-      do ispec= 1,nspec
+      do ispec = 1,nspec
         if (region_CPML(ispec) /= 0) then
           do i = 1, NGLLX; do j = 1, NGLLZ
             iglob = ibool(i,j,ispec)
@@ -285,6 +289,135 @@
   endif
 
   end subroutine pml_init
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine determine_boundary_abs_points_PML()
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IMAIN
+
+  use specfem_par, only: ibool,nglob,myrank, &
+    ispec_is_elastic,ispec_is_acoustic, &
+    num_abs_boundary_faces,codeabs,anyabs,abs_boundary_ispec
+
+  ! PML arrays
+  use specfem_par, only: ispec_is_PML, &
+                         PML_nglob_abs_acoustic,PML_abs_points_acoustic, &
+                         PML_nglob_abs_elastic,PML_abs_points_elastic
+
+  implicit none
+
+  ! local parameters
+  integer :: ispecabs,i,j,ispec,iglob,icounter
+  logical, dimension(nglob) :: mask_iglob_acoustic,mask_iglob_elastic
+
+  ! PML boundary points
+  ! counts global points on absorbing boundary faces for acoustic/elastic PML
+  PML_nglob_abs_acoustic = 0
+  PML_nglob_abs_elastic = 0
+
+  mask_iglob_acoustic(:) = .false.
+  mask_iglob_elastic(:) = .false.
+
+  if (anyabs) then
+    ! to set Dirichelet boundary condition on outer boundary of CFS-PML
+    do ispecabs = 1,num_abs_boundary_faces
+      ispec = abs_boundary_ispec(ispecabs)
+
+      if (ispec_is_PML(ispec)) then
+        ! left absorbing boundary
+        if (codeabs(IEDGE4,ispecabs)) then
+          i = 1
+          do j = 1,NGLLZ
+            iglob = ibool(i,j,ispec)
+            ! marks global point on acoustic boundary
+            if (ispec_is_acoustic(ispec)) mask_iglob_acoustic(iglob) = .true.
+            ! marks global point on elastic boundary
+            if (ispec_is_elastic(ispec)) mask_iglob_elastic(iglob) = .true.
+          enddo
+        endif
+        ! right absorbing boundary
+        if (codeabs(IEDGE2,ispecabs)) then
+          i = NGLLX
+          do j = 1,NGLLZ
+            iglob = ibool(i,j,ispec)
+            ! marks global point on acoustic boundary
+            if (ispec_is_acoustic(ispec)) mask_iglob_acoustic(iglob) = .true.
+            ! marks global point on elastic boundary
+            if (ispec_is_elastic(ispec)) mask_iglob_elastic(iglob) = .true.
+          enddo
+        endif
+        ! bottom absorbing boundary
+        if (codeabs(IEDGE1,ispecabs)) then
+          j = 1
+          do i = 1,NGLLX
+            iglob = ibool(i,j,ispec)
+            ! marks global point on acoustic boundary
+            if (ispec_is_acoustic(ispec)) mask_iglob_acoustic(iglob) = .true.
+            ! marks global point on elastic boundary
+            if (ispec_is_elastic(ispec)) mask_iglob_elastic(iglob) = .true.
+          enddo
+        endif
+        ! top absorbing boundary
+        if (codeabs(IEDGE3,ispecabs)) then
+          j = NGLLZ
+          do i = 1,NGLLX
+            iglob = ibool(i,j,ispec)
+            ! marks global point on acoustic boundary
+            if (ispec_is_acoustic(ispec)) mask_iglob_acoustic(iglob) = .true.
+            ! marks global point on elastic boundary
+            if (ispec_is_elastic(ispec)) mask_iglob_elastic(iglob) = .true.
+          enddo
+        endif  !  end of top absorbing boundary
+      endif ! end of ispec_is_PML
+    enddo ! end specabs loop
+  endif
+
+  ! array with global points on acoustic boundary for Dirichlet condition
+  PML_nglob_abs_acoustic = count(mask_iglob_acoustic(:))
+  PML_nglob_abs_elastic = count(mask_iglob_elastic(:))
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of points on acoustic abs in this slice = ',PML_nglob_abs_acoustic
+    write(IMAIN,*) '  number of points on  elastic abs in this slice = ',PML_nglob_abs_elastic
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  allocate(PML_abs_points_acoustic(PML_nglob_abs_acoustic), &
+           PML_abs_points_elastic(PML_nglob_abs_elastic))
+  PML_abs_points_acoustic(:) = 0
+  PML_abs_points_elastic(:) = 0
+
+  ! stores global point indices
+  ! acoustic boundary
+  if (PML_nglob_abs_acoustic > 0) then
+    icounter = 0
+    do iglob = 1,nglob
+      if (mask_iglob_acoustic(iglob)) then
+        icounter = icounter + 1
+        PML_abs_points_acoustic(icounter) = iglob
+      endif
+    enddo
+    if (icounter /= PML_nglob_abs_acoustic) stop 'Invalid PML counter of global points on acoustic boundary'
+  endif
+
+  ! elastic boundary
+  if (PML_nglob_abs_elastic > 0) then
+    icounter = 0
+    do iglob = 1,nglob
+      if (mask_iglob_elastic(iglob)) then
+        icounter = icounter + 1
+        PML_abs_points_elastic(icounter) = iglob
+      endif
+    enddo
+    if (icounter /= PML_nglob_abs_elastic) stop 'Invalid PML counter of global points on elastic boundary'
+  endif
+
+  end subroutine determine_boundary_abs_points_PML
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -421,7 +554,7 @@
 
   use specfem_par, only: vx_source, vz_source, f0_source,ispec_is_elastic,ispec_is_acoustic, &
                          NSOURCES,ispec_selected_source, &
-                         nspec,kmato,density,poroelastcoef,ibool,coord,islice_selected_source,myrank, SOURCE_IS_MOVING
+                         nspec,rho_vpstore,rhostore,ibool,coord,islice_selected_source,myrank, SOURCE_IS_MOVING
 ! PML arrays and variables
   use specfem_par, only: ispec_is_PML,spec_to_PML,region_CPML,PML_PARAMETER_ADJUSTMENT, &
                          K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
@@ -452,7 +585,6 @@
 
 ! material properties of the elastic medium
   integer i,j,ispec,iglob,ispec_PML,i_source
-  double precision :: lambdalplus2mul_relaxed,rhol
   double precision :: d_x, d_z, K_x, K_z, alpha_x, alpha_z, beta_x, beta_z
 ! define an alias for y and z variable names (which are the same)
   double precision :: d0_z_bottom_acoustic, d0_x_right_acoustic, d0_z_top_acoustic, d0_x_left_acoustic
@@ -467,7 +599,7 @@
                       thickness_PML_z_top,thickness_PML_x_left
 
   double precision :: xmin, xmax, zmin, zmax, xorigin, zorigin, xval, zval
-  double precision :: vpmax_acoustic, vpmax_elastic, vpmax
+  double precision :: vpmax_acoustic, vpmax_elastic, vpmax, vp
   double precision :: xoriginleft, xoriginright, zorigintop, zoriginbottom
 
   integer :: NSOURCES_glob
@@ -603,6 +735,12 @@
   thickness_PML_z_bottom = PML_z_max_bottom - PML_z_min_bottom
   thickness_PML_z_top = PML_z_max_top - PML_z_min_top
 
+  !! DK DK March 2018: added this to detect if some PML edges are not set, to avoid triggering a stop statement below otherwise
+  if (abs(thickness_PML_x_left) > 1.d30) thickness_PML_x_left = 0.d0
+  if (abs(thickness_PML_x_right) > 1.d30) thickness_PML_x_right = 0.d0
+  if (abs(thickness_PML_z_bottom) > 1.d30) thickness_PML_z_bottom = 0.d0
+  if (abs(thickness_PML_z_top) > 1.d30) thickness_PML_z_top = 0.d0
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) "    thickness PML: left   = ",sngl(thickness_PML_x_left)
@@ -612,12 +750,6 @@
     call flush_IMAIN()
   endif
 
-  !! DK DK March 2018: added this to detect if some PML edges are not set, to avoid triggering a stop statement below otherwise
-  if (abs(thickness_PML_x_left) > 1.d30) thickness_PML_x_left = 0.d0
-  if (abs(thickness_PML_x_right) > 1.d30) thickness_PML_x_right = 0.d0
-  if (abs(thickness_PML_z_bottom) > 1.d30) thickness_PML_z_bottom = 0.d0
-  if (abs(thickness_PML_z_top) > 1.d30) thickness_PML_z_top = 0.d0
-
 ! origin of the PML layer (position of right edge minus thickness, in meters)
   xoriginleft = thickness_PML_x_left+xmin
   xoriginright = xmax - thickness_PML_x_right
@@ -625,24 +757,24 @@
   zorigintop = zmax-thickness_PML_z_top
 
   ! compute d0 from Inria report section 6.1 http://hal.inria.fr/docs/00/07/32/19/PDF/RR-3471.pdf
+
+  ! determins maximum vp
   vpmax_acoustic = 0.0d0
   vpmax_elastic = 0.0d0
   do ispec = 1,nspec
     if (ispec_is_PML(ispec)) then
-      if (ispec_is_acoustic(ispec)) then
-        ! From read_materials.f90 we know, in acoustic region
-        ! lambdalplus2mul_relaxed = kappal  = poroelastcoef(3,1,kmato(ispec)) = rhol * vp_acoustic * vp_acoustic
-        lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
-        rhol = density(1,kmato(ispec))
-        vpmax_acoustic=max(vpmax_acoustic,sqrt(lambdalplus2mul_relaxed/rhol))
-      else if (ispec_is_elastic(ispec)) then
-        ! get relaxed elastic parameters of current spectral element
-        lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
-        rhol = density(1,kmato(ispec))
-        vpmax_elastic=max(vpmax_elastic,sqrt(lambdalplus2mul_relaxed/rhol))
-      else
-        call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
-      endif
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          vp = rho_vpstore(i,j,ispec) / rhostore(i,j,ispec)
+          if (ispec_is_acoustic(ispec)) then
+            vpmax_acoustic = max(vpmax_acoustic,vp)
+          else if (ispec_is_elastic(ispec)) then
+            vpmax_elastic = max(vpmax_elastic,vp)
+          else
+            call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
+          endif
+        enddo
+      enddo
     endif
   enddo
 
@@ -927,54 +1059,26 @@
                       max(abs(xmin-averagex_source)/abs(averagez_source-zoriginbottom), &
                           abs(xmax-averagex_source)/abs(averagez_source-zoriginbottom))
 
-!! DK DK April 2018: now that we have moved the parameters to adjust to the Par_file, the long series of "if" tests below
-!! DK DK April 2018: is maybe useless, since it was meant to select different values for them
-!! DK DK April 2018: depending on the estimatedincidence angle; in this new version they only change ALPHA_MAX_PML
+                ! changes ALPHA_MAX_PML accordingly
                 if (rough_estimate_incident_angle <= 1.0d0) then
                   ALPHA_MAX_PML = 1.0d0
-                  if (ispec_is_acoustic(ispec)) then
-                    d_z = d0_z_bottom_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
-                    K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (ispec_is_elastic(ispec)) then
-                    d_z = d0_z_bottom_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
-                    K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else
-                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
-                  endif
                 else if (rough_estimate_incident_angle > 1.0d0 .and. &
-                       rough_estimate_incident_angle <= 6.0d0) then
-
+                         rough_estimate_incident_angle <= 6.0d0) then
                   ALPHA_MAX_PML = 2.5d0
-                  if (ispec_is_acoustic(ispec)) then
-                    d_z = d0_z_bottom_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
-                    K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (ispec_is_elastic(ispec)) then
-                    d_z = d0_z_bottom_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
-                    K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else
-                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
-                  endif
-
                 else if (rough_estimate_incident_angle > 6.0d0) then
-
                   ALPHA_MAX_PML = 4.0d0
-                  if (ispec_is_acoustic(ispec)) then
-                    d_z = d0_z_bottom_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
-                    K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (ispec_is_elastic(ispec)) then
-                    d_z = d0_z_bottom_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
-                    K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else
-                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
-                  endif
-
                 endif
+
+                if (ispec_is_acoustic(ispec)) then
+                  d_z = d0_z_bottom_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
+                else if (ispec_is_elastic(ispec)) then
+                  d_z = d0_z_bottom_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
+                else
+                  call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
+                endif
+                K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
+                alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
+
               else
                 d_z = 0.d0; K_z = 1.0d0; alpha_z = 0.d0
               endif
@@ -995,50 +1099,27 @@
                 rough_estimate_incident_angle =  &
                       max(abs(xmin-averagex_source)/abs(averagez_source-zorigintop), &
                           abs(xmax-averagex_source)/abs(averagez_source-zorigintop))
+
+                ! changes ALPHA_MAX_PML accordingly
                 if (rough_estimate_incident_angle <= 1.0d0) then
                   ALPHA_MAX_PML = 1.0d0
-                  if (ispec_is_acoustic(ispec)) then
-                    d_z = d0_z_top_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
-                    K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (ispec_is_elastic(ispec)) then
-                    d_z = d0_z_top_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
-                    K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else
-                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
-                  endif
                 else if (rough_estimate_incident_angle > 1.0d0 .and. &
-                       rough_estimate_incident_angle <= 6.0d0) then
-
+                         rough_estimate_incident_angle <= 6.0d0) then
                   ALPHA_MAX_PML = 2.5d0
-                  if (ispec_is_acoustic(ispec)) then
-                    d_z = d0_z_top_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
-                    K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (ispec_is_elastic(ispec)) then
-                    d_z = d0_z_top_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
-                    K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else
-                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
-                  endif
-
                 else if (rough_estimate_incident_angle > 6.0d0) then
-
                   ALPHA_MAX_PML = 4.0d0
-                  if (ispec_is_acoustic(ispec)) then
-                    d_z = d0_z_top_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
-                    K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (ispec_is_elastic(ispec)) then
-                    d_z = d0_z_top_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
-                    K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else
-                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
-                  endif
                 endif
+
+                if (ispec_is_acoustic(ispec)) then
+                  d_z = d0_z_top_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
+                else if (ispec_is_elastic(ispec)) then
+                  d_z = d0_z_top_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
+                else
+                  call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
+                endif
+                K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
+                alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
+
               else
                 d_z = 0.d0; K_z = 1.0d0; alpha_z = 0.d0
               endif
@@ -1060,50 +1141,26 @@
                 rough_estimate_incident_angle = &
                       max(abs(zmin-averagez_source)/abs(averagex_source-xoriginright), &
                           abs(zmax-averagez_source)/abs(averagex_source-xoriginright))
+
+                ! changes ALPHA_MAX_PML accordingly
                 if (rough_estimate_incident_angle <= 1.0d0) then
                   ALPHA_MAX_PML = 1.0d0
-                  if (ispec_is_acoustic(ispec)) then
-                    d_x = d0_x_right_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
-                    K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (ispec_is_elastic(ispec)) then
-                    d_x = d0_x_right_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
-                    K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else
-                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
-                  endif
                 else if (rough_estimate_incident_angle > 1.0d0 .and. &
-                       rough_estimate_incident_angle <= 6.0d0) then
-
+                         rough_estimate_incident_angle <= 6.0d0) then
                   ALPHA_MAX_PML = 2.5d0
-                  if (ispec_is_acoustic(ispec)) then
-                    d_x = d0_x_right_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
-                    K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (ispec_is_elastic(ispec)) then
-                    d_x = d0_x_right_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
-                    K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else
-                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
-                  endif
-
                 else if (rough_estimate_incident_angle > 6.0d0) then
-
                   ALPHA_MAX_PML = 4.0d0
-                  if (ispec_is_acoustic(ispec)) then
-                    d_x = d0_x_right_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
-                    K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (ispec_is_elastic(ispec)) then
-                    d_x = d0_x_right_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
-                    K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else
-                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
-                  endif
                 endif
+
+                if (ispec_is_acoustic(ispec)) then
+                  d_x = d0_x_right_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
+                else if (ispec_is_elastic(ispec)) then
+                  d_x = d0_x_right_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
+                else
+                  call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
+                endif
+                K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
+                alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
 
               else
                 d_x = 0.d0; K_x = 1.0d0; alpha_x = 0.d0
@@ -1125,50 +1182,26 @@
                 rough_estimate_incident_angle =  &
                       max(abs(zmin-averagez_source)/abs(averagex_source-xoriginleft), &
                           abs(zmax-averagez_source)/abs(averagex_source-xoriginleft))
+
+                ! changes ALPHA_MAX_PML accordingly
                 if (rough_estimate_incident_angle <= 1.0d0) then
                   ALPHA_MAX_PML = 1.0d0
-                  if (ispec_is_acoustic(ispec)) then
-                    d_x = d0_x_left_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
-                    K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (ispec_is_elastic(ispec)) then
-                    d_x = d0_x_left_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
-                    K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else
-                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
-                  endif
                 else if (rough_estimate_incident_angle > 1.0d0 .and. &
-                       rough_estimate_incident_angle <= 6.0d0) then
-
+                         rough_estimate_incident_angle <= 6.0d0) then
                   ALPHA_MAX_PML = 2.5d0
-                  if (ispec_is_acoustic(ispec)) then
-                    d_x = d0_x_left_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
-                    K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (ispec_is_elastic(ispec)) then
-                    d_x = d0_x_left_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
-                    K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else
-                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
-                  endif
-
                 else if (rough_estimate_incident_angle > 6.0d0) then
-
                   ALPHA_MAX_PML = 4.0d0
-                  if (ispec_is_acoustic(ispec)) then
-                    d_x = d0_x_left_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
-                    K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (ispec_is_elastic(ispec)) then
-                    d_x = d0_x_left_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
-                    K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
-                    alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else
-                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
-                  endif
                 endif
+
+                if (ispec_is_acoustic(ispec)) then
+                  d_x = d0_x_left_acoustic / damping_change_factor_acoustic * abscissa_normalized**NPOWER
+                else if (ispec_is_elastic(ispec)) then
+                  d_x = d0_x_left_elastic / damping_change_factor_elastic * abscissa_normalized**NPOWER
+                else
+                  call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
+                endif
+                K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
+                alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
 
               else
                 d_x = 0.d0; K_x = 1.0d0; alpha_x = 0.d0
@@ -1235,6 +1268,7 @@
 
   distance_min = dsqrt(distance_min)
   call min_all_all_dp(distance_min,distance_min_glob)
+  ! checks
   if (myrank == 0) then
     if (distance_min_glob <= 0.d0) call exit_mpi(myrank,"error: GLL points minimum distance")
   endif
@@ -1242,8 +1276,10 @@
 
   CPML_thickness_z_max = max(thickness_PML_z_bottom,thickness_PML_z_top)
   call max_all_all_dp(CPML_thickness_z_max,CPML_thickness_z_max_glob)
+
   CPML_thickness_x_max = max(thickness_PML_x_left,thickness_PML_x_right)
   call max_all_all_dp(CPML_thickness_x_max,CPML_thickness_x_max_glob)
+  ! checks
   if (myrank == 0) then
     if (CPML_thickness_x_max_glob < 0.d0 .or. CPML_thickness_z_max_glob < 0.d0) &
       call exit_mpi(myrank,"error: PML thickness set is wrong")

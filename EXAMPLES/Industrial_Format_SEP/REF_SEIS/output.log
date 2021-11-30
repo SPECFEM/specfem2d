@@ -23,19 +23,19 @@ running interpolation...
  reading SEP models...
 
  *******************************************************************************
- reading sep header file: 
+ reading sep header file:
  ./SEG_2D_SALT/vp.H
 
  sep file specified in the header file is: ./SEG_2D_SALT/./vp.bin
  NX,NY,NZ =          645           1         150
- OX,OY,OZ =    0.00000000       0.00000000       0.00000000    
- DX,DY,DZ =    80.0000000       80.0000000       80.0000000    
+ OX,OY,OZ =    0.00000000       0.00000000       0.00000000
+ DX,DY,DZ =    80.0000000       80.0000000       80.0000000
  esize =            4
  data_format = native_float
  *******************************************************************************
 
  *******************************************************************************
- reading sep file: 
+ reading sep file:
  ./SEG_2D_SALT/./vp.bin
  done reading sucessfully
  *******************************************************************************
@@ -44,7 +44,7 @@ running interpolation...
  Writing interface data to file DATA/interface_industry.dat
 
 
- ************ Preparing Par_file ************ 
+ ************ Preparing Par_file ************
 
   sed -i "s/^xmin .*/xmin                            =   0.00000000/" ./DATA/Par_file
   sed -i "s/^xmax .*/xmax                            =   51520.0000/" ./DATA/Par_file
@@ -52,12 +52,12 @@ running interpolation...
   sed -i "/nbregions   /a1         644 1         149 1" ./DATA/Par_file
 
 
- ************ Setting up first simulation ************ 
+ ************ Setting up first simulation ************
 
  call xmeshfem2d
  call xspecfem2d
 
- ************ Setting up new simulation ************ 
+ ************ Setting up new simulation ************
 
  call xmeshfem2d
 
@@ -81,14 +81,14 @@ running interpolation...
 
  --------
  Material #           1  isotropic
- rho,cp,cs   =    4000.0000000000000        2500.0000000000000        2000.0000000000000     
- Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ rho,cp,cs   =    4000.0000000000000        2500.0000000000000        2000.0000000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
  Material is solid
  --------
 
  Mesh from internal meshing:
 
- Reading interface data from file: ./DATA/interface_industry.dat                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+ Reading interface data from file: ./DATA/interface_industry.dat
  Reading            2  points for interface            1
  Reading            2  points for interface            2
 
@@ -107,39 +107,39 @@ running interpolation...
  IZ from            1  to          149
  Material #            1  isotropic
  Material is solid
- vp     =    2500.00000    
- vs     =    2000.00000    
- rho    =    4000.00000    
- Poisson's ratio =  -0.388888896    
- QKappa =    9999.00000    
- Qmu    =    9999.00000    
+ vp     =    2500.00000
+ vs     =    2000.00000
+ rho    =    4000.00000
+ Poisson's ratio =  -0.388888896
+ QKappa =    9999.00000
+ Qmu    =    9999.00000
  ------
  Total number of spectral elements         =        95956
 
 
- Parameter file successfully read 
+ Parameter file successfully read
 
  The mesh contains        95956  elements
 
  Control elements have            4  nodes
 
  Source           1
-   Position xs, zs =    29520.000000000000        10000.000000000000     
+   Position xs, zs =    29520.000000000000        10000.000000000000
 
    Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, 5=plane incident S):            1
    Force source:
-   Angle of the source (deg) =    0.0000000000000000     
-   Multiplying factor  =    10000000000.000000     
+   Angle of the source (deg) =    0.0000000000000000
+   Multiplying factor  =    10000000000.000000
 
    Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 8=Read from file, 9=burst):           1
    Ricker wavelet (second-derivative):
-   Frequency, delay =    10.000000000000000        0.0000000000000000     
+   Frequency, delay =    10.000000000000000        0.0000000000000000
 
  Reading interface data from file: ./DATA/interface_industry.dat
 
- Mesh dimensions: 
-   Min and max value of X in the grid =    0.0000000000000000        51520.000000000000     
-   Min and max value of Z in the grid =    0.0000000000000000        11920.000000000002     
+ Mesh dimensions:
+   Min and max value of X in the grid =    0.0000000000000000        51520.000000000000
+   Min and max value of Z in the grid =    0.0000000000000000        11920.000000000002
 
 
  ************ Computing elements load ************
@@ -163,7 +163,7 @@ running interpolation...
  slice            2  has number of spectral elements =       24426
  slice            3  has number of spectral elements =       24459
 
- Position (x,z) of the source =    29520.000000000000        10000.000000000000     
+ Position (x,z) of the source =    29520.000000000000        10000.000000000000
 
 
  writing the ./DATA/STATIONS file
@@ -173,18 +173,18 @@ running interpolation...
 
  Target positions (x,z) of the           12  receivers
 
- Receiver            1  =    8000.0000000000000        3000.0000000000000     
- Receiver            2  =    9000.0000000000000        3000.0000000000000     
- Receiver            3  =    10000.000000000000        3000.0000000000000     
- Receiver            4  =    11000.000000000000        3000.0000000000000     
- Receiver            5  =    12000.000000000000        3000.0000000000000     
- Receiver            6  =    13000.000000000000        3000.0000000000000     
- Receiver            7  =    14000.000000000000        3000.0000000000000     
- Receiver            8  =    15000.000000000000        3000.0000000000000     
- Receiver            9  =    16000.000000000000        3000.0000000000000     
- Receiver           10  =    17000.000000000000        3000.0000000000000     
- Receiver           11  =    18000.000000000000        3000.0000000000000     
- Receiver           12  =    19000.000000000000        3000.0000000000000     
+ Receiver            1  =    8000.0000000000000        3000.0000000000000
+ Receiver            2  =    9000.0000000000000        3000.0000000000000
+ Receiver            3  =    10000.000000000000        3000.0000000000000
+ Receiver            4  =    11000.000000000000        3000.0000000000000
+ Receiver            5  =    12000.000000000000        3000.0000000000000
+ Receiver            6  =    13000.000000000000        3000.0000000000000
+ Receiver            7  =    14000.000000000000        3000.0000000000000
+ Receiver            8  =    15000.000000000000        3000.0000000000000
+ Receiver            9  =    16000.000000000000        3000.0000000000000
+ Receiver           10  =    17000.000000000000        3000.0000000000000
+ Receiver           11  =    18000.000000000000        3000.0000000000000
+ Receiver           12  =    19000.000000000000        3000.0000000000000
 
  This will be a parallel simulation on            4  processor cores
 
@@ -192,9 +192,9 @@ running interpolation...
  ************ Interpolating model ************
 
  input model:
-   Vp min/max  =    5000.00000       14700.0000    
-   Vs min/max  =    2886.83594       8487.29785    
-   rho min/max =    1000.00000       1000.00000    
+   Vp min/max  =    5000.00000       14700.0000
+   Vs min/max  =    2886.83594       8487.29785
+   rho min/max =    1000.00000       1000.00000
 
  Interpolating GLL model values
 
@@ -220,9 +220,9 @@ running interpolation...
   mv -f DATA/proc000003_model_velocity.dat_tmp DATA/proc000003_model_velocity.dat_input
 
  interpolated output model:
-   Vp min/max  =    5000.00000       14700.0000    
-   Vs min/max  =    2886.83594       8487.29785    
-   rho min/max =    1000.00000       1000.00000    
+   Vp min/max  =    5000.00000       14700.0000
+   Vs min/max  =    2886.83594       8487.29785
+   rho min/max =    1000.00000       1000.00000
 
 
  Interpolation done
@@ -254,7 +254,7 @@ running interpolation...
 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Program SPECFEM2D: 
+ Program SPECFEM2D:
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
  SALT2D
@@ -277,17 +277,17 @@ running interpolation...
 
      Display frequency . . . .(NSTEP_BETWEEN_OUTPUT_INFO) =    500
      Color display . . . . . . . . . . . . . . . (colors) =      1
-      == 0     black and white display              
-      == 1     color display                        
+      == 0     black and white display
+      == 1     color display
      Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
-      == 0     do not number the mesh               
-      == 1     number the mesh                      
+      == 0     do not number the mesh
+      == 1     number the mesh
 
 
  C o n t r o l
  =============
 
-     Seismograms recording type . . . . . . .(seismotype) = 1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+     Seismograms recording type . . . . . . .(seismotype) = 1
      Angle for first line of receivers. . . . .(anglerec) =   0.00
 
 
@@ -313,7 +313,7 @@ running interpolation...
      Subsampling of velocity model display. (subsamp_postscript) =      1
 
 
- I t e r a t i o n s 
+ I t e r a t i o n s
  ===================
 
      Number of time iterations . . . . .(NSTEP) =    5000
@@ -329,9 +329,9 @@ running interpolation...
      Multiplying factor . . . . . . . . . . =    1.0000000000E+10
      Angle from vertical direction (deg). . =    0.0000000000E+00
 
-     Onset time. . . . . . =  -0.12000000000000000     
-     Fundamental period. . =   0.10000000000000001     
-     Fundamental frequency =    10.000000000000000     
+     Onset time. . . . . . =  -0.12000000000000000
+     Fundamental period. . =   0.10000000000000001
+     Fundamental frequency =    10.000000000000000
      The onset time is ok
 
      -- Spectral Elements --
@@ -410,8 +410,8 @@ running interpolation...
    in reality they have more degrees of freedom)
 
  Mesh dimensions:
-   Xmin,Xmax of the whole mesh =    0.0000000000000000        51520.000000000000     
-   Zmin,Zmax of the whole mesh =    0.0000000000000000        11920.000000000002     
+   Xmin,Xmax of the whole mesh =    0.0000000000000000        51520.000000000000
+   Zmin,Zmax of the whole mesh =    0.0000000000000000        11920.000000000002
 
  Assigning an external velocity and density model
    model: legacy
@@ -459,13 +459,13 @@ running interpolation...
 
 
  Force source:
-             original x:    29520.0000    
-             original z:    10000.0000    
+             original x:    29520.0000
+             original z:    10000.0000
  Closest estimate found:    0.00000000      m away
   in rank            3
   in element        20603
   in elastic domain
-  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000
 
 
  end of force source detection
@@ -483,123 +483,123 @@ running interpolation...
  reading receiver information from the ./DATA/STATIONS file
 
 
- Station #            1     AA      S0001                           
-             original x:    8000.00000    
-             original z:    3000.00000    
+ Station #            1     AA      S0001
+             original x:    8000.00000
+             original z:    3000.00000
  Closest estimate found:    0.00000000      m away
   in element         6136
   in rank            0
-  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000     
+  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000
  Distance from source:    22629.8555      m
 
 
- Station #            2     AA      S0002                           
-             original x:    9000.00000    
-             original z:    3000.00000    
+ Station #            2     AA      S0002
+             original x:    9000.00000
+             original z:    3000.00000
  Closest estimate found:    0.00000000      m away
   in element         6149
   in rank            0
-  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000     
+  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
  Distance from source:    21681.1074      m
 
 
- Station #            3     AA      S0003                           
-             original x:    10000.0000    
-             original z:    3000.00000    
+ Station #            3     AA      S0003
+             original x:    10000.0000
+             original z:    3000.00000
  Closest estimate found:    0.00000000      m away
   in element         6161
   in rank            0
-  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000     
+  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000
  Distance from source:    20737.1738      m
 
 
- Station #            4     AA      S0004                           
-             original x:    11000.0000    
-             original z:    3000.00000    
+ Station #            4     AA      S0004
+             original x:    11000.0000
+             original z:    3000.00000
  Closest estimate found:    0.00000000      m away
   in element         6174
   in rank            0
-  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000     
+  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
  Distance from source:    19798.7480      m
 
 
- Station #            5     AA      S0005                           
-             original x:    12000.0000    
-             original z:    3000.00000    
+ Station #            5     AA      S0005
+             original x:    12000.0000
+             original z:    3000.00000
  Closest estimate found:    0.00000000      m away
   in element         6186
   in rank            0
-  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000     
+  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000
  Distance from source:    18866.6484      m
 
 
- Station #            6     AA      S0006                           
-             original x:    13000.0000    
-             original z:    3000.00000    
+ Station #            6     AA      S0006
+             original x:    13000.0000
+             original z:    3000.00000
  Closest estimate found:    0.00000000      m away
   in element         5299
   in rank            1
-  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000     
+  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
  Distance from source:    17941.8613      m
 
 
- Station #            7     AA      S0007                           
-             original x:    14000.0000    
-             original z:    3000.00000    
+ Station #            7     AA      S0007
+             original x:    14000.0000
+             original z:    3000.00000
  Closest estimate found:    0.00000000      m away
   in element         5311
   in rank            1
-  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000     
+  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000
  Distance from source:    17025.5801      m
 
 
- Station #            8     AA      S0008                           
-             original x:    15000.0000    
-             original z:    3000.00000    
+ Station #            8     AA      S0008
+             original x:    15000.0000
+             original z:    3000.00000
  Closest estimate found:    0.00000000      m away
   in element         5324
   in rank            1
-  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000     
+  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
  Distance from source:    16119.2559      m
 
 
- Station #            9     AA      S0009                           
-             original x:    16000.0000    
-             original z:    3000.00000    
+ Station #            9     AA      S0009
+             original x:    16000.0000
+             original z:    3000.00000
  Closest estimate found:    0.00000000      m away
   in element         5336
   in rank            1
-  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000     
+  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000
  Distance from source:    15224.6641      m
 
 
- Station #           10     AA      S0010                           
-             original x:    17000.0000    
-             original z:    3000.00000    
+ Station #           10     AA      S0010
+             original x:    17000.0000
+             original z:    3000.00000
  Closest estimate found:    0.00000000      m away
   in element         5349
   in rank            1
-  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000     
+  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
  Distance from source:    14344.0020      m
 
 
- Station #           11     AA      S0011                           
-             original x:    18000.0000    
-             original z:    3000.00000    
+ Station #           11     AA      S0011
+             original x:    18000.0000
+             original z:    3000.00000
  Closest estimate found:    0.00000000      m away
   in element         5361
   in rank            1
-  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000     
+  at xi,gamma coordinates =    1.0000000000000000        0.0000000000000000
  Distance from source:    13480.0000      m
 
 
- Station #           12     AA      S0012                           
-             original x:    19000.0000    
-             original z:    3000.00000    
+ Station #           12     AA      S0012
+             original x:    19000.0000
+             original z:    3000.00000
  Closest estimate found:    0.00000000      m away
   in element         5374
   in rank            1
-  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000     
+  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
  Distance from source:    12636.0752      m
 
 
@@ -622,9 +622,9 @@ running interpolation...
  Checking mesh and stability
 
  ********
- Model: P (or PI) velocity min,max =    5000.0000000000000        14700.000000000000     
- Model: S velocity min,max         =    2886.8000488281250        8487.2998046875000     
- Model: density min,max            =    1000.0000000000000        1000.0000000000000     
+ Model: P (or PI) velocity min,max =    5000.0000000000000        14700.000000000000
+ Model: S velocity min,max         =    2886.8000488281250        8487.2998046875000
+ Model: density min,max            =    1000.0000000000000        1000.0000000000000
  ********
 
 
@@ -632,21 +632,21 @@ running interpolation...
  *** Verification of simulation parameters ***
  *********************************************
 
- *** Max grid size =    80.000000000001819     
- *** Min grid size =    79.999999999998181     
- *** Max/min ratio =    1.0000000000000455     
+ *** Max grid size =    80.000000000001819
+ *** Min grid size =    79.999999999998181
+ *** Max/min ratio =    1.0000000000000455
 
- *** Minimum GLL point distance  =    13.813853171680599     
- *** Average GLL point distance  =    19.999999999999545     
+ *** Minimum GLL point distance  =    13.813853171680599
+ *** Average GLL point distance  =    19.999999999999545
 
  *** Minimum period resolved     =    3.4640431726677544E-002
  *** Maximum frequency resolved  =    28.868000488281233      Hz
 
  *** Maximum suggested time step                 =    4.6985895141770745E-004
- *** Maximum suggested (Ricker) source frequency =    11.547200195312493     
+ *** Maximum suggested (Ricker) source frequency =    11.547200195312493
 
  *** for DT :    5.0000000000000001E-004
- *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.53207457098704614     
+ *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.53207457098704614
 
  ----
  Number of points per wavelength:
@@ -654,11 +654,11 @@ running interpolation...
    Source            1
    maximum dominant source frequency =    25.000000000000000      Hz
 
-   Nb pts / lambdaP_fmax min =    10.0000000    
-   Nb pts / lambdaP_fmax max =    29.3999996    
+   Nb pts / lambdaP_fmax min =    10.0000000
+   Nb pts / lambdaP_fmax max =    29.3999996
 
-   Nb pts / lambdaS_fmax min =    5.77360010    
-   Nb pts / lambdaS_fmax max =    16.9745998    
+   Nb pts / lambdaS_fmax min =    5.77360010
+   Nb pts / lambdaS_fmax max =    16.9745998
 
  -----------------------------------------
 
@@ -726,13 +726,13 @@ Time step number       5   t =    0.0020 s out of    5000
  ******************************************************************
  We have done    8.00160021E-02 % of the total
  Max norm of vector field in solid (elastic) =    3.20568438E-06
- Elapsed time in seconds =   0.13000011444091797     
+ Elapsed time in seconds =   0.13000011444091797
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
  Mean elapsed time per time step in seconds =    2.6000022888183594E-002
  Time steps remaining =         4995
- Estimated remaining time in seconds =    129.87011432647705     
+ Estimated remaining time in seconds =    129.87011432647705
  Estimated remaining time in hh:mm:ss =      0 h 02 m 09 s
- Estimated total run time in seconds =    130.00011444091797     
+ Estimated total run time in seconds =    130.00011444091797
  Estimated total run time in hh:mm:ss =      0 h 02 m 10 s
  The run will finish approximately on: Sat Feb 09, 2019 16:27
 
@@ -757,13 +757,13 @@ Time step number     500   t =    0.2495 s out of    5000
  ******************************************************************
  We have done    9.98199654     % of the total
  Max norm of vector field in solid (elastic) =    3.20032686E-02
- Elapsed time in seconds =    15.621999979019165     
+ Elapsed time in seconds =    15.621999979019165
  Elapsed time in hh:mm:ss =      0 h 00 m 15 s
  Mean elapsed time per time step in seconds =    3.1243999958038331E-002
  Time steps remaining =         4500
- Estimated remaining time in seconds =    140.59799981117249     
+ Estimated remaining time in seconds =    140.59799981117249
  Estimated remaining time in hh:mm:ss =      0 h 02 m 20 s
- Estimated total run time in seconds =    156.21999979019165     
+ Estimated total run time in seconds =    156.21999979019165
  Estimated total run time in hh:mm:ss =      0 h 02 m 36 s
  The run will finish approximately on: Sat Feb 09, 2019 16:27
 
@@ -783,13 +783,13 @@ Time step number    1000   t =    0.4995 s out of    5000
  ******************************************************************
  We have done    19.9839973     % of the total
  Max norm of vector field in solid (elastic) =    1.97972730E-02
- Elapsed time in seconds =    32.429000139236450     
+ Elapsed time in seconds =    32.429000139236450
  Elapsed time in hh:mm:ss =      0 h 00 m 32 s
  Mean elapsed time per time step in seconds =    3.2429000139236448E-002
  Time steps remaining =         4000
- Estimated remaining time in seconds =    129.71600055694580     
+ Estimated remaining time in seconds =    129.71600055694580
  Estimated remaining time in hh:mm:ss =      0 h 02 m 09 s
- Estimated total run time in seconds =    162.14500069618225     
+ Estimated total run time in seconds =    162.14500069618225
  Estimated total run time in hh:mm:ss =      0 h 02 m 42 s
  The run will finish approximately on: Sat Feb 09, 2019 16:27
 
@@ -814,13 +814,13 @@ Time step number    1500   t =    0.7495 s out of    5000
  ******************************************************************
  We have done    29.9859962     % of the total
  Max norm of vector field in solid (elastic) =    1.80279072E-02
- Elapsed time in seconds =    49.460999965667725     
+ Elapsed time in seconds =    49.460999965667725
  Elapsed time in hh:mm:ss =      0 h 00 m 49 s
  Mean elapsed time per time step in seconds =    3.2973999977111819E-002
  Time steps remaining =         3500
- Estimated remaining time in seconds =    115.40899991989137     
+ Estimated remaining time in seconds =    115.40899991989137
  Estimated remaining time in hh:mm:ss =      0 h 01 m 55 s
- Estimated total run time in seconds =    164.86999988555908     
+ Estimated total run time in seconds =    164.86999988555908
  Estimated total run time in hh:mm:ss =      0 h 02 m 44 s
  The run will finish approximately on: Sat Feb 09, 2019 16:28
 
@@ -840,13 +840,13 @@ Time step number    2000   t =    0.9995 s out of    5000
  ******************************************************************
  We have done    39.9879990     % of the total
  Max norm of vector field in solid (elastic) =    1.45898908E-02
- Elapsed time in seconds =    65.921000003814697     
+ Elapsed time in seconds =    65.921000003814697
  Elapsed time in hh:mm:ss =      0 h 01 m 05 s
  Mean elapsed time per time step in seconds =    3.2960500001907346E-002
  Time steps remaining =         3000
- Estimated remaining time in seconds =    98.881500005722032     
+ Estimated remaining time in seconds =    98.881500005722032
  Estimated remaining time in hh:mm:ss =      0 h 01 m 38 s
- Estimated total run time in seconds =    164.80250000953674     
+ Estimated total run time in seconds =    164.80250000953674
  Estimated total run time in hh:mm:ss =      0 h 02 m 44 s
  The run will finish approximately on: Sat Feb 09, 2019 16:28
 
@@ -871,13 +871,13 @@ Time step number    2500   t =    1.2495 s out of    5000
  ******************************************************************
  We have done    49.9899979     % of the total
  Max norm of vector field in solid (elastic) =    1.75958406E-02
- Elapsed time in seconds =    82.571000099182129     
+ Elapsed time in seconds =    82.571000099182129
  Elapsed time in hh:mm:ss =      0 h 01 m 22 s
  Mean elapsed time per time step in seconds =    3.3028400039672855E-002
  Time steps remaining =         2500
- Estimated remaining time in seconds =    82.571000099182143     
+ Estimated remaining time in seconds =    82.571000099182143
  Estimated remaining time in hh:mm:ss =      0 h 01 m 22 s
- Estimated total run time in seconds =    165.14200019836426     
+ Estimated total run time in seconds =    165.14200019836426
  Estimated total run time in hh:mm:ss =      0 h 02 m 45 s
  The run will finish approximately on: Sat Feb 09, 2019 16:28
 
@@ -897,13 +897,13 @@ Time step number    3000   t =    1.4995 s out of    5000
  ******************************************************************
  We have done    59.9919968     % of the total
  Max norm of vector field in solid (elastic) =    1.37829753E-02
- Elapsed time in seconds =    99.242000102996826     
+ Elapsed time in seconds =    99.242000102996826
  Elapsed time in hh:mm:ss =      0 h 01 m 39 s
  Mean elapsed time per time step in seconds =    3.3080666700998941E-002
  Time steps remaining =         2000
- Estimated remaining time in seconds =    66.161333401997879     
+ Estimated remaining time in seconds =    66.161333401997879
  Estimated remaining time in hh:mm:ss =      0 h 01 m 06 s
- Estimated total run time in seconds =    165.40333350499469     
+ Estimated total run time in seconds =    165.40333350499469
  Estimated total run time in hh:mm:ss =      0 h 02 m 45 s
  The run will finish approximately on: Sat Feb 09, 2019 16:28
 
@@ -928,13 +928,13 @@ Time step number    3500   t =    1.7495 s out of    5000
  ******************************************************************
  We have done    69.9939957     % of the total
  Max norm of vector field in solid (elastic) =    1.63894333E-02
- Elapsed time in seconds =    116.05299997329712     
+ Elapsed time in seconds =    116.05299997329712
  Elapsed time in hh:mm:ss =      0 h 01 m 56 s
  Mean elapsed time per time step in seconds =    3.3157999992370603E-002
  Time steps remaining =         1500
- Estimated remaining time in seconds =    49.736999988555901     
+ Estimated remaining time in seconds =    49.736999988555901
  Estimated remaining time in hh:mm:ss =      0 h 00 m 49 s
- Estimated total run time in seconds =    165.78999996185303     
+ Estimated total run time in seconds =    165.78999996185303
  Estimated total run time in hh:mm:ss =      0 h 02 m 45 s
  The run will finish approximately on: Sat Feb 09, 2019 16:28
 
@@ -954,13 +954,13 @@ Time step number    4000   t =    1.9995 s out of    5000
  ******************************************************************
  We have done    79.9960022     % of the total
  Max norm of vector field in solid (elastic) =    1.67986993E-02
- Elapsed time in seconds =    132.70099997520447     
+ Elapsed time in seconds =    132.70099997520447
  Elapsed time in hh:mm:ss =      0 h 02 m 12 s
  Mean elapsed time per time step in seconds =    3.3175249993801115E-002
  Time steps remaining =         1000
- Estimated remaining time in seconds =    33.175249993801117     
+ Estimated remaining time in seconds =    33.175249993801117
  Estimated remaining time in hh:mm:ss =      0 h 00 m 33 s
- Estimated total run time in seconds =    165.87624996900558     
+ Estimated total run time in seconds =    165.87624996900558
  Estimated total run time in hh:mm:ss =      0 h 02 m 45 s
  The run will finish approximately on: Sat Feb 09, 2019 16:28
 
@@ -985,13 +985,13 @@ Time step number    4500   t =    2.2495 s out of    5000
  ******************************************************************
  We have done    89.9980011     % of the total
  Max norm of vector field in solid (elastic) =    1.62442904E-02
- Elapsed time in seconds =    149.48200011253357     
+ Elapsed time in seconds =    149.48200011253357
  Elapsed time in hh:mm:ss =      0 h 02 m 29 s
  Mean elapsed time per time step in seconds =    3.3218222247229680E-002
  Time steps remaining =          500
- Estimated remaining time in seconds =    16.609111123614841     
+ Estimated remaining time in seconds =    16.609111123614841
  Estimated remaining time in hh:mm:ss =      0 h 00 m 16 s
- Estimated total run time in seconds =    166.09111123614841     
+ Estimated total run time in seconds =    166.09111123614841
  Estimated total run time in hh:mm:ss =      0 h 02 m 46 s
  The run will finish approximately on: Sat Feb 09, 2019 16:28
 
@@ -1011,13 +1011,13 @@ Time step number    5000   t =    2.4995 s out of    5000
  ******************************************************************
  We have done    100.000000     % of the total
  Max norm of vector field in solid (elastic) =    1.74842905E-02
- Elapsed time in seconds =    165.87000012397766     
+ Elapsed time in seconds =    165.87000012397766
  Elapsed time in hh:mm:ss =      0 h 02 m 45 s
  Mean elapsed time per time step in seconds =    3.3174000024795529E-002
  Time steps remaining =            0
- Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    165.87000012397766     
+ Estimated total run time in seconds =    165.87000012397766
  Estimated total run time in hh:mm:ss =      0 h 02 m 45 s
 
 
@@ -1035,13 +1035,13 @@ Time step number    5000   t =    2.4995 s out of    5000
  Average duration of the calculation per spectral element =    1.40512884E-06  s
 
 
- Total duration of the timeloop in seconds, measured using 
+ Total duration of the timeloop in seconds, measured using
  date and time of the system :    166.026993      s
 
 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Program SPECFEM2D: 
+ Program SPECFEM2D:
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
  SALT2D

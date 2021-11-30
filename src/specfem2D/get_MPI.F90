@@ -77,7 +77,7 @@
   if (NPROC > 1) then
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*) '  master process:'
+      write(IMAIN,*) '  main process:'
       write(IMAIN,*) '  number of MPI interfaces in acoustic domain    = ',ninterface_acoustic
       write(IMAIN,*) '  number of MPI interfaces in elastic domain     = ',ninterface_elastic
       write(IMAIN,*) '  number of MPI interfaces in poroelastic domain = ',ninterface_poroelastic
@@ -703,7 +703,7 @@
 
   ! user output
   if (ACOUSTIC_SIMULATION) then
-    ! master collects total
+    ! main collects total
     call sum_all_i(nspec_outer_acoustic,ispec_outer)
     call sum_all_i(nspec_inner_acoustic,ispec_inner)
     if (myrank == 0) then

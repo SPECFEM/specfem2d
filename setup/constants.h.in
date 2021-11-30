@@ -51,6 +51,9 @@
 !!
 !!-----------------------------------------------------------
 
+! input, output and main MPI I/O files
+! note: careful with these unit numbers, we mostly use units in the 40-50 range.
+!       Cray Fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100,101,102 (input,output,error unit)
 ! input and output files
   integer, parameter :: ISTANDARD_OUTPUT = 6
   integer, parameter :: IIN  = 40, IOUT = 41
@@ -138,9 +141,9 @@
 !!
 !!-----------------------------------------------------------
 
-! outputs diagonal Hessian for preconditioning
-  logical, parameter :: APPROXIMATE_HESS_KL = .false.
-
+! kernel debugging
+! flag to save GLL weights for kernel benchmark examples
+  logical,parameter :: SAVE_WEIGHTS = .true.
 
 !!-----------------------------------------------------------
 !!
@@ -323,7 +326,7 @@
   double precision, parameter :: GAUSSALPHA = 0.d0,GAUSSBETA = 0.d0
 
 ! number of lines per source in SOURCE file
-  integer, parameter :: NLINES_PER_SOURCE = 17
+  integer, parameter :: NLINES_PER_SOURCE = 16
 
 ! number of iterations to solve the system for xi and eta
 ! setting it to 5 instead of 4 ensures that the result obtained is not compiler dependent

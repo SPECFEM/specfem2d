@@ -42,8 +42,10 @@
                          hprime_xx,hprime_zz, &
                          solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge, &
-                         kmato,poroelastcoef, &
-                         assign_external_model,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropycoef, &
+                         ispec_is_anisotropic, &
+                         rhostore,mustore,rho_vpstore, &
+                         c11store,c13store,c15store,c33store,c35store,c55store,c12store,c23store,c25store, &
+                         phistore,kappaarraystore,mufr_store, &
                          displ_elastic,b_displ_elastic,displs_poroelastic,displw_poroelastic, &
                          b_displs_poroelastic,b_displw_poroelastic, &
                          accel_elastic,b_accel_elastic
@@ -54,11 +56,11 @@
   integer :: inum,ispec_elastic,iedge_elastic,ispec_poroelastic,iedge_poroelastic, &
              i,j,k,ipoin1D,iglob,ii2,jj2
 
-  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
+  double precision :: phi,kappa_s,kappa_f,kappa_fr,mu_fr
   double precision :: D_biot,H_biot,C_biot,M_biot
 
   double precision :: c11,c13,c15,c33,c35,c55,c12,c23,c25
-  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,rhol,cpl
 
   real(kind=CUSTOM_REAL) :: mu_G,lambdal_G,lambdalplus2mul_G
 
@@ -95,8 +97,11 @@
       iglob = ibool(i,j,ispec_poroelastic)
 
       ! gets poroelastic material
-      call get_poroelastic_material(ispec_poroelastic,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f, &
-                                    mu_fr,kappa_fr,rho_bar)
+      phi = phistore(i,j,ispec_poroelastic)
+      kappa_s = kappaarraystore(1,i,j,ispec_poroelastic)
+      kappa_f = kappaarraystore(2,i,j,ispec_poroelastic)
+      kappa_fr = kappaarraystore(3,i,j,ispec_poroelastic)
+      mu_fr = mufr_store(i,j,ispec_poroelastic)
 
       ! Biot coefficients for the input phi
       call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
@@ -200,15 +205,19 @@
         b_sigma_xz = mu_G*(b_duz_dxl + b_dux_dzl)
         b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
       endif
+
       ! get point values for the elastic domain, which matches our side in the inverse direction
       ii2 = ivalue(ipoin1D,iedge_elastic)
       jj2 = jvalue(ipoin1D,iedge_elastic)
       iglob = ibool(ii2,jj2,ispec_elastic)
 
-      ! get elastic properties
-      lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec_elastic))
-      mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec_elastic))
-      lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec_elastic))
+      ! get elastic parameters of current grid point
+      mul_unrelaxed_elastic = mustore(ii2,jj2,ispec_elastic)
+      rhol = rhostore(ii2,jj2,ispec_elastic)
+      cpl = rho_vpstore(ii2,jj2,ispec_elastic) / rhol
+
+      lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO * mul_unrelaxed_elastic
+      lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO * mul_unrelaxed_elastic
 
       ! derivative along x and along z for u_s and w
       dux_dxi = ZERO
@@ -260,31 +269,20 @@
         b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
         b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
       endif
+
       ! compute stress tensor
       ! full anisotropy
-      if (kmato(ispec_elastic) == 2) then
+      if (ispec_is_anisotropic(ispec_elastic)) then
         ! implement anisotropy in 2D
-        if (assign_external_model) then
-          c11 = c11ext(ii2,jj2,ispec_elastic)
-          c13 = c13ext(ii2,jj2,ispec_elastic)
-          c15 = c15ext(ii2,jj2,ispec_elastic)
-          c33 = c33ext(ii2,jj2,ispec_elastic)
-          c35 = c35ext(ii2,jj2,ispec_elastic)
-          c55 = c55ext(ii2,jj2,ispec_elastic)
-          c12 = c12ext(ii2,jj2,ispec_elastic)
-          c23 = c23ext(ii2,jj2,ispec_elastic)
-          c25 = c25ext(ii2,jj2,ispec_elastic)
-        else
-          c11 = anisotropycoef(1,kmato(ispec_elastic))
-          c13 = anisotropycoef(2,kmato(ispec_elastic))
-          c15 = anisotropycoef(3,kmato(ispec_elastic))
-          c33 = anisotropycoef(4,kmato(ispec_elastic))
-          c35 = anisotropycoef(5,kmato(ispec_elastic))
-          c55 = anisotropycoef(6,kmato(ispec_elastic))
-          c12 = anisotropycoef(7,kmato(ispec_elastic))
-          c23 = anisotropycoef(8,kmato(ispec_elastic))
-          c25 = anisotropycoef(9,kmato(ispec_elastic))
-        endif
+        c11 = c11store(ii2,jj2,ispec_elastic)
+        c12 = c12store(ii2,jj2,ispec_elastic)
+        c13 = c13store(ii2,jj2,ispec_elastic)
+        c15 = c15store(ii2,jj2,ispec_elastic)
+        c23 = c23store(ii2,jj2,ispec_elastic)
+        c25 = c25store(ii2,jj2,ispec_elastic)
+        c33 = c33store(ii2,jj2,ispec_elastic)
+        c35 = c35store(ii2,jj2,ispec_elastic)
+        c55 = c55store(ii2,jj2,ispec_elastic)
 
         sigma_xx = sigma_xx + c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
         sigma_zz = sigma_zz + c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
@@ -365,8 +363,10 @@
                          hprime_xx,hprime_zz, &
                          solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge, &
-                         kmato,poroelastcoef, &
-                         assign_external_model,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropycoef, &
+                         ispec_is_anisotropic, &
+                         rhostore,mustore,rho_vpstore, &
+                         c11store,c13store,c15store,c33store,c35store,c55store,c12store,c23store,c25store, &
+                         phistore,kappaarraystore,mufr_store, &
                          displ_elastic,b_displ_elastic,displs_poroelastic,displw_poroelastic, &
                          b_displs_poroelastic,b_displw_poroelastic, &
                          accel_elastic,b_accel_elastic
@@ -377,11 +377,11 @@
   integer :: inum,ispec_elastic,iedge_elastic,ispec_poroelastic,iedge_poroelastic, &
              i,j,k,ipoin1D,iglob,ii2,jj2
 
-  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
+  double precision :: phi,kappa_s,kappa_f,kappa_fr,mu_fr
   double precision :: D_biot,H_biot,C_biot,M_biot
 
   double precision :: c11,c13,c15,c33,c35,c55,c12,c23,c25
-  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,rhol,cpl
 
   real(kind=CUSTOM_REAL) :: mu_G,lambdal_G,lambdalplus2mul_G
 
@@ -417,10 +417,12 @@
       j = jvalue_inverse(ipoin1D,iedge_poroelastic)
       iglob = ibool(i,j,ispec_poroelastic)
 
-      ! get poroelastic domain paramters
-      ! gets poroelastic material
-      call get_poroelastic_material(ispec_poroelastic,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f, &
-                                    mu_fr,kappa_fr,rho_bar)
+      ! get poroelastic domain parameters
+      phi = phistore(i,j,ispec_poroelastic)
+      kappa_s = kappaarraystore(1,i,j,ispec_poroelastic)
+      kappa_f = kappaarraystore(2,i,j,ispec_poroelastic)
+      kappa_fr = kappaarraystore(3,i,j,ispec_poroelastic)
+      mu_fr = mufr_store(i,j,ispec_poroelastic)
 
       ! Biot coefficients for the input phi
       call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
@@ -510,15 +512,19 @@
         b_sigma_xz = mu_G*(b_duz_dxl + b_dux_dzl)
         b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
       endif
+
       ! get point values for the elastic domain, which matches our side in the inverse direction
       ii2 = ivalue(ipoin1D,iedge_elastic)
       jj2 = jvalue(ipoin1D,iedge_elastic)
       iglob = ibool(ii2,jj2,ispec_elastic)
 
-      ! get elastic properties
-      lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec_elastic))
-      mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec_elastic))
-      lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec_elastic))
+      ! get elastic parameters of current grid point
+      mul_unrelaxed_elastic = mustore(ii2,jj2,ispec_elastic)
+      rhol = rhostore(ii2,jj2,ispec_elastic)
+      cpl = rho_vpstore(ii2,jj2,ispec_elastic) / rhol
+
+      lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO * mul_unrelaxed_elastic
+      lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO * mul_unrelaxed_elastic
 
       ! derivative along x and along z for u_s and w
       dux_dxi = ZERO
@@ -570,31 +576,20 @@
         b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
         b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
       endif
+
       ! compute stress tensor
       ! full anisotropy
-      if (kmato(ispec_elastic) == 2) then
+      if (ispec_is_anisotropic(ispec_elastic)) then
         ! implement anisotropy in 2D
-        if (assign_external_model) then
-          c11 = c11ext(ii2,jj2,ispec_elastic)
-          c13 = c13ext(ii2,jj2,ispec_elastic)
-          c15 = c15ext(ii2,jj2,ispec_elastic)
-          c33 = c33ext(ii2,jj2,ispec_elastic)
-          c35 = c35ext(ii2,jj2,ispec_elastic)
-          c55 = c55ext(ii2,jj2,ispec_elastic)
-          c12 = c12ext(ii2,jj2,ispec_elastic)
-          c23 = c23ext(ii2,jj2,ispec_elastic)
-          c25 = c25ext(ii2,jj2,ispec_elastic)
-        else
-          c11 = anisotropycoef(1,kmato(ispec_elastic))
-          c13 = anisotropycoef(2,kmato(ispec_elastic))
-          c15 = anisotropycoef(3,kmato(ispec_elastic))
-          c33 = anisotropycoef(4,kmato(ispec_elastic))
-          c35 = anisotropycoef(5,kmato(ispec_elastic))
-          c55 = anisotropycoef(6,kmato(ispec_elastic))
-          c12 = anisotropycoef(7,kmato(ispec_elastic))
-          c23 = anisotropycoef(8,kmato(ispec_elastic))
-          c25 = anisotropycoef(9,kmato(ispec_elastic))
-        endif
+        c11 = c11store(ii2,jj2,ispec_elastic)
+        c12 = c12store(ii2,jj2,ispec_elastic)
+        c13 = c13store(ii2,jj2,ispec_elastic)
+        c15 = c15store(ii2,jj2,ispec_elastic)
+        c23 = c23store(ii2,jj2,ispec_elastic)
+        c25 = c25store(ii2,jj2,ispec_elastic)
+        c33 = c33store(ii2,jj2,ispec_elastic)
+        c35 = c35store(ii2,jj2,ispec_elastic)
+        c55 = c55store(ii2,jj2,ispec_elastic)
 
         sigma_xx = sigma_xx + c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
         sigma_zz = sigma_zz + c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl

@@ -38,7 +38,7 @@
   use part_unstruct_par, only: nelem_acoustic_surface,acoustic_surface, &
     nxread,nzread,elmnts
 
-  use shared_parameters, only: AXISYM,ngnod,num_material,icodemat,phi_read,xmin_param, &
+  use shared_parameters, only: AXISYM,NGNOD,num_material,icodemat,phi_read,xmin_param, &
     absorbbottom,absorbleft,absorbright,absorbtop
 
   implicit none
@@ -101,6 +101,12 @@
   acoustic_surface(:,:) = 0
   nelem_acoustic_surface = 0
 
+  ! 'acoustic_surface' contains
+  ! 1/ element number,
+  ! 2/ number of nodes that form the free surface,
+  ! 3/ first node on the free surface,
+  ! 4/ second node on the free surface, if relevant (if 2/ is equal to 2)
+
   if (.not. absorbtop) then
     j = nzread
     do i = 1,nxread
@@ -109,8 +115,8 @@
           nelem_acoustic_surface = nelem_acoustic_surface + 1
           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
           acoustic_surface(2,nelem_acoustic_surface) = 2
-          acoustic_surface(3,nelem_acoustic_surface) = elmnts(3+ngnod*((j-1)*nxread+i-1))
-          acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))
+          acoustic_surface(3,nelem_acoustic_surface) = elmnts(3+NGNOD*((j-1)*nxread+i-1))
+          acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+NGNOD*((j-1)*nxread+i-1))
        endif
     enddo
   endif
@@ -122,8 +128,8 @@
           nelem_acoustic_surface = nelem_acoustic_surface + 1
           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
           acoustic_surface(2,nelem_acoustic_surface) = 2
-          acoustic_surface(3,nelem_acoustic_surface) = elmnts(0+ngnod*((j-1)*nxread+i-1))
-          acoustic_surface(4,nelem_acoustic_surface) = elmnts(1+ngnod*((j-1)*nxread+i-1))
+          acoustic_surface(3,nelem_acoustic_surface) = elmnts(0+NGNOD*((j-1)*nxread+i-1))
+          acoustic_surface(4,nelem_acoustic_surface) = elmnts(1+NGNOD*((j-1)*nxread+i-1))
        endif
     enddo
   endif
@@ -136,8 +142,8 @@
           nelem_acoustic_surface = nelem_acoustic_surface + 1
           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
           acoustic_surface(2,nelem_acoustic_surface) = 2
-          acoustic_surface(3,nelem_acoustic_surface) = elmnts(0+ngnod*((j-1)*nxread+i-1))
-          acoustic_surface(4,nelem_acoustic_surface) = elmnts(3+ngnod*((j-1)*nxread+i-1))
+          acoustic_surface(3,nelem_acoustic_surface) = elmnts(0+NGNOD*((j-1)*nxread+i-1))
+          acoustic_surface(4,nelem_acoustic_surface) = elmnts(3+NGNOD*((j-1)*nxread+i-1))
        endif
     enddo
   endif
@@ -149,8 +155,8 @@
           nelem_acoustic_surface = nelem_acoustic_surface + 1
           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
           acoustic_surface(2,nelem_acoustic_surface) = 2
-          acoustic_surface(3,nelem_acoustic_surface) = elmnts(1+ngnod*((j-1)*nxread+i-1))
-          acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))
+          acoustic_surface(3,nelem_acoustic_surface) = elmnts(1+NGNOD*((j-1)*nxread+i-1))
+          acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+NGNOD*((j-1)*nxread+i-1))
        endif
     enddo
   endif

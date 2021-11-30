@@ -52,12 +52,12 @@
   endif
 
   ! shape arrays
-  allocate(shape2D(ngnod,NGLLX,NGLLZ),dershape2D(NDIM,ngnod,NGLLX,NGLLZ),stat=ier)
+  allocate(shape2D(NGNOD,NGLLX,NGLLZ),dershape2D(NDIM,NGNOD,NGLLX,NGLLZ),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating shape arrays')
 
   do j = 1,NGLLZ
     do i = 1,NGLLX
-      call define_shape_functions(shape2D(:,i,j),dershape2D(:,:,i,j),xigll(i),zigll(j),ngnod)
+      call define_shape_functions(shape2D(:,i,j),dershape2D(:,:,i,j),xigll(i),zigll(j),NGNOD)
     enddo
   enddo
 

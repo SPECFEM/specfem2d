@@ -114,12 +114,15 @@
 ! which may result in a in stiff ordinary differential equation to solve;
 ! in such a case, resorting to the convolution formulation is better.
 !         if (CONVOLUTION_MEMORY_VARIABLES) then
-!! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
+
+        ! bulk attenuation
+!! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu1,DT,coef0,coef1,coef2)
         a_newmark = A_newmark_nu1(i_sls,i,j,ispec)
         e1(i_sls,i,j,ispec) = a_newmark * a_newmark * e1(i_sls,i,j,ispec) + &
                               B_newmark_nu1(i_sls,i,j,ispec) * (theta_n_u + a_newmark * theta_nsub1_u)
 
-!! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu2,deltat,coef0,coef1,coef2)
+        ! shear attenuation
+!! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu2,DT,coef0,coef1,coef2)
         a_newmark = A_newmark_nu2(i_sls,i,j,ispec)
         e11(i_sls,i,j,ispec) = a_newmark * a_newmark * e11(i_sls,i,j,ispec) + &
                                B_newmark_nu2(i_sls,i,j,ispec) * (dux_dxl-theta_n_u/TWO + &

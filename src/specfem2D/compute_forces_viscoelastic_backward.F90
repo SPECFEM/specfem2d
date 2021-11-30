@@ -38,19 +38,19 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
     ONE,TWO,PI,TINYVAL,ALPHA_LDDRK,BETA_LDDRK,ALPHA_RK4,BETA_RK4
 
-  use specfem_par, only: nglob,nspec,assign_external_model,P_SV, &
+  use specfem_par, only: nglob,nspec,P_SV, &
                          ATTENUATION_VISCOELASTIC,nspec_ATT,N_SLS, &
-                         ibool,kmato,ispec_is_elastic, &
-                         poroelastcoef,xix,xiz,gammax,gammaz, &
+                         ibool,ispec_is_elastic, &
+                         xix,xiz,gammax,gammaz, &
                          jacobian,rho_vpstore,mustore,rhostore, &
-                         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
-                         ispec_is_anisotropic,anisotropycoef, &
+                         c11store,c13store,c15store,c33store,c35store,c55store,c12store,c23store,c25store, &
+                         ispec_is_anisotropic, &
                          e1_LDDRK,e11_LDDRK,e13_LDDRK, &
                          e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                          inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,N_SLS, &
-                         deltat,coord, &
+                         DT,deltat,coord, &
                          time_stepping_scheme,i_stage,ispec_is_acoustic
 
   ! overlapping communication
@@ -158,12 +158,12 @@
             select case(time_stepping_scheme)
             case (1)
               ! Newmark
-              call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
+              call compute_coef_convolution(tauinvnu1,DT,coef0,coef1,coef2)
 
               e1(i,j,ispec,i_sls) = coef0 * e1(i,j,ispec,i_sls) + &
                                     phinu1 * (coef1 * theta_n_u + coef2 * theta_nsub1_u)
 
-              call compute_coef_convolution(tauinvnu2,deltat,coef0,coef1,coef2)
+              call compute_coef_convolution(tauinvnu2,DT,coef0,coef1,coef2)
 
               e11(i,j,ispec,i_sls) = coef0 * e11(i,j,ispec,i_sls) + &
                                      phinu2 * (coef1 * (dux_dxl_n(i,j,ispec)-theta_n_u/TWO) + &
@@ -298,24 +298,18 @@
 
     !--- elastic spectral element
     if (ispec_is_elastic(ispec)) then
-      ! get unrelaxed elastic parameters of current spectral element
-      lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-      mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-      lambdalplusmul_unrelaxed_elastic = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
-      lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec))
 
       ! first double loop over GLL points to compute and store gradients
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          !--- if external medium, get elastic parameters of current grid point
-          if (assign_external_model) then
-            mul_unrelaxed_elastic = mustore(i,j,ispec)
-            rhol = rhostore(i,j,ispec)
-            cpl = rho_vpstore(i,j,ispec)/rhol
-            lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO*mul_unrelaxed_elastic
-            lambdalplusmul_unrelaxed_elastic = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
-            lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic
-          endif
+          ! get elastic parameters of current grid point
+          mul_unrelaxed_elastic = mustore(i,j,ispec)
+          rhol = rhostore(i,j,ispec)
+          cpl = rho_vpstore(i,j,ispec) / rhol
+
+          lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO*mul_unrelaxed_elastic
+          lambdalplusmul_unrelaxed_elastic = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
+          lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic
 
           ! derivative along x and along z
           dux_dxi = 0._CUSTOM_REAL
@@ -349,7 +343,6 @@
                 duz_dgamma = duz_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
               enddo
             endif
-
 
           xixl = xix(i,j,ispec)
           xizl = xiz(i,j,ispec)
@@ -532,27 +525,15 @@
 
           ! full anisotropy
           if (ispec_is_anisotropic(ispec)) then
-            if (assign_external_model) then
-              c11 = c11ext(i,j,ispec)
-              c13 = c13ext(i,j,ispec)
-              c15 = c15ext(i,j,ispec)
-              c33 = c33ext(i,j,ispec)
-              c35 = c35ext(i,j,ispec)
-              c55 = c55ext(i,j,ispec)
-              c12 = c12ext(i,j,ispec)
-              c23 = c23ext(i,j,ispec)
-              c25 = c25ext(i,j,ispec)
-            else
-              c11 = anisotropycoef(1,kmato(ispec))
-              c13 = anisotropycoef(2,kmato(ispec))
-              c15 = anisotropycoef(3,kmato(ispec))
-              c33 = anisotropycoef(4,kmato(ispec))
-              c35 = anisotropycoef(5,kmato(ispec))
-              c55 = anisotropycoef(6,kmato(ispec))
-              c12 = anisotropycoef(7,kmato(ispec))
-              c23 = anisotropycoef(8,kmato(ispec))
-              c25 = anisotropycoef(9,kmato(ispec))
-            endif
+            c11 = c11store(i,j,ispec)
+            c12 = c12store(i,j,ispec)
+            c13 = c13store(i,j,ispec)
+            c15 = c15store(i,j,ispec)
+            c23 = c23store(i,j,ispec)
+            c25 = c25store(i,j,ispec)
+            c33 = c33store(i,j,ispec)
+            c35 = c35store(i,j,ispec)
+            c55 = c55store(i,j,ispec)
 
             ! implement anisotropy in 2D
             sigma_xx = c11*dux_dxl + c13*duz_dzl + c15*(duz_dxl + dux_dzl)

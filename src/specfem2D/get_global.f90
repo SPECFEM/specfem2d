@@ -35,7 +35,7 @@
 
   subroutine get_global()
 
-  use constants, only: NGLLX,NGLLZ,MAX_STRING_LEN,IN_DATA_FILES
+  use constants, only: NGLLX,NGLLZ,MAX_STRING_LEN,IN_DATA_FILES,IMAIN
 
   use specfem_par, only: nspec,ibool,copy_ibool_ori,integer_mask_ibool,SAVE_MODEL,myrank
 
@@ -71,7 +71,7 @@
   enddo
 
   ! file output for ibool
-  if (trim(SAVE_MODEL) == 'binary') then
+  if (trim(SAVE_MODEL) == 'binary' .or. trim(SAVE_MODEL) == 'gll') then
     write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_NSPEC_ibool.bin'
 
     open(888,file=trim(outputname),status='unknown',form='unformatted',iostat=ier)
@@ -79,6 +79,13 @@
     write(888) nspec
     write(888) ibool
     close(888)
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  saving ibool array to: ',trim(outputname)
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
   endif
 
   end subroutine get_global

@@ -40,16 +40,18 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
     ZERO,ONE,TWO,TWO_THIRDS,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: AXISYM,nglob,num_abs_boundary_faces,it,any_elastic, &
-                         assign_external_model,ibool,kmato, &
+  use specfem_par, only: nglob,num_abs_boundary_faces,anyabs,it,any_elastic, &
+                         ibool, &
                          abs_boundary_ispec,ispec_is_elastic, &
-                         codeabs,codeabs_corner,density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-                         rho_vpstore,rho_vsstore,wxgll,wzgll,P_SV, &
+                         codeabs,codeabs_corner, &
+                         xix,xiz,gammax,gammaz,jacobian, &
+                         rho_vpstore,rho_vsstore,rhostore,mustore, &
+                         wxgll,wzgll,P_SV, &
                          SIMULATION_TYPE,SAVE_FORWARD, &
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top, &
                          ib_left,ib_right,ib_bottom,ib_top, &
-                         STACEY_ABSORBING_CONDITIONS,deltat, &
+                         STACEY_ABSORBING_CONDITIONS, &
                          NO_BACKWARD_RECONSTRUCTION
 
   ! initialfield
@@ -61,7 +63,7 @@
                         anglesource,anglesource_refl,A_plane,B_plane,C_plane,c_inc,c_refl,time_offset
 
   ! for Bielak
-  use specfem_par, only: x_source,z_source,f0_source,coord
+  use specfem_par, only: x_source,z_source,f0_source
 
   implicit none
 
@@ -71,11 +73,11 @@
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob
   real(kind=CUSTOM_REAL) :: weight,xxi,zxi,xgamma,zgamma,jacobian1D
-  real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz
+  real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,tx,ty,tz
 
   ! material properties of the elastic medium
-  real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
-    lambdaplus2mu_unrelaxed_elastic,kappal,cpl,csl,rhol
+  real(kind=CUSTOM_REAL) :: rho_vp,rho_vs ! cpl,csl
+  real(kind=CUSTOM_REAL) :: rhol,cpl,mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
 
   ! for analytical initial plane wave for Bielak's conditions
   double precision :: veloc_horiz,veloc_vert,dxUx,dzUx,dxUz,dzUz,traction_x_t0,traction_z_t0
@@ -83,6 +85,7 @@
 
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
+  if (.not. anyabs) return
   if (.not. any_elastic) return
 
   ! Clayton-Engquist condition if elastic
@@ -96,24 +99,6 @@
 
     ! only for elastic elements, skip others
     if (.not. ispec_is_elastic(ispec) ) cycle
-
-    ! get elastic parameters of current spectral element
-    lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-    mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-
-    lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO * mul_unrelaxed_elastic
-
-    rhol  = density(1,kmato(ispec))
-
-    if (AXISYM) then ! CHECK kappa
-      kappal  = lambdal_unrelaxed_elastic + TWO_THIRDS*mul_unrelaxed_elastic
-      cpl = sqrt((kappal + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol) ! CHECK kappa
-    else
-      kappal  = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
-      cpl = sqrt((kappal + mul_unrelaxed_elastic)/rhol) ! CHECK kappa
-    endif
-
-    csl = sqrt(mul_unrelaxed_elastic/rhol)
 
     !--- left absorbing boundary
     if (codeabs(IEDGE4,ispecabs)) then
@@ -131,9 +116,18 @@
         ! left or right edge, horizontal normal vector
         if (add_Bielak_conditions_left .and. initialfield) then
           if (.not. over_critical_angle) then
-            call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                        x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
-                        c_inc, c_refl, time_offset,f0_source(1))
+            call compute_Bielak_conditions(iglob,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                                           x_source(1), z_source(1), A_plane, B_plane, C_plane, &
+                                           anglesource(1), anglesource_refl, &
+                                           c_inc, c_refl, time_offset,f0_source(1))
+
+            ! get elastic parameters of current grid point
+            mul_unrelaxed_elastic = mustore(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
+            cpl = rho_vpstore(i,j,ispec)/rhol
+
+            lambdal_unrelaxed_elastic = rhol*cpl*cpl - 2._CUSTOM_REAL * mul_unrelaxed_elastic
+            lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
 
             traction_x_t0 = lambdaplus2mu_unrelaxed_elastic * dxUx + lambdal_unrelaxed_elastic * dzUz
             traction_z_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
@@ -146,14 +140,8 @@
           endif
         endif
 
-        ! external velocity model
-        if (assign_external_model) then
-          rho_vp = rho_vpstore(i,j,ispec)
-          rho_vs = rho_vsstore(i,j,ispec)
-        else
-          rho_vp = rhol*cpl
-          rho_vs = rhol*csl
-        endif
+        rho_vp = rho_vpstore(i,j,ispec)
+        rho_vs = rho_vsstore(i,j,ispec)
 
         ! normal pointing left
         xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
@@ -228,6 +216,9 @@
 !            derivx = (dux_dxl * unit_tx + dux_dzl * unit_tz) * unit_tx
 !            derivz = (duz_dxl * unit_tx + duz_dzl * unit_tz) * unit_tz
 !
+!            csl = vsstore(i,j,ispec)
+!            cpl = vpstore(i,j,ispec)
+!
 !            tx = tx + rho_vs *( 2._CUSTOM_REAL * csl - cpl) * derivx
 !            tz = tz + rho_vs *( 2._CUSTOM_REAL * csl - cpl) * derivz
 !          endif
@@ -278,9 +269,18 @@
         ! left or right edge, horizontal normal vector
         if (add_Bielak_conditions_right .and. initialfield) then
           if (.not. over_critical_angle) then
-            call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                        x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
-                        c_inc, c_refl, time_offset,f0_source(1))
+            call compute_Bielak_conditions(iglob,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                                           x_source(1), z_source(1), A_plane, B_plane, C_plane, &
+                                           anglesource(1), anglesource_refl, &
+                                           c_inc, c_refl, time_offset,f0_source(1))
+
+            ! get elastic parameters of current grid point
+            mul_unrelaxed_elastic = mustore(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
+            cpl = rho_vpstore(i,j,ispec)/rhol
+
+            lambdal_unrelaxed_elastic = rhol*cpl*cpl - 2._CUSTOM_REAL * mul_unrelaxed_elastic
+            lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
 
             traction_x_t0 = lambdaplus2mu_unrelaxed_elastic * dxUx + lambdal_unrelaxed_elastic * dzUz
             traction_z_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
@@ -293,14 +293,8 @@
           endif
         endif
 
-        ! external velocity model
-        if (assign_external_model) then
-          rho_vp = rho_vpstore(i,j,ispec)
-          rho_vs = rho_vsstore(i,j,ispec)
-        else
-          rho_vp = rhol*cpl
-          rho_vs = rhol*csl
-        endif
+        rho_vp = rho_vpstore(i,j,ispec)
+        rho_vs = rho_vsstore(i,j,ispec)
 
         ! normal pointing right
         xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
@@ -362,9 +356,18 @@
         ! top or bottom edge, vertical normal vector
         if (add_Bielak_conditions_bottom .and. initialfield) then
           if (.not. over_critical_angle) then
-            call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                        x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
-                        c_inc, c_refl, time_offset,f0_source(1))
+            call compute_Bielak_conditions(iglob,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                                           x_source(1), z_source(1), A_plane, B_plane, C_plane, &
+                                           anglesource(1), anglesource_refl, &
+                                           c_inc, c_refl, time_offset,f0_source(1))
+
+            ! get elastic parameters of current grid point
+            mul_unrelaxed_elastic = mustore(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
+            cpl = rho_vpstore(i,j,ispec)/rhol
+
+            lambdal_unrelaxed_elastic = rhol*cpl*cpl - 2._CUSTOM_REAL * mul_unrelaxed_elastic
+            lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
 
             traction_x_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
             traction_z_t0 = lambdal_unrelaxed_elastic * dxUx + lambdaplus2mu_unrelaxed_elastic * dzUz
@@ -377,14 +380,8 @@
           endif
         endif
 
-        ! external velocity model
-        if (assign_external_model) then
-          rho_vp = rho_vpstore(i,j,ispec)
-          rho_vs = rho_vsstore(i,j,ispec)
-        else
-          rho_vp = rhol*cpl
-          rho_vs = rhol*csl
-        endif
+        rho_vp = rho_vpstore(i,j,ispec)
+        rho_vs = rho_vsstore(i,j,ispec)
 
         xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
         zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -455,22 +452,25 @@
         if (add_Bielak_conditions_top .and. initialfield) then
         ! at the top there is no test for whether we are above the critical angle
         ! because a critical angle can only exist when the top edge is a free surface, not in an infinite medium
-          call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                      x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
-                      c_inc, c_refl, time_offset,f0_source(1))
+          call compute_Bielak_conditions(iglob,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                                         x_source(1), z_source(1), A_plane, B_plane, C_plane, &
+                                         anglesource(1), anglesource_refl, &
+                                         c_inc, c_refl, time_offset,f0_source(1))
+
+          ! get elastic parameters of current grid point
+          mul_unrelaxed_elastic = mustore(i,j,ispec)
+          rhol = rhostore(i,j,ispec)
+          cpl = rho_vpstore(i,j,ispec)/rhol
+
+          lambdal_unrelaxed_elastic = rhol*cpl*cpl - 2._CUSTOM_REAL * mul_unrelaxed_elastic
+          lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
 
           traction_x_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
           traction_z_t0 = lambdal_unrelaxed_elastic * dxUx + lambdaplus2mu_unrelaxed_elastic * dzUz
         endif
 
-        ! external velocity model
-        if (assign_external_model) then
-          rho_vp = rho_vpstore(i,j,ispec)
-          rho_vs = rho_vsstore(i,j,ispec)
-        else
-          rho_vp = rhol*cpl
-          rho_vs = rhol*csl
-        endif
+        rho_vp = rho_vpstore(i,j,ispec)
+        rho_vs = rho_vsstore(i,j,ispec)
 
         xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
         zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -541,7 +541,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,any_elastic,ibool,ispec_is_elastic, &
-                         NSTEP,it,num_abs_boundary_faces, &
+                         NSTEP,it,num_abs_boundary_faces,anyabs, &
                          abs_boundary_ispec,codeabs, &
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top, &
@@ -557,6 +557,7 @@
 
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
+  if (.not. anyabs) return
   if (.not. any_elastic) return
   if (NO_BACKWARD_RECONSTRUCTION) return
 

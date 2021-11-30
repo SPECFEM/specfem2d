@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine compute_coef_convolution(bb,deltat,coef0,coef1,coef2)
+  subroutine compute_coef_convolution(bb,DT,coef0,coef1,coef2)
 
   ! compute coefficient used in second-order convolution scheme, from
   ! second-order accurate convolution term calculation from equation (21) of
@@ -42,25 +42,52 @@
   implicit none
 
   double precision :: bb,coef0,coef1,coef2,temp
-  double precision :: deltat
+  double precision :: DT
 
-  temp = exp(- 0.5d0 * bb * deltat)
+  ! recursive convolution coefficients
+  !
+  ! see Xie et al. (2014), second-order recursive scheme given by eq. (60)
+  !                        and also appendix D, eq. (D6a) and (D6b) for p = 0
+  !
+  ! coefficients needed for the recursive scheme are:
+  !    coef0 = exp(-b delta_t)
+  !          = exp(- 1/2 b delta_t) * exp(- 1/2 b delta_t)
+  !
+  !    coef1 = 1/b (1 - exp( - 1/2 b delta_t)                             -> see also factor xi_0^(n+1) in eq. D6b
+  !
+  !    coef2 = 1/b (1 - exp( - 1/2 b delta_t) exp(- 1/2 b delta_t)
+  !          = coef1 * exp(- 1/2 b delta_t)                               -> see also factor xi_0^n in eq. D6a
+  !
+  ! helper variables
+  temp = exp(- 0.5d0 * bb * DT)
 
   coef0 = temp*temp
 
   if (abs(bb) > 1d-5) then
+    ! second-order convolution scheme coefficients
     coef1 = (1.d0 - temp) / bb
     coef2 = coef1 * temp
+
+    ! first-order scheme
+    !coef1 = (1.d0 - coef0) / bb
+    !coef2 = 0.d0
   else
-    coef1 = 0.5d0 * deltat
+    ! approximation for small beta
+    coef1 = 0.5d0 * DT
     coef2 = coef1
+
+    ! Taylor expansion to third-order
+    !coef1 = 0.5d0 * DT + &
+    !        (- 1.d0/8.d0 * deltatpow2 * bb + 1.d0/48.d0 * DT**3 * bb**2 - 1.d0/384.d0 * DT**4 * bb**3)
+    !coef2 = 0.5d0 * DT + &
+    !        (- 3.d0/8.d0 * deltatpow2 * bb + 7.d0/48.d0 * DT**3 * bb**2 - 5.d0/128.d0 * DT**4 * bb**3)
   endif
 
   end subroutine compute_coef_convolution
 
 !========================================================================
 
-  subroutine lik_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+  subroutine lik_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                        CPML_region_local,index_ik,A_0,A_1,A_2,bb_1,bb_2, &
                                        coef0_1,coef1_1,coef2_1,coef0_2,coef1_2,coef2_2)
 
@@ -68,7 +95,7 @@
 
   implicit none
 
-  double precision, intent(in) :: deltat
+  double precision, intent(in) :: DT
   double precision, intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local,index_ik
 
@@ -94,7 +121,7 @@
   endif
 
   if (CPML_region_local == CPML_XZ_TEMP) then
-
+    !----------------A0-------------------------
     bar_A_0 = kappa_x / kappa_z
     A_0 = bar_A_0
     gamma_x = (alpha_x * beta_z + alpha_x**2 + 2._CUSTOM_REAL * beta_x * alpha_z - &
@@ -109,17 +136,17 @@
     A_1 = bar_A_1
     A_2 = bar_A_2
   else if (CPML_region_local == CPML_X_ONLY_TEMP) then
-  !----------------A0-------------------------
+    !----------------A0-------------------------
     bar_A_0 = kappa_x
     A_0 = bar_A_0
-  !----------------A1,2,3-------------------------
+    !----------------A1,2,3-------------------------
     bar_A_1 = - bar_A_0 * (alpha_x - beta_x)
     bar_A_2 = 0.d0
 
     A_1 = bar_A_1
     A_2 = bar_A_2
   else if (CPML_region_local == CPML_Z_ONLY_TEMP) then
-  !----------------A0-------------------------
+    !----------------A0-------------------------
     bar_A_0 = 1.d0 / kappa_z
     A_0 = bar_A_0
 
@@ -131,11 +158,13 @@
     A_2 = bar_A_2
   endif
 
+  ! gets recursive convolution coefficients
+  ! alpha coefficients
   bb_1 = alpha_x
-  call compute_coef_convolution(bb_1,deltat,coef0_1,coef1_1,coef2_1)
-
+  call compute_coef_convolution(bb_1,DT,coef0_1,coef1_1,coef2_1)
+  ! beta coefficients
   bb_2 = beta_z
-  call compute_coef_convolution(bb_2,deltat,coef0_2,coef1_2,coef2_2)
+  call compute_coef_convolution(bb_2,DT,coef0_2,coef1_2,coef2_2)
 
  end subroutine lik_parameter_computation
 
@@ -252,7 +281,7 @@
 
 !========================================================================
 
-  subroutine l_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+  subroutine l_parameter_computation(DT,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                      CPML_region_local,A_0,A_1,A_2,A_3,A_4, &
                                      bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
@@ -260,7 +289,7 @@
 
   implicit none
 
-  double precision, intent(in) :: deltat
+  double precision, intent(in) :: DT
   double precision, intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local
 
@@ -322,10 +351,10 @@
   endif
 
   bb_1 = alpha_x
-  call compute_coef_convolution(bb_1,deltat,coef0_1,coef1_1,coef2_1)
+  call compute_coef_convolution(bb_1,DT,coef0_1,coef1_1,coef2_1)
 
   bb_2 = alpha_z
-  call compute_coef_convolution(bb_2,deltat,coef0_2,coef1_2,coef2_2)
+  call compute_coef_convolution(bb_2,DT,coef0_2,coef1_2,coef2_2)
 
   end subroutine l_parameter_computation
 
@@ -484,74 +513,30 @@
 ! to be zero on outer boundary of PML help to improve the accuracy of absorbing low-frequency wave components
 ! in case of long-time simulation.
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants, only: CUSTOM_REAL
 
-  use specfem_par, only: ibool,num_abs_boundary_faces,codeabs,anyabs, &
-    abs_boundary_ispec,ispec_is_PML,nglob_acoustic,ispec_is_acoustic
+  use specfem_par, only: nglob_acoustic,anyabs,PML_abs_points_acoustic,PML_nglob_abs_acoustic
 
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                                            potential_acoustic,potential_acoustic_old
+                                                                     potential_acoustic,potential_acoustic_old
 
   ! local parameters
-  integer :: i,j,ispecabs,ispec,iglob
+  integer :: i,iglob
 
   ! checks if anything to do
   if (.not. anyabs) return
+  if (PML_nglob_abs_acoustic == 0) return
 
   ! set Dirichelet boundary condition on outer boundary of CFS-PML
-  do ispecabs = 1,num_abs_boundary_faces
-    ispec = abs_boundary_ispec(ispecabs)
-    if (.not. ispec_is_acoustic(ispec)) cycle
-
-    if (ispec_is_PML(ispec)) then
-!--- left absorbing boundary
-      if (codeabs(IEDGE4,ispecabs)) then
-        i = 1
-        do j = 1,NGLLZ
-          iglob = ibool(i,j,ispec)
-          potential_acoustic_old(iglob) = 0._CUSTOM_REAL
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
-        enddo
-      endif
-!--- right absorbing boundary
-      if (codeabs(IEDGE2,ispecabs)) then
-        i = NGLLX
-        do j = 1,NGLLZ
-          iglob = ibool(i,j,ispec)
-          potential_acoustic_old(iglob) = 0._CUSTOM_REAL
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
-        enddo
-      endif
-!--- bottom absorbing boundary
-      if (codeabs(IEDGE1,ispecabs)) then
-        j = 1
-        do i = 1,NGLLX
-          iglob = ibool(i,j,ispec)
-          potential_acoustic_old(iglob) = 0._CUSTOM_REAL
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
-        enddo
-      endif
-!--- top absorbing boundary
-      if (codeabs(IEDGE3,ispecabs)) then
-        j = NGLLZ
-        do i = 1,NGLLX
-          iglob = ibool(i,j,ispec)
-          potential_acoustic_old(iglob) = 0._CUSTOM_REAL
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
-        enddo
-      endif  !  end of top absorbing boundary
-    endif ! end of ispec_is_PML
-  enddo ! end specabs loop
+  do i = 1,PML_nglob_abs_acoustic
+    iglob = PML_abs_points_acoustic(i)
+    potential_acoustic_old(iglob) = 0._CUSTOM_REAL
+    potential_acoustic(iglob) = 0._CUSTOM_REAL
+    potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+    potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+  enddo
 
   end subroutine pml_boundary_acoustic
 
@@ -559,81 +544,32 @@
 
   subroutine pml_boundary_elastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants, only: CUSTOM_REAL,NDIM
 
-  use specfem_par, only: nglob_elastic,ibool,num_abs_boundary_faces,codeabs,anyabs, &
-    abs_boundary_ispec,ispec_is_PML,nspec_PML,ispec_is_elastic
+  use specfem_par, only: nglob_elastic,anyabs,PML_abs_points_elastic,PML_nglob_abs_elastic
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic) :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic),intent(inout) :: accel_elastic,veloc_elastic,displ_elastic, &
+                                                                         displ_elastic_old
 
   ! local parameters
-  integer :: i,j,ispecabs,ispec,iglob
+  integer :: i,iglob
 
   ! checks if anything to do
   if (.not. anyabs) return
-  if (nspec_PML == 0) return
+  if (PML_nglob_abs_elastic == 0) return
 
   !set Dirichlet boundary condition on outer boundary of PML
 
   ! we have to put Dirichlet on the boundary of the PML
-  do ispecabs = 1,num_abs_boundary_faces
-    ispec = abs_boundary_ispec(ispecabs)
-    if (.not. ispec_is_elastic(ispec)) cycle
-
-    if (ispec_is_PML(ispec)) then
-
-!--- left absorbing boundary
-      if (codeabs(IEDGE4,ispecabs)) then
-        i = 1
-        do j = 1,NGLLZ
-          iglob = ibool(i,j,ispec)
-          displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
-          displ_elastic(:,iglob) = 0._CUSTOM_REAL
-          veloc_elastic(:,iglob) = 0._CUSTOM_REAL
-          accel_elastic(:,iglob) = 0._CUSTOM_REAL
-        enddo
-      endif
-
-!--- right absorbing boundary
-      if (codeabs(IEDGE2,ispecabs)) then
-        i = NGLLX
-        do j = 1,NGLLZ
-          iglob = ibool(i,j,ispec)
-          displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
-          displ_elastic(:,iglob) = 0._CUSTOM_REAL
-          veloc_elastic(:,iglob) = 0._CUSTOM_REAL
-          accel_elastic(:,iglob) = 0._CUSTOM_REAL
-        enddo
-      endif
-
-!--- bottom absorbing boundary
-      if (codeabs(IEDGE1,ispecabs)) then
-        j = 1
-        do i = 1,NGLLX
-          iglob = ibool(i,j,ispec)
-          displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
-          displ_elastic(:,iglob) = 0._CUSTOM_REAL
-          veloc_elastic(:,iglob) = 0._CUSTOM_REAL
-          accel_elastic(:,iglob) = 0._CUSTOM_REAL
-        enddo
-      endif
-
-!--- top absorbing boundary
-      if (codeabs(IEDGE3,ispecabs)) then
-        j = NGLLZ
-        do i = 1,NGLLX
-          iglob = ibool(i,j,ispec)
-          displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
-          displ_elastic(:,iglob) = 0._CUSTOM_REAL
-          veloc_elastic(:,iglob) = 0._CUSTOM_REAL
-          accel_elastic(:,iglob) = 0._CUSTOM_REAL
-        enddo
-      endif
-
-    endif ! end of ispec_is_PML
-  enddo ! end specabs loop
+  do i = 1,PML_nglob_abs_elastic
+    iglob = PML_abs_points_elastic(i)
+    displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
+    displ_elastic(:,iglob) = 0._CUSTOM_REAL
+    veloc_elastic(:,iglob) = 0._CUSTOM_REAL
+    accel_elastic(:,iglob) = 0._CUSTOM_REAL
+  enddo
 
   end subroutine pml_boundary_elastic
 

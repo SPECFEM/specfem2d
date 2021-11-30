@@ -80,6 +80,7 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) 'PostScript file written'
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 

@@ -63,8 +63,8 @@
 
       ! Stacey absorbing boundary
       if (anyabs) then
-        call compute_stacey_poro_fluid(f0_source(1))
-        call compute_stacey_poro_solid(f0_source(1))
+        call compute_stacey_poro_fluid()
+        call compute_stacey_poro_solid()
       endif
 
       ! add coupling with the acoustic side
@@ -82,7 +82,7 @@
         if (SIMULATION_TYPE == 1) then
           ! forward wavefield
           call compute_add_sources_poro(accels_poroelastic,accelw_poroelastic,it,i_stage)
-        else if (SIMULATION_TYPE == 3) then
+        else
           ! adjoint wavefield
           call compute_add_sources_poro_adjoint()
         endif

@@ -4,6 +4,10 @@
 FC="gfortran"
 FLAGS=-Wall
 
+# setup
+ln -s ../../utils/change_simulation_type.pl
+ln -s ../../utils/compare_two_images.py
+
 ## forward simulation
 ./change_simulation_type.pl -F
 
@@ -35,6 +39,13 @@ echo
 
 rm -f xadj_source
 
+# store outputs
+mkdir -p OUTPUT_FILES/forward_run
+rm -rf OUTPUT_FILES/forward_run/*
+cp -v OUTPUT_FILES/AA* OUTPUT_FILES/forward_run/
+cp -v OUTPUT_FILES/Par_file OUTPUT_FILES/forward_run/
+echo
+
 ## adjoint kernel simulation
 ./change_simulation_type.pl -b
 
@@ -47,3 +58,4 @@ gnuplot plot_kernel.gnu
 
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
+

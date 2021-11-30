@@ -32,8 +32,8 @@ running mesher...
 
  --------
  Material #           1  isotropic
- rho,cp,cs   =    3000.0000000000000        5196.0000000000000        3000.0000000000000     
- Qkappa, Qmu =    1000000.0000000000        1000000.0000000000     
+ rho,cp,cs   =    3000.0000000000000        5196.0000000000000        3000.0000000000000
+ Qkappa, Qmu =    1000000.0000000000        1000000.0000000000
  Material is solid
  --------
 
@@ -59,15 +59,15 @@ running mesher...
  IZ from            1  to           80
  Material #            1  isotropic
  Material is solid
- vp     =    5196.00000    
- vs     =    3000.00000    
- rho    =    3000.00000    
- Poisson's ratio =   0.249977991    
- QKappa =    1000000.00    
- Qmu    =    1000000.00    
+ vp     =    5196.00000
+ vs     =    3000.00000
+ rho    =    3000.00000
+ Poisson's ratio =   0.249977991
+ QKappa =    1000000.00
+ Qmu    =    1000000.00
  ------
 
- Parameter file successfully read 
+ Parameter file successfully read
 
 
  Mesh from internal meshing:
@@ -82,25 +82,25 @@ running mesher...
  Reading in SOURCE file...
 
  Source           1
-   Position xs, zs =    0.0000000000000000        0.0000000000000000     
+   Position xs, zs =    0.0000000000000000        0.0000000000000000
 
    Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, 5=plane incident S):            1
    Force source:
-   Angle of the source (deg) =    0.0000000000000000     
+   Angle of the source (deg) =    0.0000000000000000
 
    Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 8=Read from file, 9=burst):           3
    Gaussian:
-   Frequency, delay =    10.000000000000000        0.0000000000000000     
-   Multiplying factor  =    0.0000000000000000     
+   Frequency, delay =    10.000000000000000        0.0000000000000000
+   Multiplying factor  =    0.0000000000000000
 
  all sources are okay
 
  Node coordinates:
  Mesh surfaces:
 
- Mesh dimensions: 
-   Min and max value of X in the grid =    0.0000000000000000        300000.00000000000     
-   Min and max value of Z in the grid =    0.0000000000000000        240000.00000000000     
+ Mesh dimensions:
+   Min and max value of X in the grid =    0.0000000000000000        300000.00000000000
+   Min and max value of Z in the grid =    0.0000000000000000        240000.00000000000
 
  Mesh partitioning:
    decomposing mesh using NPROC =            1
@@ -167,21 +167,21 @@ running solver...
    file name is ./DATA/STATIONS
    found            3  receivers
 
- Parameter file successfully read 
+ Parameter file successfully read
 
  Reading in SOURCE file...
 
  Source           1
-   Position xs, zs =    0.0000000000000000        0.0000000000000000     
+   Position xs, zs =    0.0000000000000000        0.0000000000000000
 
    Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, 5=plane incident S):            1
    Force source:
-   Angle of the source (deg) =    0.0000000000000000     
+   Angle of the source (deg) =    0.0000000000000000
 
    Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 8=Read from file, 9=burst):           3
    Gaussian:
-   Frequency, delay =    10.000000000000000        0.0000000000000000     
-   Multiplying factor  =    0.0000000000000000     
+   Frequency, delay =    10.000000000000000        0.0000000000000000
+   Multiplying factor  =    0.0000000000000000
 
  all sources are okay
 
@@ -189,7 +189,7 @@ running solver...
 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Program SPECFEM2D: 
+ Program SPECFEM2D:
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
  Noise_2D
@@ -212,11 +212,11 @@ running solver...
 
      Display frequency . . . .(NSTEP_BETWEEN_OUTPUT_INFO) =    250
      Color display . . . . . . . . . . . . . . . (colors) =      1
-      == 0     black and white display              
-      == 1     color display                        
+      == 0     black and white display
+      == 1     color display
      Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
-      == 0     do not number the mesh               
-      == 1     number the mesh                      
+      == 0     do not number the mesh
+      == 1     number the mesh
 
 
  C o n t r o l
@@ -248,7 +248,7 @@ running solver...
      Subsampling of velocity model display. (subsamp_postscript) =      1
 
 
- I t e r a t i o n s 
+ I t e r a t i o n s
  ===================
 
      Number of time iterations . . . . .(NSTEP) =    1599
@@ -313,8 +313,8 @@ running solver...
  Approximate total number of grid points in the mesh
  (with a few duplicates coming from MPI buffers):       128721
  Mesh dimensions:
-   Xmin,Xmax of the whole mesh =    0.0000000000000000        300000.00000000000     
-   Zmin,Zmax of the whole mesh =    0.0000000000000000        240000.00000000000     
+   Xmin,Xmax of the whole mesh =    0.0000000000000000        300000.00000000000
+   Zmin,Zmax of the whole mesh =    0.0000000000000000        240000.00000000000
 
 
  setup material arrays
@@ -360,9 +360,9 @@ running solver...
 
 
    Source:            1
-     Onset time. . . . . . =  -0.12000000000000000     
-     Fundamental period. . =   0.10000000000000001     
-     Fundamental frequency =    10.000000000000000     
+     Onset time. . . . . . =  -0.12000000000000000
+     Fundamental period. . =   0.10000000000000001
+     Fundamental frequency =    10.000000000000000
      The onset time is ok
 
  Source:            1
@@ -371,13 +371,13 @@ running solver...
  *******************************
 
  Force source:
-             original x:    0.00000000    
-             original z:    0.00000000    
+             original x:    0.00000000
+             original z:    0.00000000
  Closest estimate found:    0.00000000      m away
   in rank            0
   in element            1
   in elastic domain
-  at xi,gamma coordinates =   -1.0000000000000000       -1.0000000000000000     
+  at xi,gamma coordinates =   -1.0000000000000000       -1.0000000000000000
 
 
  end of force source detection
@@ -395,33 +395,33 @@ running solver...
  reading receiver information from the ./DATA/STATIONS file
 
 
- Station #            1     AA      S0001                           
-             original x:    100000.000    
-             original z:    120000.000    
+ Station #            1     AA      S0001
+             original x:    100000.000
+             original z:    120000.000
  Closest estimate found:    0.00000000      m away
   in element         3934
   in rank            0
-  at xi,gamma coordinates =  -0.33333333333333770        1.0000000000000062     
+  at xi,gamma coordinates =  -0.33333333333333770        1.0000000000000062
  Distance from source:    156205.000      m
 
 
- Station #            2     AA      S0002                           
-             original x:    150000.000    
-             original z:    120000.000    
+ Station #            2     AA      S0002
+             original x:    150000.000
+             original z:    120000.000
  Closest estimate found:    0.00000000      m away
   in element         3950
   in rank            0
-  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000
  Distance from source:    192093.734      m
 
 
- Station #            3     AA      S0003                           
-             original x:    200000.000    
-             original z:    120000.000    
+ Station #            3     AA      S0003
+             original x:    200000.000
+             original z:    120000.000
  Closest estimate found:    0.00000000      m away
   in element         3967
   in rank            0
-  at xi,gamma coordinates =   0.33333333333334070        1.0000000000000000     
+  at xi,gamma coordinates =   0.33333333333334070        1.0000000000000000
  Distance from source:    233238.078      m
 
 
@@ -451,9 +451,9 @@ running solver...
  Checking mesh and stability
 
  ********
- Model: P (or PI) velocity min,max =    5196.0000000000000        5196.0000000000000     
- Model: S velocity min,max         =    3000.0000000000000        3000.0000000000000     
- Model: density min,max            =    3000.0000000000000        3000.0000000000000     
+ Model: P (or PI) velocity min,max =    5196.0000000000000        5196.0000000000000
+ Model: S velocity min,max         =    3000.0000000000000        3000.0000000000000
+ Model: density min,max            =    3000.0000000000000        3000.0000000000000
  ********
 
 
@@ -461,21 +461,21 @@ running solver...
  *** Verification of simulation parameters ***
  *********************************************
 
- *** Max grid size =    3000.0000000000146     
- *** Min grid size =    2999.9999999999854     
- *** Max/min ratio =    1.0000000000000098     
+ *** Max grid size =    3000.0000000000146
+ *** Min grid size =    2999.9999999999854
+ *** Max/min ratio =    1.0000000000000098
 
- *** Minimum GLL point distance  =    518.01949393803170     
- *** Average GLL point distance  =    749.99999999999636     
+ *** Minimum GLL point distance  =    518.01949393803170
+ *** Average GLL point distance  =    749.99999999999636
 
- *** Minimum period resolved     =    1.2500000000000062     
+ *** Minimum period resolved     =    1.2500000000000062
  *** Maximum frequency resolved  =   0.79999999999999605      Hz
 
  *** Maximum suggested time step                 =    4.9847911271943005E-002
- *** Maximum suggested (Ricker) source frequency =   0.31999999999999845     
+ *** Maximum suggested (Ricker) source frequency =   0.31999999999999845
 
  *** for DT :    5.0000000000000003E-002
- *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.50152552759159041     
+ *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.50152552759159041
 
  ----
  Number of points per wavelength:
@@ -483,11 +483,11 @@ running solver...
    Source            1
    maximum dominant source frequency =    25.000000000000000      Hz
 
-   Nb pts / lambdaP_fmax min =   0.277119994    
-   Nb pts / lambdaP_fmax max =   0.277119994    
+   Nb pts / lambdaP_fmax min =   0.277119994
+   Nb pts / lambdaP_fmax max =   0.277119994
 
-   Nb pts / lambdaS_fmax min =   0.159999996    
-   Nb pts / lambdaS_fmax max =   0.159999996    
+   Nb pts / lambdaS_fmax min =   0.159999996
+   Nb pts / lambdaS_fmax max =   0.159999996
 
  -----------------------------------------
 
@@ -541,7 +541,7 @@ running solver...
 
    noise source array:
    number of time steps =         1599
-   zero-time t0         =    39.9500008    
+   zero-time t0         =    39.9500008
    Figure 2a noise source
 
  Preparing image coloring
@@ -568,30 +568,30 @@ Time step number       5   t =    0.2000 s out of    1599
  ******************************************************************
  We have done   0.250312895     % of the total
  Noise simulation            1  of 3
- Max norm of vector field in solid (elastic) =    0.00000000    
+ Max norm of vector field in solid (elastic) =    0.00000000
  Elapsed time in seconds =    2.7999877929687500E-002
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
  Mean elapsed time per time step in seconds =    5.5999755859375000E-003
  Time steps remaining =         1594
- Estimated remaining time in seconds =    8.9263610839843750     
+ Estimated remaining time in seconds =    8.9263610839843750
  Estimated remaining time in hh:mm:ss =      0 h 00 m 08 s
- Estimated total run time in seconds =    8.9543609619140625     
+ Estimated total run time in seconds =    8.9543609619140625
  Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
  The run will finish approximately on: Fri Mar 20, 2020 23:53
 
  Creating color image of size          800  x          674  for time step            5
  drawing scalar image of the forward wavefield displacement...
- Color image maximum amplitude =    0.0000000000000000     
+ Color image maximum amplitude =    0.0000000000000000
  Color image created
 
  Creating color image of size          800  x          674  for time step          100
  drawing scalar image of the forward wavefield displacement...
- Color image maximum amplitude =    0.0000000000000000     
+ Color image maximum amplitude =    0.0000000000000000
  Color image created
 
  Creating color image of size          800  x          674  for time step          200
  drawing scalar image of the forward wavefield displacement...
- Color image maximum amplitude =    0.0000000000000000     
+ Color image maximum amplitude =    0.0000000000000000
  Color image created
 
 
@@ -600,25 +600,25 @@ Time step number     250   t =   12.4500 s out of    1599
  ******************************************************************
  We have done    15.5819778     % of the total
  Noise simulation            1  of 3
- Max norm of vector field in solid (elastic) =    0.00000000    
- Elapsed time in seconds =    1.8769998550415039     
+ Max norm of vector field in solid (elastic) =    0.00000000
+ Elapsed time in seconds =    1.8769998550415039
  Elapsed time in hh:mm:ss =      0 h 00 m 01 s
  Mean elapsed time per time step in seconds =    7.5079994201660153E-003
  Time steps remaining =         1349
- Estimated remaining time in seconds =    10.128291217803955     
+ Estimated remaining time in seconds =    10.128291217803955
  Estimated remaining time in hh:mm:ss =      0 h 00 m 10 s
- Estimated total run time in seconds =    12.005291072845459     
+ Estimated total run time in seconds =    12.005291072845459
  Estimated total run time in hh:mm:ss =      0 h 00 m 12 s
  The run will finish approximately on: Fri Mar 20, 2020 23:53
 
  Creating color image of size          800  x          674  for time step          300
  drawing scalar image of the forward wavefield displacement...
- Color image maximum amplitude =    0.0000000000000000     
+ Color image maximum amplitude =    0.0000000000000000
  Color image created
 
  Creating color image of size          800  x          674  for time step          400
  drawing scalar image of the forward wavefield displacement...
- Color image maximum amplitude =    0.0000000000000000     
+ Color image maximum amplitude =    0.0000000000000000
  Color image created
 
 
@@ -627,20 +627,20 @@ Time step number     500   t =   24.9500 s out of    1599
  ******************************************************************
  We have done    31.2265339     % of the total
  Noise simulation            1  of 3
- Max norm of vector field in solid (elastic) =    0.00000000    
- Elapsed time in seconds =    3.7029998302459717     
+ Max norm of vector field in solid (elastic) =    0.00000000
+ Elapsed time in seconds =    3.7029998302459717
  Elapsed time in hh:mm:ss =      0 h 00 m 03 s
  Mean elapsed time per time step in seconds =    7.4059996604919432E-003
  Time steps remaining =         1099
- Estimated remaining time in seconds =    8.1391936268806457     
+ Estimated remaining time in seconds =    8.1391936268806457
  Estimated remaining time in hh:mm:ss =      0 h 00 m 08 s
- Estimated total run time in seconds =    11.842193457126617     
+ Estimated total run time in seconds =    11.842193457126617
  Estimated total run time in hh:mm:ss =      0 h 00 m 11 s
  The run will finish approximately on: Fri Mar 20, 2020 23:53
 
  Creating color image of size          800  x          674  for time step          500
  drawing scalar image of the forward wavefield displacement...
- Color image maximum amplitude =    0.0000000000000000     
+ Color image maximum amplitude =    0.0000000000000000
  Color image created
 
  Creating color image of size          800  x          674  for time step          600
@@ -660,13 +660,13 @@ Time step number     750   t =   37.4500 s out of    1599
  We have done    46.8710899     % of the total
  Noise simulation            1  of 3
  Max norm of vector field in solid (elastic) =    7.47651896E-09
- Elapsed time in seconds =    5.5290000438690186     
+ Elapsed time in seconds =    5.5290000438690186
  Elapsed time in hh:mm:ss =      0 h 00 m 05 s
  Mean elapsed time per time step in seconds =    7.3720000584920247E-003
  Time steps remaining =          849
- Estimated remaining time in seconds =    6.2588280496597291     
+ Estimated remaining time in seconds =    6.2588280496597291
  Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
- Estimated total run time in seconds =    11.787828093528748     
+ Estimated total run time in seconds =    11.787828093528748
  Estimated total run time in hh:mm:ss =      0 h 00 m 11 s
  The run will finish approximately on: Fri Mar 20, 2020 23:53
 
@@ -687,13 +687,13 @@ Time step number    1000   t =   49.9500 s out of    1599
  We have done    62.5156441     % of the total
  Noise simulation            1  of 3
  Max norm of vector field in solid (elastic) =    6.80095846E-09
- Elapsed time in seconds =    7.3299999237060547     
+ Elapsed time in seconds =    7.3299999237060547
  Elapsed time in hh:mm:ss =      0 h 00 m 07 s
  Mean elapsed time per time step in seconds =    7.3299999237060546E-003
  Time steps remaining =          599
- Estimated remaining time in seconds =    4.3906699542999270     
+ Estimated remaining time in seconds =    4.3906699542999270
  Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    11.720669878005982     
+ Estimated total run time in seconds =    11.720669878005982
  Estimated total run time in hh:mm:ss =      0 h 00 m 11 s
  The run will finish approximately on: Fri Mar 20, 2020 23:53
 
@@ -723,13 +723,13 @@ Time step number    1250   t =   62.4500 s out of    1599
  We have done    78.1602020     % of the total
  Noise simulation            1  of 3
  Max norm of vector field in solid (elastic) =    4.47902071E-09
- Elapsed time in seconds =    9.1610000133514404     
+ Elapsed time in seconds =    9.1610000133514404
  Elapsed time in hh:mm:ss =      0 h 00 m 09 s
  Mean elapsed time per time step in seconds =    7.3288000106811520E-003
  Time steps remaining =          349
- Estimated remaining time in seconds =    2.5577512037277219     
+ Estimated remaining time in seconds =    2.5577512037277219
  Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
- Estimated total run time in seconds =    11.718751217079163     
+ Estimated total run time in seconds =    11.718751217079163
  Estimated total run time in hh:mm:ss =      0 h 00 m 11 s
  The run will finish approximately on: Fri Mar 20, 2020 23:53
 
@@ -750,13 +750,13 @@ Time step number    1500   t =   74.9500 s out of    1599
  We have done    93.8047562     % of the total
  Noise simulation            1  of 3
  Max norm of vector field in solid (elastic) =    3.63098041E-09
- Elapsed time in seconds =    10.938999891281128     
+ Elapsed time in seconds =    10.938999891281128
  Elapsed time in hh:mm:ss =      0 h 00 m 10 s
  Mean elapsed time per time step in seconds =    7.2926665941874186E-003
  Time steps remaining =           99
- Estimated remaining time in seconds =   0.72197399282455443     
+ Estimated remaining time in seconds =   0.72197399282455443
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    11.660973884105683     
+ Estimated total run time in seconds =    11.660973884105683
  Estimated total run time in hh:mm:ss =      0 h 00 m 11 s
  The run will finish approximately on: Fri Mar 20, 2020 23:53
 
@@ -772,13 +772,13 @@ Time step number    1599   t =   79.9000 s out of    1599
  We have done    100.000000     % of the total
  Noise simulation            1  of 3
  Max norm of vector field in solid (elastic) =    3.51874441E-09
- Elapsed time in seconds =    11.713999986648560     
+ Elapsed time in seconds =    11.713999986648560
  Elapsed time in hh:mm:ss =      0 h 00 m 11 s
  Mean elapsed time per time step in seconds =    7.3258286345519444E-003
  Time steps remaining =            0
- Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    11.713999986648560     
+ Estimated total run time in seconds =    11.713999986648560
  Estimated total run time in hh:mm:ss =      0 h 00 m 11 s
 
 
@@ -800,13 +800,13 @@ Time step number    1599   t =   79.9000 s out of    1599
  Average duration of the calculation per spectral element =    9.18895523E-07  s
 
 
- Total duration of the timeloop in seconds, measured using 
+ Total duration of the timeloop in seconds, measured using
  date and time of the system :    11.7550001      s
 
 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Program SPECFEM2D: 
+ Program SPECFEM2D:
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
  Noise_2D

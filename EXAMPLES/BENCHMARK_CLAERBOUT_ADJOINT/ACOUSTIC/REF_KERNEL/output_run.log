@@ -1,0 +1,300 @@
+running example: Tue Oct 12 11:45:43 +03 2021
+
+setup:
+  SIM_TYPE                : 1     (1 == acoustic / 2 == elastic P-SV / 3 == elastic SH / 4 == coupled acoustic-elastic)
+  perturbation parameter  : vp
+  perturbation percent    : -0.02
+  number of stations/lines: 1 1
+
+Par_file parameters:
+  NPROC = 1
+  NSTEP = 600
+  DT    = 0.00035
+
+
+setting up example...
+
+creating STATIONS file:
+  nlinesx =  1
+  nlinesz =  1
+
+  total number of stations:  1
+
+  stations written to:  DATA/STATIONS
+
+
+running data forward simulation
+
+Changed simulation_type to 1 in Par_file
+
+output.log -> OUTPUT_FILES/output.log
+OUTPUT_FILES/Up_file_single_p.su -> SEM/dat/Up_file_single_p.su
+DATA/proc000000_rho.bin -> MODELS/target_model/proc000000_rho.bin
+DATA/proc000000_vp.bin -> MODELS/target_model/proc000000_vp.bin
+DATA/proc000000_vs.bin -> MODELS/target_model/proc000000_vs.bin
+DATA/proc000000_NSPEC_ibool.bin -> MODELS/target_model/proc000000_NSPEC_ibool.bin
+DATA/proc000000_x.bin -> MODELS/target_model/proc000000_x.bin
+DATA/proc000000_z.bin -> MODELS/target_model/proc000000_z.bin
+
+setting up perturbed model...
+> ./model_add_Gaussian_perturbation.py vp -0.02 1
+
+
+model perturbation generation:
+  perturbation =  -0.02
+  NPROC        =  1
+
+
+
+reading in mesh files for rank 0...
+
+
+mesh:
+  nspec =  10000
+  model dimension: x min/max =  0.0 1000.0
+                   z min/max =  0.0 1000.0
+
+
+model: rho,vp,vs
+
+
+Gaussian perturbation:
+  input wavelength                       (m):  270.0
+  using scalelengths horizontal,vertical (m):  67.5 67.5
+
+  pertubation center location         : x/z =  500.0 / 500.0
+  perturbation strength               :  -0.02
+  perturbing                          : Vp values
+
+rank  0 :
+  initial model velocity  : rho min/max =  2500.0 2500.0
+                            vp  min/max =  2700.0 2700.0
+                            vs  min/max =  0.0 0.0
+
+  perturbed model velocity: rho min/max =  2500.0 2500.0
+                            vp  min/max =  2646.0 2700.0
+                            vs  min/max =  0.0 0.0
+
+storing new files...
+perturbed model files written to:
+   ./DATA/proc000000_rho_gaussian.bin
+   ./DATA/proc000000_vp_gaussian.bin
+   ./DATA/proc000000_vs_gaussian.bin
+
+
+all done
+
+DATA/proc000000_rho_gaussian.bin -> DATA/proc000000_rho.bin
+DATA/proc000000_vp_gaussian.bin -> DATA/proc000000_vp.bin
+DATA/proc000000_vs_gaussian.bin -> DATA/proc000000_vs.bin
+
+running synthetics forward simulation (with saving forward wavefield)
+
+Changed simulation_type to 1 and save_forward = .true. in Par_file
+
+output.log -> OUTPUT_FILES/output.forward.log
+OUTPUT_FILES/Up_file_single_p.su -> SEM/syn/Up_file_single_p.su
+DATA/proc000000_rho.bin -> MODELS/initial_model/proc000000_rho.bin
+DATA/proc000000_vp.bin -> MODELS/initial_model/proc000000_vp.bin
+DATA/proc000000_vs.bin -> MODELS/initial_model/proc000000_vs.bin
+DATA/proc000000_NSPEC_ibool.bin -> MODELS/initial_model/proc000000_NSPEC_ibool.bin
+DATA/proc000000_x.bin -> MODELS/initial_model/proc000000_x.bin
+DATA/proc000000_z.bin -> MODELS/initial_model/proc000000_z.bin
+
+creating adjoint sources...
+> ./adj_seismogram.py OUTPUT_FILES.syn.forward/Up_file_single_p.su OUTPUT_FILES.dat.forward/Up_file_single_p.su
+
+
+creating adjoint seismograms:
+  input syn :  OUTPUT_FILES.syn.forward/Up_file_single_p.su
+  input data:  OUTPUT_FILES.dat.forward/Up_file_single_p.su
+
+misfit:
+  maximum waveform difference (syn - dat) =  0.08026172
+  trace time steps: DT =  0.00035 (s)
+
+  total misfit: sum(s - d)^2 = 4.298724e-05
+
+adjoint source:
+  number of traces =  1
+  creating adjoint sources for pressure (taking second-derivative of pressure differences)...
+  maximum amplitude |f^adj| =  23559.953
+
+  receivers:  1
+  adjoint sources written to:  SEM/Up_file_single.su.adj
+
+
+all done
+
+
+running kernel simulation
+
+Changed simulation_type to 3 in Par_file
+
+output.log -> OUTPUT_FILES/output.kernel.log
+OUTPUT_FILES/output.kernel.log -> KERNELS/output.kernel.log
+OUTPUT_FILES/proc000000_c_acoustic_kernel.bin -> KERNELS/proc000000_c_acoustic_kernel.bin
+OUTPUT_FILES/proc000000_kappa_acoustic_kernel.bin -> KERNELS/proc000000_kappa_acoustic_kernel.bin
+OUTPUT_FILES/proc000000_rho_acoustic_kernel.bin -> KERNELS/proc000000_rho_acoustic_kernel.bin
+OUTPUT_FILES/proc000000_rhop_acoustic_kernel.bin -> KERNELS/proc000000_rhop_acoustic_kernel.bin
+OUTPUT_FILES/proc000000_weights_kernel.bin -> KERNELS/proc000000_weights_kernel.bin
+
+model update
+
+> ./model_update.py 1 1 0.02
+
+
+model update:
+  NPROC        =  1
+  SIM_TYPE     =  1
+  percent      =  0.02
+
+
+reading in model files for rank 0...
+
+model input directory:  ./DATA/
+
+mesh:
+  model dimension: x min/max =  0.0 1000.0
+                   z min/max =  0.0 1000.0
+
+initial model:
+  directory:  ./DATA/
+
+  rho min/max =  2500.0 2500.0
+  vp  min/max =  2646.0 2700.0
+  vs  min/max =  0.0 0.0
+  plotted as  ./DATA/proc000000_rho.jpg
+  plotted as  ./DATA/proc000000_vp.jpg
+  plotted as  ./DATA/proc000000_vs.jpg
+
+kernels:
+  input directory:  ./KERNELS/
+  plotted as  ./KERNELS/proc000000_rhop_acoustic_kernel.bin.jpg
+  plotted as  ./KERNELS/proc000000_c_acoustic_kernel.bin.jpg
+  acoustic simulation: setting zero shear kernel
+
+  kernel rhop : min/max =  -1.6744794e-05 8.7365715e-06
+  kernel alpha: min/max =  -7.93016e-06 1.853892e-06
+  kernel beta : min/max =  0.0 0.0
+
+  norm of rhop kernel  =  2.1095106e-09
+  norm of alpha kernel =  7.522734e-09
+  norm of beta kernel  =  0.0
+
+model update:
+  kernel maximum value            =  1.6744794e-05
+  maximum gradient step dln(m)    =  0.02
+
+  resulting step size             =  1194.4010587702112
+
+updated model:
+  rho min/max =  2474.048 2550.5034
+  vp  min/max =  2648.2273 2725.695
+  vs  min/max =  0.0 0.0
+
+storing new files...
+  updated model files written to:
+   ./DATA/proc000000_rho_new.bin
+   ./DATA/proc000000_vp_new.bin
+   ./DATA/proc000000_vs_new.bin
+
+  plotted as  ./DATA/proc000000_rho_new.jpg
+  plotted as  ./DATA/proc000000_vp_new.jpg
+  plotted as  ./DATA/proc000000_vs_new.jpg
+
+all done
+
+DATA/proc000000_rho_new.bin -> DATA/proc000000_rho.bin
+DATA/proc000000_vp_new.bin -> DATA/proc000000_vp.bin
+DATA/proc000000_vs_new.bin -> DATA/proc000000_vs.bin
+
+running forward simulation (updated model)
+
+Changed simulation_type to 1 in Par_file
+
+output.log -> OUTPUT_FILES/output.log
+
+postprocessing...
+> ./kernel_evaluation_postprocessing.py 600 0.00035 1 1
+
+postprocessing:
+  NSTEP =  600
+  DT    =  0.00035
+  NPROC =  1
+  type  =  1 (1 == acoustic / 2 == elastic P-SV / 3 == elastic SH / 4 == coupled acoustic-elastic)
+
+rank:  0
+
+  reading model coordinates...
+
+  model dimensions: x min/max =  0.0 1000.0
+                    z min/max =  0.0 1000.0
+
+
+  reading kernels...
+
+  kernel rhop : min/max =  -1.6744794e-05 8.7365715e-06
+  kernel alpha: min/max =  -7.93016e-06 1.853892e-06
+
+  reading integration weights...
+
+reading model...
+
+
+  target model : rho min/max =  2500.0 2500.0
+                 vp  min/max =  2700.0 2700.0
+
+
+  initial model: rho min/max =  2500.0 2500.0
+                 vp  min/max =  2646.0 2700.0
+
+
+  relative model perturbation (rho - rhop)/rho0 : min/max =  0.0 0.0
+  relative model perturbation (vp - vp0)/vp0    : min/max =  0.0 0.020408163
+
+
+  calculating inner product in model space: < F* F dm, dm>
+
+  model space contributions: Mrho = 0.000000e+00 Mvp = 4.417066e-05
+  total model space = 4.417066e-05
+
+
+  calculating inner product in data space: < F dm, F dm>
+
+  data sources:
+   OUTPUT_FILES.dat.forward/Up_file_single_p.su
+
+   OUTPUT_FILES.syn.forward/Up_file_single_p.su
+
+   OUTPUT_FILES.syn.updated/Up_file_single_p.su
+
+
+  num receivers =  1
+  samples       =  600
+
+  data space contribution = 4.298724e-05
+         total data space = 4.298724e-05
+
+  data space contribution (updated) = 5.337044e-06
+         total data space (updated) = 5.337044e-06
+
+
+total number of traces considered:  1
+
+DATASPACE      = 4.298724e-05
+DATASPACE_NEW  = 5.337044e-06
+MODELSPACE     = 4.417066e-05
+
+relative data misfit (dataspace - dataspace_new)/dataspace =  0.8758458744964653
+data misfit decrease looks ok
+
+relative error       (dataspace - modelspace)/dataspace    =  -0.027529500569596972
+
+total relative error should be small enough, < 0.15 should be OK
+looks ok
+
+
+done: Tue Oct 12 11:47:16 +03 2021
+
+

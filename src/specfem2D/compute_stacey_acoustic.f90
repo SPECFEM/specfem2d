@@ -38,11 +38,11 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,TWO_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4,USE_A_STRONG_FORMULATION_FOR_E1
 
-  use specfem_par, only: AXISYM,nglob,num_abs_boundary_faces,it,any_acoustic, &
-                         assign_external_model,ibool,kmato, &
+  use specfem_par, only: nglob,num_abs_boundary_faces,anyabs,it,any_acoustic, &
+                         ibool, &
                          abs_boundary_ispec,ispec_is_acoustic, &
                          codeabs,codeabs_corner, &
-                         density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
+                         xix,xiz,gammax,gammaz,jacobian, &
                          rho_vpstore, &
                          wxgll,wzgll, &
                          ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
@@ -65,10 +65,11 @@
   integer :: ibegin,iend,jbegin,jend
   real(kind=CUSTOM_REAL) :: weight,xxi,zxi,xgamma,zgamma,jacobian1D
   ! material properties of the acoustic medium
-  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl,rhol,rho_vp
+  real(kind=CUSTOM_REAL) :: rho_vp
 
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
+  if (.not. anyabs) return
   if (.not. any_acoustic) return
 
   do ispecabs = 1,num_abs_boundary_faces
@@ -77,19 +78,6 @@
     ! Sommerfeld condition if acoustic
     if (ispec_is_acoustic(ispec)) then
 
-      ! get elastic parameters of current spectral element
-      lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-      mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-
-      if (AXISYM) then ! CHECK kappa
-        kappal  = lambdal_relaxed + TWO_THIRDS * mul_relaxed
-      else
-        kappal  = lambdal_relaxed + mul_relaxed
-      endif
-
-      rhol = density(1,kmato(ispec))
-      cpl = sqrt(kappal/rhol)
-
       !--- left absorbing boundary
       if (codeabs(IEDGE4,ispecabs)) then
         i = 1
@@ -97,12 +85,8 @@
         jend = iend_edge4(ispecabs)
         do j = jbegin,jend
           iglob = ibool(i,j,ispec)
-          ! external velocity model
-          if (assign_external_model) then
-            rho_vp = rho_vpstore(i,j,ispec)
-          else
-            rho_vp = rhol*cpl
-          endif
+          rho_vp = rho_vpstore(i,j,ispec)
+
           xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
           zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
           jacobian1D = sqrt(xgamma ** 2 + zgamma ** 2)
@@ -127,12 +111,8 @@
         jend = iend_edge2(ispecabs)
         do j = jbegin,jend
           iglob = ibool(i,j,ispec)
-          ! external velocity model
-          if (assign_external_model) then
-            rho_vp = rho_vpstore(i,j,ispec)
-          else
-            rho_vp = rhol*cpl
-          endif
+          rho_vp = rho_vpstore(i,j,ispec)
+
           xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
           zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
           jacobian1D = sqrt(xgamma ** 2 + zgamma ** 2)
@@ -160,12 +140,8 @@
         if (codeabs_corner(2,ispecabs)) iend = NGLLX-1
         do i = ibegin,iend
           iglob = ibool(i,j,ispec)
-          ! external velocity model
-          if (assign_external_model) then
-            rho_vp = rho_vpstore(i,j,ispec)
-          else
-            rho_vp = rhol*cpl
-          endif
+          rho_vp = rho_vpstore(i,j,ispec)
+
           xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
           zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
           jacobian1D = sqrt(xxi ** 2 + zxi ** 2)
@@ -193,12 +169,8 @@
         if (codeabs_corner(4,ispecabs)) iend = NGLLX-1
         do i = ibegin,iend
           iglob = ibool(i,j,ispec)
-          ! external velocity model
-          if (assign_external_model) then
-            rho_vp = rho_vpstore(i,j,ispec)
-          else
-            rho_vp = rhol*cpl
-          endif
+          rho_vp = rho_vpstore(i,j,ispec)
+
           xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
           zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
           jacobian1D = sqrt(xxi ** 2 + zxi ** 2)
@@ -232,7 +204,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: nglob,num_abs_boundary_faces,it,NSTEP,any_acoustic, &
+  use specfem_par, only: nglob,num_abs_boundary_faces,anyabs,it,NSTEP,any_acoustic, &
                          ibool,abs_boundary_ispec,ispec_is_acoustic, &
                          codeabs,codeabs_corner, &
                          ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
@@ -253,6 +225,7 @@
 
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
+  if (.not. anyabs) return
   if (.not. any_acoustic) return
   if (NO_BACKWARD_RECONSTRUCTION) return
 

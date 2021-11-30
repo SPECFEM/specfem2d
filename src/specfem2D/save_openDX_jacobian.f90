@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine save_openDX_jacobian(nspec,npgeo,ngnod,knods,coorg,xigll,zigll,AXISYM,is_on_the_axis,xiglj)
+  subroutine save_openDX_jacobian(nspec,npgeo,NGNOD,knods,coorg,xigll,zigll,AXISYM,is_on_the_axis,xiglj)
 
   use constants, only: NDIM,NGLLX,NGLLZ,NGLJ,ZERO
 
@@ -39,12 +39,12 @@
 
   logical :: AXISYM
 
-  integer :: nspec,npgeo,ngnod
+  integer :: nspec,npgeo,NGNOD
   double precision, dimension(NDIM,npgeo) :: coorg
   double precision, dimension(NGLLX) :: xigll
   double precision, dimension(NGLLZ) :: zigll
 
-  integer, dimension(ngnod,nspec) :: knods
+  integer, dimension(NGNOD,nspec) :: knods
 
   double precision, dimension(NGLJ) :: xiglj
   logical, dimension(nspec) :: is_on_the_axis
@@ -71,7 +71,7 @@
   allocate(ibool_OpenDX(npgeo))
   mask_point(:) = .false.
   do ispec = 1,nspec
-    do ia = 1,ngnod
+    do ia = 1,NGNOD
       nnum = knods(ia,ispec)
       xelm = coorg(1,nnum)
       zelm = coorg(2,nnum)
@@ -119,7 +119,7 @@
         gamma = zigll(j)
 
         call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl, &
-                                                   coorg,knods,ispec,ngnod,nspec,npgeo, &
+                                                   coorg,knods,ispec,NGNOD,nspec,npgeo, &
                                                    .false.)
 
         if (jacobianl <= ZERO) found_a_problem_in_this_element = .true.

@@ -56,8 +56,8 @@
   integer,external :: err_occurred
 
   ! safety check
-  ! only master process is supposed to read in file parameters
-  if (myrank /= 0) call stop_the_code('Only master process should read regions, exiting...')
+  ! only main process is supposed to read in file parameters
+  if (myrank /= 0) call stop_the_code('Only main process should read regions, exiting...')
 
   ! user output
   write(IMAIN,*) 'Regions:'
@@ -98,7 +98,6 @@
 
     ! determines region domain
     if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. icodemat(imaterial_number) /= POROELASTIC_MATERIAL) then
-
        ! isotropic material
        vpregion = cp(imaterial_number)
        vsregion = cs(imaterial_number)
@@ -121,13 +120,11 @@
        if (poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) call stop_the_code('incorrect value of Poisson''s ratio')
 
     else if (icodemat(imaterial_number) == POROELASTIC_MATERIAL) then
-
        ! poroelastic material
        write(IMAIN,*) 'Material # ',imaterial_number,' isotropic'
        write(IMAIN,*) 'Material is poroelastic'
 
     else
-
        ! anisotropic material
        write(IMAIN,*) 'Material # ',imaterial_number,' anisotropic'
        write(IMAIN,*) 'cp = ',sngl(cp(imaterial_number))

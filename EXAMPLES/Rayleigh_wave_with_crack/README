@@ -18,6 +18,10 @@ and
  in the source code file setup/constants.h
 *********************************************************************************************************
 
+The script run_this_example.sh will do this for you, recompile the code, run the example, and revert back the original setup.
+However, the test should have a valid configuration and Makefile in the root directory to be able to recompile.
+Please make sure that the command `make all` will execute successfully before running this example.
+
 TO RUN:
 
 0. Read the user manual in SPECFEM2D/doc/manual_SPECFEM2D.pdf

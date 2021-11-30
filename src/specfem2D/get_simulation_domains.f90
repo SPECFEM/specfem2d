@@ -144,6 +144,8 @@
           ispec_is_elastic(ispec) = .true.
         endif
 
+        ! note: no external poroelastic model yet defined
+
         if ( trim(MODEL) == 'external' .or. trim(MODEL) == 'tomo' .or. trim(MODEL) == 'binary_voigt' ) then
 
           ! sets element type
@@ -203,10 +205,6 @@
     call stop_the_code('PML boundary conditions not implemented for poroelastic simulations yet')
   endif
 
-  if (PML_BOUNDARY_CONDITIONS .and. any_elastic .and. (.not. P_SV)) then
-    call stop_the_code('PML boundary conditions not implemented for SH simulations yet')
-  endif
-
   ! checks material domains
   do ispec = 1,nspec
     ! checks if at least one domain is set
@@ -249,17 +247,17 @@
   ! acoustic
   ! number of acoustic elements in this partition
   nspec_acoustic = count(ispec_is_acoustic(:))
-  if (nspec_acoustic > 0 ) any_acoustic = .true.
+  if (nspec_acoustic > 0) any_acoustic = .true.
 
   ! elastic
   ! number of elastic elements in this partition
   nspec_elastic = count(ispec_is_elastic(:))
-  if (nspec_elastic > 0 ) any_elastic = .true.
+  if (nspec_elastic > 0) any_elastic = .true.
 
   ! poroelastic
   ! number of elastic elements in this partition
   nspec_poroelastic = count(ispec_is_poroelastic(:))
-  if (nspec_poroelastic > 0 ) any_poroelastic = .true.
+  if (nspec_poroelastic > 0) any_poroelastic = .true.
 
   ! aniso
   nspec_aniso = count(ispec_is_anisotropic(:))

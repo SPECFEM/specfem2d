@@ -54,9 +54,9 @@ Replace \texttt{surange} with \texttt{suxwigb} to see wiggle plots for the seism
 \section*{Notes about \texttt{DATA/Par\_file} parameters}
 %------------------------------------------------------------------------------------------------%
 
-\red{\textbf{The default \texttt{DATA/Par\_file} provided in the root directory of the code contains detailed comments and should be almost self-explanatory
+The default \texttt{DATA/Par\_file} provided in the root directory of the code contains detailed comments and should be almost self-explanatory
 (note that some of the older \texttt{DATA/Par\_file} files provided in the \texttt{EXAMPLES} directory work fine but some of the comments
-they contain may be obsolete or even wrong; thus refer to the default \texttt{DATA/Par\_file} instead for reliable explanations).}}
+they contain may be obsolete or even wrong; thus refer to the default \texttt{DATA/Par\_file} instead for reliable explanations).
 
 \begin{description}[font=\ttfamily]
 
@@ -84,23 +84,23 @@ is accurate at second order and thus contains significantly less numerical noise
 %
 \begin{verbatim}
 I:  model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0
-II:  model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
+II:  model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 QKappa Qmu
 III: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
 IV: model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
 \end{verbatim}
 %
 
-To make a given region acoustic, use I and make \texttt{Vs} be zero.
+To make a given region acoustic, use (I) and make \texttt{Vs} be zero.
 
-To make a given region isotropic elastic, use I and make \texttt{Vs} be nonzero.  See Section 4.1 for more details.
+To make a given region isotropic elastic, use (I) and make \texttt{Vs} be nonzero.  See Section 4.1 for more details.
 
-To make a given region anisotropic, use II.  See Section 4.2 for more details.
+To make a given region anisotropic, use (II).  See Section 4.2 for more details.
 
-To make a given region poroeslatic, use III.  See Section 4.3 for more details.
+To make a given region poroeslatic, use (III).  See Section 4.3 for more details.
 
 When viscoelasticity is turned on, the \texttt{Vp} and \texttt{Vs} values that are read here are the UNRELAXED ones i.e. the values at infinite frequency
-unless the READ\_VELOCITIES\_AT\_f0 parameter above is set to true, in which case they are the values at frequency $f_0$.
-Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp. To convert one to the other see doc/note\_on\_Qkappa\_versus\_Qp.pdf and utils/attenuation/conversion\_from\_Qkappa\_Qmu\_to\_Qp\_Qs\_from\_Dahlen\_Tromp\_959\_960.f90.
+unless the \texttt{READ\_VELOCITIES\_AT\_f0} parameter above is set to true, in which case they are the values at frequency $f_0$.
+Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp. To convert one to the other see \texttt{doc/note\_on\_Qkappa\_versus\_Qp.pdf} and \texttt{utils/attenuation/conversion\_from\_Qkappa\_Qmu\_to\_Qp\_Qs\_from\_Dahlen\_Tromp\_959\_960.f90}.
 
 \item[nbregions]  With \texttt{MODEL = default} chosen, a variety of simple layered model configurations can be specified using the \texttt{nbregions} device.
 

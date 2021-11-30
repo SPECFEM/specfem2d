@@ -41,10 +41,12 @@
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge, &
                          fluid_poro_poroelastic_ispec,fluid_poro_poroelastic_iedge, &
-                         porosity,tortuosity,density,kmato, &
-                         potential_acoustic_adj_coupling, &
+                         phistore,tortstore,rhoarraystore, &
                          nglob_acoustic,nglob_poroelastic, &
                          SIMULATION_TYPE
+
+  use specfem_par, only: potential_acoustic
+                         !potential_acoustic_adj_coupling, &
 
   implicit none
 
@@ -60,7 +62,6 @@
   real(kind=CUSTOM_REAL) :: pressure,xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
   real(kind=CUSTOM_REAL) :: fac_s,fac_w
   double precision :: phi,tort,rho_f,rho_s,rho_bar
-  integer :: material
 
   ! loop on all the coupling edges
   do inum = 1,num_fluid_poro_edges
@@ -78,30 +79,30 @@
       j = jvalue_inverse(ipoin1D,iedge_acoustic)
       iglob = ibool(i,j,ispec_acoustic)
 
-      ! get poroelastic parameters
-      material = kmato(ispec_poroelastic)
-      phi = porosity(material)
-      tort = tortuosity(material)
-      rho_f = density(2,material)
-      rho_s = density(1,material)
-      rho_bar = (1.d0-phi)*rho_s + phi*rho_f
-
-      fac_s = real((1.d0 - phi/tort),kind=CUSTOM_REAL)
-      fac_w = real((1.d0 - rho_f/rho_bar),kind=CUSTOM_REAL)
-
       ! compute pressure on the fluid/porous medium edge
       pressure = - potential_dot_dot_acoustic(iglob)
 
       if (SIMULATION_TYPE == 3 .and. FORWARD_OR_ADJOINT == 1) then
         ! new definition of adjoint displacement and adjoint potential
         ! adjoint definition: pressure^\dagger = potential^\dagger
-        pressure = potential_acoustic_adj_coupling(iglob)
+        pressure = potential_acoustic(iglob)  ! potential_acoustic_adj_coupling(iglob)
       endif
 
       ! get point values for the poroelastic side
       ii2 = ivalue(ipoin1D,iedge_poroelastic)
       jj2 = jvalue(ipoin1D,iedge_poroelastic)
       iglob = ibool(ii2,jj2,ispec_poroelastic)
+
+      ! get poroelastic parameters
+      phi = phistore(ii2,jj2,ispec_poroelastic)
+      tort = tortstore(ii2,jj2,ispec_poroelastic)
+      rho_s = rhoarraystore(1,ii2,jj2,ispec_poroelastic)
+      rho_f = rhoarraystore(2,ii2,jj2,ispec_poroelastic)
+
+      rho_bar = (1.d0-phi)*rho_s + phi*rho_f
+
+      fac_s = real((1.d0 - phi/tort),kind=CUSTOM_REAL)
+      fac_w = real((1.d0 - rho_f/rho_bar),kind=CUSTOM_REAL)
 
       ! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
       ! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,

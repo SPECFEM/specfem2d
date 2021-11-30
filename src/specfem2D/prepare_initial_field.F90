@@ -38,14 +38,16 @@
   use specfem_par, only: myrank,any_acoustic,any_elastic,any_poroelastic, &
                          over_critical_angle, &
                          NSOURCES,source_type,anglesource,x_source,z_source,f0_source,t0, &
-                         nglob,numat,poroelastcoef,density,coord, &
+                         nglob,numat, &
+                         rho_vpstore,rho_vsstore,rhostore, &
+                         coord, &
                          anglesource_refl,c_inc,c_refl,time_offset, &
                          A_plane, B_plane, C_plane, &
                          accel_elastic,veloc_elastic,displ_elastic, &
                          potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic
 
   use constants, only: OUTPUT_FILES
-  use specfem_par, only: deltat,NSTEP,t0, &
+  use specfem_par, only: DT,NSTEP,t0, &
     x_final_receiver,z_final_receiver,station_name,network_name
 
   implicit none
@@ -53,8 +55,8 @@
   double precision,intent(out) :: cploc, csloc
 
   ! local parameters
-  integer :: numat_local,i
-  double precision :: denst,lambdaplus2mu,mu,p,x0_source,z0_source
+  integer :: i
+  double precision :: p,x0_source,z0_source
   double precision :: PP,PS,SP,SS,anglesource_abs
   double precision :: xmax, xmin, zmax, zmin,x,z,t
   double precision :: xmax_glob, xmin_glob, zmax_glob, zmin_glob
@@ -160,7 +162,6 @@
   endif
 
   ! only implemented for homogeneous media therefore only one material supported
-  numat_local = numat
   if (numat /= 1) then
      if (myrank == 0) then
         write(IMAIN,*)
@@ -171,15 +172,11 @@
         write(IMAIN,*) 'Thus use at your own risk!'
         write(IMAIN,*)
      endif
-     numat_local = 1
   endif
 
-  mu = poroelastcoef(2,1,numat_local)
-  lambdaplus2mu  = poroelastcoef(3,1,numat_local)
-  denst = density(1,numat_local)
-
-  cploc = sqrt(lambdaplus2mu/denst)
-  csloc = sqrt(mu/denst)
+  ! uses single point for assigning velocities
+  cploc = rho_vpstore(1,1,1) / rhostore(1,1,1)
+  csloc = rho_vsstore(1,1,1) / rhostore(1,1,1)
 
   ! plane wave type
   select case(initial_field_type)
@@ -383,13 +380,13 @@
       write(11,*) "# receiver: ",trim(network_name(1)),".",trim(station_name(1))
       write(11,*) "#           position x/z = ",x_final_receiver(1),z_final_receiver(1)
       write(11,*) "#"
-      write(11,*) "# dt          = ",deltat
+      write(11,*) "# dt          = ",DT
       write(11,*) "# time offset = ",time_offset
       write(11,*) "#"
       write(11,*) "# format: #time  #displacement"
       do it = 1,NSTEP
         ! wavefield output will have advanced by one step
-        timeval = t + dble(it) * deltat
+        timeval = t + dble(it) * DT
         ! displacement
         mode_y = mode_A * sin( mode_n * PI * x ) * sin( mode_m * PI * z ) * cos( mode_omega * timeval)
 
@@ -399,9 +396,9 @@
         mode_y = - mode_y
         mode_y = 2.4e-06 * mode_y
 
-        ! seismogram outputs time corresponding to: (it-1)*deltat - t0
+        ! seismogram outputs time corresponding to: (it-1)*DT - t0
         ! format: #time #displacement
-        write(11,*) t + dble(it-1) * deltat,mode_y
+        write(11,*) t + dble(it-1) * DT, mode_y
       enddo
       close(11)
       write(IMAIN,*) 'file written: ',trim(filename)

@@ -41,14 +41,14 @@
 
   use specfem_par, only: NSTEP, NSOURCES, source_time_function, &
                          time_function_type, name_of_source_file, burst_band_width, f0_source,tshift_src, &
-                         factor, t0, deltat, SOURCE_IS_MOVING, &
+                         factor, t0, DT, SOURCE_IS_MOVING, &
                          time_stepping_scheme, stage_time_scheme, islice_selected_source, &
                          USE_TRICK_FOR_BETTER_PRESSURE, myrank, initialfield
 
   implicit none
 
   ! local parameters
-  double precision :: stf_used, timeval, DecT, Tc, omegat, omega_coa,time,coeff, t_used, Nc
+  double precision :: stf_used, timeval, DecT, Tc, omegat, omega_coa,dummy_t,coeff, t_used, Nc
   double precision :: hdur,hdur_gauss
 
   integer :: it,i_source,ier,num_file
@@ -95,7 +95,7 @@
 
   if (myrank == 0) then
     write(IMAIN,*) '  time stepping stages: ',stage_time_scheme
-    write(IMAIN,*) '  time step size      : ',sngl(deltat)
+    write(IMAIN,*) '  time step size      : ',sngl(DT)
     write(IMAIN,*)
     write(IMAIN,*) '  number of time steps: ',NSTEP
     if (initialfield) then
@@ -118,9 +118,9 @@
     allocate(source_time_function(NSOURCES,NSTEP,stage_time_scheme),stat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error allocating array source_time_function')
   endif
+
   ! initializes stf array
   source_time_function(:,:,:) = 0.d0
-
 
   ! user output
   if (myrank == islice_selected_source(1)) then
@@ -138,18 +138,16 @@
   do i_source = 1,NSOURCES
 
     ! The following lines could be needed to set absolute amplitudes.
-    ! In this case variables rho_vpstore,density,poroelastcoef,assign_external_model,ispec_selected_source,kmato
-    ! and double precision :: rho, cp logical :: already_done = .false. need to be introduced
+    !
+    ! use specfem_par, only: rho_vpstore,rhostore,ispec_selected_source
+    ! double precision :: rho, cp
+    ! logical :: already_done = .false. need to be introduced
     !    if (myrank == islice_selected_source(i_source)) then
     !      if (AXISYM) then
     !        if (.not. already_done) then
-    !          if (  assign_external_model ) then
-    !            cp = rho_vpstore(0,0,ispec_selected_source(i_source))/rhostore(0,0,ispec_selected_source(i_source))
-    !            TODO (above): We must interpolate to find the exact cp value at source location
-    !          else
-    !            rho = density(1,kmato(ispec_selected_source(i_source)))
-    !            cp = sqrt(poroelastcoef(3,1,kmato(ispec_selected_source(i_source)))/rho)
-    !          endif
+    !          cp = rho_vpstore(0,0,ispec_selected_source(i_source)) / rhostore(0,0,ispec_selected_source(i_source))
+    !          TODO (above): We must interpolate to find the exact cp value at source location
+    !
     !          factor(i_source) = - factor(i_source)*2.0d0*cp**2*0.45d-5 !0.225d-5
     !          if (time_function_type (i_source) == 7)  factor(i_source) = factor(i_source) * 222066.1d0 !444132.2d0
     !          already_done = .true.
@@ -180,27 +178,27 @@
         select case(time_stepping_scheme)
         case (1)
           ! Newmark
-          timeval = dble(it-1)*deltat
+          timeval = dble(it-1)*DT
         case (2)
           ! LDDRK: Low-Dissipation and low-dispersion Runge-Kutta
           ! note: the LDDRK scheme updates displacement after the stiffness computations and
           !       after adding boundary/coupling/source terms.
           !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme.
           !       we therefore at an additional -DT to have the corresponding timing for the source.
-          timeval = dble(it-1-1)*deltat + dble(C_LDDRK(i_stage))*deltat
+          timeval = dble(it-1-1)*DT + dble(C_LDDRK(i_stage))*DT
         case (3)
           ! RK: Runge-Kutta
           ! note: similar like LDDRK above, displ(n+1) will be determined after stiffness/source/.. computations.
           !       thus, adding an additional -DT to have the same timing in seismogram as Newmark
-          timeval = dble(it-1-1)*deltat + dble(C_RK4(i_stage))*deltat
+          timeval = dble(it-1-1)*DT + dble(C_RK4(i_stage))*DT
         case (4)
           ! symplectic PEFRL
           ! note: similar like LDDRK above, displ(n+1) will be determined after final stage of stiffness/source/.. computations.
           !       thus, adding an additional -DT to have the same timing in seismogram as Newmark
           !
           !       for symplectic schemes, the current stage time step size is the sum of all previous and current coefficients
-          !          sum( ALPHA_SYMPLECTIC(1:i_stage) ) * deltat
-          timeval = dble(it-1-1)*deltat + dble(sum(ALPHA_SYMPLECTIC(1:i_stage))) * deltat
+          !          sum( ALPHA_SYMPLECTIC(1:i_stage) ) * DT
+          timeval = dble(it-1-1)*DT + dble(sum(ALPHA_SYMPLECTIC(1:i_stage))) * DT
         case default
           call exit_MPI(myrank,'Error invalid time stepping scheme chosen, please check...')
         end select
@@ -364,19 +362,33 @@
             ! external type
             ! opens external file to read in source time function
             if (it == 1) then
-              coeff = factor(i_source)
+              ! reads in from external source time function file
               open(unit=num_file,file=trim(name_of_source_file(i_source)),status='old',action='read',iostat=ier)
               if (ier /= 0) then
+                print *,'Error opening source time function file: ',trim(name_of_source_file(i_source))
                 error_msg = trim(error_msg1)//trim(name_of_source_file(i_source))
                 call exit_MPI(myrank,error_msg)
               endif
             endif
 
+            ! reads in 2-column file values (time value in first column will be ignored)
             ! format: #time #stf-value
-            read(num_file,*) time, source_time_function(i_source,it,i_stage)
+            read(num_file,*,iostat=ier) dummy_t, source_time_function(i_source,it,i_stage)
+            if (ier /= 0) then
+              print *,'Error reading source time function file: ',trim(name_of_source_file(i_source)),' at line ',it
+              print *,'Please make sure the file contains the same number of lines as the number of timesteps NSTEP ',NSTEP
+              call exit_MPI(myrank,'Error reading source time function file')
+            endif
 
             ! closes external file
-            if (it == NSTEP ) close(num_file)
+            if (it == NSTEP) close(num_file)
+
+            ! amplifies STF by factor
+            ! note: the amplification factor will amplify the external source time function.
+            !       in case this is not desired, one just needs to set the amplification factor to 1 in DATA/SOURCE:
+            !         factor  = 1.0
+            coeff = factor(i_source)
+            source_time_function(i_source,it,i_stage) = source_time_function(i_source,it,i_stage) * coeff
 
           case (9)
             ! burst type
@@ -471,7 +483,7 @@
           if (i_source == 1 .and. i_stage == 1) then
             stf_used = source_time_function(i_source,it,i_stage)
 
-            ! note: earliest start time of the simulation is: (it-1)*deltat - t0 - tshift_src(i_source)
+            ! note: earliest start time of the simulation is: (it-1)*DT - t0 - tshift_src(i_source)
             if (myrank == islice_selected_source(1)) write(55,*) timeval-t0,' ',stf_used
 
           endif

@@ -33,53 +33,98 @@ from __future__ import (absolute_import, division, print_function)
 
 import sys
 
+print("compare two images...")
+
 try:
     import numpy as np
 except:
     print("Error importing numpy, please install numpy package first...")
     sys.tracebacklimit=0
-    raise Exception("Importing numpy failed")
+    raise Exception("Importing numpy failed, please install numpy package first...")
 
-try:
-    from skimage.color import rgb2grey
-except:
-    print("Error importing rgb2grey from skimage.color, please install skimage package first...")
-    sys.tracebacklimit=0
-    raise Exception("Importing skimage.color failed")
-
-try:
-    from skimage.data import imread
-except:
-    print("Error importing imread from skimage.data, please install skimage package first...")
-    sys.tracebacklimit=0
-    raise Exception("Importing skimage.data failed")
+print("numpy version: ",np.__version__)
 
 try:
     import skimage
-    version = skimage.__version__
-    print("skimage version: ",version)
-    v = version.split('.')
-    # determines skimage version function
-    new_version = 0
-    if len(v) > 2:
-        print("skimage structural similarity support: %i.%i.x" % (int(v[0]),int(v[1])))
-        if int(v[1]) > 11:
-            new_version = 1
-        else:
-            new_version = 0
-    # imports structural similarity function
-    if new_version == 1:
-        # deprecated: from skimage.measure import structural_similarity as ssim
-        print("importing new function compare_ssim as ssim")
-        from skimage.measure import compare_ssim as ssim
-    else:
-        # older version <= 0.11.x
-        print("importing old function structural_similarity as ssim")
-        from skimage.measure import structural_similarity as ssim
 except:
-    print("Error importing structural similarity from skimage.measure, please install skimage package first...")
+    print("Error importing skimage, please install skimage package (scikit-image) first...")
     sys.tracebacklimit=0
-    raise Exception("Importing skimage.measure failed")
+    raise Exception("Importing skimage failed, please install skimage package (scikit-image) first...")
+
+version = skimage.__version__
+print("skimage version: ",version)
+
+# determines skimage version function
+v = version.split('.')
+new_version = 0
+if len(v) > 2:
+    print("skimage structural similarity support: %i.%i.x" % (int(v[0]),int(v[1])))
+    if int(v[1]) >= 16:
+        new_version = 2
+    elif int(v[1]) > 11 and int(v[1]) < 16:
+        new_version = 1
+    else:
+        new_version = 0
+
+# imports rgb2gray
+# more recent versions use rgb2gray instead of rbg2grey (which throws a deprecation warning)
+try:
+    from skimage.color import rgb2gray
+except:
+    print("Error importing rgb2gray from skimage.color, please install skimage package (scikit-image) first...")
+    sys.tracebacklimit=0
+    raise Exception("Importing skimage.color rgb2gray failed")
+
+# imports rgba2rgb
+if new_version == 2:
+    # since versions >= 0.13.x
+    try:
+        from skimage.color import rgba2rgb
+    except:
+        print("Error importing rgba2rgb from skimage.color, please install skimage package (scikit-image) first...")
+        sys.tracebacklimit=0
+        raise Exception("Importing skimage.color rgba2rgb failed")
+
+# imports imread
+if new_version == 2:
+    # uses skimage.io
+    try:
+        from skimage.io import imread
+    except:
+        print("Error importing imread from skimage.io, please install skimage package (scikit-image) first...")
+        sys.tracebacklimit=0
+        raise Exception("Importing skimage.io imread failed")
+else:
+    # uses skimage.data
+    try:
+        from skimage.data import imread
+    except:
+        print("Error importing imread from skimage.data, please install skimage package (scikit-image) first...")
+        sys.tracebacklimit=0
+        raise Exception("Importing skimage.data imread failed")
+
+# imports structural similarity function
+if new_version == 2:
+    # function was renamed from skimage.measure.compare_ssim to skimage.metrics.structural_similarity
+    try:
+        from skimage.metrics import structural_similarity as ssim
+    except:
+        print("Error importing structural_similarity from skimage.metrics, please install skimage package (scikit-image) first...")
+elif new_version == 1:
+    # deprecated: from skimage.measure import structural_similarity as ssim
+    print("importing new function compare_ssim as ssim")
+    try:
+        from skimage.measure import compare_ssim as ssim
+    except:
+        print("Error importing compare_ssim from skimage.measure, please install skimage package (scikit-image) first...")
+else:
+    # older version <= 0.11.x
+    print("importing old function structural_similarity as ssim")
+    try:
+        from skimage.measure import structural_similarity as ssim
+    except:
+        print("Error importing structural_similarity from skimage.measure, please install skimage package (scikit-image) first...")
+print("")
 
 #####################################################################
 # USER PARAMETERS
@@ -108,6 +153,7 @@ def compare_images(imageA, imageB, title, show_plot=True):
     """
     computes the mean squared error and structural similarity
     """
+    global new_version
 
     # index values for mean squared error
     if VERBOSE: print("comparing mean squared error...")
@@ -115,8 +161,12 @@ def compare_images(imageA, imageB, title, show_plot=True):
 
     # convert the images to grayscale
     if VERBOSE: print("converting to greyscale...")
-    imageA_grey = rgb2grey(imageA)
-    imageB_grey = rgb2grey(imageB)
+    if new_version == 2:
+        imageA_grey = rgb2gray(rgba2rgb(imageA))
+        imageB_grey = rgb2gray(rgba2rgb(imageB))
+    else:
+        imageA_grey = rgb2gray(imageA)
+        imageB_grey = rgb2gray(imageB)
 
     # uses image copies to avoid runtime warning for ssim computation
     img1_grey = np.copy(imageA_grey)
