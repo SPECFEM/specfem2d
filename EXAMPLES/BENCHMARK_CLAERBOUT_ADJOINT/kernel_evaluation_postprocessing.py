@@ -219,7 +219,7 @@ def postprocessing(NSTEP,DT,NPROC,SIM_TYPE):
             dlnvs = (vs - vs0)/vs0
 
         print("")
-        print("  relative model perturbation (rho - rhop)/rho0 : min/max = ",dlnrho.min(),dlnrho.max())
+        print("  relative model perturbation (rho - rho0)/rho0 : min/max = ",dlnrho.min(),dlnrho.max())
         print("  relative model perturbation (vp - vp0)/vp0    : min/max = ",dlnvp.min(),dlnvp.max())
         if SIM_TYPE != 1:
           print("  relative model perturbation (vs - vs0)/vs0    : min/max = ",dlnvs.min(),dlnvs.max())
@@ -297,7 +297,6 @@ def postprocessing(NSTEP,DT,NPROC,SIM_TYPE):
                 # reads in all traces
                 syn_new = hf.read_SU_file(filename_syn_new)
 
-
                 num_receivers = len(dat)
                 num_samples = len(dat[0])
 
@@ -308,6 +307,7 @@ def postprocessing(NSTEP,DT,NPROC,SIM_TYPE):
 
                 # misfit (s - d)
                 diff = syn - dat
+
                 DS_l = 0.0
                 for irec in range(num_receivers):
                     # single receiver trace
