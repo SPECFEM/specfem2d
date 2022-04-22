@@ -320,7 +320,7 @@
         open(unit=13,file=trim(OUTPUT_FILES)//'Up_file_double_'//component//suffix,status=sismo_statut,access='stream')
         file_unit_13_has_been_opened = .true.
       else if (.not. P_SV) then
-        open(unit=13,file=trim(OUTPUT_FILES)//'Uz_file_double_'//component//suffix,status=sismo_statut,access='stream')
+        open(unit=13,file=trim(OUTPUT_FILES)//'Uy_file_double_'//component//suffix,status=sismo_statut,access='stream')
         file_unit_13_has_been_opened = .true.
       else
         open(unit=13,file=trim(OUTPUT_FILES)//'Ux_file_double_'//component//suffix,status=sismo_statut,access='stream')
