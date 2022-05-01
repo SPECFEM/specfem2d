@@ -65,23 +65,39 @@
   ! for Bielak
   use specfem_par, only: x_source,z_source,f0_source
 
+  use specfem_par, only: displ_elastic,hprime_xx,hprime_zz
+
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(inout) :: accel_elastic
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: veloc_elastic
 
   ! local parameters
-  integer :: ispecabs,ispec,i,j,iglob
+  integer :: ispecabs,ispec,i,j,k,iglob,iiglob
   real(kind=CUSTOM_REAL) :: weight,xxi,zxi,xgamma,zgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,tx,ty,tz
+  real(kind=CUSTOM_REAL) :: dn,dx_n,dz_n,dx_t,dz_t,tx_n,tz_n,tx_t,tz_t
+  real(kind=CUSTOM_REAL) :: unit_tx,unit_tz,v_norm
+  real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
+  real(kind=CUSTOM_REAL) :: tempx1l_n,tempz1l_n,tempx2l_n,tempz2l_n
+  real(kind=CUSTOM_REAL) :: tempx1l_t,tempz1l_t,tempx2l_t,tempz2l_t
+  real(kind=CUSTOM_REAL) :: dux_dxl,dux_dzl,duz_dxl,duz_dzl,deriv_x,deriv_z
 
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: rho_vp,rho_vs ! cpl,csl
-  real(kind=CUSTOM_REAL) :: rhol,cpl,mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
+  real(kind=CUSTOM_REAL) :: rhol,cpl,csl
+  real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
 
   ! for analytical initial plane wave for Bielak's conditions
   double precision :: veloc_horiz,veloc_vert,dxUx,dzUx,dxUz,dzUz,traction_x_t0,traction_z_t0
   integer :: count_left,count_right,count_bottom
+
+  ! Stacey second order absorbing boundary scheme called P3
+  ! implemented for spectral-elements, see section 5.3 in:
+  !    Casadei et al. (2002),
+  !    A mortar spectral/finite element method for complex 2D and 3D elastodynamic problems,
+  !    Comput. Methods Appl. Mech. Engrg. 191, 5119-5148.
+  logical, parameter :: STACEY_SECOND_ORDER_P3 = .false.
 
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
@@ -166,62 +182,132 @@
           tx = rho_vp*vn*nx + rho_vs*(vx-vn*nx)
           tz = rho_vp*vn*nz + rho_vs*(vz-vn*nz)
 
-          ! second-order Stacey (1988), named P3 uses derivatives du / dx_tangential
-          !   T_tangential2 = + rho * vs * (2 * vs - vp) du_normal / dx_tangential
+          ! second-order Stacey (1988), named P3
+          !   T_tangential  = - rho * vs * veloc_tangential
+          !   T_tangential2 = + rho * vs * (2 * vs - vp) * d/dx_tangential( displ_normal )
           ! and
-          !   T_normal2 = - rho * vs * (2 * vs - vp) du_tangential / dx_tangential
+          !   T_normal  = - rho * vp * veloc_normal
+          !   T_normal2 = - rho * vs * (2 * vs - vp) * d/dx_tangential( displ_tangential )
           ! and total traction is
           !   T_normal + Tnormal2 + T_tangential + T_tangential2
+          !
           ! derivatives: grad_tangential(f) is the dot-product grad(f) * vector_tangential
+          if (STACEY_SECOND_ORDER_P3) then
+            ! normal displacement
+            dn = nx*displ_elastic(1,iglob) + nz*displ_elastic(2,iglob)
+            dx_n = dn * nx
+            dz_n = dn * nz
 
-! daniel debug: todo - still one could try to evaluate this second-order boundary...
-!
-!          ! u_normal
-!          displn = nx*displ_elastic(1,iglob) + nz*displ_elastic(2,iglob)
-!          displnx = displn * nx
-!          displnz = displn * nz
-!          ! u_tangential
-!          displtx = displ_elastic(1,iglob) - displn * nx
-!          displtz = displ_elastic(2,iglob) - displn * nz
-!          displt_norm = sqrt(displtx**2 + displtz**2)
-!          if (displt_norm > 0._CUSTOM_REAL) then
-!            ! unit vector in tangential direction
-!            unit_tx = displtx / displt_norm
-!            unit_tz = displtz / displt_norm
-!
-!            ! derivative along x
-!            tempx1l = 0._CUSTOM_REAL
-!            tempx2l = 0._CUSTOM_REAL
-!            do k = 1,NGLLX
-!              iglob = ibool(k,j,ispec)
-!              tempx1l = tempx1l + displnx * hprime_xx(i,k)
-!              tempx2l = tempx2l + displnz * hprime_xx(i,k)
-!            enddo
-!            ! derivative along z
-!            tempz1l = 0._CUSTOM_REAL
-!            tempz2l = 0._CUSTOM_REAL
-!            do k = 1,NGLLX
-!              iglob = ibool(i,k,ispec)
-!              tempz1l = tempz1l + displnx * hprime_zz(j,k)
-!              tempz2l = tempz2l + displnz * hprime_zz(j,k)
-!            enddo
-!            ! derivatives of displacement du_normal / du
-!            dux_dxl = (tempx1l*xixl + tempz1l*gammaxl)
-!            dux_dzl = (tempx1l*xizl + tempz1l*gammazl)
-!
-!            duz_dxl = (tempx2l*xixl + tempz2l*gammaxl)
-!            duz_dzl = (tempx2l*xizl + tempz2l*gammazl)
-!
-!            ! derivative du_normal / dx_tangential (along tangential vector)
-!            derivx = (dux_dxl * unit_tx + dux_dzl * unit_tz) * unit_tx
-!            derivz = (duz_dxl * unit_tx + duz_dzl * unit_tz) * unit_tz
-!
-!            csl = vsstore(i,j,ispec)
-!            cpl = vpstore(i,j,ispec)
-!
-!            tx = tx + rho_vs *( 2._CUSTOM_REAL * csl - cpl) * derivx
-!            tz = tz + rho_vs *( 2._CUSTOM_REAL * csl - cpl) * derivz
-!          endif
+            ! tangential displacement
+            dx_t = displ_elastic(1,iglob) - dx_n
+            dz_t = displ_elastic(2,iglob) - dz_n
+
+            ! tangential vector norm
+            v_norm = sqrt(dx_t*dx_t + dz_t*dz_t)
+
+            if (v_norm > 0.0_CUSTOM_REAL) then
+              ! unit vector in tangential direction
+              unit_tx = dx_t / v_norm
+              unit_tz = dz_t / v_norm
+            else
+              ! unit vector in tangential direction
+              ! t_tangential = (tx tz)^-1 = (nz -nx)^-1
+              !   component tangential tx -> normal nz
+              !   component tangential tz -> normal -nx
+              unit_tx = nz
+              unit_tz = - nx
+            endif
+
+            ! additional terms
+            rhol = rhostore(i,j,ispec)
+            cpl = rho_vpstore(i,j,ispec) / rhol
+            csl = rho_vsstore(i,j,ispec) / rhol
+
+            xixl = xix(i,j,ispec)
+            xizl = xiz(i,j,ispec)
+            gammaxl = gammax(i,j,ispec)
+            gammazl = gammaz(i,j,ispec)
+
+            ! displ_normal
+            ! derivative along x
+            tempx1l_n = 0._CUSTOM_REAL ! u_normal
+            tempx2l_n = 0._CUSTOM_REAL
+            tempx1l_t = 0._CUSTOM_REAL ! u_tangential
+            tempx2l_t = 0._CUSTOM_REAL
+            do k = 1,NGLLX
+              iiglob = ibool(k,j,ispec)
+              ! normal displacement
+              dn = nx*displ_elastic(1,iiglob) + nz*displ_elastic(2,iiglob)
+              dx_n = dn * nx
+              dz_n = dn * nz
+              ! tangential displacement
+              dx_t = displ_elastic(1,iiglob) - dx_n
+              dz_t = displ_elastic(2,iiglob) - dz_n
+
+              tempx1l_n = tempx1l_n + dx_n * hprime_xx(i,k)
+              tempx2l_n = tempx2l_n + dz_n * hprime_xx(i,k)
+
+              tempx1l_t = tempx1l_t + dx_t * hprime_xx(i,k)
+              tempx2l_t = tempx2l_t + dz_t * hprime_xx(i,k)
+            enddo
+            ! derivative along z
+            tempz1l_n = 0._CUSTOM_REAL ! u_normal
+            tempz2l_n = 0._CUSTOM_REAL
+            tempz1l_t = 0._CUSTOM_REAL ! u_tangential
+            tempz2l_t = 0._CUSTOM_REAL
+            do k = 1,NGLLX
+              iiglob = ibool(i,k,ispec)
+              ! normal displacement
+              dn = nx*displ_elastic(1,iiglob) + nz*displ_elastic(2,iiglob)
+              dx_n = dn * nx
+              dz_n = dn * nz
+              ! tangential displacement
+              dx_t = displ_elastic(1,iiglob) - dx_n
+              dz_t = displ_elastic(2,iiglob) - dz_n
+
+              tempz1l_n = tempz1l_n + dx_n * hprime_zz(j,k)
+              tempz2l_n = tempz2l_n + dz_n * hprime_zz(j,k)
+
+              tempz1l_t = tempz1l_t + dx_t * hprime_zz(j,k)
+              tempz2l_t = tempz2l_t + dz_t * hprime_zz(j,k)
+            enddo
+
+            ! derivatives of displacement du_normal / du
+            dux_dxl = (tempx1l_n*xixl + tempz1l_n*gammaxl)
+            dux_dzl = (tempx1l_n*xizl + tempz1l_n*gammazl)
+
+            duz_dxl = (tempx2l_n*xixl + tempz2l_n*gammaxl)
+            duz_dzl = (tempx2l_n*xizl + tempz2l_n*gammazl)
+
+            ! derivative du_normal / dx_tangential (along tangential vector)
+            deriv_x = (dux_dxl * unit_tx + dux_dzl * unit_tz) * unit_tx
+            deriv_z = (duz_dxl * unit_tx + duz_dzl * unit_tz) * unit_tz
+
+            ! tangential traction: additional P3 term (minus sign added as tx will be subtracted)
+            tx_t = - rho_vs * (2.0 * csl - cpl) * deriv_x
+            tz_t = - rho_vs * (2.0 * csl - cpl) * deriv_z
+
+            ! derivatives of displacement du_tangential / du
+            dux_dxl = (tempx1l_t*xixl + tempz1l_t*gammaxl)
+            dux_dzl = (tempx1l_t*xizl + tempz1l_t*gammazl)
+
+            duz_dxl = (tempx2l_t*xixl + tempz2l_t*gammaxl)
+            duz_dzl = (tempx2l_t*xizl + tempz2l_t*gammazl)
+
+            ! derivative du_tangential / dx_tangential (along tangential vector)
+            deriv_x = (dux_dxl * unit_tx + dux_dzl * unit_tz) * unit_tx
+            deriv_z = (duz_dxl * unit_tx + duz_dzl * unit_tz) * unit_tz
+
+            ! normal traction: additional P3 term
+            tx_n = - rho_vs * (2.0 * csl - cpl) * deriv_x
+            tz_n = - rho_vs * (2.0 * csl - cpl) * deriv_z
+
+            !if (j==1 .and. ispec==100) print *,'debug: ',ispecabs,ispec,tx,tz,'n',tx_n,tz_n,'t',tx_t,tz_t!,'v',v_norm
+
+            ! P3: adds second-order terms
+            tx = tx + tx_t + tx_n
+            tz = tz + tz_t + tz_n
+          endif  ! STACEY_SECOND_ORDER_P3
 
         else
           ! SH case
@@ -310,6 +396,134 @@
           vn = nx*vx + nz*vz
           tx = rho_vp*vn*nx + rho_vs*(vx-vn*nx)
           tz = rho_vp*vn*nz + rho_vs*(vz-vn*nz)
+
+          ! second-order Stacey (1988), named P3
+          !   T_tangential  = - rho * vs * veloc_tangential
+          !   T_tangential2 = + rho * vs * (2 * vs - vp) * d/dx_tangential( displ_normal )
+          ! and
+          !   T_normal  = - rho * vp * veloc_normal
+          !   T_normal2 = - rho * vs * (2 * vs - vp) * d/dx_tangential( displ_tangential )
+          ! and total traction is
+          !   T_normal + Tnormal2 + T_tangential + T_tangential2
+          !
+          ! derivatives: grad_tangential(f) is the dot-product grad(f) * vector_tangential
+          if (STACEY_SECOND_ORDER_P3) then
+            ! normal displacement
+            dn = nx*displ_elastic(1,iglob) + nz*displ_elastic(2,iglob)
+            dx_n = dn * nx
+            dz_n = dn * nz
+
+            ! tangential displacement
+            dx_t = displ_elastic(1,iglob) - dx_n
+            dz_t = displ_elastic(2,iglob) - dz_n
+
+            ! tangential vector norm
+            v_norm = sqrt(dx_t*dx_t + dz_t*dz_t)
+
+            if (v_norm > 0.0_CUSTOM_REAL) then
+              ! unit vector in tangential direction
+              unit_tx = dx_t / v_norm
+              unit_tz = dz_t / v_norm
+            else
+              ! unit vector in tangential direction
+              ! t_tangential = (tx tz)^-1 = (nz -nx)^-1
+              !   component tangential tx -> normal nz
+              !   component tangential tz -> normal -nx
+              unit_tx = nz
+              unit_tz = - nx
+            endif
+
+            ! additional terms
+            rhol = rhostore(i,j,ispec)
+            cpl = rho_vpstore(i,j,ispec) / rhol
+            csl = rho_vsstore(i,j,ispec) / rhol
+
+            xixl = xix(i,j,ispec)
+            xizl = xiz(i,j,ispec)
+            gammaxl = gammax(i,j,ispec)
+            gammazl = gammaz(i,j,ispec)
+
+            ! displ_normal
+            ! derivative along x
+            tempx1l_n = 0._CUSTOM_REAL ! u_normal
+            tempx2l_n = 0._CUSTOM_REAL
+            tempx1l_t = 0._CUSTOM_REAL ! u_tangential
+            tempx2l_t = 0._CUSTOM_REAL
+            do k = 1,NGLLX
+              iiglob = ibool(k,j,ispec)
+              ! normal displacement
+              dn = nx*displ_elastic(1,iiglob) + nz*displ_elastic(2,iiglob)
+              dx_n = dn * nx
+              dz_n = dn * nz
+              ! tangential displacement
+              dx_t = displ_elastic(1,iiglob) - dx_n
+              dz_t = displ_elastic(2,iiglob) - dz_n
+
+              tempx1l_n = tempx1l_n + dx_n * hprime_xx(i,k)
+              tempx2l_n = tempx2l_n + dz_n * hprime_xx(i,k)
+
+              tempx1l_t = tempx1l_t + dx_t * hprime_xx(i,k)
+              tempx2l_t = tempx2l_t + dz_t * hprime_xx(i,k)
+            enddo
+            ! derivative along z
+            tempz1l_n = 0._CUSTOM_REAL ! u_normal
+            tempz2l_n = 0._CUSTOM_REAL
+            tempz1l_t = 0._CUSTOM_REAL ! u_tangential
+            tempz2l_t = 0._CUSTOM_REAL
+            do k = 1,NGLLX
+              iiglob = ibool(i,k,ispec)
+              ! normal displacement
+              dn = nx*displ_elastic(1,iiglob) + nz*displ_elastic(2,iiglob)
+              dx_n = dn * nx
+              dz_n = dn * nz
+              ! tangential displacement
+              dx_t = displ_elastic(1,iiglob) - dx_n
+              dz_t = displ_elastic(2,iiglob) - dz_n
+
+              tempz1l_n = tempz1l_n + dx_n * hprime_zz(j,k)
+              tempz2l_n = tempz2l_n + dz_n * hprime_zz(j,k)
+
+              tempz1l_t = tempz1l_t + dx_t * hprime_zz(j,k)
+              tempz2l_t = tempz2l_t + dz_t * hprime_zz(j,k)
+            enddo
+
+            ! derivatives of displacement du_normal / du
+            dux_dxl = (tempx1l_n*xixl + tempz1l_n*gammaxl)
+            dux_dzl = (tempx1l_n*xizl + tempz1l_n*gammazl)
+
+            duz_dxl = (tempx2l_n*xixl + tempz2l_n*gammaxl)
+            duz_dzl = (tempx2l_n*xizl + tempz2l_n*gammazl)
+
+            ! derivative du_normal / dx_tangential (along tangential vector)
+            deriv_x = (dux_dxl * unit_tx + dux_dzl * unit_tz) * unit_tx
+            deriv_z = (duz_dxl * unit_tx + duz_dzl * unit_tz) * unit_tz
+
+            ! tangential traction: additional P3 term (minus sign added as tx will be subtracted)
+            tx_t = - rho_vs * (2.0 * csl - cpl) * deriv_x
+            tz_t = - rho_vs * (2.0 * csl - cpl) * deriv_z
+
+            ! derivatives of displacement du_tangential / du
+            dux_dxl = (tempx1l_t*xixl + tempz1l_t*gammaxl)
+            dux_dzl = (tempx1l_t*xizl + tempz1l_t*gammazl)
+
+            duz_dxl = (tempx2l_t*xixl + tempz2l_t*gammaxl)
+            duz_dzl = (tempx2l_t*xizl + tempz2l_t*gammazl)
+
+            ! derivative du_tangential / dx_tangential (along tangential vector)
+            deriv_x = (dux_dxl * unit_tx + dux_dzl * unit_tz) * unit_tx
+            deriv_z = (duz_dxl * unit_tx + duz_dzl * unit_tz) * unit_tz
+
+            ! normal traction: additional P3 term
+            tx_n = - rho_vs * (2.0 * csl - cpl) * deriv_x
+            tz_n = - rho_vs * (2.0 * csl - cpl) * deriv_z
+
+            !if (j==1 .and. ispec==100) print *,'debug: ',ispecabs,ispec,tx,tz,'n',tx_n,tz_n,'t',tx_t,tz_t!,'v',v_norm
+
+            ! P3: adds second-order terms
+            tx = tx + tx_t + tx_n
+            tz = tz + tz_t + tz_n
+          endif  ! STACEY_SECOND_ORDER_P3
+
         else
           ! SH case
           vy = veloc_elastic(1,iglob)
@@ -383,6 +597,7 @@
         rho_vp = rho_vpstore(i,j,ispec)
         rho_vs = rho_vsstore(i,j,ispec)
 
+        ! normal pointing down
         xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
         zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
         jacobian1D = sqrt(xxi**2 + zxi**2)
@@ -396,6 +611,134 @@
           vn = nx*vx+nz*vz
           tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
           tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+
+          ! second-order Stacey (1988), named P3
+          !   T_tangential  = - rho * vs * veloc_tangential
+          !   T_tangential2 = + rho * vs * (2 * vs - vp) * d/dx_tangential( displ_normal )
+          ! and
+          !   T_normal  = - rho * vp * veloc_normal
+          !   T_normal2 = - rho * vs * (2 * vs - vp) * d/dx_tangential( displ_tangential )
+          ! and total traction is
+          !   T_normal + Tnormal2 + T_tangential + T_tangential2
+          !
+          ! derivatives: grad_tangential(f) is the dot-product grad(f) * vector_tangential
+          if (STACEY_SECOND_ORDER_P3) then
+            ! normal displacement
+            dn = nx*displ_elastic(1,iglob) + nz*displ_elastic(2,iglob)
+            dx_n = dn * nx
+            dz_n = dn * nz
+
+            ! tangential displacement
+            dx_t = displ_elastic(1,iglob) - dx_n
+            dz_t = displ_elastic(2,iglob) - dz_n
+
+            ! tangential vector norm
+            v_norm = sqrt(dx_t*dx_t + dz_t*dz_t)
+
+            if (v_norm > 0.0_CUSTOM_REAL) then
+              ! unit vector in tangential direction
+              unit_tx = dx_t / v_norm
+              unit_tz = dz_t / v_norm
+            else
+              ! unit vector in tangential direction
+              ! t_tangential = (tx tz)^-1 = (nz -nx)^-1
+              !   component tangential tx -> normal nz
+              !   component tangential tz -> normal -nx
+              unit_tx = nz
+              unit_tz = - nx
+            endif
+
+            ! additional terms
+            rhol = rhostore(i,j,ispec)
+            cpl = rho_vpstore(i,j,ispec) / rhol
+            csl = rho_vsstore(i,j,ispec) / rhol
+
+            xixl = xix(i,j,ispec)
+            xizl = xiz(i,j,ispec)
+            gammaxl = gammax(i,j,ispec)
+            gammazl = gammaz(i,j,ispec)
+
+            ! displ_normal
+            ! derivative along x
+            tempx1l_n = 0._CUSTOM_REAL ! u_normal
+            tempx2l_n = 0._CUSTOM_REAL
+            tempx1l_t = 0._CUSTOM_REAL ! u_tangential
+            tempx2l_t = 0._CUSTOM_REAL
+            do k = 1,NGLLX
+              iiglob = ibool(k,j,ispec)
+              ! normal displacement
+              dn = nx*displ_elastic(1,iiglob) + nz*displ_elastic(2,iiglob)
+              dx_n = dn * nx
+              dz_n = dn * nz
+              ! tangential displacement
+              dx_t = displ_elastic(1,iiglob) - dx_n
+              dz_t = displ_elastic(2,iiglob) - dz_n
+
+              tempx1l_n = tempx1l_n + dx_n * hprime_xx(i,k)
+              tempx2l_n = tempx2l_n + dz_n * hprime_xx(i,k)
+
+              tempx1l_t = tempx1l_t + dx_t * hprime_xx(i,k)
+              tempx2l_t = tempx2l_t + dz_t * hprime_xx(i,k)
+            enddo
+            ! derivative along z
+            tempz1l_n = 0._CUSTOM_REAL ! u_normal
+            tempz2l_n = 0._CUSTOM_REAL
+            tempz1l_t = 0._CUSTOM_REAL ! u_tangential
+            tempz2l_t = 0._CUSTOM_REAL
+            do k = 1,NGLLX
+              iiglob = ibool(i,k,ispec)
+              ! normal displacement
+              dn = nx*displ_elastic(1,iiglob) + nz*displ_elastic(2,iiglob)
+              dx_n = dn * nx
+              dz_n = dn * nz
+              ! tangential displacement
+              dx_t = displ_elastic(1,iiglob) - dx_n
+              dz_t = displ_elastic(2,iiglob) - dz_n
+
+              tempz1l_n = tempz1l_n + dx_n * hprime_zz(j,k)
+              tempz2l_n = tempz2l_n + dz_n * hprime_zz(j,k)
+
+              tempz1l_t = tempz1l_t + dx_t * hprime_zz(j,k)
+              tempz2l_t = tempz2l_t + dz_t * hprime_zz(j,k)
+            enddo
+
+            ! derivatives of displacement du_normal / du
+            dux_dxl = (tempx1l_n*xixl + tempz1l_n*gammaxl)
+            dux_dzl = (tempx1l_n*xizl + tempz1l_n*gammazl)
+
+            duz_dxl = (tempx2l_n*xixl + tempz2l_n*gammaxl)
+            duz_dzl = (tempx2l_n*xizl + tempz2l_n*gammazl)
+
+            ! derivative du_normal / dx_tangential (along tangential vector)
+            deriv_x = (dux_dxl * unit_tx + dux_dzl * unit_tz) * unit_tx
+            deriv_z = (duz_dxl * unit_tx + duz_dzl * unit_tz) * unit_tz
+
+            ! tangential traction: additional P3 term (minus sign added as tx will be subtracted)
+            tx_t = - rho_vs * (2.0 * csl - cpl) * deriv_x
+            tz_t = - rho_vs * (2.0 * csl - cpl) * deriv_z
+
+            ! derivatives of displacement du_tangential / du
+            dux_dxl = (tempx1l_t*xixl + tempz1l_t*gammaxl)
+            dux_dzl = (tempx1l_t*xizl + tempz1l_t*gammazl)
+
+            duz_dxl = (tempx2l_t*xixl + tempz2l_t*gammaxl)
+            duz_dzl = (tempx2l_t*xizl + tempz2l_t*gammazl)
+
+            ! derivative du_tangential / dx_tangential (along tangential vector)
+            deriv_x = (dux_dxl * unit_tx + dux_dzl * unit_tz) * unit_tx
+            deriv_z = (duz_dxl * unit_tx + duz_dzl * unit_tz) * unit_tz
+
+            ! normal traction: additional P3 term
+            tx_n = - rho_vs * (2.0 * csl - cpl) * deriv_x
+            tz_n = - rho_vs * (2.0 * csl - cpl) * deriv_z
+
+            !if (j==1 .and. ispec==100) print *,'debug: ',ispecabs,ispec,tx,tz,'n',tx_n,tz_n,'t',tx_t,tz_t!,'v',v_norm
+
+            ! P3: adds second-order terms
+            tx = tx + tx_t + tx_n
+            tz = tz + tz_t + tz_n
+          endif  ! STACEY_SECOND_ORDER_P3
+
         else
           ! SH case
           vy = veloc_elastic(1,iglob)
@@ -472,6 +815,7 @@
         rho_vp = rho_vpstore(i,j,ispec)
         rho_vs = rho_vsstore(i,j,ispec)
 
+        ! normal pointing up
         xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
         zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
         jacobian1D = sqrt(xxi**2 + zxi**2)
@@ -485,6 +829,134 @@
           vn = nx*vx+nz*vz
           tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
           tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+
+          ! second-order Stacey (1988), named P3
+          !   T_tangential  = - rho * vs * veloc_tangential
+          !   T_tangential2 = + rho * vs * (2 * vs - vp) * d/dx_tangential( displ_normal )
+          ! and
+          !   T_normal  = - rho * vp * veloc_normal
+          !   T_normal2 = - rho * vs * (2 * vs - vp) * d/dx_tangential( displ_tangential )
+          ! and total traction is
+          !   T_normal + Tnormal2 + T_tangential + T_tangential2
+          !
+          ! derivatives: grad_tangential(f) is the dot-product grad(f) * vector_tangential
+          if (STACEY_SECOND_ORDER_P3) then
+            ! normal displacement
+            dn = nx*displ_elastic(1,iglob) + nz*displ_elastic(2,iglob)
+            dx_n = dn * nx
+            dz_n = dn * nz
+
+            ! tangential displacement
+            dx_t = displ_elastic(1,iglob) - dx_n
+            dz_t = displ_elastic(2,iglob) - dz_n
+
+            ! tangential vector norm
+            v_norm = sqrt(dx_t*dx_t + dz_t*dz_t)
+
+            if (v_norm > 0.0_CUSTOM_REAL) then
+              ! unit vector in tangential direction
+              unit_tx = dx_t / v_norm
+              unit_tz = dz_t / v_norm
+            else
+              ! unit vector in tangential direction
+              ! t_tangential = (tx tz)^-1 = (nz -nx)^-1
+              !   component tangential tx -> normal nz
+              !   component tangential tz -> normal -nx
+              unit_tx = nz
+              unit_tz = - nx
+            endif
+
+            ! additional terms
+            rhol = rhostore(i,j,ispec)
+            cpl = rho_vpstore(i,j,ispec) / rhol
+            csl = rho_vsstore(i,j,ispec) / rhol
+
+            xixl = xix(i,j,ispec)
+            xizl = xiz(i,j,ispec)
+            gammaxl = gammax(i,j,ispec)
+            gammazl = gammaz(i,j,ispec)
+
+            ! displ_normal
+            ! derivative along x
+            tempx1l_n = 0._CUSTOM_REAL ! u_normal
+            tempx2l_n = 0._CUSTOM_REAL
+            tempx1l_t = 0._CUSTOM_REAL ! u_tangential
+            tempx2l_t = 0._CUSTOM_REAL
+            do k = 1,NGLLX
+              iiglob = ibool(k,j,ispec)
+              ! normal displacement
+              dn = nx*displ_elastic(1,iiglob) + nz*displ_elastic(2,iiglob)
+              dx_n = dn * nx
+              dz_n = dn * nz
+              ! tangential displacement
+              dx_t = displ_elastic(1,iiglob) - dx_n
+              dz_t = displ_elastic(2,iiglob) - dz_n
+
+              tempx1l_n = tempx1l_n + dx_n * hprime_xx(i,k)
+              tempx2l_n = tempx2l_n + dz_n * hprime_xx(i,k)
+
+              tempx1l_t = tempx1l_t + dx_t * hprime_xx(i,k)
+              tempx2l_t = tempx2l_t + dz_t * hprime_xx(i,k)
+            enddo
+            ! derivative along z
+            tempz1l_n = 0._CUSTOM_REAL ! u_normal
+            tempz2l_n = 0._CUSTOM_REAL
+            tempz1l_t = 0._CUSTOM_REAL ! u_tangential
+            tempz2l_t = 0._CUSTOM_REAL
+            do k = 1,NGLLX
+              iiglob = ibool(i,k,ispec)
+              ! normal displacement
+              dn = nx*displ_elastic(1,iiglob) + nz*displ_elastic(2,iiglob)
+              dx_n = dn * nx
+              dz_n = dn * nz
+              ! tangential displacement
+              dx_t = displ_elastic(1,iiglob) - dx_n
+              dz_t = displ_elastic(2,iiglob) - dz_n
+
+              tempz1l_n = tempz1l_n + dx_n * hprime_zz(j,k)
+              tempz2l_n = tempz2l_n + dz_n * hprime_zz(j,k)
+
+              tempz1l_t = tempz1l_t + dx_t * hprime_zz(j,k)
+              tempz2l_t = tempz2l_t + dz_t * hprime_zz(j,k)
+            enddo
+
+            ! derivatives of displacement du_normal / du
+            dux_dxl = (tempx1l_n*xixl + tempz1l_n*gammaxl)
+            dux_dzl = (tempx1l_n*xizl + tempz1l_n*gammazl)
+
+            duz_dxl = (tempx2l_n*xixl + tempz2l_n*gammaxl)
+            duz_dzl = (tempx2l_n*xizl + tempz2l_n*gammazl)
+
+            ! derivative du_normal / dx_tangential (along tangential vector)
+            deriv_x = (dux_dxl * unit_tx + dux_dzl * unit_tz) * unit_tx
+            deriv_z = (duz_dxl * unit_tx + duz_dzl * unit_tz) * unit_tz
+
+            ! tangential traction: additional P3 term (minus sign added as tx will be subtracted)
+            tx_t = - rho_vs * (2.0 * csl - cpl) * deriv_x
+            tz_t = - rho_vs * (2.0 * csl - cpl) * deriv_z
+
+            ! derivatives of displacement du_tangential / du
+            dux_dxl = (tempx1l_t*xixl + tempz1l_t*gammaxl)
+            dux_dzl = (tempx1l_t*xizl + tempz1l_t*gammazl)
+
+            duz_dxl = (tempx2l_t*xixl + tempz2l_t*gammaxl)
+            duz_dzl = (tempx2l_t*xizl + tempz2l_t*gammazl)
+
+            ! derivative du_tangential / dx_tangential (along tangential vector)
+            deriv_x = (dux_dxl * unit_tx + dux_dzl * unit_tz) * unit_tx
+            deriv_z = (duz_dxl * unit_tx + duz_dzl * unit_tz) * unit_tz
+
+            ! normal traction: additional P3 term
+            tx_n = - rho_vs * (2.0 * csl - cpl) * deriv_x
+            tz_n = - rho_vs * (2.0 * csl - cpl) * deriv_z
+
+            !if (j==1 .and. ispec==100) print *,'debug: ',ispecabs,ispec,tx,tz,'n',tx_n,tz_n,'t',tx_t,tz_t!,'v',v_norm
+
+            ! P3: adds second-order terms
+            tx = tx + tx_t + tx_n
+            tz = tz + tz_t + tz_n
+          endif  ! STACEY_SECOND_ORDER_P3
+
         else
           ! SH case
           vy = veloc_elastic(1,iglob)

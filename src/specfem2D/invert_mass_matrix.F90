@@ -494,8 +494,8 @@
 
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: rho_vp,rho_vs
-  real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,tx,ty,tz, &
-                            weight,xxi,zxi,xgamma,zgamma,jacobian1D
+  real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,tx,ty,tz
+  real(kind=CUSTOM_REAL) :: weight,xxi,zxi,xgamma,zgamma,jacobian1D
 
   ! check if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
@@ -587,6 +587,7 @@
 
               tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
               tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
+
               rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
               rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
             else
@@ -632,6 +633,7 @@
 
               tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
               tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
+
               rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
               rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
             else
@@ -677,6 +679,7 @@
 
               tx = rho_vp * vn * nx + rho_vs * (vx - vn * nx)
               tz = rho_vp * vn * nz + rho_vs * (vz - vn * nz)
+
               rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
               rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
             else
