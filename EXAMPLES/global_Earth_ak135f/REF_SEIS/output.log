@@ -1,0 +1,1227 @@
+running example: Mon May  2 15:26:55 +03 2022
+
+setting up example...
+
+ Generate mesh
+
+ Number of elements at the surface of the whole circle =         1024
+
+ Size of a spectral element at the surface =    78.183932796955361       km
+
+ Since minimum S velocity in the crust is about    3.4600000000000000       km/s
+ and since one spectral element is needed to resolve the shortest wavelength,
+ this mesh is accurate approximately down to a minimum period of    22.596512369062243       seconds
+
+ Generating the grid for SPECFEM2D...
+
+ generating only half the mesh
+
+
+ Total number of spectral elements =        10368
+
+ Generating the global numbering...
+ Total number of points of the global mesh:        41921
+
+ Generating the coordinates of the points of the global mesh...
+
+ Writing the external mesh database for SPECFEM2D...
+ using ASCII file format to store the mesh databases
+ Done writing the external mesh database for SPECFEM2D
+
+ number of elements in contact with the symmetry axis =          192
+
+ All Done
+
+
+done w/ script: make_specific_mesher_for_2D_Earth.sh
+
+
+
+
+running mesher on 4 processors...
+
+
+ **********************************************
+ *** Specfem 2-D Mesher - MPI version       ***
+ **********************************************
+
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
+
+ Reading the parameter file...
+
+ Title of the simulation: AK135F for half a disk for axisymmetric runs
+
+ Axisymmetric simulation
+
+ Receiver lines:
+   Nb of line sets =            1
+
+ Materials:
+   Nb of solid, fluid or porous materials =            4
+
+ --------
+ Material #           1  isotropic
+ rho,cp,cs   =    3320.0000000000000        8040.0000000000000        4480.0000000000000     
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ Material is solid
+ --------
+ Material #           2  isotropic
+ rho,cp,cs   =    4985.0000000000000        12503.000000000000        6805.0000000000000     
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ Material is solid
+ --------
+ Material #           3  isotropic
+ rho,cp,cs   =    11539.000000000000        9751.0000000000000        0.0000000000000000     
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ Material is fluid
+ --------
+ Material #           4  isotropic
+ rho,cp,cs   =    13004.000000000000        11256.000000000000        3663.0000000000000     
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ Material is solid
+ --------
+
+ Parameter file successfully read 
+
+
+ Mesh from external meshing:
+   Reading data from external mesh file: ./DATA/Mesh_AK135F_NO_MUD
+     NGNOD =            9
+     Total number of spectral elements   :       10368
+     Total number of nodal points        :       41921
+
+   Reading materials from external mesh file: ./DATA/Material_AK135F_NO_MUD
+
+ PML mesh elements:
+   Total number of PML elements =            0
+
+ The mesh contains        10368  elements
+
+ Control elements have            9  nodes
+
+ Reading in SOURCE file...
+
+ Source           1
+   Position xs, zs =    0.0000000000000000        6103278.0000000000     
+
+   Source type (1=force, 2=moment tensor):            1
+   Force source:
+   Angle of the source (deg) =    0.0000000000000000     
+
+   Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 6,7=ocean type, 8=Read from file, 9=burst, 10=Sinusoidal, 11=Ormsby):           1
+   Ricker wavelet (second-derivative):
+   Frequency, delay =    1.4000000000000000E-002   0.0000000000000000     
+   Multiplying factor  =    10000000000.000000     
+
+ all sources are okay
+
+ Normals to surface not needed
+
+ Node coordinates:
+   Reading node coords from external mesh file: ./DATA/Nodes_AK135F_NO_MUD
+     node coords: X min/max =    0.0000000000000000      /   6371000.0000000000     
+                  Z min/max =   -6371000.0000000000      /   6371000.0000000000     
+
+ Mesh surfaces:
+   Reading acoustic surface from external mesh file: ./DATA/Surf_free_AK135F_NO_MUD
+   Total number of surface elements         :            0
+   Total number of acoustic surface elements:            0
+
+ Axisymmetric mesh:
+   Reading axial elements from external mesh file: ./DATA/Symmetry_axis_elements_AK135F_NO_MUD
+ Number of elements on the axis:          192
+ testing for duplicates in the axial element input file...
+ done testing for duplicates
+
+     Total number of axial elements:          192
+
+
+ Axial elements:          192
+
+
+ Mesh dimensions: 
+   Min and max value of X in the grid =    0.0000000000000000        6371000.0000000000     
+   Min and max value of Z in the grid =   -6371000.0000000000        6371000.0000000000     
+
+ Mesh partitioning:
+   decomposing mesh using NPROC =            4
+
+ Graph construction:
+   graph adjacency done
+
+ ************ Computing elements load ************
+ Number of elastic elements :        7424
+ Number of acoustic elements :        2944
+ Number of viscoelastic elements :           0
+ Number of viscoacoustic elements :           0
+ Number of elastic PML elements :           0
+ Number of acoustic PML elements :           0
+ Number of viscoelastic PML elements :           0
+ Number of viscoacoustic PML elements :           0
+ *************************************************
+
+
+ Partitioning type: SCOTCH
+
+ Coupled interfaces:
+ nedges_coupled (acoustic/elastic)     =          192
+   after iteration            2 repartitioning of all coupled elements done
+ nedges_coupled (acoustic/poroelastic) =            0
+ nedges_coupled (poroelastic/elastic)  =            0
+
+ Local numbering:
+   NPROC:            4
+   number of elements:        10368
+
+ decompose mesh all done
+
+ Saving databases:
+   database file: ./OUTPUT_FILES/Database00000.bin
+   slice            0  has number of spectral elements =        2120
+
+   database file: ./OUTPUT_FILES/Database00001.bin
+   slice            1  has number of spectral elements =        2638
+
+   database file: ./OUTPUT_FILES/Database00002.bin
+   slice            2  has number of spectral elements =        2095
+
+   database file: ./OUTPUT_FILES/Database00003.bin
+   slice            3  has number of spectral elements =        3515
+
+   VTK mesh files:
+   written file: ./OUTPUT_FILES//mesh_materials.vtk
+   written file: ./OUTPUT_FILES//mesh_partition_number.vtk
+   done
+
+ creating STATIONS file...
+
+ writing the ./DATA/STATIONS file
+
+
+ There are            2  receivers
+
+ Target positions (x,z) of the            2  receivers
+
+ Receiver            1  =    6050000.0000000000        900000.00000000000     
+ Receiver            2  =    6050000.0000000000       -900000.00000000000     
+
+ This will be a parallel simulation on            4  processor cores
+
+
+running solver on 4 processors...
+
+
+ **********************************************
+ **** Specfem 2-D Solver - MPI version     ****
+ **********************************************
+
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
+
+ There are            4  MPI processes
+ Processes are numbered from 0 to            3
+
+ There is a total of            4  slices
+
+
+ NDIM =            2
+
+ NGLLX =            5
+ NGLLZ =            5
+
+ using single precision for the calculations
+
+ smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
+
+ Reading the parameter file...
+
+ Title of the simulation: AK135F for half a disk for axisymmetric runs
+
+ Axisymmetric simulation
+
+ Parameter file successfully read 
+
+ Reading in SOURCE file...
+
+ Source           1
+   Position xs, zs =    0.0000000000000000        6103278.0000000000     
+
+   Source type (1=force, 2=moment tensor):            1
+   Force source:
+   Angle of the source (deg) =    0.0000000000000000     
+
+   Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 6,7=ocean type, 8=Read from file, 9=burst, 10=Sinusoidal, 11=Ormsby):           1
+   Ricker wavelet (second-derivative):
+   Frequency, delay =    1.4000000000000000E-002   0.0000000000000000     
+   Multiplying factor  =    10000000000.000000     
+
+ all sources are okay
+
+
+
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ Program SPECFEM2D: 
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ AK135F for half a disk for axisymmetric runs
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ D a t e : 02 - 05 - 2022                                 T i m e  : 15:27:02
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+
+
+ -----------------------------------------------------
+ --- A x i s y m m e t r i c   S i m u l a t i o n ---
+ -----------------------------------------------------
+
+
+ C o n t r o l
+ =============
+
+     Number of spectral element control nodes. . .(npgeo) =   42414
+     Number of space dimensions. . . . . . . . . . (NDIM) =       2
+
+
+ C o n t r o l
+ =============
+
+     Display frequency . . . (NTSTEP_BETWEEN_OUTPUT_INFO) =    500
+     Color display . . . . . . . . . . . . . . . (colors) =      1
+      == 0     black and white display              
+      == 1     color display                        
+     Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
+      == 0     do not number the mesh               
+      == 1     number the mesh                      
+
+
+ C o n t r o l
+ =============
+
+     Seismograms recording type . . . . . . .(seismotype) = 1
+     Angle for first line of receivers. . . . .(anglerec) =   0.00
+
+
+ C o n t r o l
+ =============
+
+     Read external initial field. . . . . .(initialfield) =      F
+     Add Bielak conditions (add_Bielak_conditions_bottom) =      F
+     Add Bielak conditions .(add_Bielak_conditions_right) =      F
+     Add Bielak conditions . .(add_Bielak_conditions_top) =      F
+     Add Bielak conditions. .(add_Bielak_conditions_left) =      F
+     Attenuation in solid . . .(ATTENUATION_VISCOELASTIC) =      F
+     Attenuation in fluid . . (ATTENUATION_VISCOACOUSTIC) =      F
+     Save grid in ASCII file or not . (output_grid_ASCII) =      F
+     Save a file with total energy or not.(OUTPUT_ENERGY) =      F
+
+
+ C o n t r o l
+ =============
+
+     Vector display type . . . . . . . . .(imagetype_postscript) =      1
+     Percentage of cut for vector plots. . . . . . . .(cutsnaps) =   1.00
+     Subsampling of velocity model display. (subsamp_postscript) =      1
+
+
+ I t e r a t i o n s 
+ ===================
+
+     Number of time iterations . . . . .(NSTEP) =    8000
+     Time step increment. . . . . . . . . .(DT) =   2.500000E-01
+     Total simulation duration . . . . . (ttot) =   2.000000E+03
+
+
+ reading mesh databases:
+ reading nodal coordinates...
+
+ -- Spectral Elements --
+
+
+     Number of spectral elements . . . . . . . . .  (nspec) =  10368
+     Number of control nodes per element . . . . . (NGNOD) =      9
+     Number of points in X-direction . . . . . . . (NGLLX) =      5
+     Number of points in Y-direction . . . . . . . (NGLLZ) =      5
+     Number of points per element. . . . . . (NGLLX*NGLLZ) =     25
+     Number of points for display . . . . . . (pointsdisp) =      6
+     Number of element material sets . . . . . . . (numat) =      4
+     Number of acoustic forcing elements (nelem_acforcing) =      0
+     Number of acoustic free surf (nelem_acoustic_surface) =      0
+
+ reading attenuation setup...
+ reading material properties..
+
+
+ M a t e r i a l   s e t s :   2 D  (p o r o) e l a s t i c i t y
+ ======================================================
+
+     Number of material sets . . . . . . (numat) =     4
+
+
+     ----------------------------------------
+     -- Elastic (solid) isotropic material --
+     ----------------------------------------
+     Material set number. . . . . . . . (jmat) =     1
+     P-wave velocity. . . . . . . . . . . (cp) = 8.04000000E+03
+     S-wave velocity. . . . . . . . . . . (cs) = 4.48000000E+03
+     Mass density. . . . . . . . . . (density) = 3.32000000E+03
+     Poisson's ratio. . . . . . . . .(poisson) = 2.74850127E-01
+     First Lame parameter Lambda. . . (lambda) = 8.13426560E+10
+     Second Lame parameter Mu. . . . . . .(mu) = 6.66337280E+10
+     Bulk modulus Kappa . . . . . . . .(kappa) = 1.25765141E+11
+     Young's modulus E. . . . . . . . .(young) = 1.69896033E+11
+     QKappa_attenuation .  . . . . . .(QKappa) = 9.99900000E+03
+     Qmu_attenuation . . . . . . . . . . (Qmu) = 9.99900000E+03
+
+
+
+     ----------------------------------------
+     -- Elastic (solid) isotropic material --
+     ----------------------------------------
+     Material set number. . . . . . . . (jmat) =     2
+     P-wave velocity. . . . . . . . . . . (cp) = 1.25030000E+04
+     S-wave velocity. . . . . . . . . . . (cs) = 6.80500000E+03
+     Mass density. . . . . . . . . . (density) = 4.98500000E+03
+     Poisson's ratio. . . . . . . . .(poisson) = 2.89541472E-01
+     First Lame parameter Lambda. . . (lambda) = 3.17589161E+11
+     Second Lame parameter Mu. . . . . . .(mu) = 2.30845505E+11
+     Bulk modulus Kappa . . . . . . . .(kappa) = 4.71486164E+11
+     Young's modulus E. . . . . . . . .(young) = 5.95369704E+11
+     QKappa_attenuation .  . . . . . .(QKappa) = 9.99900000E+03
+     Qmu_attenuation . . . . . . . . . . (Qmu) = 9.99900000E+03
+
+
+
+     -------------------------------
+     -- Acoustic (fluid) material --
+     -------------------------------
+     Material set number. . . . . . . . (jmat) =     3
+     P-wave velocity. . . . . . . . . . . (cp) = 9.75100000E+03
+     Mass density. . . . . . . . . . (density) = 1.15390000E+04
+     Bulk modulus Kappa . . . . . . . .(kappa) = 1.09715121E+12
+     QKappa_attenuation. . . . . . . .(QKappa) = 9.99900000E+03
+     Qmu_attenuation. . . . . . . . . . .(Qmu) = 9.99900000E+03
+
+
+
+     ----------------------------------------
+     -- Elastic (solid) isotropic material --
+     ----------------------------------------
+     Material set number. . . . . . . . (jmat) =     4
+     P-wave velocity. . . . . . . . . . . (cp) = 1.12560000E+04
+     S-wave velocity. . . . . . . . . . . (cs) = 3.66300000E+03
+     Mass density. . . . . . . . . . (density) = 1.30040000E+04
+     Poisson's ratio. . . . . . . . .(poisson) = 4.40776956E-01
+     First Lame parameter Lambda. . . (lambda) = 1.29861062E+12
+     Second Lame parameter Mu. . . . . . .(mu) = 1.74482067E+11
+     Bulk modulus Kappa . . . . . . . .(kappa) = 1.41493200E+12
+     Young's modulus E. . . . . . . . .(young) = 5.02779483E+11
+     QKappa_attenuation .  . . . . . .(QKappa) = 9.99900000E+03
+     Qmu_attenuation . . . . . . . . . . (Qmu) = 9.99900000E+03
+
+ reading interfaces informations...
+   number of interfaces         =            3
+
+ reading absorbing boundary...
+   Total number of absorbing elements =            0
+
+   any absorbing boundary flag        =  F
+   PML boundary flag                  =  F
+   Stacey boundary flag               =  F
+
+ reading acoustic forcing...
+   acoustic forcing                             =  F
+   number of acoustic forcing boundary elements =            0
+
+ reading free surface information...
+   number of acoustic free surface boundary elements =            0
+ reading coupling surfaces...
+   number of fluid-solid edges  =          192
+   number of fluid-poro  edges  =            0
+   number of solid-poro  edges  =            0
+
+ reading tangential curves...
+   number of tangential curve nodes =            0
+
+ reading axial elements...
+   number of axial elements     =            0
+
+  Total number of elements on the axis :          192
+
+
+ done reading mesh databases
+
+
+ Setting up mesh
+
+ Generating global mesh numbering (fast version)...
+
+ Mesh numbering:
+   Total number of elements:        10368
+
+   Total number of acoustic elements           =         2944
+   Total number of elastic/visco/poro elements =         7424
+
+ Approximate total number of grid points in the mesh
+ (with a few duplicates coming from MPI buffers):       167768
+
+ Approximate number of acoustic degrees of freedom in the mesh:        47638
+ Approximate number of elastic degrees of freedom in the mesh:       240260
+   (there are 2 degrees of freedom per point for elastic elements)
+
+ Approximate total number of degrees of freedom in the mesh
+ (sum of the two values above):       287898
+
+  (for simplicity viscoelastic or poroelastic elements, if any,
+   are counted as elastic in the above three estimates;
+   in reality they have more degrees of freedom)
+
+ Mesh dimensions:
+   Xmin,Xmax of the whole mesh =    0.0000000000000000        6371000.0000000000     
+   Zmin,Zmax of the whole mesh =   -6371000.0000000000        6371000.0000000000     
+
+ Material properties:
+   MODEL                 : external
+   nspec                 :        10368
+   assign external model :  T
+
+   assigning an external velocity and density model
+   model selected             : external
+   setup with binary database :            0
+
+   external model: ak135-f
+   done reading external model
+
+   setting up material arrays
+   setting up anisotropic arrays
+   all material arrays done
+
+ Domains:
+   total number of acoustic elements        =         2944
+   total number of elastic elements         =         7424
+   total number of poroelastic elements     =            0
+
+ Mixed acoustic/elastic simulation
+
+   Beginning of fluid/solid edge detection
+   Checking fluid/solid edge topology...
+   End of fluid/solid edge detection
+
+
+ Setting up MPI communication arrays
+
+   maximum number of MPI interfaces (for a single slice) =            3
+
+   total MPI interface points:         1976
+
+   checking acoustic interfaces:
+   total number of global acoustic interface points:          717
+   total number of global points assembled by acoustic MPI interfaces:         717
+   interfaces okay
+
+   main process:
+   number of MPI interfaces in acoustic domain    =            2
+   number of MPI interfaces in elastic domain     =            3
+   number of MPI interfaces in poroelastic domain =            0
+
+   number of outer elements  =          137
+   number of inner elements  =         1983
+
+   percentage of outer elements    6.46226501     %
+   percentage of inner elements    93.5377350     %
+
+   number of global nodes in outer elements  =         2741
+   number of global nodes in inner elements  =        32181
+
+   determining communication phases:
+   elastic domains:
+   total number of outer/inner elements =          307        7117
+   total percentage of outer elements    4.13523865     %
+   total percentage of inner elements    95.8647614     %
+
+   acoustic domains:
+   total number of outer/inner elements =          177        2767
+   total percentage of outer elements    6.01222992     %
+   total percentage of inner elements    93.9877701     %
+
+ All mesh setup done successfully
+
+ sources:
+   Total number of sources:            1
+
+
+   Setting parameters for source           1
+
+     Source Type. . . . . . . . . . . . . . = Collocated Force
+     X-position (meters). . . . . . . . . . =    0.0000000000E+00
+     Y-position (meters). . . . . . . . . . =    6.1032780000E+06
+     Fundamental frequency (Hz) . . . . . . =    1.4000000000E-02
+     Time delay (s) . . . . . . . . . . . . =    0.0000000000E+00
+     Multiplying factor . . . . . . . . . . =    1.0000000000E+10
+     Angle from vertical direction (deg). . =    0.0000000000E+00
+
+
+   Source:            1
+     Onset time. . . . . . =   -85.714285714285708     
+     Fundamental period. . =    71.428571428571431     
+     Fundamental frequency =    1.4000000000000000E-002
+     The onset time is ok
+
+ Source:            1
+ *******************************
+  locating force source
+ *******************************
+
+ Force source:
+             original x:    0.00000000    
+             original z:    6103278.00    
+ Closest estimate found:    4.79826953E-13  m away
+  in rank            2
+  in element          436
+  in elastic domain
+  at xi,gamma coordinates =   -1.0000000000000100       0.88721212121217763     
+
+
+ end of force source detection
+
+
+ receivers:
+
+ Total number of receivers =            2
+
+
+ ********************
+  locating receivers
+ ********************
+
+ reading receiver information from the ./DATA/STATIONS file
+
+
+ Station #            1     AA      S0001                           
+             original x:    6050000.00    
+             original z:    900000.000    
+ Closest estimate found:    1.87714067E-09  m away
+  in rank            0
+  in element          605
+  in elastic domain
+  at xi,gamma coordinates =   0.93233671493243520      -0.70982304260175078     
+ Distance from source:    7979762.00      m
+
+
+ Station #            2     AA      S0002                           
+             original x:    6050000.00    
+             original z:   -900000.000    
+ Closest estimate found:    0.00000000      m away
+  in rank            0
+  in element          630
+  in elastic domain
+  at xi,gamma coordinates =  -0.93233671493243997      -0.70982304260171403     
+ Distance from source:    9254642.00      m
+
+ maximum error in location of all the receivers:    1.87714067E-09  m
+
+ end of receiver detection
+
+ found a total of            2  receivers, this is okay
+
+
+ Preparing timerun:
+
+
+ Preparing timerun constants
+
+ Preparing array allocations
+   arrays for acoustic domains
+   arrays for elastic domains
+   done initialization
+
+ Attenuation:
+   viscoelastic  attenuation: F (shear & bulk attenuation in elastic domains)
+   viscoacoustic attenuation: F (bulk attenuation in acoustic domains)
+
+ Preparing mass matrices
+   initializing mass matrices
+   inverting mass matrices
+
+
+ Preparing source time function
+   time stepping scheme:   Newmark
+   time stepping stages:            1
+   time step size      :   0.250000000    
+
+   number of time steps:         8000
+   number of sources   :            1
+
+ Movie simulation:
+   color images         - JPEG image type:            2
+   number of steps between outputs       :          500
+
+ Preparing image coloring: jpeg
+   allocating color image arrays
+   locating all the pixels of color images
+   total number of image pixels =      1068758
+   done locating all the pixels of color images
+   coloring image background based on vp
+
+ Checking mesh and stability
+
+ ********
+ Model: P (or PI) velocity min,max =    5799.9999389928935        13660.099673101240     
+ Model: S velocity min,max         =    3459.9999818030528        7281.7002992599237     
+ Model: density min,max            =    2.7200000286102295        13.012200355529785     
+ ********
+
+
+ *********************************************
+ *** Verification of simulation parameters ***
+ *********************************************
+
+ *** Max grid size =    138209.51475059666     
+ *** Min grid size =    31668.000134825172     
+ *** Max/min ratio =    4.3643272123965993     
+
+ *** Minimum GLL point distance  =    5468.2138012905780     
+ *** Average GLL point distance  =    7917.0000337062929     
+
+ *** Minimum period resolved     =    28.491691517294907     
+ *** Maximum frequency resolved  =    3.5097951253367468E-002 Hz
+
+ *** Maximum suggested time step                 =   0.28824154109830941     
+ *** Maximum suggested (Ricker) source frequency =    1.4039180501346988E-002
+
+ *** for DT :   0.250000000    
+ *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.43366407050039590     
+
+ ----
+ Number of points per wavelength:
+ ----
+   Source            1
+   maximum dominant source frequency =    3.5000000000000003E-002 Hz
+
+   Nb pts / lambdaP_fmax min =    8.47822952    
+   Nb pts / lambdaP_fmax max =    30.3741722    
+
+   Nb pts / lambdaS_fmax min =    5.01399326    
+   Nb pts / lambdaS_fmax max =    9.75706959    
+
+ -----------------------------------------
+
+ histogram of min number of points per S wavelength in solid regions:
+
+ there are         7424  elements out of        10368  in solid regions
+   (i.e.,    71.6049347     % of the total)
+
+ (too small = poor resolution of calculations -
+  too big = wasting memory and CPU time)
+ (threshold value is around 4.5 points per S wavelength
+  in elastic regions and 5.5 per P wavelength in fluid regions):
+
+   5.01399326      -    5.25114679             640     8.62068939      %
+   5.25114679      -    5.48830080             128     1.72413790      %
+   5.48830080      -    5.72545433             256     3.44827580      %
+   5.72545433      -    5.96260834             256     3.44827580      %
+   5.96260834      -    6.19976234             256     3.44827580      %
+   6.19976234      -    6.43691587             128     1.72413790      %
+   6.43691587      -    6.67406988             524     7.05818987      %
+   6.67406988      -    6.91122389             948     12.7693968      %
+   6.91122389      -    7.14837742             480     6.46551704      %
+   7.14837742      -    7.38553143             428     5.76508617      %
+   7.38553143      -    7.62268496             556     7.48922396      %
+   7.62268496      -    7.85983896             164     2.20905161      %
+   7.85983896      -    8.09699249             276     3.71767235      %
+   8.09699249      -    8.33414650             416     5.60344839      %
+   8.33414650      -    8.57130051             516     6.95043087      %
+   8.57130051      -    8.80845451             148     1.99353445      %
+   8.80845451      -    9.04560852             456     6.14224148      %
+   9.04560852      -    9.28276157             598     8.05495644      %
+   9.28276157      -    9.51991558             218     2.93642235      %
+   9.51991558      -    9.75706959              32    0.431034476      %
+
+ total percentage =    100.00000000000001       %
+
+ -----------------------------------------
+
+ histogram of min number of points per P wavelength in fluid regions:
+
+ there are         2944  elements out of        10368  in fluid regions
+   (i.e.,    28.3950615     % of the total)
+
+ (too small = poor resolution of calculations -
+  too big = wasting memory and CPU time)
+ (threshold value is around 4.5 points per S wavelength
+  in elastic regions and 5.5 per P wavelength in fluid regions):
+
+   9.09218311      -    9.56527901             192     6.52173901      %
+   9.56527901      -    10.0383749              64     2.17391300      %
+   10.0383749      -    10.5114708             128     4.34782600      %
+   10.5114708      -    10.9845657             192     6.52173901      %
+   10.9845657      -    11.4576616             320     10.8695650      %
+   11.4576616      -    11.9307575             320     10.8695650      %
+   11.9307575      -    12.4038534             448     15.2173910      %
+   12.4038534      -    12.8769493             576     19.5652180      %
+   12.8769493      -    13.3500452              64     2.17391300      %
+   13.3500452      -    13.8231411              64     2.17391300      %
+   13.8231411      -    14.2962370              64     2.17391300      %
+   14.2962370      -    14.7693329              64     2.17391300      %
+   14.7693329      -    15.2424288               0     0.00000000      %
+   15.2424288      -    15.7155247              64     2.17391300      %
+   15.7155247      -    16.1886196             128     4.34782600      %
+   16.1886196      -    16.6617165               0     0.00000000      %
+   16.6617165      -    17.1348114              64     2.17391300      %
+   17.1348114      -    17.6079082               0     0.00000000      %
+   17.6079082      -    18.0810032             128     4.34782600      %
+   18.0810032      -    18.5541000              64     2.17391300      %
+
+ total percentage =    100.00000000000001       %
+
+
+ total number of elements in fluid and solid regions =        10368
+
+
+ done, preparation successful
+
+
+ =========================================
+ =  T i m e  e v o l u t i o n  l o o p  =
+ =========================================
+
+
+ Starting time iteration loop ...
+
+
+ ******************************************************************
+Time step number       5   t =    1.0000 s out of    8000
+ ******************************************************************
+ We have done    5.00062518E-02 % of the total
+ Max norm of vector field in solid (elastic) =    8.34181435E-08
+ Max absolute value of scalar field in fluid (acoustic) =    0.00000000    
+ Elapsed time in seconds =    1.6999959945678711E-002
+ Elapsed time in hh:mm:ss =      0 h 00 m 00 s
+ Mean elapsed time per time step in seconds =    3.3999919891357423E-003
+ Time steps remaining =         7995
+ Estimated remaining time in seconds =    27.182935953140259     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 27 s
+ Estimated total run time in seconds =    27.199935913085938     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 27 s
+ The run will finish approximately on: Mon May 02, 2022 15:27
+
+ Creating color image of size          826  x         1734  for time step            5
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.3258532760573871E-007
+ Color image created
+
+
+ ******************************************************************
+Time step number     500   t =  124.7500 s out of    8000
+ ******************************************************************
+ We have done    6.23827982     % of the total
+ Max norm of vector field in solid (elastic) =    6.41646096E-03
+ Max absolute value of scalar field in fluid (acoustic) =    4.79825857E-20
+ Elapsed time in seconds =    1.9699997901916504     
+ Elapsed time in hh:mm:ss =      0 h 00 m 01 s
+ Mean elapsed time per time step in seconds =    3.9399995803833009E-003
+ Time steps remaining =         7500
+ Estimated remaining time in seconds =    29.549996852874756     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 29 s
+ Estimated total run time in seconds =    31.519996643066406     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 31 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+ Creating color image of size          826  x         1734  for time step          500
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    6.2775067053735256E-003
+ Color image created
+
+
+ ******************************************************************
+Time step number    1000   t =  249.7500 s out of    8000
+ ******************************************************************
+ We have done    12.4890614     % of the total
+ Max norm of vector field in solid (elastic) =    1.68606581E-04
+ Max absolute value of scalar field in fluid (acoustic) =    2.37345286E-02
+ Elapsed time in seconds =    3.9099998474121094     
+ Elapsed time in hh:mm:ss =      0 h 00 m 03 s
+ Mean elapsed time per time step in seconds =    3.9099998474121092E-003
+ Time steps remaining =         7000
+ Estimated remaining time in seconds =    27.369998931884766     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 27 s
+ Estimated total run time in seconds =    31.279998779296875     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 31 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+
+ Total number of time steps done:         1000
+ Writing the seismograms by main proc alone took    1.07190004E-02  seconds
+
+ Creating color image of size          826  x         1734  for time step         1000
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.4480043319053948E-004
+ Color image created
+
+
+ ******************************************************************
+Time step number    1500   t =  374.7500 s out of    8000
+ ******************************************************************
+ We have done    18.7398434     % of the total
+ Max norm of vector field in solid (elastic) =    1.02402788E-04
+ Max absolute value of scalar field in fluid (acoustic) =    2.76084900    
+ Elapsed time in seconds =    5.7619998455047607     
+ Elapsed time in hh:mm:ss =      0 h 00 m 05 s
+ Mean elapsed time per time step in seconds =    3.8413332303365070E-003
+ Time steps remaining =         6500
+ Estimated remaining time in seconds =    24.968665997187294     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 24 s
+ Estimated total run time in seconds =    30.730665842692055     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+ Creating color image of size          826  x         1734  for time step         1500
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    9.5750685431994498E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number    2000   t =  499.7500 s out of    8000
+ ******************************************************************
+ We have done    24.9906235     % of the total
+ Max norm of vector field in solid (elastic) =    6.97221112E-05
+ Max absolute value of scalar field in fluid (acoustic) =    2.38402414    
+ Elapsed time in seconds =    7.5559999942779541     
+ Elapsed time in hh:mm:ss =      0 h 00 m 07 s
+ Mean elapsed time per time step in seconds =    3.7779999971389771E-003
+ Time steps remaining =         6000
+ Estimated remaining time in seconds =    22.667999982833862     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 22 s
+ Estimated total run time in seconds =    30.223999977111816     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+
+ Total number of time steps done:         2000
+ Writing the seismograms by main proc alone took    2.45869998E-02  seconds
+
+ Creating color image of size          826  x         1734  for time step         2000
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    6.7725653934758157E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number    2500   t =  624.7500 s out of    8000
+ ******************************************************************
+ We have done    31.2414055     % of the total
+ Max norm of vector field in solid (elastic) =    7.81275739E-05
+ Max absolute value of scalar field in fluid (acoustic) =    2.55331326    
+ Elapsed time in seconds =    9.4969999790191650     
+ Elapsed time in hh:mm:ss =      0 h 00 m 09 s
+ Mean elapsed time per time step in seconds =    3.7987999916076660E-003
+ Time steps remaining =         5500
+ Estimated remaining time in seconds =    20.893399953842163     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 20 s
+ Estimated total run time in seconds =    30.390399932861328     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+ Creating color image of size          826  x         1734  for time step         2500
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    7.1465103246737272E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number    3000   t =  749.7500 s out of    8000
+ ******************************************************************
+ We have done    37.4921875     % of the total
+ Max norm of vector field in solid (elastic) =    5.45047951E-05
+ Max absolute value of scalar field in fluid (acoustic) =    3.49020004    
+ Elapsed time in seconds =    11.292999982833862     
+ Elapsed time in hh:mm:ss =      0 h 00 m 11 s
+ Mean elapsed time per time step in seconds =    3.7643333276112874E-003
+ Time steps remaining =         5000
+ Estimated remaining time in seconds =    18.821666638056438     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 18 s
+ Estimated total run time in seconds =    30.114666620890301     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+
+ Total number of time steps done:         3000
+ Writing the seismograms by main proc alone took    1.14219999E-02  seconds
+
+ Creating color image of size          826  x         1734  for time step         3000
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    4.9171903810929507E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number    3500   t =  874.7500 s out of    8000
+ ******************************************************************
+ We have done    43.7429695     % of the total
+ Max norm of vector field in solid (elastic) =    5.12744082E-05
+ Max absolute value of scalar field in fluid (acoustic) =    1.69785857    
+ Elapsed time in seconds =    13.263999938964844     
+ Elapsed time in hh:mm:ss =      0 h 00 m 13 s
+ Mean elapsed time per time step in seconds =    3.7897142682756695E-003
+ Time steps remaining =         4500
+ Estimated remaining time in seconds =    17.053714207240514     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 17 s
+ Estimated total run time in seconds =    30.317714146205358     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+ Creating color image of size          826  x         1734  for time step         3500
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    4.1385406802874058E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number    4000   t =  999.7500 s out of    8000
+ ******************************************************************
+ We have done    49.9937477     % of the total
+ Max norm of vector field in solid (elastic) =    4.57096357E-05
+ Max absolute value of scalar field in fluid (acoustic) =    1.21813786    
+ Elapsed time in seconds =    15.187999963760376     
+ Elapsed time in hh:mm:ss =      0 h 00 m 15 s
+ Mean elapsed time per time step in seconds =    3.7969999909400940E-003
+ Time steps remaining =         4000
+ Estimated remaining time in seconds =    15.187999963760376     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 15 s
+ Estimated total run time in seconds =    30.375999927520752     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+
+ Total number of time steps done:         4000
+ Writing the seismograms by main proc alone took    4.34550010E-02  seconds
+
+ Creating color image of size          826  x         1734  for time step         4000
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    3.7647569115506485E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number    4500   t =  1.124750E+03 s out of    8000
+ ******************************************************************
+ We have done    56.2445297     % of the total
+ Max norm of vector field in solid (elastic) =    4.93883053E-05
+ Max absolute value of scalar field in fluid (acoustic) =    1.25220573    
+ Elapsed time in seconds =    17.162999868392944     
+ Elapsed time in hh:mm:ss =      0 h 00 m 17 s
+ Mean elapsed time per time step in seconds =    3.8139999707539878E-003
+ Time steps remaining =         3500
+ Estimated remaining time in seconds =    13.348999897638958     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 13 s
+ Estimated total run time in seconds =    30.511999766031902     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+ Creating color image of size          826  x         1734  for time step         4500
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    3.9492628275183961E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number    5000   t =  1.249750E+03 s out of    8000
+ ******************************************************************
+ We have done    62.4953117     % of the total
+ Max norm of vector field in solid (elastic) =    4.30716318E-05
+ Max absolute value of scalar field in fluid (acoustic) =    1.48743737    
+ Elapsed time in seconds =    19.208999872207642     
+ Elapsed time in hh:mm:ss =      0 h 00 m 19 s
+ Mean elapsed time per time step in seconds =    3.8417999744415282E-003
+ Time steps remaining =         3000
+ Estimated remaining time in seconds =    11.525399923324585     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 11 s
+ Estimated total run time in seconds =    30.734399795532227     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+
+ Total number of time steps done:         5000
+ Writing the seismograms by main proc alone took    1.14639997E-02  seconds
+
+ Creating color image of size          826  x         1734  for time step         5000
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    3.2696534617571160E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number    5500   t =  1.374750E+03 s out of    8000
+ ******************************************************************
+ We have done    68.7460938     % of the total
+ Max norm of vector field in solid (elastic) =    4.36512892E-05
+ Max absolute value of scalar field in fluid (acoustic) =    1.22366154    
+ Elapsed time in seconds =    21.213999986648560     
+ Elapsed time in hh:mm:ss =      0 h 00 m 21 s
+ Mean elapsed time per time step in seconds =    3.8570909066633747E-003
+ Time steps remaining =         2500
+ Estimated remaining time in seconds =    9.6427272666584365     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 09 s
+ Estimated total run time in seconds =    30.856727253306996     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+ Creating color image of size          826  x         1734  for time step         5500
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.3843798771849833E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number    6000   t =  1.499750E+03 s out of    8000
+ ******************************************************************
+ We have done    74.9968719     % of the total
+ Max norm of vector field in solid (elastic) =    4.04859384E-05
+ Max absolute value of scalar field in fluid (acoustic) =    5.14326668    
+ Elapsed time in seconds =    23.265999794006348     
+ Elapsed time in hh:mm:ss =      0 h 00 m 23 s
+ Mean elapsed time per time step in seconds =    3.8776666323343911E-003
+ Time steps remaining =         2000
+ Estimated remaining time in seconds =    7.7553332646687823     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 07 s
+ Estimated total run time in seconds =    31.021333058675129     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 31 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+
+ Total number of time steps done:         6000
+ Writing the seismograms by main proc alone took    6.51820004E-02  seconds
+
+ Creating color image of size          826  x         1734  for time step         6000
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.3405396859743632E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number    6500   t =  1.624750E+03 s out of    8000
+ ******************************************************************
+ We have done    81.2476578     % of the total
+ Max norm of vector field in solid (elastic) =    3.94607414E-05
+ Max absolute value of scalar field in fluid (acoustic) =    3.85555673    
+ Elapsed time in seconds =    25.361999988555908     
+ Elapsed time in hh:mm:ss =      0 h 00 m 25 s
+ Mean elapsed time per time step in seconds =    3.9018461520855243E-003
+ Time steps remaining =         1500
+ Estimated remaining time in seconds =    5.8527692281282864     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
+ Estimated total run time in seconds =    31.214769216684196     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 31 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+ Creating color image of size          826  x         1734  for time step         6500
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.1942154489806853E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number    7000   t =  1.749750E+03 s out of    8000
+ ******************************************************************
+ We have done    87.4984360     % of the total
+ Max norm of vector field in solid (elastic) =    4.01669422E-05
+ Max absolute value of scalar field in fluid (acoustic) =    10.5352840    
+ Elapsed time in seconds =    27.370999813079834     
+ Elapsed time in hh:mm:ss =      0 h 00 m 27 s
+ Mean elapsed time per time step in seconds =    3.9101428304399765E-003
+ Time steps remaining =         1000
+ Estimated remaining time in seconds =    3.9101428304399763     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
+ Estimated total run time in seconds =    31.281142643519811     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 31 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+
+ Total number of time steps done:         7000
+ Writing the seismograms by main proc alone took    1.25120003E-02  seconds
+
+ Creating color image of size          826  x         1734  for time step         7000
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.0243116523488425E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number    7500   t =  1.874750E+03 s out of    8000
+ ******************************************************************
+ We have done    93.7492218     % of the total
+ Max norm of vector field in solid (elastic) =    3.73716539E-05
+ Max absolute value of scalar field in fluid (acoustic) =    4.44441462    
+ Elapsed time in seconds =    29.462999820709229     
+ Elapsed time in hh:mm:ss =      0 h 00 m 29 s
+ Mean elapsed time per time step in seconds =    3.9283999760945636E-003
+ Time steps remaining =          500
+ Estimated remaining time in seconds =    1.9641999880472818     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
+ Estimated total run time in seconds =    31.427199808756509     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 31 s
+ The run will finish approximately on: Mon May 02, 2022 15:28
+
+ Creating color image of size          826  x         1734  for time step         7500
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.7951888366951607E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number    8000   t =  1.999750E+03 s out of    8000
+ ******************************************************************
+ We have done    100.000000     % of the total
+ Max norm of vector field in solid (elastic) =    3.86177344E-05
+ Max absolute value of scalar field in fluid (acoustic) =    6.48495579    
+ Elapsed time in seconds =    31.465999841690063     
+ Elapsed time in hh:mm:ss =      0 h 00 m 31 s
+ Mean elapsed time per time step in seconds =    3.9332499802112583E-003
+ Time steps remaining =            0
+ Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
+ Estimated total run time in seconds =    31.465999841690063     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 31 s
+
+
+ Total number of time steps done:         8000
+ Writing the seismograms by main proc alone took    7.75419995E-02  seconds
+
+ Creating color image of size          826  x         1734  for time step         8000
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.7072778064175509E-005
+ Color image created
+
+
+ Total duration of the time loop in seconds =    31.6380806      s
+ Total number of time steps =         8000
+ Average duration of a time step of the time loop =    3.95476026E-03  s
+ Total number of spectral elements in the mesh =         2120
+     of which         2120  are regular elements
+     and            0  are PML elements.
+ Average duration of the calculation per spectral element =    1.86545287E-06  s
+
+
+ Total duration of the timeloop in seconds, measured using 
+ date and time of the system :    31.6399994      s
+
+
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ Program SPECFEM2D: 
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ AK135F for half a disk for axisymmetric runs
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ D a t e : 02 - 05 - 2022                                 T i m e  : 15:27:34
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+
+see results in directory: OUTPUT_FILES/
+
+done
+Mon May 2 15:27:34 +03 2022

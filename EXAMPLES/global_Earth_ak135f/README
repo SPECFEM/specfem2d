@@ -1,0 +1,20 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This example simulates a global AK-135F model as an example of the use of AXISYM option. This option allows for axisymmetric simulations. 
+The domain defined is physically the meridional 2D shape of a axisymmetric 3D domain.
+
+Mesh parameters for the global AK135-F model (modified without the mud layer) are created by the script `make_specific_mesher_for_2D_Earth.sh`. 
+The corresponding velocity model values for this AK135-F model are defined by the "external" model (i.e., in Par_file: MODEL = external), 
+defined in file src/specfem2D/define_external_model.f90
+This example is designed for parallel simulations, using 4 MPI processes.
+
+
+To run the example, type:
+
+  ./run_this_example.sh
+
+in this directory.
+
+The results are in OUTPUT_FILES/. The seismograms created can be compared with those in REF_SEIS/.
