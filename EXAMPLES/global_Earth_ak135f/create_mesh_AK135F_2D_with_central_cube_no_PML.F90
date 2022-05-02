@@ -1,5 +1,5 @@
 
-  program generate_mesh_PREM
+  program generate_mesh
 
 ! Dimitri Komatitsch, Harvard University, USA, around 1998: 2D mesh generator for the global Earth
 
@@ -115,6 +115,12 @@
   double precision, parameter :: R670   = 5711000.d0
   double precision, parameter :: RCMB   = 3479500.d0
   double precision, parameter :: RICB   = 1217500.d0
+
+! values for PREM
+!  double precision, parameter :: R670   = 5701000.d0  ! at 670 km depth
+!  double precision, parameter :: RCMB   = 3480000.d0  !   2891 km depth
+!  double precision, parameter :: RICB   = 1221500.d0
+
   double precision, parameter :: R_DOUBLING_OUTER_CORE   = RICB + 0.56*(RCMB - RICB)
 
   double precision, parameter :: PI = 3.141592653589793d0
@@ -207,7 +213,7 @@
   delta_theta = 2. * pi / dble(nspec_surf_whole_circle/2)
   size_of_a_surface_element_in_km = delta_theta*R_EARTH/1000.
 
-  print *,'Generate mesh PREM'
+  print *,'Generate mesh'
   print *
   print *,'Number of elements at the surface of the whole circle = ',nspec_surf_whole_circle
   print *

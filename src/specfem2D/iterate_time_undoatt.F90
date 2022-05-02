@@ -104,8 +104,6 @@
     call exit_MPI(myrank,'UNDO_ATTENUATION is not implemented for poroelastic simulation yet')
   if (NOISE_TOMOGRAPHY /= 0) &
     call exit_MPI(myrank,'For UNDO_ATTENUATION, NOISE_TOMOGRAPHY is not supported')
-  if (AXISYM) &
-    call exit_MPI(myrank,'Just axisymmetric FORWARD simulations are possible so far')
   if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
     call exit_MPI(myrank,'For UNDO_ATTENUATION with viscoacousticity, &
                  & USE_A_STRONG_FORMULATION_FOR_E1 has to be set to true (in setup/constants.h)')

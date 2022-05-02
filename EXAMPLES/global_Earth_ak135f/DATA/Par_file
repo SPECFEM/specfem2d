@@ -315,7 +315,7 @@ nbregions                       = 2              # then set below the different 
 
 # interval at which we output time step info and max of norm of displacement
 # (every how many time steps we display information about the simulation. costly, do not use a very small value)
-NTSTEP_BETWEEN_OUTPUT_INFO      = 200
+NTSTEP_BETWEEN_OUTPUT_INFO      = 500
 
 # meshing output
 output_grid_Gnuplot             = .false.        # generate a GNUPLOT file containing the grid, and a script to plot it
@@ -340,7 +340,7 @@ COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
 
 # every how many time steps we draw JPEG or PostScript pictures of the simulation
 # and/or we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
-NTSTEP_BETWEEN_OUTPUT_IMAGES    = 100
+NTSTEP_BETWEEN_OUTPUT_IMAGES    = 500
 
 # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
 cutsnaps                        = 1.

@@ -51,7 +51,7 @@
 
   ! enforces vanishing wavefields on axis
   if (AXISYM) then
-    call enforce_zero_radial_displacements_on_the_axis()
+    call enforce_zero_radial_displacements_on_the_axis(displ_elastic,veloc_elastic,accel_elastic)
   endif
 
   ! distinguishes two runs: for elements on MPI interfaces (outer), and elements within the partitions (inner)
@@ -59,8 +59,9 @@
 
     ! main solver for the elastic elements
     ! visco-elastic term
-    call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old,dux_dxl_old,duz_dzl_old, &
-                                     dux_dzl_plus_duz_dxl_old,PML_BOUNDARY_CONDITIONS,e1,e11,e13,iphase)
+    call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic, &
+                                     displ_elastic_old,dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old, &
+                                     PML_BOUNDARY_CONDITIONS,e1,e11,e13,iphase)
 
     ! computes additional contributions to acceleration field
     if (iphase == 1) then
@@ -119,7 +120,7 @@
 
     ! enforces vanishing wavefields on axis
     if (AXISYM) then
-      call enforce_zero_radial_displacements_on_the_axis()
+      call enforce_zero_radial_displacements_on_the_axis(displ_elastic,veloc_elastic,accel_elastic)
     endif
 
 #ifdef WITH_MPI
@@ -225,6 +226,10 @@
   ! checks if anything to do in this slice
   if (.not. any_elastic) return
 
+  ! safety check
+  if (SOURCE_IS_MOVING) &
+    stop 'Option SOURCE_IS_MOVING is not implemented yet for kernel simulations (SIMULATION_TYPE == 3)'
+
   ! timing
   if (UNDO_ATTENUATION_AND_OR_PML) then
     ! time increment
@@ -248,12 +253,17 @@
     call rebuild_value_on_PML_interface_viscoelastic(it_temp)
   endif
 
+  ! enforces vanishing wavefields on axis
+  if (AXISYM) then
+    call enforce_zero_radial_displacements_on_the_axis(b_displ_elastic,b_veloc_elastic,b_accel_elastic)
+  endif
+
   ! distinguishes two runs: for elements on MPI interfaces (outer), and elements within the partitions (inner)
   do iphase = 1,2
 
-    call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                     b_dux_dxl_old,b_duz_dzl_old, &
-                                     b_dux_dzl_plus_duz_dxl_old,.false.,b_e1,b_e11,b_e13,iphase)
+    call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic, &
+                                     b_displ_elastic_old,b_dux_dxl_old,b_duz_dzl_old,b_dux_dzl_plus_duz_dxl_old, &
+                                     .false.,b_e1,b_e11,b_e13,iphase)
 
     ! computes additional contributions
     if (iphase == 1) then
@@ -269,9 +279,6 @@
       ! PML boundary
       if (PML_BOUNDARY_CONDITIONS) then
         call pml_boundary_elastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old)
-      endif
-
-      if (PML_BOUNDARY_CONDITIONS) then
         call rebuild_value_on_PML_interface_viscoelastic(it_temp)
       endif
 
@@ -284,11 +291,6 @@
       if (coupled_elastic_poro) then
         call compute_coupling_viscoelastic_po_backward()
       endif
-
-      ! only on forward arrays so far implemented...
-      !if (AXISYM) then
-      !  call enforce_zero_radial_displacements_on_the_axis()
-      !endif
 
       ! add force source
       if (.not. initialfield) then
@@ -308,6 +310,11 @@
       endif ! if not using an initial field
 
     endif ! iphase
+
+    ! enforces vanishing wavefields on axis
+    if (AXISYM) then
+      call enforce_zero_radial_displacements_on_the_axis(b_displ_elastic,b_veloc_elastic,b_accel_elastic)
+    endif
 
 #ifdef WITH_MPI
     ! assembling accel_elastic for elastic elements

@@ -91,6 +91,9 @@
                          rho_kl,mu_kl,kappa_kl, &
                          c11_kl,c13_kl,c15_kl,c33_kl,c35_kl,c55_kl
 
+  ! AXISYM case
+  use specfem_par, only: AXISYM,is_on_the_axis,hprimeBar_xx,NGLJ
+
   implicit none
 
   !local variables
@@ -140,6 +143,23 @@
             b_duz_dgamma = b_duz_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
           enddo
 
+          ! AXISYM case overwrites dux_dxi and duz_dxi
+          if (AXISYM) then
+            if (is_on_the_axis(ispec)) then
+              ! derivative along x and along z
+              dux_dxi = 0._CUSTOM_REAL
+              duz_dxi = 0._CUSTOM_REAL
+              b_dux_dxi = 0._CUSTOM_REAL
+              b_duz_dxi = 0._CUSTOM_REAL
+              do k = 1,NGLJ
+                dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                b_duz_dxi = b_duz_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+              enddo
+            endif
+          endif
+
           xixl = xix(i,j,ispec)
           xizl = xiz(i,j,ispec)
           gammaxl = gammax(i,j,ispec)
@@ -155,6 +175,17 @@
           b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
           b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
           b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
+
+          ! AXISYM case overwrite duz_dxl
+          if (AXISYM) then
+            if (is_on_the_axis(ispec)) then
+              ! d_uz/dr=0 on the axis
+              if (i == 1) then
+                duz_dxl = 0._CUSTOM_REAL
+                b_duz_dxl = 0._CUSTOM_REAL
+              endif
+            endif
+          endif
 
           ! isotropic kernel contributions
           if (P_SV) then
@@ -269,6 +300,9 @@
 
   use specfem_par_gpu, only: Mesh_pointer
 
+  ! AXISYM case
+  use specfem_par, only: AXISYM,is_on_the_axis,hprimeBar_xx,NGLJ
+
   implicit none
 
   !local variables
@@ -313,6 +347,19 @@
               b_tempx2l = b_tempx2l + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
             enddo
 
+            ! AXISYM case overwrites dux_dxi
+            if (AXISYM) then
+              if (is_on_the_axis(ispec)) then
+                ! derivative along x
+                tempx1l = ZERO
+                b_tempx1l = ZERO
+                do k = 1,NGLJ
+                  tempx1l = tempx1l + potential_acoustic(ibool(k,j,ispec)) * hprimeBar_xx(i,k)
+                  b_tempx1l = b_tempx1l + b_potential_acoustic(ibool(k,j,ispec)) * hprimeBar_xx(i,k)
+                enddo
+              endif
+            endif
+
             xixl = xix(i,j,ispec)
             xizl = xiz(i,j,ispec)
             gammaxl = gammax(i,j,ispec)
@@ -325,6 +372,17 @@
 
             b_displ_loc(1) = (b_tempx1l*xixl + b_tempx2l*gammaxl)
             b_displ_loc(2) = (b_tempx1l*xizl + b_tempx2l*gammazl)
+
+            ! AXISYM case overwrite dux_dxl
+            if (AXISYM) then
+              if (is_on_the_axis(ispec)) then
+                ! dchi/dr=rho * u_r=0 on the axis
+                if (i == 1) then
+                  accel_loc(1) = 0._CUSTOM_REAL
+                  b_displ_loc(1) = 0._CUSTOM_REAL
+                endif
+              endif
+            endif
 
             ! acoustic kernel integration
             ! YANGL

@@ -53,7 +53,7 @@ def grid(x, y, z, resX=100, resY=100):
     X, Y = np.meshgrid(xi, yi)
     return X, Y, Z
 
-def plot_kernels(filename,show=False):
+def plot_kernels(filename,show=False,max_val=None):
     """
     plots ASCII kernel file
     """
@@ -153,21 +153,39 @@ def plot_kernels(filename,show=False):
     print("  data max = ",total_max)
     print("")
 
-    # limit size
-    if total_max < 1.e-5:
-        total_max = 1.0 * 10**(int(np.log10(total_max))-1)  # example: 2.73e-11 limits to 1.e-11
+    # plotting limits
+    if not max_val is None:
+        # user defined
+        total_max = max_val
     else:
-        total_max = 1.e-5
+        # limit size to data range
+        if total_max < 1.e-5:
+            total_max = 1.0 * 10**(int(np.log10(total_max))-1)  # example: 2.73e-11 limits to 1.e-11
+        else:
+            total_max = 1.e-5
     print("plot: color scale max = ",total_max)
     print("")
+
+    # determine orientation
+    plot_horizontal = False
+
+    x_range =  x.max() - x.min()
+    y_range =  y.max() - y.min()
+    if abs(y_range) > abs(x_range): plot_horizontal = True
 
     # setup figure
     if num_kernels == 2:
         # with 2 subplots
-        fig, axes = plt.subplots(nrows=2, ncols=1)
+        if plot_horizontal:
+            fig, axes = plt.subplots(nrows=1, ncols=2)
+        else:
+            fig, axes = plt.subplots(nrows=2, ncols=1)
     else:
         # with 3 subplots
-        fig, axes = plt.subplots(nrows=3, ncols=1)
+        if plot_horizontal:
+            fig, axes = plt.subplots(nrows=1, ncols=3)
+        else:
+            fig, axes = plt.subplots(nrows=3, ncols=1)
 
     for i,ax in enumerate(axes.flat,start=1):
         # top
@@ -183,15 +201,22 @@ def plot_kernels(filename,show=False):
             ax.set_ylabel(kernel3)
 
         im = ax.imshow(Z,vmax=total_max, vmin=-total_max,
-                       extent=[x.min(), x.max(), y.min(), y.max()],cmap=colormap)
+                       extent=[x.min(), x.max(), y.min(), y.max()], origin='lower', cmap=colormap)
 
     # moves plots together
-    fig.subplots_adjust(hspace=0)
+    if plot_horizontal:
+        fig.subplots_adjust(wspace=0)
+        plt.tight_layout()
+    else:
+        fig.subplots_adjust(hspace=0)
+
     plt.setp([a.get_xticklabels() for a in fig.axes[:-1]], visible=False)
 
     # colorbar
-    fig.colorbar(im, ax=axes.ravel().tolist())
-    #fig.colorbar(im, ax=axes.ravel().tolist(),orientation='horizontal')
+    if plot_horizontal:
+        fig.colorbar(im, ax=axes.ravel().tolist(),orientation='horizontal')
+    else:
+        fig.colorbar(im, ax=axes.ravel().tolist())
 
     # show the figure
     if show:
@@ -210,11 +235,17 @@ def plot_kernels(filename,show=False):
 
 
 def usage():
-    print("usage: ./plot_kernel.py file [1 == show figure / 0 == just plot file]")
+    print("usage: ./plot_kernel.py file [1 == show figure / 0 == just plot file] [max_val]")
     print("   where")
-    print("       file - ASCII kernel file, e.g. OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat")
+    print("       file    - ASCII kernel file, e.g. OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat")
+    print("       1 or 0  - (optional) to show figure use 1, or 0 to just plot file (default to just plot file)")
+    print("       max_val - (optional) to use max_val for kernel plot limit")
 
 if __name__ == '__main__':
+    # initializes
+    show = False
+    max_val = None
+
     # gets arguments
     if len(sys.argv) < 2:
         usage()
@@ -223,12 +254,10 @@ if __name__ == '__main__':
         file = sys.argv[1]
 
     if len(sys.argv) > 2:
-        show_plot = sys.argv[2]
-    else:
-        show_plot = 0
+        if sys.argv[2] == "show" or sys.argv[2] == "1": show = True
 
-    if show_plot == '1':
-        plot_kernels(file,show=True)
-    else:
-        plot_kernels(file)
+    if len(sys.argv) == 4:
+        max_val = float(sys.argv[3])
+
+    plot_kernels(file,show,max_val)
 

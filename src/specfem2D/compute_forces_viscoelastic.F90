@@ -688,7 +688,7 @@
               tempx2l = 0._CUSTOM_REAL
               tempz1l = 0._CUSTOM_REAL
               tempz2l = 0._CUSTOM_REAL
-              do k = 1,NGLLX
+              do k = 1,NGLJ
                 tempx1l = tempx1l + tempx1(k,j) * hprimeBarwglj_xx(k,i)
                 tempx2l = tempx2l + tempx2(i,k) * hprimewgll_zz(k,j)
                 tempz1l = tempz1l + tempz1(k,j) * hprimeBarwglj_xx(k,i)

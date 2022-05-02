@@ -75,7 +75,7 @@
   use constants, only: PI,TWO,TINYVAL,myrank
 
   use specfem_par, only: any_poroelastic, ROTATE_PML_ACTIVATE, &
-                         STACEY_ABSORBING_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD, &
+                         STACEY_ABSORBING_CONDITIONS, &
                          NSOURCES, source_type, ispec_selected_source, ADD_PERIODIC_CONDITIONS, &
                          anglesource, is_on_the_axis, ispec_is_elastic, islice_selected_source, &
                          NOISE_TOMOGRAPHY
@@ -91,10 +91,6 @@
     call exit_MPI(myrank,'ROTATE_PML_ACTIVATE is not implemented for axisymmetric simulations')
   if (STACEY_ABSORBING_CONDITIONS) &
     call exit_MPI(myrank,'Stacey boundary conditions are not implemented for axisymmetric simulations,use PML instead')
-  if (SIMULATION_TYPE /= 1) &
-    call exit_MPI(myrank,'Just axisymmetric FORWARD simulations are possible so far')
-  if (SAVE_FORWARD) &
-    call exit_MPI(myrank,'SAVE_FORWARD has presently not been tested with axisymmetric simulations')
   if (ADD_PERIODIC_CONDITIONS) &
     call exit_MPI(myrank,'Periodic conditions (ADD_PERIODIC_CONDITIONS) are not implemented for axisymmetric simulations')
   if (NOISE_TOMOGRAPHY /= 0) &
@@ -133,18 +129,19 @@
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine enforce_zero_radial_displacements_on_the_axis()
+  subroutine enforce_zero_radial_displacements_on_the_axis(displ_elastic,veloc_elastic,accel_elastic)
 
 ! This subroutine enforces zero displacement, velocity and acceleration on the axis for elastic elements;
 ! for acoustic elements we do not need to do anything, some gradient components
 ! will be set to zero on the axis later in the code, when they are computed
 
-  use constants, only: NGLJ,NGLLZ,ZERO
+  use constants, only: NDIM,NGLJ,NGLLZ,ZERO,CUSTOM_REAL
 
-  use specfem_par, only: ispec_is_elastic, ibool, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis, &
-          displ_elastic, veloc_elastic, accel_elastic
+  use specfem_par, only: nglob, ispec_is_elastic, ibool, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis
 
   implicit none
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(inout) :: displ_elastic,veloc_elastic,accel_elastic
 
   ! local variables
   integer :: i_on_the_axis,ispec_axis,i,j

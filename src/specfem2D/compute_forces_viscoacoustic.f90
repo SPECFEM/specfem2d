@@ -146,7 +146,7 @@
           do i = 1,NGLLX
             ! derivative along x and along z
             dux_dxi(i,j) = 0._CUSTOM_REAL
-            do k = 1,NGLLX
+            do k = 1,NGLJ
               dux_dxi(i,j) = dux_dxi(i,j) + potential_elem(k,j) * hprimeBar_xx(i,k)
             enddo
           enddo
@@ -287,7 +287,7 @@
               ! assembles the contributions
               temp1l = 0._CUSTOM_REAL
               temp2l = 0._CUSTOM_REAL
-              do k = 1,NGLLX
+              do k = 1,NGLJ
                 temp1l = temp1l + tempx1(k,j) * hprimeBarwglj_xx(k,i)
                 temp2l = temp2l + tempx2(i,k) * hprimewgll_zz(k,j)
               enddo

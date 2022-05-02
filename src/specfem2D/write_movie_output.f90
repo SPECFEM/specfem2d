@@ -66,10 +66,17 @@
   ! wavefield integration
   integer :: ier
 
+  ! checks plotting of backward wavefield
+  if (UNDO_ATTENUATION_AND_OR_PML .and. get_b_wavefield .and. .not. NO_BACKWARD_RECONSTRUCTION) then
+    plot_b_wavefield_only = .true.
+  else
+    plot_b_wavefield_only = .false.
+  endif
+
   ! integrates wavefield for kernel adjoint simulations
   !
   ! this is meant mostly for looking at the adjoint wavefield to check it and applies only to plotting color images
-  if (coupled_acoustic_elastic .and. SIMULATION_TYPE == 3 .and. output_color_image) then
+  if (coupled_acoustic_elastic .and. SIMULATION_TYPE == 3 .and. output_color_image .and. (.not. plot_b_wavefield_only)) then
     ! for kernel simulations and coupled acoustic-elastic simulations, the adjoint acoustic potential is defined
     ! as an acceleration potential:
     !   \partial_t^2 u^adj = - 1/rho grad(chi^adj)
@@ -109,13 +116,6 @@
 
   ! checks if anything to do
   if (.not. (mod(it,NTSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP)) return
-
-  ! checks plotting of backward wavefield
-  if (UNDO_ATTENUATION_AND_OR_PML .and. get_b_wavefield .and. .not. NO_BACKWARD_RECONSTRUCTION) then
-    plot_b_wavefield_only = .true.
-  else
-    plot_b_wavefield_only = .false.
-  endif
 
   ! transfers arrays from GPU to CPU
   if (GPU_MODE) then
