@@ -93,7 +93,7 @@
   integer :: count_left,count_right,count_bottom
 
   ! Stacey second order absorbing boundary scheme called P3
-  ! implemented for spectral-elements, see section 5.3 in:
+  ! implemented for spectral elements, see section 5.3 in:
   !    Casadei et al. (2002),
   !    A mortar spectral/finite element method for complex 2D and 3D elastodynamic problems,
   !    Comput. Methods Appl. Mech. Engrg. 191, 5119-5148.

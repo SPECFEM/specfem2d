@@ -71,7 +71,7 @@ def print_trace_stats(syn,dat,dt=None):
 
     # integrals
     m_syn = 0.5 * np.sum( syn[:,1]**2 ) * dt
-    
+
     if not dat is None:
       m_dat = 0.5 * np.sum( dat[:,1]**2 ) * dt
       m_diff = 0.5 * np.sum( (dat[:,1]-syn[:,1])**2 ) * dt
@@ -81,7 +81,7 @@ def print_trace_stats(syn,dat,dt=None):
     print("  time step dt: %f" % dt)
     print("  syn min/max   = {} / {}".format(syn[:,1].min(),syn[:,1].max()))
     print("  syn integral  = {}".format(m_syn))
-        
+
     if not dat is None:
         print("  dat min/max   = {} / {}".format(dat[:,1].min(),dat[:,1].max()))
         print("  dat integral = {}".format(m_dat))
@@ -92,7 +92,7 @@ def print_trace_stats(syn,dat,dt=None):
 def get_time_window_taper(trace,t_start,t_end):
     """
     defines the time window W(t) between [t_start,t_end]
-    
+
     trace is a 2-d array, with trace[:,0] time and trace[:,1] data values
     """
     global TAPER_TYPE,show_figures
@@ -116,7 +116,7 @@ def get_time_window_taper(trace,t_start,t_end):
     print("  trace length   = %i" % length)
     print("  window length  = %i" % length_window)
     print("")
-    
+
     TW = np.zeros(length)
 
     # creates time window
@@ -159,7 +159,7 @@ def get_time_window_taper(trace,t_start,t_end):
 
         plt.tight_layout()
         plt.show()
-    
+
     return TW
 
 
@@ -168,11 +168,11 @@ def create_adjoint_source(type,file_syn,file_dat):
     takes two traces (data and synthetics) and computes the adjoint source for an attenuation kernel
     """
     global show_figures
-    
+
     # initializes
     syn = None
     dat = None
-    
+
     # user output
     print("adjoint source:")
     if type == 1:
@@ -182,10 +182,10 @@ def create_adjoint_source(type,file_syn,file_dat):
     else:
         print("Invalid adjoint source type, must be 1 or 2")
         sys.exit(1)
-        
+
     print("  synthetics file : %s\n" % file_syn)
     if type == 2: print("  data file       : %s" % file_dat)
-    
+
     # makes sure files are available
     if not os.path.isfile(file_syn):
         print("  file " + file_syn + " not found")
@@ -212,7 +212,7 @@ def create_adjoint_source(type,file_syn,file_dat):
     t0 = syn_t[0] # start
     t1 = syn_t[len(syn_t)-1] # end
     dt = syn_t[1] - syn_t[0]
-    
+
     print("synthetics file:")
     print("  trace length = %i" % len(syn_t))
     print("  time step : %f" % dt)
@@ -220,31 +220,31 @@ def create_adjoint_source(type,file_syn,file_dat):
     print("  start time: %f" % t0)
     print("    end time: %f" % t1)
     print("")
-    
+
     # more stats
     print_trace_stats(syn,dat,dt)
 
     # taper for windowing
     t_start = t0 + 0.1 * len(syn_t) * dt
     t_end   = t1 - 0.1 * len(syn_t) * dt
-    
+
     taper = get_time_window_taper(syn,t_start,t_end)
 
     # tappered synthetic trace (data values)
     trace = taper[:] * syn[:,1]
-    
+
     # adjoint source
     if type == 1:
         # traveltime adjoint source
         adj = np.zeros(len(trace))
-        
+
         # gets time derivative to obtain velocity
         for i in range(1,len(trace)-1):
             # central finite-differences
             val = (trace[i+1] - trace[i-1]) / (2.0 * dt)
             # adding negative sign
             adj[i] = - val
-            
+
         # 2nd-order scheme
         #for i in range(1,len(trace)-1):
         #    # central finite difference (2nd-order scheme)
@@ -259,15 +259,15 @@ def create_adjoint_source(type,file_syn,file_dat):
         #            + 4.0/3.0 * trace[i-1] - 1.0/12.0 * trace[i-2] ) / (dt**2)
         #    # adding negative sign
         #    adj[i] = - val
-            
+
     elif type == 2:
         # amplitude adjoint source
         # kernels following Tromp et al. (2005) eq.67
         adj = np.zeros(len(trace))
-        
+
         # waveform
         adj = trace[:]
-      
+
     else:
         print("Invalid adjoint source type, must be 1 or 2")
         sys.exit(1)
@@ -295,19 +295,19 @@ def create_adjoint_source(type,file_syn,file_dat):
 
     # work directory
     path = os.getcwd()
-    
+
     # output in SEM/ directory
     if not os.path.exists("SEM"): os.mkdir("SEM")
     os.chdir("SEM")
-    
+
     # filename
     fname = os.path.basename(file_syn)
     names = fname.split(".")
-    
+
     # remove file ending .semd and add .adj instead
     name = '.'.join(names[0:-1])
     filename = name + ".adj"
-    
+
     # file output
     f = open(filename, "w")
 
@@ -319,7 +319,7 @@ def create_adjoint_source(type,file_syn,file_dat):
         time = syn_t[ii]
         val = adj[ii]
         f.write("{}\t{}\n".format(time,val))
-        
+
     # numpy save
     #xy = np.empty(shape=(0,2))
     #for ii in range(len(adj)):
@@ -327,7 +327,7 @@ def create_adjoint_source(type,file_syn,file_dat):
     #    xy = np.append(xy,[[time,adj[ii]]],axis=0)
     ## saves as ascii
     #np.savetxt(f, xy, fmt="%f\t%f")
-    
+
     # closes file
     f.close()
 
@@ -353,7 +353,7 @@ if __name__ == '__main__':
     else:
         type = int(sys.argv[1])
         file_syn = sys.argv[2]
-        
+
     # optional for amplitude adjoint sources
     if len(sys.argv) == 4:
         if sys.argv[3] == "show":
@@ -361,7 +361,7 @@ if __name__ == '__main__':
             file_dat = None
         else:
             file_dat = sys.argv[3]
-    
+
     # optional for showing figures
     if len(sys.argv) == 5:
         show_figures = (sys.argv[4] == "show")
