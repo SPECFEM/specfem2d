@@ -161,8 +161,8 @@
   if (.not. any_poroelastic) return
 
   ! implement viscous attenuation for poroelastic media
-  if (ATTENUATION_PORO_FLUID_PART) call stop_the_code( &
-'ATTENUATION_PORO_FLUID_PART not implemented yet for backward/kernel simulations')
+  if (ATTENUATION_PORO_FLUID_PART) &
+    call stop_the_code('ATTENUATION_PORO_FLUID_PART not implemented yet for backward/kernel simulations')
 
   ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
   do iphase = 1,2

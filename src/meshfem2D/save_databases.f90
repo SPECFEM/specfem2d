@@ -57,6 +57,7 @@
     endif
 
     ! opens Database file
+    ! note: adding access='stream' would further decrease file size
     open(unit=IOUT,file=trim(prname),status='unknown',action='write',form='unformatted',iostat=ier)
     if (ier /= 0 ) call stop_the_code('Error saving databases; check that directory OUTPUT_FILES exists')
 

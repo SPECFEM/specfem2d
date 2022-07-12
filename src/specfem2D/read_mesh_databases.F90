@@ -78,6 +78,7 @@
 
   ! opens Database file
   write(prname,"(a,i5.5,a)") trim(OUTPUT_FILES)//'Database',myrank,'.bin'
+  ! note: adding access='stream' would further decrease file size
   open(unit=IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0 ) then
     if (myrank == 0) then

@@ -48,6 +48,7 @@ subroutine read_model_nspec()
 
   ! opens database file
   write(prname,"('./OUTPUT_FILES/Database',i5.5,'.bin')") myrank
+  ! note: adding access='stream' would further decrease file size
   open(IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print *,'Error opening: ',trim(prname)

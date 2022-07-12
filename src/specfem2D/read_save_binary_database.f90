@@ -48,6 +48,7 @@
   ! user output
   if (myrank == 0) write(IMAIN,*) 'saving binary database       : ',trim(OUTPUT_FILES)//trim(outputname)
 
+  ! note: adding access='stream' would further decrease file size
   open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown',action='write',form='unformatted', iostat=ier)
   if (ier /= 0) call stop_the_code('Error writing data file to disk')
 
@@ -105,6 +106,7 @@
   ! user output
   if (myrank == 0) write(IMAIN,*) 'saving binary sources info   : ',trim(OUTPUT_FILES)//trim(outputname)
 
+  ! note: adding access='stream' would further decrease file size
   open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown',action='write',form='unformatted', iostat=ier)
   if (ier /= 0) call stop_the_code('Error writing sources info file to disk')
 
@@ -117,6 +119,7 @@
   ! user output
   if (myrank == 0) write(IMAIN,*) 'saving binary receivers info : ',trim(OUTPUT_FILES)//trim(outputname)
 
+  ! note: adding access='stream' would further decrease file size
   open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
   if (ier /= 0) call stop_the_code('Error writing receivers info data file to disk')
 
@@ -151,6 +154,7 @@
   ! user output
   if (myrank == 0) write(IMAIN,*) 'reading binary databases (part1) : ',trim(outputname)
 
+  ! note: adding access='stream' would further decrease file size
   open(unit=IIN,file=trim(outputname),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_data.bin')
 
@@ -302,6 +306,7 @@
   ! user output
   if (myrank == 0) write(IMAIN,*) 'reading binary sources info      : ',trim(OUTPUT_FILES)//trim(outputname)
 
+  ! note: adding access='stream' would further decrease file size
   open(unit=IIN,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted', iostat=ier)
   if (ier /= 0) call stop_the_code('Error reading sources info from disk')
 
@@ -334,6 +339,7 @@
   ! user output
   if (myrank == 0) write(IMAIN,*) 'reading binary receivers info    : ',trim(OUTPUT_FILES)//trim(outputname)
 
+  ! note: adding access='stream' would further decrease file size
   open(unit=IIN,file = trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted', iostat=ier)
   if (ier /= 0) call stop_the_code('Error reading receivers info from disk')
 

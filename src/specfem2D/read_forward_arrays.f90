@@ -52,6 +52,7 @@
   ! acoustic medium
   if (any_acoustic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
+  ! note: adding access='stream' would further decrease file size
     open(unit=IIN,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_acoustic**.bin')
@@ -74,6 +75,7 @@
   ! elastic medium
   if (any_elastic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
+    ! note: adding access='stream' would further decrease file size
     open(unit=IIN,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_elastic**.bin')
@@ -100,6 +102,7 @@
   ! poroelastic medium
   if (any_poroelastic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
+    ! note: adding access='stream' would further decrease file size
     open(unit=IIN,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_poroelastic_s**.bin')
@@ -110,6 +113,7 @@
     close(IIN)
 
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
+    ! note: adding access='stream' would further decrease file size
     open(unit=IIN,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_poroelastic_w**.bin')
@@ -160,8 +164,8 @@
   write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
 
   ! opens corresponding snapshot file for reading
-  open(unit=IIN_UNDO_ATT,file=trim(OUTPUT_FILES)//outputname, &
-       status='old',action='read',form='unformatted',iostat=ier)
+  ! note: adding access='stream' would further decrease file size
+  open(unit=IIN_UNDO_ATT,file=trim(OUTPUT_FILES)//outputname,status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for reading')
 
   if (any_acoustic) then

@@ -61,6 +61,7 @@
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  ! note: adding access='stream' would further decrease file size
   open(unit=990, file=trim(filename), form='unformatted' , status='old', action='read',iostat=ier)
 #else
   open(unit=990, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
@@ -164,6 +165,7 @@
 
   ! file input
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  ! note: adding access='stream' would further decrease file size
   open(unit=992, file=trim(filename), form='unformatted' , status='old', action='read',iostat=ier)
 #else
   open(unit=992, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
@@ -216,6 +218,7 @@
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  ! note: adding access='stream' would further decrease file size
   open(unit=992, file=trim(filename), form='unformatted' , status='old', action='read',iostat=ier)
 #else
   open(unit=992, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
@@ -282,6 +285,7 @@
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  ! note: adding access='stream' would further decrease file size
   open(unit=991, file=trim(filename), form='unformatted' , status='old', action='read', iostat=ier)
 #else
   open(unit=991, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
@@ -359,6 +363,7 @@
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  ! note: adding access='stream' would further decrease file size
   open(unit=993, file=trim(filename), form='unformatted' , status='old', action='read', iostat=ier)
 #else
   open(unit=993, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
@@ -450,6 +455,7 @@
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  ! note: adding access='stream' would further decrease file size
   open(unit=994, file=trim(filename), form='unformatted' , status='old', action='read', iostat=ier)
 #else
   open(unit=994, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
@@ -540,6 +546,7 @@
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  ! note: adding access='stream' would further decrease file size
   open(unit=995, file=trim(filename), form='unformatted' , status='old', action='read', iostat=ier)
 #else
   open(unit=995, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
@@ -632,6 +639,7 @@
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  ! note: adding access='stream' would further decrease file size
   open(unit=994, file=trim(filename), form='unformatted' , status='old', action='read', iostat=ier)
 #else
   open(unit=994, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
