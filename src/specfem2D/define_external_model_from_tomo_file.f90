@@ -157,6 +157,8 @@ module interpolation
     ! case 1 | case 5 | case 4
     ! Reference: http://en.wikipedia.org/wiki/Bilinear_interpolation
 
+    use constants, only: TINYVAL
+
     implicit none
 
     integer, intent(in) :: x_len, y_len
@@ -191,23 +193,36 @@ module interpolation
     ! ------------------------> x
     ! case 1 | case 5 | case 4
 
-    if (x <= minx .and. y <= miny) then ! case 1
+    ! case 1
+    !if (x <= minx .and. y <= miny) then
+    ! considers floating point round-off errors
+    if ( ((x < minx) .or. (abs(x-minx) < TINYVAL)) .and. ((y < miny) .or. (abs(y-miny) < TINYVAL)) ) then
       !print *,"case1"
       interpolate = f(1,1)
 
-    else if (x > maxx .and. y >= maxy) then ! case 2
+    ! case 2
+    !else if (x > maxx .and. y >= maxy) then
+    else if ( (x > maxx) .and. ((y > maxy) .or. (abs(y-maxy) < TINYVAL)) ) then
       !print *,"case2"
       interpolate = f(x_len,y_len)
 
-    else if (x <= minx .and. y >= maxy) then ! case 3
+    ! case 3
+    !else if (x <= minx .and. y >= maxy) then
+    else if ( ((x < minx) .or. (abs(x-minx) < TINYVAL)) .and. ((y > maxy) .or. (abs(y-maxy) < TINYVAL)) ) then
       !print *,"case3"
       interpolate = f(1,y_len)
 
-    else if (x >= maxx .and. y <= miny) then ! case 4
+    ! case 4
+    !else if (x >= maxx .and. y <= miny) then
+    else if ( ((x > maxx) .or. (abs(x-maxx) < TINYVAL)) .and. ((y < miny) .or. (abs(y-miny) < TINYVAL)) ) then
       !print *,"case4"
       interpolate = f(x_len,1)
 
-    else if (x >= minx .and. x <= maxx .and. y <= miny) then ! case 5
+    ! case 5
+    !else if (x >= minx .and. x <= maxx .and. y <= miny) then
+    else if ( ((x > minx) .or. (abs(x-minx) < TINYVAL)) .and. &
+              ((x < maxx) .or. (abs(x-maxx) < TINYVAL)) .and. &
+              ((y < miny) .or. (abs(y-miny) < TINYVAL)) ) then
       !print *,"case5"
       y1 = y_array(1)
       y2 = y_array(2)
@@ -224,7 +239,11 @@ module interpolation
       denom = (x2 - x1)*(y2 - y1)
       interpolate = (f(i,j)*(x2-x)*(y2-y1) + f(i+1,j)*(x-x1)*(y2-y1))/denom
 
-    else if (x >= minx .and. x <= maxx .and. y >= maxy) then ! case 6
+    ! case 6
+    !else if (x >= minx .and. x <= maxx .and. y >= maxy) then
+    else if ( ((x > minx) .or. (abs(x-minx) < TINYVAL)) .and. &
+              ((x < maxx) .or. (abs(x-maxx) < TINYVAL)) .and. &
+              ((y > maxy) .or. (abs(y-maxy) < TINYVAL)) ) then
       !print *,"case6"
       y1 = y_array(y_len-1)
       y2 = y_array(y_len)
@@ -241,7 +260,11 @@ module interpolation
       denom = (x2 - x1)*(y2 - y1)
       interpolate = (f(i,j+1)*(x2-x)*(y2-y1) + f(i+1, j+1)*(x-x1)*(y2-y1))/denom
 
-    else if (x <= minx .and. y >= miny .and. y <= maxy) then ! case 7
+    ! case 7
+    !else if (x <= minx .and. y >= miny .and. y <= maxy) then
+    else if ( ((x < minx) .or. (abs(x-minx) < TINYVAL)) .and. &
+              ((y > miny) .or. (abs(y-miny) < TINYVAL)) .and. &
+              ((y < maxy) .or. (abs(y-maxy) < TINYVAL)) ) then
       !print *,"case7"
       x1 = x_array(1)
       x2 = x_array(2)
@@ -258,7 +281,11 @@ module interpolation
       denom = (x2 - x1)*(y2 - y1)
       interpolate = (f(i,j)*(x2-x1)*(y2-y) + f(i,j+1)*(x2-x1)*(y-y1))/denom
 
-    else if (x >= maxx .and. y >= miny .and. y <= maxy) then ! case 8
+    ! case 8
+    !else if (x >= maxx .and. y >= miny .and. y <= maxy) then
+    else if ( ((x > maxx) .or. (abs(x-maxx) < TINYVAL)) .and. &
+              ((y > miny) .or. (abs(y-miny) < TINYVAL)) .and. &
+              ((y < maxy) .or. (abs(y-maxy) < TINYVAL)) ) then
       !print *,"case8"
       x1 = x_array(x_len-1)
       x2 = x_array(x_len)
@@ -275,7 +302,9 @@ module interpolation
       denom = (x2 - x1)*(y2 - y1)
       interpolate = (f(i+1,j)*(x2-x1)*(y2-y) + f(i+1,j+1)*(x2-x1)*(y-y1))/denom
 
-    else ! case 9 ! The point is exactly on the area defined
+    ! case 9
+    else
+      ! The point is exactly on the area defined
       !print *,"case9"
       i = searchInf(x_len, x_array, x) ! Test also if the array is increasing
       j = searchInf(y_len, y_array, y) ! Test also if the array is increasing

@@ -96,51 +96,68 @@
     write(IMAIN,*) 'IX from ',ix_start,' to ',ix_end
     write(IMAIN,*) 'IZ from ',iz_start,' to ',iz_end
 
+    ! note on supported model formats:
+    !  acoustic                - model_number  1 rho    Vp   0   0   0 QKappa Qmu   0   0   0    0      0   0
+    !  elastic                 - model_number  1 rho    Vp  Vs   0   0 QKappa Qmu   0   0   0    0      0   0
+    !  anisotropic             - model_number  2 rho   c11 c13 c15 c33    c35 c55 c12 c23 c25    0 QKappa Qmu
+    !  anisotropic (in AXISYM) - model_number  2 rho   c11 c13 c15 c33    c35 c55 c12 c23 c25  c22 QKappa Qmu
+    !  poroelastic             - model_number  3 rhos rhof phi   c kxx    kxz kzz  Ks  Kf Kfr etaf   mufr Qmu
+    !  tomo                    - model_number -1 0       0   A   0   0      0   0   0   0   0    0      0   0
+    !
+    ! in particular, icodemat(imaterial_number) can be negative for tomographic models
+
     ! determines region domain
     if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. icodemat(imaterial_number) /= POROELASTIC_MATERIAL) then
-       ! isotropic material
-       vpregion = cp(imaterial_number)
-       vsregion = cs(imaterial_number)
+      ! isotropic material
+      vpregion = cp(imaterial_number)
+      vsregion = cs(imaterial_number)
 
-       write(IMAIN,*) 'Material # ',imaterial_number,' isotropic'
-       if (vsregion < TINYVAL) then
-          write(IMAIN,*) 'Material is fluid'
-       else
-          write(IMAIN,*) 'Material is solid'
-       endif
-       write(IMAIN,*) 'vp     = ',sngl(vpregion)
-       write(IMAIN,*) 'vs     = ',sngl(vsregion)
-       write(IMAIN,*) 'rho    = ',sngl(rho_s_read(imaterial_number))
-       if (vpregion == vsregion) stop 'Materials cannot have Vs = Vp, there is an error in your input file'
-       poisson_ratio = 0.5d0*(vpregion*vpregion - 2.d0*vsregion*vsregion) / (vpregion*vpregion - vsregion*vsregion)
-       write(IMAIN,*) 'Poisson''s ratio = ',sngl(poisson_ratio)
-       write(IMAIN,*) 'QKappa = ',sngl(QKappa(imaterial_number))
-       write(IMAIN,*) 'Qmu    = ',sngl(Qmu(imaterial_number))
+      write(IMAIN,*) 'Material # ',imaterial_number,' isotropic'
+      if (vsregion < TINYVAL) then
+        write(IMAIN,*) 'Material is fluid'
+      else
+        write(IMAIN,*) 'Material is solid'
+      endif
+      write(IMAIN,*) 'vp     = ',sngl(vpregion)
+      write(IMAIN,*) 'vs     = ',sngl(vsregion)
+      write(IMAIN,*) 'rho    = ',sngl(rho_s_read(imaterial_number))
+      if (vpregion == vsregion) stop 'Materials cannot have Vs = Vp, there is an error in your input file'
 
-       if (poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) call stop_the_code('incorrect value of Poisson''s ratio')
+      ! Poisson ratio (only for non-tomographic models, where vp/vs have been defined)
+      if (icodemat(imaterial_number) > 0) then
+        poisson_ratio = 0.5d0*(vpregion*vpregion - 2.d0*vsregion*vsregion) / (vpregion*vpregion - vsregion*vsregion)
+        write(IMAIN,*) 'Poisson''s ratio = ',sngl(poisson_ratio)
+        write(IMAIN,*) 'QKappa = ',sngl(QKappa(imaterial_number))
+        write(IMAIN,*) 'Qmu    = ',sngl(Qmu(imaterial_number))
+
+        if (poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) call stop_the_code('incorrect value of Poisson''s ratio')
+      else
+        ! tomographic material
+        write(IMAIN,*) 'tomographic material = ',icodemat(imaterial_number)
+      endif
 
     else if (icodemat(imaterial_number) == POROELASTIC_MATERIAL) then
-       ! poroelastic material
-       write(IMAIN,*) 'Material # ',imaterial_number,' isotropic'
-       write(IMAIN,*) 'Material is poroelastic'
+      ! poroelastic material
+      write(IMAIN,*) 'Material # ',imaterial_number,' isotropic'
+      write(IMAIN,*) 'Material is poroelastic'
 
     else
-       ! anisotropic material
-       write(IMAIN,*) 'Material # ',imaterial_number,' anisotropic'
-       write(IMAIN,*) 'cp = ',sngl(cp(imaterial_number))
-       write(IMAIN,*) 'cs = ',sngl(cs(imaterial_number))
-       write(IMAIN,*) 'c11 = ',sngl(aniso3(imaterial_number))
-       write(IMAIN,*) 'c13 = ',sngl(aniso4(imaterial_number))
-       write(IMAIN,*) 'c15 = ',sngl(aniso5(imaterial_number))
-       write(IMAIN,*) 'c33 = ',sngl(aniso6(imaterial_number))
-       write(IMAIN,*) 'c35 = ',sngl(aniso7(imaterial_number))
-       write(IMAIN,*) 'c55 = ',sngl(aniso8(imaterial_number))
-       write(IMAIN,*) 'c12 = ',sngl(aniso9(imaterial_number))
-       write(IMAIN,*) 'c23 = ',sngl(aniso10(imaterial_number))
-       write(IMAIN,*) 'c25 = ',sngl(aniso11(imaterial_number))
-       write(IMAIN,*) 'rho = ',sngl(rho_s_read(imaterial_number))
-       write(IMAIN,*) 'QKappa = ',sngl(QKappa(imaterial_number))
-       write(IMAIN,*) 'Qmu = ',sngl(Qmu(imaterial_number))
+      ! anisotropic material
+      write(IMAIN,*) 'Material # ',imaterial_number,' anisotropic'
+      write(IMAIN,*) 'cp = ',sngl(cp(imaterial_number))
+      write(IMAIN,*) 'cs = ',sngl(cs(imaterial_number))
+      write(IMAIN,*) 'c11 = ',sngl(aniso3(imaterial_number))
+      write(IMAIN,*) 'c13 = ',sngl(aniso4(imaterial_number))
+      write(IMAIN,*) 'c15 = ',sngl(aniso5(imaterial_number))
+      write(IMAIN,*) 'c33 = ',sngl(aniso6(imaterial_number))
+      write(IMAIN,*) 'c35 = ',sngl(aniso7(imaterial_number))
+      write(IMAIN,*) 'c55 = ',sngl(aniso8(imaterial_number))
+      write(IMAIN,*) 'c12 = ',sngl(aniso9(imaterial_number))
+      write(IMAIN,*) 'c23 = ',sngl(aniso10(imaterial_number))
+      write(IMAIN,*) 'c25 = ',sngl(aniso11(imaterial_number))
+      write(IMAIN,*) 'rho = ',sngl(rho_s_read(imaterial_number))
+      write(IMAIN,*) 'QKappa = ',sngl(QKappa(imaterial_number))
+      write(IMAIN,*) 'Qmu = ',sngl(Qmu(imaterial_number))
     endif
 
     ! store density and velocity model

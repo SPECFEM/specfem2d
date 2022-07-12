@@ -35,7 +35,8 @@
 
 ! reads properties of a 2D isotropic or anisotropic linear elastic element
 
-  use constants, only: IIN,IMAIN,ZERO,FOUR_THIRDS,TWO_THIRDS,HALF,TINYVAL
+  use constants, only: IIN,IMAIN,ZERO,FOUR_THIRDS,TWO_THIRDS,HALF,TINYVAL, &
+                       ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL
 
   use specfem_par, only: AXISYM,density,porosity,tortuosity,anisotropycoef,permeability,poroelastcoef, &
                           numat,myrank,QKappa_attenuationcoef,Qmu_attenuationcoef, &
@@ -112,7 +113,7 @@
 
     !---- isotropic material, P and S velocities given, allows for declaration of elastic/acoustic material
     !---- elastic (cs /= 0) and acoustic (cs = 0)
-    if (indic == 1) then
+    if (indic == ISOTROPIC_MATERIAL) then
       ! isotropic elastic/acoustic material
 
       ! line format:
@@ -155,7 +156,7 @@
       if (poisson < -1.d0 .or. poisson > 0.5d0) call exit_MPI(myrank,'Poisson''s ratio out of range')
 
     !---- anisotropic material, c11, c13, c33 and c44 given in Pascal
-    else if (indic == 2) then
+    else if (indic == ANISOTROPIC_MATERIAL) then
       ! anisotropic elastic material
 
       ! line format:
@@ -220,7 +221,7 @@
 
     !---- isotropic material, moduli are given, allows for declaration of poroelastic material
     !---- poroelastic (0 < phi < 1)
-    else if (indic == 3) then
+    else if (indic == POROELASTIC_MATERIAL) then
       ! poroelastic material
 
       ! line format:
@@ -313,7 +314,7 @@
     !
     !----  set elastic coefficients and density
     !
-    if (indic == 1) then
+    if (indic == ISOTROPIC_MATERIAL) then
       ! isotropic elastic/acoustic material
 
       density(1,n) = density_mat(1)
@@ -332,7 +333,7 @@
         porosity(n) = 1.d0
       endif
 
-    else if (indic == 2) then
+    else if (indic == ANISOTROPIC_MATERIAL) then
       ! anisotropic elastic material
 
       density(1,n) = density_mat(1)
@@ -359,7 +360,7 @@
 
       porosity(n) = 0.d0
 
-    else if (indic == 3) then
+    else if (indic == POROELASTIC_MATERIAL) then
       ! poroelastic material
 
       density(1,n) = density_mat(1)
@@ -411,7 +412,7 @@
     !
     if (myrank == 0) then
       ! user output
-      if (indic == 1) then
+      if (indic == ISOTROPIC_MATERIAL) then
         ! elastic/acoustic
 
         ! material can be acoustic (fluid) or elastic (solid)
@@ -431,7 +432,7 @@
           write(IMAIN,300) n,cp,density_mat(1),kappa,QKappa,Qmu
         endif
 
-      else if (indic == 2) then
+      else if (indic == ANISOTROPIC_MATERIAL) then
         ! elastic (anisotropic)
 
         if (AXISYM) then
@@ -440,7 +441,7 @@
           write(IMAIN,400) n,density_mat(1),c11,c13,c15,c33,c35,c55,c12,c23,c25,Qkappa,Qmu
         endif
 
-      else if (indic == 3) then
+      else if (indic == POROELASTIC_MATERIAL) then
         ! material is poroelastic (solid/fluid)
 
         write(IMAIN,500) n,sqrt(cpIsquare),sqrt(cpIIsquare),sqrt(cssquare)
