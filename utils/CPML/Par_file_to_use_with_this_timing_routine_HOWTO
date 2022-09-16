@@ -197,6 +197,9 @@ save_ASCII_kernels              = .true.
 # since the accuracy of kernel integration may not need to respect the CFL, this option permits to save computing time, and memory with UNDO_ATTENUATION_AND_OR_PML mode
 NTSTEP_BETWEEN_COMPUTE_KERNELS  = 1
 
+# outputs approximate Hessian for preconditioning
+APPROXIMATE_HESS_KL             = .false.
+
 #-----------------------------------------------------------
 #
 # Boundary conditions
