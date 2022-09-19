@@ -64,6 +64,9 @@
     comp_source_time_function_d2Gaussian,comp_source_time_function_d3Gaussian,marmousi_ormsby_wavelet,cos_taper
   double precision, external :: comp_source_time_function_Ricker,comp_source_time_function_d2Ricker
 
+  ! outputs source time function to file
+  logical, parameter :: PLOT_SOURCE_TIME_FUNCTION = .true.
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
@@ -121,18 +124,6 @@
 
   ! initializes stf array
   source_time_function(:,:,:) = 0.d0
-
-  ! user output
-  if (myrank == islice_selected_source(1)) then
-    if (myrank == 0) then
-      write(IMAIN,*) '  saving the source time function in a text file...'
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
-    ! opens source time file for output
-    open(unit=55,file=trim(OUTPUT_FILES)//'plot_source_time_function.txt',status='unknown',iostat=ier)
-    if (ier /= 0) call stop_the_code('Error opening source time function text-file')
-  endif
 
   ! loop on all the sources
   do i_source = 1,NSOURCES
@@ -479,23 +470,81 @@
 
           end select
 
-          ! outputs (first source) source time function
-          if (i_source == 1 .and. i_stage == 1) then
-            stf_used = source_time_function(i_source,it,i_stage)
-
-            ! note: earliest start time of the simulation is: (it-1)*DT - t0 - tshift_src(i_source)
-            if (myrank == islice_selected_source(1)) write(55,*) timeval-t0,' ',stf_used
-
-          endif
         endif
       enddo
     enddo
   enddo
 
-  ! closes STF file
-  if (myrank == islice_selected_source(1)) close(55)
+  ! plots source time function to file
+  if (PLOT_SOURCE_TIME_FUNCTION) then
 
-  !print *,"myrank:",myrank,"Ok"
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  saving the source time function in a text file...'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    ! outputs (first source) source time function
+    i_source = 1
+    i_stage = 1
+
+    if (myrank == islice_selected_source(i_source)) then
+
+      ! opens source time file for output
+      open(unit=55,file=trim(OUTPUT_FILES)//'plot_source_time_function.txt',status='unknown',iostat=ier)
+      if (ier /= 0) call stop_the_code('Error opening source time function text-file')
+
+      do it = 1,NSTEP
+
+        ! compute current time
+        select case(time_stepping_scheme)
+        case (1)
+          ! Newmark
+          timeval = dble(it-1)*DT
+        case (2)
+          ! LDDRK: Low-Dissipation and low-dispersion Runge-Kutta
+          ! note: the LDDRK scheme updates displacement after the stiffness computations and
+          !       after adding boundary/coupling/source terms.
+          !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme.
+          !       we therefore at an additional -DT to have the corresponding timing for the source.
+          timeval = dble(it-1-1)*DT + dble(C_LDDRK(i_stage))*DT
+        case (3)
+          ! RK: Runge-Kutta
+          ! note: similar like LDDRK above, displ(n+1) will be determined after stiffness/source/.. computations.
+          !       thus, adding an additional -DT to have the same timing in seismogram as Newmark
+          timeval = dble(it-1-1)*DT + dble(C_RK4(i_stage))*DT
+        case (4)
+          ! symplectic PEFRL
+          ! note: similar like LDDRK above, displ(n+1) will be determined after final stage of stiffness/source/.. computations.
+          !       thus, adding an additional -DT to have the same timing in seismogram as Newmark
+          !
+          !       for symplectic schemes, the current stage time step size is the sum of all previous and current coefficients
+          !          sum( ALPHA_SYMPLECTIC(1:i_stage) ) * DT
+          timeval = dble(it-1-1)*DT + dble(sum(ALPHA_SYMPLECTIC(1:i_stage))) * DT
+        case default
+          call exit_MPI(myrank,'Error invalid time stepping scheme chosen, please check...')
+        end select
+
+        t_used = timeval - t0 - tshift_src(i_source)
+
+        stf_used = source_time_function(i_source,it,i_stage)
+
+        ! note: earliest start time of the simulation is: (it-1)*DT - t0 - tshift_src(i_source)
+        write(55,*) t_used,' ',stf_used
+
+      enddo
+
+      ! closes STF file
+      close(55)
+
+    endif  ! myrank == islice_selected_source(i_source)
+
+  endif ! PLOT_SOURCE_TIME_FUNCTION
+
+  !debug
+  !call synchronize_all()
+  !print *,"debug: prepare STF - myrank:",myrank,"Ok"
 
   ! synchronizes all processes
   call synchronize_all()
