@@ -15,7 +15,11 @@ echo
 mkdir -p OUTPUT_FILES
 
 # cleans output files
-rm -rf OUTPUT_FILES/*
+if [ "$1" != "noclean" ]; then
+  echo "cleaning OUTPUT_FILES/"
+  # cleans output files
+  rm -rf OUTPUT_FILES/*
+fi
 
 cd $currentdir
 

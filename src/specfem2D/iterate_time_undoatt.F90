@@ -232,7 +232,7 @@
         ! display time step and max of norm of displacement
         if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) call check_stability()
 
-        do i_stage = 1, stage_time_scheme ! is equal to 1 if Newmark because only one stage then
+        do i_stage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
           ! update displacement
           select case(time_stepping_scheme)
@@ -357,7 +357,7 @@
         ! We compute the forward reconstructed wavefield first
         compute_b_wavefield = .true.
 
-        do i_stage = 1, stage_time_scheme
+        do i_stage = 1, NSTAGE_TIME_SCHEME
           ! backward_inner_loop
           ! update displacement
           select case(time_stepping_scheme)
@@ -495,7 +495,7 @@
         ! we only compute the adjoint wavefield on the next loop
         compute_b_wavefield = .false.
 
-        do i_stage = 1, stage_time_scheme
+        do i_stage = 1, NSTAGE_TIME_SCHEME
           ! adjoint
           ! update displacement
           select case(time_stepping_scheme)

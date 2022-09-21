@@ -313,7 +313,7 @@
   if (initialfield) then
     allocate(source_time_function(1,1,1))
   else
-    allocate(source_time_function(NSOURCES,NSTEP,stage_time_scheme),stat=ier)
+    allocate(source_time_function(NSOURCES,NSTEP,NSTAGE_TIME_SCHEME),stat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error allocating array source_time_function')
   endif
 

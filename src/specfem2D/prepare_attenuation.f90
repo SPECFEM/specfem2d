@@ -226,13 +226,13 @@
     allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
     allocate(e11_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
     allocate(e13_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
-    allocate(e1_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
-    allocate(e11_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
-    allocate(e13_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
+    allocate(e1_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,NSTAGE_TIME_SCHEME))
+    allocate(e11_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,NSTAGE_TIME_SCHEME))
+    allocate(e13_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,NSTAGE_TIME_SCHEME))
     ! acoustic domains
     if (ATTENUATION_VISCOACOUSTIC) then
       allocate(e1_initial_rk_acous(nglob_att,N_SLS))
-      allocate(e1_force_rk_acous(nglob_att,N_SLS,stage_time_scheme))
+      allocate(e1_force_rk_acous(nglob_att,N_SLS,NSTAGE_TIME_SCHEME))
     else
       allocate(e1_initial_rk_acous(1,1))
       allocate(e1_force_rk_acous(1,1,1))
@@ -478,8 +478,8 @@
     if (time_stepping_scheme == 3) then
       allocate(rx_viscous_initial_rk(NGLLX,NGLLZ,nspec))
       allocate(rz_viscous_initial_rk(NGLLX,NGLLZ,nspec))
-      allocate(rx_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
-      allocate(rz_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
+      allocate(rx_viscous_force_RK(NGLLX,NGLLZ,nspec,NSTAGE_TIME_SCHEME))
+      allocate(rz_viscous_force_RK(NGLLX,NGLLZ,nspec,NSTAGE_TIME_SCHEME))
       rx_viscous_initial_rk(:,:,:) = 0.d0
       rz_viscous_initial_rk(:,:,:) = 0.d0
       rx_viscous_force_RK(:,:,:,:) = 0.d0

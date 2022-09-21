@@ -152,7 +152,7 @@
       call check_stability()
     endif
 
-    do i_stage = 1, stage_time_scheme
+    do i_stage = 1, NSTAGE_TIME_SCHEME
 
       ! updates wavefields
       select case(time_stepping_scheme)
@@ -360,7 +360,7 @@
         endif
       end select
 
-    enddo ! stage_time_scheme (LDDRK or RK)
+    enddo ! NSTAGE_TIME_SCHEME (LDDRK or RK)
 
     ! reads in lastframe for adjoint/kernels calculation
     if (SIMULATION_TYPE == 3 .and. it == 1 .and. .not. NO_BACKWARD_RECONSTRUCTION) then

@@ -243,7 +243,7 @@
     ! example: NSTEP = 800 -> 800,799,..,1
     it_temp = NSTEP - it + 1
     ! time scheme
-    istage_temp = stage_time_scheme - i_stage + 1
+    istage_temp = NSTAGE_TIME_SCHEME - i_stage + 1
   endif
 
   ! main solver for the elastic elements

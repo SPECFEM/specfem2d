@@ -39,8 +39,17 @@
 
   implicit none
 
+  ! local parameters
+  double precision :: tCPU,tstart
+  double precision, external :: wtime
+
   ! user output
   call synchronize_all()
+
+  ! get MPI starting time
+  tstart = wtime()
+
+  ! user output
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) "Preparing timerun:"
@@ -185,9 +194,38 @@
 
   ! user output
   if (myrank == 0) then
+    ! elapsed time since beginning of preparation
+    tCPU = wtime() - tstart
     write(IMAIN,*)
-    write(IMAIN,*) "done, preparation successful"
+    write(IMAIN,*) 'Elapsed time for preparing timerun in seconds = ',tCPU
     write(IMAIN,*)
+    write(IMAIN,*) '************'
+    write(IMAIN,*) ' time loop'
+    write(IMAIN,*) '************'
+    select case(time_stepping_scheme)
+    case (1)
+      ! Newmark time scheme
+      write(IMAIN,*) '              scheme:         Newmark'
+    case (2)
+      ! LDDRK
+      write(IMAIN,*) '              scheme:         LDDRK      with',NSTAGE_TIME_SCHEME,'stages'
+    case (3)
+      ! RK4
+      write(IMAIN,*) '              scheme:         RK4        with',NSTAGE_TIME_SCHEME,'stages'
+    case (4)
+      ! symplectic PEFRL
+      write(IMAIN,*) '              scheme:         symplectic with',NSTAGE_TIME_SCHEME,'stages'
+    case default
+      call stop_the_code('Error time scheme not implemente yet')
+    end select
+    write(IMAIN,*)
+    write(IMAIN,*) '           time step: ',sngl(DT),' s'
+    write(IMAIN,*) 'number of time steps: ',NSTEP
+    write(IMAIN,*) 'total simulated time: ',sngl(NSTEP*DT),' seconds'
+    write(IMAIN,*) 'start time:',sngl(-t0),' seconds'
+    write(IMAIN,*)
+
+    ! flushes file buffer for main output file (IMAIN)
     call flush_IMAIN()
   endif
 
@@ -209,8 +247,8 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*)
     write(IMAIN,*) 'Preparing timerun constants'
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 

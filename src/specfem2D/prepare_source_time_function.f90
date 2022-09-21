@@ -42,7 +42,7 @@
   use specfem_par, only: NSTEP, NSOURCES, source_time_function, &
                          time_function_type, name_of_source_file, burst_band_width, f0_source,tshift_src, &
                          factor, t0, DT, SOURCE_IS_MOVING, &
-                         time_stepping_scheme, stage_time_scheme, islice_selected_source, &
+                         time_stepping_scheme, NSTAGE_TIME_SCHEME, islice_selected_source, &
                          USE_TRICK_FOR_BETTER_PRESSURE, myrank, initialfield
 
   implicit none
@@ -97,7 +97,7 @@
   end select
 
   if (myrank == 0) then
-    write(IMAIN,*) '  time stepping stages: ',stage_time_scheme
+    write(IMAIN,*) '  time stepping stages: ',NSTAGE_TIME_SCHEME
     write(IMAIN,*) '  time step size      : ',sngl(DT)
     write(IMAIN,*)
     write(IMAIN,*) '  number of time steps: ',NSTEP
@@ -118,7 +118,7 @@
     ! we're all done
     return
   else
-    allocate(source_time_function(NSOURCES,NSTEP,stage_time_scheme),stat=ier)
+    allocate(source_time_function(NSOURCES,NSTEP,NSTAGE_TIME_SCHEME),stat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error allocating array source_time_function')
   endif
 
@@ -161,7 +161,7 @@
       endif
     endif
 
-    do i_stage = 1,stage_time_scheme
+    do i_stage = 1,NSTAGE_TIME_SCHEME
 
       ! loop on all the time steps
       do it = 1,NSTEP

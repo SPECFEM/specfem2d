@@ -191,16 +191,16 @@
   select case (time_stepping_scheme)
   case (1)
     ! Newmark
-    stage_time_scheme = 1
+    NSTAGE_TIME_SCHEME = 1
   case (2)
     ! LDDRK
-    stage_time_scheme = NSTAGE_LDDRK ! 6
+    NSTAGE_TIME_SCHEME = NSTAGE_LDDRK ! 6
   case (3)
     ! Runge-Kutta
-    stage_time_scheme = NSTAGE_RK4   ! 4
+    NSTAGE_TIME_SCHEME = NSTAGE_RK4   ! 4
   case (4)
     ! symplectic PEFRL
-    stage_time_scheme = NSTAGE_SYMPLECTIC ! 4
+    NSTAGE_TIME_SCHEME = NSTAGE_SYMPLECTIC ! 4
   case default
     call stop_the_code('Error invalid time stepping scheme value')
   end select

@@ -251,12 +251,12 @@ module moving_sources_par
       ! call cpu_time(start_time)
 
       ! note: the following routine and arrays assume there is only a single stage for the time scheme.
-      if (stage_time_scheme /= 1) stop 'Invalid number of stages of time scheme for moving sources'
+      if (NSTAGE_TIME_SCHEME /= 1) stop 'Invalid number of stages of time scheme for moving sources'
 
       ! counts sources in this process slice for this time step
       nsources_local = 0
 
-      do i_stage_loc = 1, stage_time_scheme  ! For now stage_time_scheme == 1 only because only Newmark time scheme are supported
+      do i_stage_loc = 1, NSTAGE_TIME_SCHEME  ! For now NSTAGE_TIME_SCHEME == 1 only because only Newmark time scheme are supported
 
         ! current time
         if (time_stepping_scheme == 1) then
@@ -501,7 +501,7 @@ module moving_sources_par
           !endif
 
         enddo  ! NSOURCES
-      enddo ! stage_time_scheme
+      enddo ! NSTAGE_TIME_SCHEME
 
       ! check
       if (nsources_local > NSOURCES) stop 'Invalid nsources_local for moving sources'

@@ -195,7 +195,7 @@
       ! add source
       if (.not. initialfield) then
         ! backward wavefield
-        call compute_add_sources_poro(b_accels_poroelastic,b_accelw_poroelastic,NSTEP-it+1,stage_time_scheme-i_stage+1)
+        call compute_add_sources_poro(b_accels_poroelastic,b_accelw_poroelastic,NSTEP-it+1,NSTAGE_TIME_SCHEME-i_stage+1)
       endif
     endif
 

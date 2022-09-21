@@ -262,7 +262,7 @@
     ! time increment
     it_temp = NSTEP - it + 1
     ! time scheme
-    istage_temp = stage_time_scheme - i_stage + 1
+    istage_temp = NSTAGE_TIME_SCHEME - i_stage + 1
   endif
 
   ! PML restores interface values

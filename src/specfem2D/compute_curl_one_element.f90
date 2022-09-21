@@ -31,16 +31,20 @@
 !
 !========================================================================
 
-  subroutine compute_curl_one_element(ispec,curl_element)
+  subroutine compute_curl_one_element(field_elastic,fields_poroelastic,ispec,curl_element)
 
 ! compute curl in (poro)elastic elements (for rotational study)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO
+  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,ZERO
 
-  use specfem_par, only: displ_elastic,displs_poroelastic,ispec_is_elastic,ispec_is_poroelastic, &
+  use specfem_par, only: nglob_elastic,nglob_poroelastic, &
+                         ispec_is_elastic,ispec_is_poroelastic, &
                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,myrank
 
   implicit none
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic),intent(in) :: field_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic),intent(in) :: fields_poroelastic
 
   integer,intent(in) :: ispec
 
@@ -73,10 +77,10 @@
         ! first double loop over GLL points to compute and store gradients
         ! we can merge the two loops because NGLLX == NGLLZ
         do k = 1,NGLLX
-          dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-          duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-          dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-          duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+          dux_dxi = dux_dxi + field_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+          duz_dxi = duz_dxi + field_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+          dux_dgamma = dux_dgamma + field_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+          duz_dgamma = duz_dgamma + field_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
         enddo
 
         xixl = xix(i,j,ispec)
@@ -107,10 +111,10 @@
         ! first double loop over GLL points to compute and store gradients
         ! we can merge the two loops because NGLLX == NGLLZ
         do k = 1,NGLLX
-          dux_dxi = dux_dxi + displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-          duz_dxi = duz_dxi + displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-          dux_dgamma = dux_dgamma + displs_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-          duz_dgamma = duz_dgamma + displs_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+          dux_dxi = dux_dxi + fields_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+          duz_dxi = duz_dxi + fields_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+          dux_dgamma = dux_dgamma + fields_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+          duz_dgamma = duz_dgamma + fields_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
         enddo
 
         xixl = xix(i,j,ispec)

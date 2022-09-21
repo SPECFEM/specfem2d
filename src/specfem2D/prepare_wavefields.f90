@@ -45,7 +45,6 @@
 
   ! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
   if (myrank == 0) then
-    write(IMAIN,*)
     write(IMAIN,*) 'Preparing array allocations'
     call flush_IMAIN()
   endif
@@ -105,8 +104,8 @@
   if (time_stepping_scheme == 3) then
     allocate(potential_acoustic_init_rk(nglob_acoustic), &
              potential_dot_acoustic_init_rk(nglob_acoustic), &
-             potential_dot_dot_acoustic_rk(nglob_acoustic,stage_time_scheme), &
-             potential_dot_acoustic_rk(nglob_acoustic,stage_time_scheme),stat=ier)
+             potential_dot_dot_acoustic_rk(nglob_acoustic,NSTAGE_TIME_SCHEME), &
+             potential_dot_acoustic_rk(nglob_acoustic,NSTAGE_TIME_SCHEME),stat=ier)
     if (ier /= 0) call stop_the_code('Error allocating acoustic RK arrays')
     potential_acoustic_init_rk(:) = 0._CUSTOM_REAL; potential_dot_acoustic_init_rk(:) = 0._CUSTOM_REAL
     potential_dot_dot_acoustic_rk(:,:) = 0._CUSTOM_REAL; potential_dot_acoustic_rk(:,:) = 0._CUSTOM_REAL
@@ -210,8 +209,8 @@
 
   ! RK4
   if (time_stepping_scheme == 3) then
-    allocate(accel_elastic_rk(NDIM,nglob_elastic,stage_time_scheme), &
-             veloc_elastic_rk(NDIM,nglob_elastic,stage_time_scheme), &
+    allocate(accel_elastic_rk(NDIM,nglob_elastic,NSTAGE_TIME_SCHEME), &
+             veloc_elastic_rk(NDIM,nglob_elastic,NSTAGE_TIME_SCHEME), &
              veloc_elastic_initial_rk(NDIM,nglob_elastic), &
              displ_elastic_initial_rk(NDIM,nglob_elastic),stat=ier)
     if (ier /= 0) call stop_the_code('Error allocating elastic RK wavefield arrays')
@@ -328,10 +327,10 @@
 
   ! RK4
   if (time_stepping_scheme == 3) then
-    allocate(accels_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme), &
-             velocs_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme), &
-             accelw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme), &
-             velocw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme), &
+    allocate(accels_poroelastic_rk(NDIM,nglob_poroelastic,NSTAGE_TIME_SCHEME), &
+             velocs_poroelastic_rk(NDIM,nglob_poroelastic,NSTAGE_TIME_SCHEME), &
+             accelw_poroelastic_rk(NDIM,nglob_poroelastic,NSTAGE_TIME_SCHEME), &
+             velocw_poroelastic_rk(NDIM,nglob_poroelastic,NSTAGE_TIME_SCHEME), &
              displs_poroelastic_initial_rk(NDIM,nglob_poroelastic), &
              velocs_poroelastic_initial_rk(NDIM,nglob_poroelastic), &
              displw_poroelastic_initial_rk(NDIM,nglob_poroelastic), &
@@ -462,6 +461,7 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '  done initialization'
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 

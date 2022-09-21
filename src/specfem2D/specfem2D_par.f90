@@ -305,7 +305,7 @@ module specfem_par
   ! for time discretization
   !---------------------------------------------------------------------
   ! for LDDRK46
-  integer :: i_stage,stage_time_scheme
+  integer :: i_stage,NSTAGE_TIME_SCHEME
 
   ! coefficients of the explicit Newmark time scheme
   real(kind=CUSTOM_REAL) :: deltat,deltatover2,deltatsquareover2

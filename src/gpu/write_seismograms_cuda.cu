@@ -54,6 +54,11 @@ void FC_FUNC_(compute_seismograms_cuda,
   // compute_seismograms
   TRACE("compute_seismograms_cuda");
 
+  // flag to indicate that traces for kernel runs are taken from backward/reconstructed wavefields instead of adjoint wavefields;
+  // useful for debugging.
+  // default (0) is to output adjoint wavefield
+  const int OUTPUT_BACKWARD_WAVEFIELD = 0;
+
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
 
   // synchronizes to wait for cuda computations to be completed before copying wavefield values
@@ -127,26 +132,47 @@ void FC_FUNC_(compute_seismograms_cuda,
 
   if (seismotype == 1){
     // deplacement
-    displ = mp->d_displ;
-    potential = mp->d_potential_acoustic;
-
+    if (OUTPUT_BACKWARD_WAVEFIELD && mp->simulation_type == 3){
+      displ = mp->d_b_displ;
+      potential = mp->d_b_potential_acoustic;
+    }else{
+      displ = mp->d_displ;
+      potential = mp->d_potential_acoustic;
+    }
   }else if (seismotype == 2){
     // vitesse
-    displ = mp->d_veloc;
-    potential = mp->d_potential_dot_acoustic;
-
+    if (OUTPUT_BACKWARD_WAVEFIELD && mp->simulation_type == 3){
+      displ = mp->d_b_veloc;
+      potential = mp->d_b_potential_dot_acoustic;
+    }else{
+      displ = mp->d_veloc;
+      potential = mp->d_potential_dot_acoustic;
+    }
   }else if (seismotype == 3){
     // acceleration
-    displ = mp->d_accel;
-    potential = mp->d_potential_dot_dot_acoustic;
-
+    if (OUTPUT_BACKWARD_WAVEFIELD && mp->simulation_type == 3){
+      displ = mp->d_b_accel;
+      potential = mp->d_b_potential_dot_dot_acoustic;
+    }else{
+      displ = mp->d_accel;
+      potential = mp->d_potential_dot_dot_acoustic;
+    }
   }else if (seismotype == 4){
     // pression
-    displ = mp->d_displ;
-    if (*USE_TRICK_FOR_BETTER_PRESSURE){
-      potential = mp->d_potential_acoustic;
+    if (OUTPUT_BACKWARD_WAVEFIELD && mp->simulation_type == 3){
+      displ = mp->d_b_displ;
+      if (*USE_TRICK_FOR_BETTER_PRESSURE){
+        potential = mp->d_b_potential_acoustic;
+      }else{
+        potential = mp->d_b_potential_dot_dot_acoustic;
+      }
     }else{
-      potential = mp->d_potential_dot_dot_acoustic;
+      displ = mp->d_displ;
+      if (*USE_TRICK_FOR_BETTER_PRESSURE){
+        potential = mp->d_potential_acoustic;
+      }else{
+        potential = mp->d_potential_dot_dot_acoustic;
+      }
     }
   }
 
