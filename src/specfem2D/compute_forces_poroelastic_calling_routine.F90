@@ -62,9 +62,10 @@
       if (USE_PORO_VISCOUS_DAMPING) call compute_forces_poro_viscous_damping()
 
       ! Stacey absorbing boundary
-      if (anyabs) then
-        call compute_stacey_poro_fluid()
-        call compute_stacey_poro_solid()
+      ! Stacey boundary conditions
+      if (STACEY_ABSORBING_CONDITIONS) then
+        call compute_stacey_poro_fluid(accelw_poroelastic,velocs_poroelastic,velocw_poroelastic)
+        call compute_stacey_poro_solid(accels_poroelastic,velocs_poroelastic,velocw_poroelastic)
       endif
 
       ! add coupling with the acoustic side
@@ -149,6 +150,7 @@
 
   implicit none
 
+  ! local parameters
   ! non-blocking MPI
   ! iphase: iphase = 1 is for computing outer elements (on MPI interface),
   !         iphase = 2 is for computing inner elements
@@ -176,10 +178,15 @@
       ! viscous damping
       if (USE_PORO_VISCOUS_DAMPING) call compute_forces_poro_viscous_damping_backward()
 
-      ! Stacey absorbing boundary
-      if (anyabs) then
-        call compute_stacey_poro_fluid_backward()
-        call compute_stacey_poro_solid_backward()
+      ! Stacey boundary conditions
+      if (STACEY_ABSORBING_CONDITIONS) then
+        if (UNDO_ATTENUATION_AND_OR_PML) then
+          call compute_stacey_poro_fluid(b_accelw_poroelastic,b_velocs_poroelastic,b_velocw_poroelastic)
+          call compute_stacey_poro_solid(b_accels_poroelastic,b_velocs_poroelastic,b_velocw_poroelastic)
+        else
+          call compute_stacey_poro_fluid_backward(b_accelw_poroelastic)
+          call compute_stacey_poro_solid_backward(b_accels_poroelastic)
+        endif
       endif
 
       ! add coupling with the acoustic side
