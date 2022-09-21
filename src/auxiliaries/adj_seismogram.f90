@@ -92,7 +92,7 @@ program adj_seismogram
     call get_command_argument(i,arg)
     if (trim(arg) == '' .or. command_argument_count() /= 4) then
       print *,'Usage: '
-      print *,'  xadj_seismogram t1 t2 station-name adj_comp[1-3]'
+      print *,'  xadj_seismogram t1 t2 station-name adj_comp[1-4]'
       print *,'with'
       print *,'  t1: window start time'
       print *,'  t2: window end time'
@@ -100,6 +100,7 @@ program adj_seismogram
       print *,'  adj_comp: 1 = adjoint source given by X component'
       print *,'  adj_comp: 2 = adjoint source given by Y component (SH waves)'
       print *,'  adj_comp: 3 = adjoint source given by Z component'
+      print *,'  adj_comp: 4 = adjoint source given by both X & Z component'
       stop 1
     endif
     select case (i)
@@ -118,8 +119,8 @@ program adj_seismogram
   enddo
 
   ! checks input arguments
-  if (adj_comp /= 1 .and. adj_comp /= 2 .and. adj_comp /= 3) then
-    print *,'Invalid adj_comp number, must be 1 (X-comp), 2 (Y-comp) or 3 (Z-comp)'
+  if (adj_comp /= 1 .and. adj_comp /= 2 .and. adj_comp /= 3 .and. adj_comp /= 4) then
+    print *,'Invalid adj_comp number, must be 1 (X-comp), 2 (Y-comp), 3 (Z-comp) or 4 (X & Z-comp)'
     stop 1
   endif
 
@@ -140,7 +141,7 @@ program adj_seismogram
   !tstart(1) = 27.0 + 8.0
   !tend(1) = 32.0 + 8.0
 
-  ! chose the component for the adjoint source (adj_comp = 1:X, 2:Y, 3:Z)
+  ! chose the component for the adjoint source (adj_comp = 1:X, 2:Y, 3:Z, 4:X&Z)
   !adj_comp = 1
   !---------------------------------
 
@@ -182,8 +183,8 @@ program adj_seismogram
     print *,'  seismogram labels       = ',compr(1),' / ',compr(2)
   endif
   print *
-  print *,'  time window start/end                           = ',tstart(1),tend(1)
-  print *,'  adjoint source trace component (1 == X / 2 == Y / 3 == Z) = ',adj_comp
+  print *,'  time window start/end                                                = ',tstart(1),tend(1)
+  print *,'  adjoint source trace component (1 == X / 2 == Y / 3 == Z / 4 == X&Z) = ',adj_comp
   print *
 
   ! basic check
@@ -311,9 +312,11 @@ program adj_seismogram
     enddo
 
     if (NDIMr == 2) then
+      ! P-SV: BXX and BXZ components
       seism(:,3) = seism(:,2)
       seism(:,2) = 0.d0
     else
+      ! SH-only: BXY
       seism(:,2) = seism(:,1)
       seism(:,1) = 0.d0
       seism(:,3) = 0.d0
@@ -353,6 +356,12 @@ program adj_seismogram
     ! outputs all 3-component X/Y/Z (needed for kernel simulations)
     do icomp = 1, NDIM
 
+      ! SH-only: skips X & Z components
+      if (NDIMr == 1 .and. icomp /= 2) cycle
+      ! P-SV: skips Y component
+      if (NDIMr == 2 .and. icomp == 2) cycle
+
+      ! output
       print *,'component: ',comp(icomp)
 
       filename = 'SEM/'//trim(station_name(irec))//'.'// comp(icomp) // '.adj'
@@ -383,6 +392,7 @@ program adj_seismogram
         stop 60
       end select
 
+      ! gets single trace
       seism_win(:) = seism(:,icomp)
 
       ! first time derivative (by finite-differences)
@@ -402,10 +412,15 @@ program adj_seismogram
       seism_accel(NSTEP) = (seism_veloc(NSTEP) - seism_veloc(NSTEP-1))/deltat
 
       ! cross-correlation traveltime adjoint source
+
+      ! normalization factor
+      ! based on acceleration trace (see Tromp et al. 2005; eq 42)
       Nnorm = deltat * sum(time_window(:) * seism_win(:) * seism_accel(:))
 
+      ! based on velocity trace
       !Nnorm = deltat * sum(time_window(:) * seism_veloc(:) * seism_veloc(:))
 
+      ! adjoint source (see Tromp et al. 2005; eq 45)
       if (abs(Nnorm) > EPS) then
          !ft_bar(:) = -seism_veloc(:) * time_window(:) / Nnorm
          ft_bar(:) = seism_veloc(:) * time_window(:) / Nnorm
@@ -415,13 +430,18 @@ program adj_seismogram
          print *,'Norm =', Nnorm
          ft_bar(:) = 0.d0
       endif
+
       print *
 
-      if (icomp == adj_comp) then
+      if (icomp == adj_comp &
+         .or. (icomp == 1 .and. adj_comp == 4) &
+         .or. (icomp == 3 .and. adj_comp == 4)) then
+        ! selected component
         do itime = 1,NSTEP
           write(11,*) (itime-1)*deltat + t0, ft_bar(itime)
         enddo
       else
+        ! zeros out source otherwise
         do itime = 1,NSTEP
           write(11,*) (itime-1)*deltat + t0, 0.d0
         enddo
