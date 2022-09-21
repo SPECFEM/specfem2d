@@ -1,0 +1,2270 @@
+running example: Wed Sep 21 21:20:43 CEST 2022
+
+(will take about 5 minutes)
+
+############################################################
+
+running forward simulation (with saving forward wavefield)
+
+############################################################
+Changed simulation_type to 1 and save_forward = .true. in Par_file 
+running example: Wed Sep 21 21:20:43 CEST 2022
+
+setting up example...
+
+cleaning OUTPUT_FILES/
+
+running mesher on 4 processors...
+
+
+ **********************************************
+ *** Specfem 2-D Mesher - MPI version       ***
+ **********************************************
+
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
+
+ Reading the parameter file...
+
+ Title of the simulation: poroelastic semi-infinite homogeneous
+
+
+ Receiver lines:
+   Nb of line sets =            1
+
+ Materials:
+   Nb of solid, fluid or porous materials =            1
+
+ --------
+ Material #           1  isotropic
+ rho_s, kappa_s         =    2650.0000000000000        12200000000.000000     
+ rho_f, kappa_f, eta_f  =    880.00000000000000        1985000000.0000000        0.0000000000000000     
+ phi, tortuosity        =   0.10000000000000001        2.0000000000000000     
+ permxx, permxz, permzz =    1.0000000000000001E-009   0.0000000000000000        1.0000000000000001E-009
+ kappa_fr, mu_fr, Qmu   =    9600000000.0000000        5100000000.0000000        9999999999.0000000     
+ Material is porous
+ --------
+
+
+ Mesh from internal meshing:
+
+ Reading interface data from file: ./DATA/./interfaces.dat
+ Reading            2  points for interface            1
+ Reading            2  points for interface            2
+
+ Total number of layers in z direction =            1
+ There are          200  spectral elements along Z in layer            1
+
+ Total number of spectral elements along X =          200
+ Total number of spectral elements along Z =          200
+
+ Regions:
+   Nb of regions in the mesh =            1
+
+ ------
+ Region            1
+ IX from            1  to          200
+ IZ from            1  to          200
+ Material #            1  isotropic
+ Material is poroelastic
+ ------
+
+ Parameter file successfully read 
+
+
+ Mesh from internal meshing:
+   Total number of spectral elements         =        40000
+
+ PML mesh elements:
+   Total number of PML elements =            0
+
+ The mesh contains        40000  elements
+
+ Control elements have            9  nodes
+
+ Reading in SOURCE file...
+
+ Source           1
+   Position xs, zs =    500.00000000000000        300.00000000000000     
+
+   Source type (1=force, 2=moment tensor):            2
+   Moment tensor source:
+   Mxx of the source =    1.0000000000000000     
+   Mzz of the source =    1.0000000000000000     
+   Mxz of the source =    0.0000000000000000     
+
+   Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 6,7=ocean type, 8=Read from file, 9=burst, 10=Sinusoidal, 11=Ormsby):           3
+   Gaussian:
+   Frequency, delay =    30.000000000000000        0.0000000000000000     
+   Multiplying factor  =    10000000000.000000     
+
+ all sources are okay
+
+ Normals to surface not needed
+
+ Node coordinates:
+
+ reading node coordinates from interfaces...
+
+ Mesh surfaces:
+   determining acoustic free surface...
+   number of acoustic elements with free surface =            0
+
+   determining absorbing boundary surfaces...
+   number of elements with absorbing boundaries =          600
+
+
+ Mesh dimensions: 
+   Min and max value of X in the grid =    0.0000000000000000        1000.0000000000000     
+   Min and max value of Z in the grid =    0.0000000000000000        1000.0000000000000     
+
+ Mesh partitioning:
+   decomposing mesh using NPROC =            4
+
+ Graph construction:
+   graph adjacency done
+
+ ************ Computing elements load ************
+ Number of elastic elements :           0
+ Number of acoustic elements :           0
+ Number of viscoelastic elements :           0
+ Number of viscoacoustic elements :           0
+ Number of elastic PML elements :           0
+ Number of acoustic PML elements :           0
+ Number of viscoelastic PML elements :           0
+ Number of viscoacoustic PML elements :           0
+ *************************************************
+
+
+ Partitioning type: SCOTCH
+
+ Coupled interfaces:
+ nedges_coupled (acoustic/elastic)     =            0
+ nedges_coupled (acoustic/poroelastic) =            0
+ nedges_coupled (poroelastic/elastic)  =            0
+
+ Local numbering:
+   NPROC:            4
+   number of elements:        40000
+
+ decompose mesh all done
+
+ Absorbing boundaries:
+   nedge_bound   :          600
+   nelemabs_merge:          600
+
+ Saving databases:
+   database file: ./OUTPUT_FILES/Database00000.bin
+   slice            0  has number of spectral elements =        9875
+
+   database file: ./OUTPUT_FILES/Database00001.bin
+   slice            1  has number of spectral elements =       10125
+
+   database file: ./OUTPUT_FILES/Database00002.bin
+   slice            2  has number of spectral elements =       10000
+
+   database file: ./OUTPUT_FILES/Database00003.bin
+   slice            3  has number of spectral elements =       10000
+
+   VTK mesh files:
+   written file: ./OUTPUT_FILES//mesh_materials.vtk
+   written file: ./OUTPUT_FILES//mesh_partition_number.vtk
+   done
+
+ creating STATIONS file...
+
+ writing the ./DATA/STATIONS file
+
+
+ There are            1  receivers
+
+ Target positions (x,z) of the            1  receivers
+
+ Receiver            1  =    600.00000000000000        400.00000000000000     
+
+ This will be a parallel simulation on            4  processor cores
+
+
+running solver on 4 processors...
+
+
+ **********************************************
+ **** Specfem 2-D Solver - MPI version     ****
+ **********************************************
+
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
+
+ There are            4  MPI processes
+ Processes are numbered from 0 to            3
+
+ There is a total of            4  slices
+
+
+ NDIM =            2
+
+ NGLLX =            5
+ NGLLZ =            5
+
+ using single precision for the calculations
+
+ smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
+
+ Reading the parameter file...
+
+ Title of the simulation: poroelastic semi-infinite homogeneous
+
+
+ Parameter file successfully read 
+
+ Reading in SOURCE file...
+
+ Source           1
+   Position xs, zs =    500.00000000000000        300.00000000000000     
+
+   Source type (1=force, 2=moment tensor):            2
+   Moment tensor source:
+   Mxx of the source =    1.0000000000000000     
+   Mzz of the source =    1.0000000000000000     
+   Mxz of the source =    0.0000000000000000     
+
+   Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 6,7=ocean type, 8=Read from file, 9=burst, 10=Sinusoidal, 11=Ormsby):           3
+   Gaussian:
+   Frequency, delay =    30.000000000000000        0.0000000000000000     
+   Multiplying factor  =    10000000000.000000     
+
+ all sources are okay
+
+
+
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ Program SPECFEM2D: 
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ poroelastic semi-infinite homogeneous
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ D a t e : 21 - 09 - 2022                                 T i m e  : 21:20:44
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+
+
+ C o n t r o l
+ =============
+
+     Number of spectral element control nodes. . .(npgeo) =  161644
+     Number of space dimensions. . . . . . . . . . (NDIM) =       2
+
+
+ C o n t r o l
+ =============
+
+     Display frequency . . . (NTSTEP_BETWEEN_OUTPUT_INFO) =    200
+     Color display . . . . . . . . . . . . . . . (colors) =      1
+      == 0     black and white display              
+      == 1     color display                        
+     Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
+      == 0     do not number the mesh               
+      == 1     number the mesh                      
+
+
+ C o n t r o l
+ =============
+
+     Seismograms recording type . . . . . . .(seismotype) = 1
+     Angle for first line of receivers. . . . .(anglerec) =   0.00
+
+
+ C o n t r o l
+ =============
+
+     Read external initial field. . . . . .(initialfield) =      F
+     Add Bielak conditions (add_Bielak_conditions_bottom) =      F
+     Add Bielak conditions .(add_Bielak_conditions_right) =      F
+     Add Bielak conditions . .(add_Bielak_conditions_top) =      F
+     Add Bielak conditions. .(add_Bielak_conditions_left) =      F
+     Attenuation in solid . . .(ATTENUATION_VISCOELASTIC) =      F
+     Attenuation in fluid . . (ATTENUATION_VISCOACOUSTIC) =      F
+     Save grid in ASCII file or not . (output_grid_ASCII) =      F
+     Save a file with total energy or not.(OUTPUT_ENERGY) =      F
+
+
+ C o n t r o l
+ =============
+
+     Vector display type . . . . . . . . .(imagetype_postscript) =      1
+     Percentage of cut for vector plots. . . . . . . .(cutsnaps) =  10.00
+     Subsampling of velocity model display. (subsamp_postscript) =      1
+
+
+ I t e r a t i o n s 
+ ===================
+
+     Number of time iterations . . . . .(NSTEP) =    2500
+     Time step increment. . . . . . . . . .(DT) =   1.000000E-04
+     Total simulation duration . . . . . (ttot) =   2.500000E-01
+
+
+ reading mesh databases:
+ reading nodal coordinates...
+
+ -- Spectral Elements --
+
+
+     Number of spectral elements . . . . . . . . .  (nspec) =  40000
+     Number of control nodes per element . . . . . (NGNOD) =      9
+     Number of points in X-direction . . . . . . . (NGLLX) =      5
+     Number of points in Y-direction . . . . . . . (NGLLZ) =      5
+     Number of points per element. . . . . . (NGLLX*NGLLZ) =     25
+     Number of points for display . . . . . . (pointsdisp) =      6
+     Number of element material sets . . . . . . . (numat) =      1
+     Number of acoustic forcing elements (nelem_acforcing) =      0
+     Number of acoustic free surf (nelem_acoustic_surface) =      0
+
+ reading attenuation setup...
+ reading material properties..
+
+
+ M a t e r i a l   s e t s :   2 D  (p o r o) e l a s t i c i t y
+ ======================================================
+
+     Number of material sets . . . . . . (numat) =     1
+
+
+     ----------------------------------------
+     -- Poroelastic isotropic material --
+     ----------------------------------------
+     Material set number. . . . . . . . (jmat) =     1
+     First P-wave velocity. . . . . . . .(cpI) = 2.63902976E+03
+     Second P-wave velocity. . . . . . .(cpII) = 9.60957155E+02
+     S-wave velocity. . . . . . . . . . . (cs) = 1.44900983E+03
+
+
+     -------------------------------
+     -- Solid phase properties --
+     Mass density. . . . . . . . . . (density_s) = 2.65000000E+03
+     Poisson's ratio . . . . . . . . (poisson_s) = 3.16546763E-01
+     First Lame parameter Lambda. . . (lambda_s) = 8.80000000E+09
+     Second Lame parameter Mu. . . . . . .(mu_s) = 5.10000000E+09
+     Solid bulk modulus Kappa . . . . .(kappa_s) = 1.22000000E+10
+     Young's modulus E . . . . . . .  .(young_s) = 1.34287770E+10
+
+
+     -------------------------------
+     -- Fluid phase properties --
+     Mass density. . . . . . . . . . (density_f) = 8.80000000E+02
+     Fluid bulk modulus Kappa . . . . .(kappa_f) = 1.98500000E+09
+     Fluid viscosity Eta . . . . . . . . (eta_f) = 0.00000000E+00
+
+
+     -------------------------------
+     -- Frame properties --
+     First Lame parameter Lambda. . . (lambda_fr) = 6.20000000E+09
+     Second Lame parameter Mu. . . . . . .(mu_fr) = 5.10000000E+09
+     Frame bulk modulus Kappa . . . . .(kappa_fr) = 9.60000000E+09
+     Porosity. . . . . . . . . . . . . . . .(phi) = 1.00000000E-01
+     Tortuosity. . . . . . . . . . . . . . . .(c) = 2.00000000E+00
+     Permeability xx component. . . . . . . . . . = 1.00000000E-09
+     Permeability zx component. . . . . . . . . . = 0.00000000E+00
+     Permeability zz component. . . . . . . . . . = 1.00000000E-09
+     Qmu_attenuation. . . . . . . . . . . . (Qmu) = 1.00000000E+10
+
+
+     -------------------------------
+     -- Biot coefficients --
+     -------------------------------
+     D. . . . . . . . . .= 1.84782368E+10
+     H. . . . . . . . . .= 1.71614124E+10
+     C. . . . . . . . . .= 3.57278149E+09
+     M. . . . . . . . . .= 1.67645901E+10
+     Characteristic freq = 0.00000000E+00
+
+ reading interfaces informations...
+   number of interfaces         =            2
+
+ reading absorbing boundary...
+   Total number of absorbing elements =          600
+
+   any absorbing boundary flag        =  T
+   PML boundary flag                  =  F
+   Stacey boundary flag               =  T
+
+
+ Absorbing boundaries:
+   using Stacey absorbing boundary conditions
+
+   Total number of absorbing elements:          600
+     nspec_left   =          200
+     nspec_right  =          200
+     nspec_bottom =          200
+     nspec_top    =            0
+
+
+ reading acoustic forcing...
+   acoustic forcing                             =  F
+   number of acoustic forcing boundary elements =            0
+
+ reading free surface information...
+   number of acoustic free surface boundary elements =            0
+ reading coupling surfaces...
+   number of fluid-solid edges  =            0
+   number of fluid-poro  edges  =            0
+   number of solid-poro  edges  =            0
+
+ reading tangential curves...
+   number of tangential curve nodes =            0
+
+ reading axial elements...
+   number of axial elements     =            0
+
+ done reading mesh databases
+
+
+ Setting up mesh
+
+ Generating global mesh numbering (fast version)...
+
+ Mesh numbering:
+   Total number of elements:        40000
+
+   Total number of acoustic elements           =            0
+   Total number of elastic/visco/poro elements =        40000
+
+ Approximate total number of grid points in the mesh
+ (with a few duplicates coming from MPI buffers):       643284
+
+ Approximate number of acoustic degrees of freedom in the mesh:            0
+ Approximate number of elastic degrees of freedom in the mesh:      1286568
+   (there are 2 degrees of freedom per point for elastic elements)
+
+ Approximate total number of degrees of freedom in the mesh
+ (sum of the two values above):      1286568
+
+  (for simplicity viscoelastic or poroelastic elements, if any,
+   are counted as elastic in the above three estimates;
+   in reality they have more degrees of freedom)
+
+ Mesh dimensions:
+   Xmin,Xmax of the whole mesh =    0.0000000000000000        1000.0000000000001     
+   Zmin,Zmax of the whole mesh =    0.0000000000000000        1000.0000000000001     
+
+ Material properties:
+   MODEL                 : default
+   nspec                 :        40000
+   assign external model :  F
+
+   setting up material arrays
+   all material arrays done
+
+ Domains:
+   total number of acoustic elements        =            0
+   total number of elastic elements         =            0
+   total number of poroelastic elements     =        40000
+
+ Setting up MPI communication arrays
+
+   maximum number of MPI interfaces (for a single slice) =            3
+
+   total MPI interface points:         3370
+
+   main process:
+   number of MPI interfaces in acoustic domain    =            0
+   number of MPI interfaces in elastic domain     =            0
+   number of MPI interfaces in poroelastic domain =            2
+
+   number of outer elements  =          209
+   number of inner elements  =         9666
+
+   percentage of outer elements    2.11645508     %
+   percentage of inner elements    97.8835449     %
+
+   number of global nodes in outer elements  =         4185
+   number of global nodes in inner elements  =       155489
+
+   determining communication phases:
+   poroelastic domains:
+   total number of outer/inner elements =          836       39164
+   total percentage of outer elements    2.08999634     %
+   total percentage of inner elements    97.9100037     %
+
+ All mesh setup done successfully
+
+ sources:
+   Total number of sources:            1
+
+
+   Setting parameters for source           1
+
+     Source Type. . . . . . . . . . . . . . = Moment-tensor
+     X-position (meters). . . . . . . . . . =    5.0000000000E+02
+     Y-position (meters). . . . . . . . . . =    3.0000000000E+02
+     Fundamental frequency (Hz) . . . . . . =    3.0000000000E+01
+     Time delay (s) . . . . . . . . . . . . =    0.0000000000E+00
+     Multiplying factor . . . . . . . . . . =    1.0000000000E+10
+     Mxx. . . . . . . . . . . . . . . . . . =    1.0000000000E+00
+     Mzz. . . . . . . . . . . . . . . . . . =    1.0000000000E+00
+     Mxz. . . . . . . . . . . . . . . . . . =    0.0000000000E+00
+
+     2D seismic moment M0 =    10000000.0     (dyne-cm)
+         moment magnitude =   -6.03333330    
+
+   Source:            1
+     Onset time. . . . . . =   -4.0000000000000001E-002
+     Fundamental period. . =    3.3333333333333333E-002
+     Fundamental frequency =    30.000000000000000     
+     The onset time is ok
+
+ Source:            1
+ *******************************
+  locating moment-tensor source
+ *******************************
+
+ Moment-tensor source:
+             original x:    500.000000    
+             original z:    300.000000    
+ Closest estimate found:    0.00000000      m away
+  in rank            2
+  in element         6000
+  in poroelastic domain
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
+
+
+ end of moment-tensor source detection
+
+
+ receivers:
+
+ Total number of receivers =            1
+
+
+ ********************
+  locating receivers
+ ********************
+
+ reading receiver information from the ./DATA/STATIONS file
+
+
+ Station #            1     AA      S0001                           
+             original x:    600.000000    
+             original z:    400.000000    
+ Closest estimate found:    0.00000000      m away
+  in rank            3
+  in element         7920
+  in poroelastic domain
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
+ Distance from source:    141.421356      m
+
+ maximum error in location of all the receivers:    0.00000000      m
+
+ end of receiver detection
+
+ found a total of            1  receivers, this is okay
+
+
+ Preparing timerun:
+
+ Preparing timerun constants
+
+ Preparing array allocations
+   arrays for poroelastic domains
+   done initialization
+
+
+ Preparing Stacey boundaries
+   total number of absorbing boundary faces/edges:          600
+
+ Attenuation:
+   viscoelastic  attenuation: F (shear & bulk attenuation in elastic domains)
+   viscoacoustic attenuation: F (bulk attenuation in acoustic domains)
+
+ Preparing mass matrices
+   initializing mass matrices
+   adding Stacey contributions to mass matrix
+   inverting mass matrices
+
+
+ Preparing save forward simulation:
+   estimated minimum period resolved by mesh        :    0.00000000    
+   estimated number of time steps for minimum period:            0
+   estimated steps between compute kernels (for a fair reconstruction):            0
+
+   number of steps between compute kernels:            1
+
+
+ Preparing save forward/adjoint simulation for poroelasticity
+   using viscous damping arrays for poroelastic domain
+
+ Preparing source time function
+   time stepping scheme:   Newmark
+   time stepping stages:            1
+   time step size      :    9.99999975E-05
+
+   number of time steps:         2500
+   number of sources   :            1
+
+   saving the source time function in a text file...
+
+ Movie simulation:
+   color images         - JPEG image type:            2
+   number of steps between outputs       :          500
+
+ Preparing image coloring: jpeg
+   allocating color image arrays
+   locating all the pixels of color images
+   total number of image pixels =      2590490
+   done locating all the pixels of color images
+   coloring image background based on vp
+
+ Checking mesh and stability
+
+ ********
+ Model: P (or PI) velocity min,max =    2639.0298113207546        2639.0298113207546     
+ Model: PII velocity min,max       =    960.95715332031250        960.95715332031250     
+ Model: S velocity min,max         =    1449.0098344653697        1449.0098344653697     
+ Model: density min,max            =    2650.0000000000000        2650.0000000000000     
+ ********
+
+
+ *********************************************
+ *** Verification of simulation parameters ***
+ *********************************************
+
+ *** Max grid size =    5.0000000000000000     
+ *** Min grid size =    5.0000000000000000     
+ *** Max/min ratio =    1.0000000000000000     
+
+ *** Minimum GLL point distance  =   0.86336582323005695     
+ *** Average GLL point distance  =    1.2500000000000000     
+
+ *** Minimum period resolved     =    4.3132902561051388E-003
+ *** Maximum frequency resolved  =    231.84157351445918      Hz
+
+ *** Maximum suggested time step                 =    1.6357636801343455E-004
+ *** Maximum suggested (Ricker) source frequency =    92.736629405783674     
+
+ *** for DT :    9.99999975E-05
+ *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.30566761778686302     
+
+ ----
+ Number of points per wavelength:
+ ----
+   Source            1
+   maximum dominant source frequency =    75.000000000000000      Hz
+
+   Nb pts / lambdaPI_fmax min =    28.1496506    
+   Nb pts / lambdaPI_fmax max =    28.1496506    
+
+   Nb pts / lambdaPII_fmax min =    10.2502098    
+   Nb pts / lambdaPII_fmax max =    10.2502098    
+
+   Nb pts / lambdaS_fmax min =    15.4561052    
+   Nb pts / lambdaS_fmax max =    15.4561052    
+
+ -----------------------------------------
+
+ histogram of min number of points per S wavelength in solid regions:
+
+ there are        40000  elements out of        40000  in solid regions
+   (i.e.,    100.000000     % of the total)
+
+ (too small = poor resolution of calculations -
+  too big = wasting memory and CPU time)
+ (threshold value is around 4.5 points per S wavelength
+  in elastic regions and 5.5 per P wavelength in fluid regions):
+
+   15.3015442      -    15.3170004               0     0.00000000      %
+   15.3170004      -    15.3324556               0     0.00000000      %
+   15.3324556      -    15.3479118               0     0.00000000      %
+   15.3479118      -    15.3633680               0     0.00000000      %
+   15.3633680      -    15.3788242               0     0.00000000      %
+   15.3788242      -    15.3942804               0     0.00000000      %
+   15.3942804      -    15.4097366               0     0.00000000      %
+   15.4097366      -    15.4251928               0     0.00000000      %
+   15.4251928      -    15.4406490               0     0.00000000      %
+   15.4406490      -    15.4561052               0     0.00000000      %
+   15.4561052      -    15.4715614           40000     100.000000      %
+   15.4715614      -    15.4870167               0     0.00000000      %
+   15.4870167      -    15.5024729               0     0.00000000      %
+   15.5024729      -    15.5179291               0     0.00000000      %
+   15.5179291      -    15.5333853               0     0.00000000      %
+   15.5333853      -    15.5488415               0     0.00000000      %
+   15.5488415      -    15.5642977               0     0.00000000      %
+   15.5642977      -    15.5797539               0     0.00000000      %
+   15.5797539      -    15.5952101               0     0.00000000      %
+   15.5952101      -    15.6106663               0     0.00000000      %
+
+ total percentage =    100.00000000000000       %
+
+
+ total number of elements in fluid and solid regions =        40000
+
+
+ Elapsed time for preparing timerun in seconds =    7.0849999999999969E-002
+
+ ************
+  time loop
+ ************
+               scheme:         Newmark
+
+            time step:    9.99999975E-05  s
+ number of time steps:         2500
+ total simulated time:   0.250000000      seconds
+ start time:  -3.99999991E-02  seconds
+
+
+ =========================================
+ =  T i m e  e v o l u t i o n  l o o p  =
+ =========================================
+
+
+ Starting time iteration loop ...
+
+
+ ******************************************************************
+Time step number       5   t =  4.000000E-04 s out of    2500
+ ******************************************************************
+ We have done   0.160064027     % of the total
+ Max norm of vector field in solid (poroelastic) =    5.85419213E-11
+ Max norm of vector field in fluid (poroelastic) =    1.07419212E-11
+ Elapsed time in seconds =    9.1000080108642578E-002
+ Elapsed time in hh:mm:ss =      0 h 00 m 00 s
+ Mean elapsed time per time step in seconds =    1.8200016021728514E-002
+ Time steps remaining =         2495
+ Estimated remaining time in seconds =    45.409039974212646     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 45 s
+ Estimated total run time in seconds =    45.500040054321289     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 45 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:22
+
+ Creating color image of size         1610  x         1690  for time step            5
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    4.2341050804362013E-011
+ Color image created
+
+
+ ******************************************************************
+Time step number     200   t =    0.0199 s out of    2500
+ ******************************************************************
+ We have done    7.96318531     % of the total
+ Max norm of vector field in solid (poroelastic) =    9.28500071E-07
+ Max norm of vector field in fluid (poroelastic) =    1.38497933E-06
+ Elapsed time in seconds =    4.6900000572204590     
+ Elapsed time in hh:mm:ss =      0 h 00 m 04 s
+ Mean elapsed time per time step in seconds =    2.3450000286102293E-002
+ Time steps remaining =         2300
+ Estimated remaining time in seconds =    53.935000658035271     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 53 s
+ Estimated total run time in seconds =    58.625000715255730     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 58 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:22
+
+
+ ******************************************************************
+Time step number     400   t =    0.0399 s out of    2500
+ ******************************************************************
+ We have done    15.9663868     % of the total
+ Max norm of vector field in solid (poroelastic) =    3.46976667E-05
+ Max norm of vector field in fluid (poroelastic) =    5.48414355E-05
+ Elapsed time in seconds =    9.2179999351501465     
+ Elapsed time in hh:mm:ss =      0 h 00 m 09 s
+ Mean elapsed time per time step in seconds =    2.3044999837875366E-002
+ Time steps remaining =         2100
+ Estimated remaining time in seconds =    48.394499659538269     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 48 s
+ Estimated total run time in seconds =    57.612499594688416     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 57 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:22
+
+ Creating color image of size         1610  x         1690  for time step          500
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.0285589269187767E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number     600   t =    0.0599 s out of    2500
+ ******************************************************************
+ We have done    23.9695873     % of the total
+ Max norm of vector field in solid (poroelastic) =    1.07048038E-06
+ Max norm of vector field in fluid (poroelastic) =    7.76378056E-06
+ Elapsed time in seconds =    13.742000102996826     
+ Elapsed time in hh:mm:ss =      0 h 00 m 13 s
+ Mean elapsed time per time step in seconds =    2.2903333504994711E-002
+ Time steps remaining =         1900
+ Estimated remaining time in seconds =    43.516333659489952     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 43 s
+ Estimated total run time in seconds =    57.258333762486778     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 57 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:22
+
+
+ ******************************************************************
+Time step number     800   t =    0.0799 s out of    2500
+ ******************************************************************
+ We have done    31.9727898     % of the total
+ Max norm of vector field in solid (poroelastic) =    1.09475991E-07
+ Max norm of vector field in fluid (poroelastic) =    7.29692920E-06
+ Elapsed time in seconds =    18.266000032424927     
+ Elapsed time in hh:mm:ss =      0 h 00 m 18 s
+ Mean elapsed time per time step in seconds =    2.2832500040531157E-002
+ Time steps remaining =         1700
+ Estimated remaining time in seconds =    38.815250068902969     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 38 s
+ Estimated total run time in seconds =    57.081250101327896     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 57 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:22
+
+
+ ******************************************************************
+Time step number    1000   t =    0.0999 s out of    2500
+ ******************************************************************
+ We have done    39.9759903     % of the total
+ Max norm of vector field in solid (poroelastic) =    8.85821692E-08
+ Max norm of vector field in fluid (poroelastic) =    6.83028884E-06
+ Elapsed time in seconds =    22.821000099182129     
+ Elapsed time in hh:mm:ss =      0 h 00 m 22 s
+ Mean elapsed time per time step in seconds =    2.2821000099182129E-002
+ Time steps remaining =         1500
+ Estimated remaining time in seconds =    34.231500148773193     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 34 s
+ Estimated total run time in seconds =    57.052500247955322     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 57 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:22
+
+
+ Total number of time steps done:         1000
+ Writing the seismograms by main proc alone took    4.02900018E-03  seconds
+
+ Creating color image of size         1610  x         1690  for time step         1000
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    8.8504485518114961E-008
+ Color image created
+
+
+ ******************************************************************
+Time step number    1200   t =    0.1199 s out of    2500
+ ******************************************************************
+ We have done    47.9791908     % of the total
+ Max norm of vector field in solid (poroelastic) =    7.63714070E-08
+ Max norm of vector field in fluid (poroelastic) =    6.33903073E-06
+ Elapsed time in seconds =    27.375000000000000     
+ Elapsed time in hh:mm:ss =      0 h 00 m 27 s
+ Mean elapsed time per time step in seconds =    2.2812499999999999E-002
+ Time steps remaining =         1300
+ Estimated remaining time in seconds =    29.656250000000000     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 29 s
+ Estimated total run time in seconds =    57.031250000000000     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 57 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:22
+
+
+ ******************************************************************
+Time step number    1400   t =    0.1399 s out of    2500
+ ******************************************************************
+ We have done    55.9823914     % of the total
+ Max norm of vector field in solid (poroelastic) =    6.81297792E-08
+ Max norm of vector field in fluid (poroelastic) =    5.87871409E-06
+ Elapsed time in seconds =    31.887000083923340     
+ Elapsed time in hh:mm:ss =      0 h 00 m 31 s
+ Mean elapsed time per time step in seconds =    2.2776428631373816E-002
+ Time steps remaining =         1100
+ Estimated remaining time in seconds =    25.054071494511199     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 25 s
+ Estimated total run time in seconds =    56.941071578434538     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 56 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:22
+
+ Creating color image of size         1610  x         1690  for time step         1500
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    6.5240030266977556E-008
+ Color image created
+
+
+ ******************************************************************
+Time step number    1600   t =    0.1599 s out of    2500
+ ******************************************************************
+ We have done    63.9855957     % of the total
+ Max norm of vector field in solid (poroelastic) =    6.22907237E-08
+ Max norm of vector field in fluid (poroelastic) =    5.52239089E-06
+ Elapsed time in seconds =    36.470000028610229     
+ Elapsed time in hh:mm:ss =      0 h 00 m 36 s
+ Mean elapsed time per time step in seconds =    2.2793750017881392E-002
+ Time steps remaining =          900
+ Estimated remaining time in seconds =    20.514375016093254     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 20 s
+ Estimated total run time in seconds =    56.984375044703484     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 56 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:22
+
+
+ ******************************************************************
+Time step number    1800   t =    0.1799 s out of    2500
+ ******************************************************************
+ We have done    71.9887924     % of the total
+ Max norm of vector field in solid (poroelastic) =    5.74069858E-08
+ Max norm of vector field in fluid (poroelastic) =    5.19283412E-06
+ Elapsed time in seconds =    40.963999986648560     
+ Elapsed time in hh:mm:ss =      0 h 00 m 40 s
+ Mean elapsed time per time step in seconds =    2.2757777770360310E-002
+ Time steps remaining =          700
+ Estimated remaining time in seconds =    15.930444439252216     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 15 s
+ Estimated total run time in seconds =    56.894444425900772     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 56 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:22
+
+
+ ******************************************************************
+Time step number    2000   t =    0.1999 s out of    2500
+ ******************************************************************
+ We have done    79.9919968     % of the total
+ Max norm of vector field in solid (poroelastic) =    5.36406866E-08
+ Max norm of vector field in fluid (poroelastic) =    4.92862819E-06
+ Elapsed time in seconds =    45.443000078201294     
+ Elapsed time in hh:mm:ss =      0 h 00 m 45 s
+ Mean elapsed time per time step in seconds =    2.2721500039100648E-002
+ Time steps remaining =          500
+ Estimated remaining time in seconds =    11.360750019550323     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 11 s
+ Estimated total run time in seconds =    56.803750097751617     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 56 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:22
+
+
+ Total number of time steps done:         2000
+ Writing the seismograms by main proc alone took    3.24600004E-03  seconds
+
+ Creating color image of size         1610  x         1690  for time step         2000
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    5.3621366902234513E-008
+ Color image created
+
+
+ ******************************************************************
+Time step number    2200   t =    0.2199 s out of    2500
+ ******************************************************************
+ We have done    87.9952011     % of the total
+ Max norm of vector field in solid (poroelastic) =    5.05932718E-08
+ Max norm of vector field in fluid (poroelastic) =    4.70017812E-06
+ Elapsed time in seconds =    50.006999969482422     
+ Elapsed time in hh:mm:ss =      0 h 00 m 50 s
+ Mean elapsed time per time step in seconds =    2.2730454531582921E-002
+ Time steps remaining =          300
+ Estimated remaining time in seconds =    6.8191363594748760     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
+ Estimated total run time in seconds =    56.826136328957297     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 56 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:22
+
+
+ ******************************************************************
+Time step number    2400   t =    0.2399 s out of    2500
+ ******************************************************************
+ We have done    95.9983978     % of the total
+ Max norm of vector field in solid (poroelastic) =    4.79772417E-08
+ Max norm of vector field in fluid (poroelastic) =    4.49699201E-06
+ Elapsed time in seconds =    54.521000146865845     
+ Elapsed time in hh:mm:ss =      0 h 00 m 54 s
+ Mean elapsed time per time step in seconds =    2.2717083394527434E-002
+ Time steps remaining =          100
+ Estimated remaining time in seconds =    2.2717083394527435     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
+ Estimated total run time in seconds =    56.792708486318588     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 56 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:22
+
+
+ ******************************************************************
+Time step number    2500   t =    0.2499 s out of    2500
+ ******************************************************************
+ We have done    100.000000     % of the total
+ Max norm of vector field in solid (poroelastic) =    4.67468837E-08
+ Max norm of vector field in fluid (poroelastic) =    4.40540271E-06
+ Elapsed time in seconds =    56.769000053405762     
+ Elapsed time in hh:mm:ss =      0 h 00 m 56 s
+ Mean elapsed time per time step in seconds =    2.2707600021362306E-002
+ Time steps remaining =            0
+ Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
+ Estimated total run time in seconds =    56.769000053405762     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 56 s
+
+
+ Total number of time steps done:         2500
+ Writing the seismograms by main proc alone took    2.16799998E-03  seconds
+
+ Creating color image of size         1610  x         1690  for time step         2500
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    4.6726920999162758E-008
+ Color image created
+
+
+ Total duration of the time loop in seconds =    56.8435745      s
+ Total number of time steps =         2500
+ Average duration of a time step of the time loop =    2.27374304E-02  s
+ Total number of spectral elements in the mesh =         9875
+     of which         9875  are regular elements
+     and            0  are PML elements.
+ Average duration of the calculation per spectral element =    2.30252454E-06  s
+
+
+ Total duration of the timeloop in seconds, measured using 
+ date and time of the system :    56.8450012      s
+
+ Saving forward arrays:
+ Saving Stacey absorbing boundary contributions...
+ Saving poroelastic last frame...
+
+
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ Program SPECFEM2D: 
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ poroelastic semi-infinite homogeneous
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ D a t e : 21 - 09 - 2022                                 T i m e  : 21:21:41
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+
+see results in directory: OUTPUT_FILES/
+
+done
+Wed Sep 21 21:21:42 CEST 2022
+############################################################
+
+setting up adjoint sources
+
+############################################################
+using station: AA.S0001
+############################################################
+
+running adjoint source creation
+
+############################################################
+ adjoint source - seismogram:
+
+ setup:
+   number of adjoint stations (nrec)   =            1
+   station name            1 :    AA.S0001                                                                                                                                              
+
+   seismogram components   =            2
+   seismogram labels       = BXX / BXZ
+
+   time window start/end                                                =    1.4999999999999999E-002   9.5000000000000001E-002
+   adjoint source trace component (1 == X / 2 == Y / 3 == Z / 4 == X&Z) =            4
+
+ reading input traces:
+   number of time steps (NSTEP)  =         2500
+
+   start time (t0)               =   -4.0000000000000001E-002
+   end time                      =   0.20990000000000000     
+   time step size (deltat)       =    1.0000000000000000E-004
+
+ time window:
+   index      : istart =         551 iend =        1351
+   time window: tstart =   1.5000000000000001E-002 tend =   9.5000000000000001E-002
+
+ component: BXX
+ Norm =  -9.8593899820111114E-013
+
+ component: BXZ
+ Norm =  -9.8593868167671310E-013
+
+ *************************
+ The input files (AA.S****.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in folder SEM/
+ *************************
+############################################################
+
+running kernel simulation
+
+############################################################
+Changed simulation_type to 3 in Par_file 
+running example: Wed Sep 21 21:21:42 CEST 2022
+
+setting up example...
+
+
+running mesher on 4 processors...
+
+
+ **********************************************
+ *** Specfem 2-D Mesher - MPI version       ***
+ **********************************************
+
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
+
+ Reading the parameter file...
+
+ Title of the simulation: poroelastic semi-infinite homogeneous
+
+
+ Receiver lines:
+   Nb of line sets =            1
+
+ Materials:
+   Nb of solid, fluid or porous materials =            1
+
+ --------
+ Material #           1  isotropic
+ rho_s, kappa_s         =    2650.0000000000000        12200000000.000000     
+ rho_f, kappa_f, eta_f  =    880.00000000000000        1985000000.0000000        0.0000000000000000     
+ phi, tortuosity        =   0.10000000000000001        2.0000000000000000     
+ permxx, permxz, permzz =    1.0000000000000001E-009   0.0000000000000000        1.0000000000000001E-009
+ kappa_fr, mu_fr, Qmu   =    9600000000.0000000        5100000000.0000000        9999999999.0000000     
+ Material is porous
+ --------
+
+
+ Mesh from internal meshing:
+
+ Reading interface data from file: ./DATA/./interfaces.dat
+ Reading            2  points for interface            1
+ Reading            2  points for interface            2
+
+ Total number of layers in z direction =            1
+ There are          200  spectral elements along Z in layer            1
+
+ Total number of spectral elements along X =          200
+ Total number of spectral elements along Z =          200
+
+ Regions:
+   Nb of regions in the mesh =            1
+
+ ------
+ Region            1
+ IX from            1  to          200
+ IZ from            1  to          200
+ Material #            1  isotropic
+ Material is poroelastic
+ ------
+
+ Parameter file successfully read 
+
+
+ Mesh from internal meshing:
+   Total number of spectral elements         =        40000
+
+ PML mesh elements:
+   Total number of PML elements =            0
+
+ The mesh contains        40000  elements
+
+ Control elements have            9  nodes
+
+ Reading in SOURCE file...
+
+ Source           1
+   Position xs, zs =    500.00000000000000        300.00000000000000     
+
+   Source type (1=force, 2=moment tensor):            2
+   Moment tensor source:
+   Mxx of the source =    1.0000000000000000     
+   Mzz of the source =    1.0000000000000000     
+   Mxz of the source =    0.0000000000000000     
+
+   Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 6,7=ocean type, 8=Read from file, 9=burst, 10=Sinusoidal, 11=Ormsby):           3
+   Gaussian:
+   Frequency, delay =    30.000000000000000        0.0000000000000000     
+   Multiplying factor  =    10000000000.000000     
+
+ all sources are okay
+
+ Normals to surface not needed
+
+ Node coordinates:
+
+ reading node coordinates from interfaces...
+
+ Mesh surfaces:
+   determining acoustic free surface...
+   number of acoustic elements with free surface =            0
+
+   determining absorbing boundary surfaces...
+   number of elements with absorbing boundaries =          600
+
+
+ Mesh dimensions: 
+   Min and max value of X in the grid =    0.0000000000000000        1000.0000000000000     
+   Min and max value of Z in the grid =    0.0000000000000000        1000.0000000000000     
+
+ Mesh partitioning:
+   decomposing mesh using NPROC =            4
+
+ Graph construction:
+   graph adjacency done
+
+ ************ Computing elements load ************
+ Number of elastic elements :           0
+ Number of acoustic elements :           0
+ Number of viscoelastic elements :           0
+ Number of viscoacoustic elements :           0
+ Number of elastic PML elements :           0
+ Number of acoustic PML elements :           0
+ Number of viscoelastic PML elements :           0
+ Number of viscoacoustic PML elements :           0
+ *************************************************
+
+
+ Partitioning type: SCOTCH
+
+ Coupled interfaces:
+ nedges_coupled (acoustic/elastic)     =            0
+ nedges_coupled (acoustic/poroelastic) =            0
+ nedges_coupled (poroelastic/elastic)  =            0
+
+ Local numbering:
+   NPROC:            4
+   number of elements:        40000
+
+ decompose mesh all done
+
+ Absorbing boundaries:
+   nedge_bound   :          600
+   nelemabs_merge:          600
+
+ Saving databases:
+   database file: ./OUTPUT_FILES/Database00000.bin
+   slice            0  has number of spectral elements =        9875
+
+   database file: ./OUTPUT_FILES/Database00001.bin
+   slice            1  has number of spectral elements =       10125
+
+   database file: ./OUTPUT_FILES/Database00002.bin
+   slice            2  has number of spectral elements =       10000
+
+   database file: ./OUTPUT_FILES/Database00003.bin
+   slice            3  has number of spectral elements =       10000
+
+   VTK mesh files:
+   written file: ./OUTPUT_FILES//mesh_materials.vtk
+   written file: ./OUTPUT_FILES//mesh_partition_number.vtk
+   done
+
+ creating STATIONS file...
+
+ writing the ./DATA/STATIONS file
+
+
+ There are            1  receivers
+
+ Target positions (x,z) of the            1  receivers
+
+ Receiver            1  =    600.00000000000000        400.00000000000000     
+
+ This will be a parallel simulation on            4  processor cores
+
+
+running solver on 4 processors...
+
+
+ **********************************************
+ **** Specfem 2-D Solver - MPI version     ****
+ **********************************************
+
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
+
+ There are            4  MPI processes
+ Processes are numbered from 0 to            3
+
+ There is a total of            4  slices
+
+
+ NDIM =            2
+
+ NGLLX =            5
+ NGLLZ =            5
+
+ using single precision for the calculations
+
+ smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
+
+ Reading the parameter file...
+
+ Title of the simulation: poroelastic semi-infinite homogeneous
+
+
+ Parameter file successfully read 
+
+ Reading in SOURCE file...
+
+ Source           1
+   Position xs, zs =    500.00000000000000        300.00000000000000     
+
+   Source type (1=force, 2=moment tensor):            2
+   Moment tensor source:
+   Mxx of the source =    1.0000000000000000     
+   Mzz of the source =    1.0000000000000000     
+   Mxz of the source =    0.0000000000000000     
+
+   Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 6,7=ocean type, 8=Read from file, 9=burst, 10=Sinusoidal, 11=Ormsby):           3
+   Gaussian:
+   Frequency, delay =    30.000000000000000        0.0000000000000000     
+   Multiplying factor  =    10000000000.000000     
+
+ all sources are okay
+
+
+
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ Program SPECFEM2D: 
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ poroelastic semi-infinite homogeneous
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ D a t e : 21 - 09 - 2022                                 T i m e  : 21:21:44
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+
+
+ C o n t r o l
+ =============
+
+     Number of spectral element control nodes. . .(npgeo) =  161644
+     Number of space dimensions. . . . . . . . . . (NDIM) =       2
+
+
+ C o n t r o l
+ =============
+
+     Display frequency . . . (NTSTEP_BETWEEN_OUTPUT_INFO) =    200
+     Color display . . . . . . . . . . . . . . . (colors) =      1
+      == 0     black and white display              
+      == 1     color display                        
+     Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
+      == 0     do not number the mesh               
+      == 1     number the mesh                      
+
+
+ C o n t r o l
+ =============
+
+     Seismograms recording type . . . . . . .(seismotype) = 1
+     Angle for first line of receivers. . . . .(anglerec) =   0.00
+
+
+ C o n t r o l
+ =============
+
+     Read external initial field. . . . . .(initialfield) =      F
+     Add Bielak conditions (add_Bielak_conditions_bottom) =      F
+     Add Bielak conditions .(add_Bielak_conditions_right) =      F
+     Add Bielak conditions . .(add_Bielak_conditions_top) =      F
+     Add Bielak conditions. .(add_Bielak_conditions_left) =      F
+     Attenuation in solid . . .(ATTENUATION_VISCOELASTIC) =      F
+     Attenuation in fluid . . (ATTENUATION_VISCOACOUSTIC) =      F
+     Save grid in ASCII file or not . (output_grid_ASCII) =      F
+     Save a file with total energy or not.(OUTPUT_ENERGY) =      F
+
+
+ C o n t r o l
+ =============
+
+     Vector display type . . . . . . . . .(imagetype_postscript) =      1
+     Percentage of cut for vector plots. . . . . . . .(cutsnaps) =  10.00
+     Subsampling of velocity model display. (subsamp_postscript) =      1
+
+
+ I t e r a t i o n s 
+ ===================
+
+     Number of time iterations . . . . .(NSTEP) =    2500
+     Time step increment. . . . . . . . . .(DT) =   1.000000E-04
+     Total simulation duration . . . . . (ttot) =   2.500000E-01
+
+
+ reading mesh databases:
+ reading nodal coordinates...
+
+ -- Spectral Elements --
+
+
+     Number of spectral elements . . . . . . . . .  (nspec) =  40000
+     Number of control nodes per element . . . . . (NGNOD) =      9
+     Number of points in X-direction . . . . . . . (NGLLX) =      5
+     Number of points in Y-direction . . . . . . . (NGLLZ) =      5
+     Number of points per element. . . . . . (NGLLX*NGLLZ) =     25
+     Number of points for display . . . . . . (pointsdisp) =      6
+     Number of element material sets . . . . . . . (numat) =      1
+     Number of acoustic forcing elements (nelem_acforcing) =      0
+     Number of acoustic free surf (nelem_acoustic_surface) =      0
+
+ reading attenuation setup...
+ reading material properties..
+
+
+ M a t e r i a l   s e t s :   2 D  (p o r o) e l a s t i c i t y
+ ======================================================
+
+     Number of material sets . . . . . . (numat) =     1
+
+
+     ----------------------------------------
+     -- Poroelastic isotropic material --
+     ----------------------------------------
+     Material set number. . . . . . . . (jmat) =     1
+     First P-wave velocity. . . . . . . .(cpI) = 2.63902976E+03
+     Second P-wave velocity. . . . . . .(cpII) = 9.60957155E+02
+     S-wave velocity. . . . . . . . . . . (cs) = 1.44900983E+03
+
+
+     -------------------------------
+     -- Solid phase properties --
+     Mass density. . . . . . . . . . (density_s) = 2.65000000E+03
+     Poisson's ratio . . . . . . . . (poisson_s) = 3.16546763E-01
+     First Lame parameter Lambda. . . (lambda_s) = 8.80000000E+09
+     Second Lame parameter Mu. . . . . . .(mu_s) = 5.10000000E+09
+     Solid bulk modulus Kappa . . . . .(kappa_s) = 1.22000000E+10
+     Young's modulus E . . . . . . .  .(young_s) = 1.34287770E+10
+
+
+     -------------------------------
+     -- Fluid phase properties --
+     Mass density. . . . . . . . . . (density_f) = 8.80000000E+02
+     Fluid bulk modulus Kappa . . . . .(kappa_f) = 1.98500000E+09
+     Fluid viscosity Eta . . . . . . . . (eta_f) = 0.00000000E+00
+
+
+     -------------------------------
+     -- Frame properties --
+     First Lame parameter Lambda. . . (lambda_fr) = 6.20000000E+09
+     Second Lame parameter Mu. . . . . . .(mu_fr) = 5.10000000E+09
+     Frame bulk modulus Kappa . . . . .(kappa_fr) = 9.60000000E+09
+     Porosity. . . . . . . . . . . . . . . .(phi) = 1.00000000E-01
+     Tortuosity. . . . . . . . . . . . . . . .(c) = 2.00000000E+00
+     Permeability xx component. . . . . . . . . . = 1.00000000E-09
+     Permeability zx component. . . . . . . . . . = 0.00000000E+00
+     Permeability zz component. . . . . . . . . . = 1.00000000E-09
+     Qmu_attenuation. . . . . . . . . . . . (Qmu) = 1.00000000E+10
+
+
+     -------------------------------
+     -- Biot coefficients --
+     -------------------------------
+     D. . . . . . . . . .= 1.84782368E+10
+     H. . . . . . . . . .= 1.71614124E+10
+     C. . . . . . . . . .= 3.57278149E+09
+     M. . . . . . . . . .= 1.67645901E+10
+     Characteristic freq = 0.00000000E+00
+
+ reading interfaces informations...
+   number of interfaces         =            2
+
+ reading absorbing boundary...
+   Total number of absorbing elements =          600
+
+   any absorbing boundary flag        =  T
+   PML boundary flag                  =  F
+   Stacey boundary flag               =  T
+
+
+ Absorbing boundaries:
+   using Stacey absorbing boundary conditions
+
+   Total number of absorbing elements:          600
+     nspec_left   =          200
+     nspec_right  =          200
+     nspec_bottom =          200
+     nspec_top    =            0
+
+
+ reading acoustic forcing...
+   acoustic forcing                             =  F
+   number of acoustic forcing boundary elements =            0
+
+ reading free surface information...
+   number of acoustic free surface boundary elements =            0
+ reading coupling surfaces...
+   number of fluid-solid edges  =            0
+   number of fluid-poro  edges  =            0
+   number of solid-poro  edges  =            0
+
+ reading tangential curves...
+   number of tangential curve nodes =            0
+
+ reading axial elements...
+   number of axial elements     =            0
+
+ done reading mesh databases
+
+
+ Setting up mesh
+
+ Generating global mesh numbering (fast version)...
+
+ Mesh numbering:
+   Total number of elements:        40000
+
+   Total number of acoustic elements           =            0
+   Total number of elastic/visco/poro elements =        40000
+
+ Approximate total number of grid points in the mesh
+ (with a few duplicates coming from MPI buffers):       643284
+
+ Approximate number of acoustic degrees of freedom in the mesh:            0
+ Approximate number of elastic degrees of freedom in the mesh:      1286568
+   (there are 2 degrees of freedom per point for elastic elements)
+
+ Approximate total number of degrees of freedom in the mesh
+ (sum of the two values above):      1286568
+
+  (for simplicity viscoelastic or poroelastic elements, if any,
+   are counted as elastic in the above three estimates;
+   in reality they have more degrees of freedom)
+
+ Mesh dimensions:
+   Xmin,Xmax of the whole mesh =    0.0000000000000000        1000.0000000000001     
+   Zmin,Zmax of the whole mesh =    0.0000000000000000        1000.0000000000001     
+
+ Material properties:
+   MODEL                 : default
+   nspec                 :        40000
+   assign external model :  F
+
+   setting up material arrays
+   all material arrays done
+
+ Domains:
+   total number of acoustic elements        =            0
+   total number of elastic elements         =            0
+   total number of poroelastic elements     =        40000
+
+ Setting up MPI communication arrays
+
+   maximum number of MPI interfaces (for a single slice) =            3
+
+   total MPI interface points:         3370
+
+   main process:
+   number of MPI interfaces in acoustic domain    =            0
+   number of MPI interfaces in elastic domain     =            0
+   number of MPI interfaces in poroelastic domain =            2
+
+   number of outer elements  =          209
+   number of inner elements  =         9666
+
+   percentage of outer elements    2.11645508     %
+   percentage of inner elements    97.8835449     %
+
+   number of global nodes in outer elements  =         4185
+   number of global nodes in inner elements  =       155489
+
+   determining communication phases:
+   poroelastic domains:
+   total number of outer/inner elements =          836       39164
+   total percentage of outer elements    2.08999634     %
+   total percentage of inner elements    97.9100037     %
+
+ All mesh setup done successfully
+
+ sources:
+   Total number of sources:            1
+
+
+   Setting parameters for source           1
+
+     Source Type. . . . . . . . . . . . . . = Moment-tensor
+     X-position (meters). . . . . . . . . . =    5.0000000000E+02
+     Y-position (meters). . . . . . . . . . =    3.0000000000E+02
+     Fundamental frequency (Hz) . . . . . . =    3.0000000000E+01
+     Time delay (s) . . . . . . . . . . . . =    0.0000000000E+00
+     Multiplying factor . . . . . . . . . . =    1.0000000000E+10
+     Mxx. . . . . . . . . . . . . . . . . . =    1.0000000000E+00
+     Mzz. . . . . . . . . . . . . . . . . . =    1.0000000000E+00
+     Mxz. . . . . . . . . . . . . . . . . . =    0.0000000000E+00
+
+     2D seismic moment M0 =    10000000.0     (dyne-cm)
+         moment magnitude =   -6.03333330    
+
+   Source:            1
+     Onset time. . . . . . =   -4.0000000000000001E-002
+     Fundamental period. . =    3.3333333333333333E-002
+     Fundamental frequency =    30.000000000000000     
+     The onset time is ok
+
+ Source:            1
+ *******************************
+  locating moment-tensor source
+ *******************************
+
+ Moment-tensor source:
+             original x:    500.000000    
+             original z:    300.000000    
+ Closest estimate found:    0.00000000      m away
+  in rank            2
+  in element         6000
+  in poroelastic domain
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
+
+
+ end of moment-tensor source detection
+
+
+ receivers:
+
+ Total number of receivers =            1
+
+
+ ********************
+  locating receivers
+ ********************
+
+ reading receiver information from the ./DATA/STATIONS file
+
+
+ Station #            1     AA      S0001                           
+             original x:    600.000000    
+             original z:    400.000000    
+ Closest estimate found:    0.00000000      m away
+  in rank            3
+  in element         7920
+  in poroelastic domain
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
+ Distance from source:    141.421356      m
+
+ maximum error in location of all the receivers:    0.00000000      m
+
+ end of receiver detection
+
+ found a total of            1  receivers, this is okay
+
+
+ adjoint sources:
+   adjoint source type:           1
+   reading ASCII adjoint source files
+   number of adjoint sources =            1
+   adjoint sources min/max   =    3.40282347E+38  -3.40282347E+38
+
+ Preparing timerun:
+
+ Preparing timerun constants
+
+ Preparing array allocations
+   arrays for poroelastic domains
+   done initialization
+
+
+ Preparing Stacey boundaries
+   total number of absorbing boundary faces/edges:          600
+
+ Attenuation:
+   viscoelastic  attenuation: F (shear & bulk attenuation in elastic domains)
+   viscoacoustic attenuation: F (bulk attenuation in acoustic domains)
+
+ Preparing mass matrices
+   initializing mass matrices
+   adding Stacey contributions to mass matrix
+   inverting mass matrices
+
+
+ Preparing kernel simulation:
+   estimated minimum period resolved by mesh        :    0.00000000    
+   estimated number of time steps for minimum period:            0
+   estimated steps between compute kernels (for a fair reconstruction):            0
+
+   number of steps between compute kernels:            1
+
+ Preparing adjoint simulation
+   initializing adjoint sensitivity kernels
+   reading Stacey boundary arrays
+
+ Preparing save forward/adjoint simulation for poroelasticity
+   using viscous damping arrays for poroelastic domain
+
+ Preparing source time function
+   time stepping scheme:   Newmark
+   time stepping stages:            1
+   time step size      :    9.99999975E-05
+
+   number of time steps:         2500
+   number of sources   :            1
+
+   saving the source time function in a text file...
+
+ Movie simulation:
+   color images         - JPEG image type:            2
+   number of steps between outputs       :          500
+
+ Preparing image coloring: jpeg
+   allocating color image arrays
+   locating all the pixels of color images
+   total number of image pixels =      2590490
+   done locating all the pixels of color images
+   coloring image background based on vp
+
+ Checking mesh and stability
+
+ ********
+ Model: P (or PI) velocity min,max =    2639.0298113207546        2639.0298113207546     
+ Model: PII velocity min,max       =    960.95715332031250        960.95715332031250     
+ Model: S velocity min,max         =    1449.0098344653697        1449.0098344653697     
+ Model: density min,max            =    2650.0000000000000        2650.0000000000000     
+ ********
+
+
+ *********************************************
+ *** Verification of simulation parameters ***
+ *********************************************
+
+ *** Max grid size =    5.0000000000000000     
+ *** Min grid size =    5.0000000000000000     
+ *** Max/min ratio =    1.0000000000000000     
+
+ *** Minimum GLL point distance  =   0.86336582323005695     
+ *** Average GLL point distance  =    1.2500000000000000     
+
+ *** Minimum period resolved     =    4.3132902561051388E-003
+ *** Maximum frequency resolved  =    231.84157351445918      Hz
+
+ *** Maximum suggested time step                 =    1.6357636801343455E-004
+ *** Maximum suggested (Ricker) source frequency =    92.736629405783674     
+
+ *** for DT :    9.99999975E-05
+ *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.30566761778686302     
+
+ ----
+ Number of points per wavelength:
+ ----
+   Source            1
+   maximum dominant source frequency =    75.000000000000000      Hz
+
+   Nb pts / lambdaPI_fmax min =    28.1496506    
+   Nb pts / lambdaPI_fmax max =    28.1496506    
+
+   Nb pts / lambdaPII_fmax min =    10.2502098    
+   Nb pts / lambdaPII_fmax max =    10.2502098    
+
+   Nb pts / lambdaS_fmax min =    15.4561052    
+   Nb pts / lambdaS_fmax max =    15.4561052    
+
+ -----------------------------------------
+
+ histogram of min number of points per S wavelength in solid regions:
+
+ there are        40000  elements out of        40000  in solid regions
+   (i.e.,    100.000000     % of the total)
+
+ (too small = poor resolution of calculations -
+  too big = wasting memory and CPU time)
+ (threshold value is around 4.5 points per S wavelength
+  in elastic regions and 5.5 per P wavelength in fluid regions):
+
+   15.3015442      -    15.3170004               0     0.00000000      %
+   15.3170004      -    15.3324556               0     0.00000000      %
+   15.3324556      -    15.3479118               0     0.00000000      %
+   15.3479118      -    15.3633680               0     0.00000000      %
+   15.3633680      -    15.3788242               0     0.00000000      %
+   15.3788242      -    15.3942804               0     0.00000000      %
+   15.3942804      -    15.4097366               0     0.00000000      %
+   15.4097366      -    15.4251928               0     0.00000000      %
+   15.4251928      -    15.4406490               0     0.00000000      %
+   15.4406490      -    15.4561052               0     0.00000000      %
+   15.4561052      -    15.4715614           40000     100.000000      %
+   15.4715614      -    15.4870167               0     0.00000000      %
+   15.4870167      -    15.5024729               0     0.00000000      %
+   15.5024729      -    15.5179291               0     0.00000000      %
+   15.5179291      -    15.5333853               0     0.00000000      %
+   15.5333853      -    15.5488415               0     0.00000000      %
+   15.5488415      -    15.5642977               0     0.00000000      %
+   15.5642977      -    15.5797539               0     0.00000000      %
+   15.5797539      -    15.5952101               0     0.00000000      %
+   15.5952101      -    15.6106663               0     0.00000000      %
+
+ total percentage =    100.00000000000000       %
+
+
+ total number of elements in fluid and solid regions =        40000
+
+
+ Elapsed time for preparing timerun in seconds =   0.14692400000000000     
+
+ ************
+  time loop
+ ************
+               scheme:         Newmark
+
+            time step:    9.99999975E-05  s
+ number of time steps:         2500
+ total simulated time:   0.250000000      seconds
+ start time:  -3.99999991E-02  seconds
+
+
+ =========================================
+ =  T i m e  e v o l u t i o n  l o o p  =
+ =========================================
+
+
+ Starting time iteration loop ...
+
+
+ ******************************************************************
+Time step number       5   t =  4.000000E-04 s out of    2500
+ ******************************************************************
+ We have done   0.160064027     % of the total
+ Max norm of vector field in solid (poroelastic) =    0.00000000    
+ Max norm of vector field in fluid (poroelastic) =    0.00000000    
+ Elapsed time in seconds =   0.30400013923645020     
+ Elapsed time in hh:mm:ss =      0 h 00 m 00 s
+ Mean elapsed time per time step in seconds =    6.0800027847290036E-002
+ Time steps remaining =         2495
+ Estimated remaining time in seconds =    151.69606947898865     
+ Estimated remaining time in hh:mm:ss =      0 h 02 m 31 s
+ Estimated total run time in seconds =    152.00006961822510     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 32 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:24
+
+ Creating color image of size         1610  x         1690  for time step            5
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
+ Creating color image of size         1610  x         1690  for time step            5
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    4.6730349367862800E-008
+ Color image created
+
+
+ ******************************************************************
+Time step number     200   t =    0.0199 s out of    2500
+ ******************************************************************
+ We have done    7.96318531     % of the total
+ Max norm of vector field in solid (poroelastic) =    0.00000000    
+ Max norm of vector field in fluid (poroelastic) =    0.00000000    
+ Elapsed time in seconds =    14.634000062942505     
+ Elapsed time in hh:mm:ss =      0 h 00 m 14 s
+ Mean elapsed time per time step in seconds =    7.3170000314712519E-002
+ Time steps remaining =         2300
+ Estimated remaining time in seconds =    168.29100072383881     
+ Estimated remaining time in hh:mm:ss =      0 h 02 m 48 s
+ Estimated total run time in seconds =    182.92500078678131     
+ Estimated total run time in hh:mm:ss =      0 h 03 m 02 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:25
+
+
+ ******************************************************************
+Time step number     400   t =    0.0399 s out of    2500
+ ******************************************************************
+ We have done    15.9663868     % of the total
+ Max norm of vector field in solid (poroelastic) =    0.00000000    
+ Max norm of vector field in fluid (poroelastic) =    0.00000000    
+ Elapsed time in seconds =    29.226000070571899     
+ Elapsed time in hh:mm:ss =      0 h 00 m 29 s
+ Mean elapsed time per time step in seconds =    7.3065000176429751E-002
+ Time steps remaining =         2100
+ Estimated remaining time in seconds =    153.43650037050247     
+ Estimated remaining time in hh:mm:ss =      0 h 02 m 33 s
+ Estimated total run time in seconds =    182.66250044107437     
+ Estimated total run time in hh:mm:ss =      0 h 03 m 02 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:25
+
+ Creating color image of size         1610  x         1690  for time step          500
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
+ Creating color image of size         1610  x         1690  for time step          500
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    5.3604804151063945E-008
+ Color image created
+
+
+ ******************************************************************
+Time step number     600   t =    0.0599 s out of    2500
+ ******************************************************************
+ We have done    23.9695873     % of the total
+ Max norm of vector field in solid (poroelastic) =    0.00000000    
+ Max norm of vector field in fluid (poroelastic) =    0.00000000    
+ Elapsed time in seconds =    44.282000064849854     
+ Elapsed time in hh:mm:ss =      0 h 00 m 44 s
+ Mean elapsed time per time step in seconds =    7.3803333441416416E-002
+ Time steps remaining =         1900
+ Estimated remaining time in seconds =    140.22633353869119     
+ Estimated remaining time in hh:mm:ss =      0 h 02 m 20 s
+ Estimated total run time in seconds =    184.50833360354105     
+ Estimated total run time in hh:mm:ss =      0 h 03 m 04 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:25
+
+
+ ******************************************************************
+Time step number     800   t =    0.0799 s out of    2500
+ ******************************************************************
+ We have done    31.9727898     % of the total
+ Max norm of vector field in solid (poroelastic) =    0.00000000    
+ Max norm of vector field in fluid (poroelastic) =    0.00000000    
+ Elapsed time in seconds =    59.467999935150146     
+ Elapsed time in hh:mm:ss =      0 h 00 m 59 s
+ Mean elapsed time per time step in seconds =    7.4334999918937689E-002
+ Time steps remaining =         1700
+ Estimated remaining time in seconds =    126.36949986219408     
+ Estimated remaining time in hh:mm:ss =      0 h 02 m 06 s
+ Estimated total run time in seconds =    185.83749979734421     
+ Estimated total run time in hh:mm:ss =      0 h 03 m 05 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:25
+
+
+ ******************************************************************
+Time step number    1000   t =    0.0999 s out of    2500
+ ******************************************************************
+ We have done    39.9759903     % of the total
+ Max norm of vector field in solid (poroelastic) =    0.00000000    
+ Max norm of vector field in fluid (poroelastic) =    0.00000000    
+ Elapsed time in seconds =    74.641000032424927     
+ Elapsed time in hh:mm:ss =      0 h 01 m 14 s
+ Mean elapsed time per time step in seconds =    7.4641000032424923E-002
+ Time steps remaining =         1500
+ Estimated remaining time in seconds =    111.96150004863739     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 51 s
+ Estimated total run time in seconds =    186.60250008106232     
+ Estimated total run time in hh:mm:ss =      0 h 03 m 06 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:25
+
+
+ Total number of time steps done:         1000
+ Writing the seismograms by main proc alone took    3.83999990E-03  seconds
+
+ Creating color image of size         1610  x         1690  for time step         1000
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    0.0000000000000000     
+ Color image created
+ Creating color image of size         1610  x         1690  for time step         1000
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    6.5190334908038494E-008
+ Color image created
+
+
+ ******************************************************************
+Time step number    1200   t =    0.1199 s out of    2500
+ ******************************************************************
+ We have done    47.9791908     % of the total
+ Max norm of vector field in solid (poroelastic) =    6.54718860E-06
+ Max norm of vector field in fluid (poroelastic) =    7.16078034E-07
+ Elapsed time in seconds =    89.867000102996826     
+ Elapsed time in hh:mm:ss =      0 h 01 m 29 s
+ Mean elapsed time per time step in seconds =    7.4889166752497349E-002
+ Time steps remaining =         1300
+ Estimated remaining time in seconds =    97.355916778246552     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 37 s
+ Estimated total run time in seconds =    187.22291688124338     
+ Estimated total run time in hh:mm:ss =      0 h 03 m 07 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:25
+
+
+ ******************************************************************
+Time step number    1400   t =    0.1399 s out of    2500
+ ******************************************************************
+ We have done    55.9823914     % of the total
+ Max norm of vector field in solid (poroelastic) =    2.18446716E-04
+ Max norm of vector field in fluid (poroelastic) =    2.27171386E-05
+ Elapsed time in seconds =    104.98000001907349     
+ Elapsed time in hh:mm:ss =      0 h 01 m 44 s
+ Mean elapsed time per time step in seconds =    7.4985714299338202E-002
+ Time steps remaining =         1100
+ Estimated remaining time in seconds =    82.484285729272017     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 22 s
+ Estimated total run time in seconds =    187.46428574834550     
+ Estimated total run time in hh:mm:ss =      0 h 03 m 07 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:25
+
+ Creating color image of size         1610  x         1690  for time step         1500
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    6.7484006285667419E-004
+ Color image created
+ Creating color image of size         1610  x         1690  for time step         1500
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    8.8411162835200230E-008
+ Color image created
+
+
+ ******************************************************************
+Time step number    1600   t =    0.1599 s out of    2500
+ ******************************************************************
+ We have done    63.9855957     % of the total
+ Max norm of vector field in solid (poroelastic) =    5.79950400E-04
+ Max norm of vector field in fluid (poroelastic) =    5.31449550E-05
+ Elapsed time in seconds =    120.20900011062622     
+ Elapsed time in hh:mm:ss =      0 h 02 m 00 s
+ Mean elapsed time per time step in seconds =    7.5130625069141393E-002
+ Time steps remaining =          900
+ Estimated remaining time in seconds =    67.617562562227249     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 07 s
+ Estimated total run time in seconds =    187.82656267285347     
+ Estimated total run time in hh:mm:ss =      0 h 03 m 07 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:25
+
+
+ ******************************************************************
+Time step number    1800   t =    0.1799 s out of    2500
+ ******************************************************************
+ We have done    71.9887924     % of the total
+ Max norm of vector field in solid (poroelastic) =    2.38586217E-04
+ Max norm of vector field in fluid (poroelastic) =    1.61573334E-05
+ Elapsed time in seconds =    135.48099994659424     
+ Elapsed time in hh:mm:ss =      0 h 02 m 15 s
+ Mean elapsed time per time step in seconds =    7.5267222192552358E-002
+ Time steps remaining =          700
+ Estimated remaining time in seconds =    52.687055534786651     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 52 s
+ Estimated total run time in seconds =    188.16805548138089     
+ Estimated total run time in hh:mm:ss =      0 h 03 m 08 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:25
+
+
+ ******************************************************************
+Time step number    2000   t =    0.1999 s out of    2500
+ ******************************************************************
+ We have done    79.9919968     % of the total
+ Max norm of vector field in solid (poroelastic) =    2.00795330E-04
+ Max norm of vector field in fluid (poroelastic) =    1.12024554E-05
+ Elapsed time in seconds =    150.56400012969971     
+ Elapsed time in hh:mm:ss =      0 h 02 m 30 s
+ Mean elapsed time per time step in seconds =    7.5282000064849849E-002
+ Time steps remaining =          500
+ Estimated remaining time in seconds =    37.641000032424927     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 37 s
+ Estimated total run time in seconds =    188.20500016212463     
+ Estimated total run time in hh:mm:ss =      0 h 03 m 08 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:25
+
+
+ Total number of time steps done:         2000
+ Writing the seismograms by main proc alone took    3.40500008E-03  seconds
+
+ Creating color image of size         1610  x         1690  for time step         2000
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    1.7112061323132366E-004
+ Color image created
+ Creating color image of size         1610  x         1690  for time step         2000
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    1.0105572982865851E-005
+ Color image created
+
+
+ ******************************************************************
+Time step number    2200   t =    0.2199 s out of    2500
+ ******************************************************************
+ We have done    87.9952011     % of the total
+ Max norm of vector field in solid (poroelastic) =    1.72627013E-04
+ Max norm of vector field in fluid (poroelastic) =    9.99881831E-06
+ Elapsed time in seconds =    165.70399999618530     
+ Elapsed time in hh:mm:ss =      0 h 02 m 45 s
+ Mean elapsed time per time step in seconds =    7.5319999998266052E-002
+ Time steps remaining =          300
+ Estimated remaining time in seconds =    22.595999999479815     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 22 s
+ Estimated total run time in seconds =    188.29999999566513     
+ Estimated total run time in hh:mm:ss =      0 h 03 m 08 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:25
+
+
+ ******************************************************************
+Time step number    2400   t =    0.2399 s out of    2500
+ ******************************************************************
+ We have done    95.9983978     % of the total
+ Max norm of vector field in solid (poroelastic) =    1.52653505E-04
+ Max norm of vector field in fluid (poroelastic) =    8.99922907E-06
+ Elapsed time in seconds =    180.82299995422363     
+ Elapsed time in hh:mm:ss =      0 h 03 m 00 s
+ Mean elapsed time per time step in seconds =    7.5342916647593183E-002
+ Time steps remaining =          100
+ Estimated remaining time in seconds =    7.5342916647593183     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 07 s
+ Estimated total run time in seconds =    188.35729161898294     
+ Estimated total run time in hh:mm:ss =      0 h 03 m 08 s
+ The run will finish approximately on: Wed Sep 21, 2022 21:25
+
+
+ ******************************************************************
+Time step number    2500   t =    0.2499 s out of    2500
+ ******************************************************************
+ We have done    100.000000     % of the total
+ Max norm of vector field in solid (poroelastic) =    1.44847552E-04
+ Max norm of vector field in fluid (poroelastic) =    8.57460418E-06
+ Elapsed time in seconds =    188.37000012397766     
+ Elapsed time in hh:mm:ss =      0 h 03 m 08 s
+ Mean elapsed time per time step in seconds =    7.5348000049591066E-002
+ Time steps remaining =            0
+ Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
+ Estimated total run time in seconds =    188.37000012397766     
+ Estimated total run time in hh:mm:ss =      0 h 03 m 08 s
+
+
+ Total number of time steps done:         2500
+ Writing the seismograms by main proc alone took    2.26300000E-03  seconds
+
+ Creating color image of size         1610  x         1690  for time step         2500
+ drawing scalar image of the adjoint wavefield displacement...
+ Color image maximum amplitude =    1.2280575174372643E-004
+ Color image created
+ Creating color image of size         1610  x         1690  for time step         2500
+ drawing scalar image of the reconstructed forward wavefield displacement...
+ Color image maximum amplitude =    3.0760183896555437E-012
+ Color image created
+
+
+ Total duration of the time loop in seconds =    188.534027      s
+ Total number of time steps =         2500
+ Average duration of a time step of the time loop =    7.54136145E-02  s
+ Total number of spectral elements in the mesh =         9875
+     of which         9875  are regular elements
+     and            0  are PML elements.
+ Average duration of the calculation per spectral element =    7.63682146E-06  s
+
+
+ Total duration of the timeloop in seconds, measured using 
+ date and time of the system :    188.535995      s
+
+ Writing Kernels file
+
+ Poroelastic kernels:
+   maximum value of rho kernel   =    3.31277540E-11
+   maximum value of rho_f kernel =    2.89044483E-12
+   maximum value of m kernel     =    4.23999637E-12
+   maximum value of M kernel     =    5.74012192E-12
+   maximum value of B kernel     =    2.50603531E-11
+   maximum value of C kernel     =    4.03741190E-12
+   maximum value of mu_fr kernel =    1.00821027E-11
+
+   maximum value of cpI kernel   =    7.55268695E-11
+   maximum value of cpII kernel  =    1.15595302E-11
+   maximum value of cs kernel    =    2.05945816E-11
+
+   ./OUTPUT_FILES/proc000000_mu_B_C_kernel.dat
+   ./OUTPUT_FILES/proc000000_M_rho_rhof_kernel.dat
+   ./OUTPUT_FILES/proc000000_m_eta_kernel.dat
+   ./OUTPUT_FILES/proc000000_cpI_cpII_cs_kernel.dat
+   ./OUTPUT_FILES/proc000000_rhobb_rhofbb_ratio_kernel.dat
+   ./OUTPUT_FILES/proc000000_phib_eta_kernel.dat
+   ./OUTPUT_FILES/proc000000_mub_Bb_Cb_kernel.dat
+   ./OUTPUT_FILES/proc000000_Mb_rhob_rhofb_kernel.dat
+   ./OUTPUT_FILES/proc000000_mb_etab_kernel.dat
+
+   ./OUTPUT_FILES/proc000000_weights_kernel.dat
+
+
+
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ Program SPECFEM2D: 
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ poroelastic semi-infinite homogeneous
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ D a t e : 21 - 09 - 2022                                 T i m e  : 21:24:56
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+
+see results in directory: OUTPUT_FILES/
+
+done
+Wed Sep 21 21:24:56 CEST 2022
+############################################################
+
+plotting kernels
+
+############################################################
+plotting kernel file:  OUTPUT_FILES/cpI_cpII_cs_kernel.dat
+
+dimensions:
+  x-range min/max = 0.000000 / 1000.000000
+  y-range min/max = 0.000000 / 1000.000000
+
+statistics:
+         K_cpI : min/max = -3.100900e-03 / 4.188800e-03
+        K_cpII : min/max = -2.534200e-04 / 9.110600e-05
+          K_cs : min/max = -9.632300e-03 / 1.031800e-02
+
+  data max =  0.010318
+
+plot: color scale max =  1e-05
+
+*****
+plotted file:  OUTPUT_FILES/cpI_cpII_cs_kernel.png
+*****
+
+plotting kernel file:  OUTPUT_FILES/mu_B_C_kernel.dat
+
+dimensions:
+  x-range min/max = 0.000000 / 1000.000000
+  y-range min/max = 0.000000 / 1000.000000
+
+statistics:
+          K_mu : min/max = -5.494400e-03 / 5.380000e-03
+           K_B : min/max = -1.033400e-03 / 1.396000e-03
+           K_C : min/max = -9.594900e-04 / 3.616300e-04
+
+  data max =  0.0054944
+
+plot: color scale max =  1e-05
+
+*****
+plotted file:  OUTPUT_FILES/mu_B_C_kernel.png
+*****
+
+plotting kernel file:  OUTPUT_FILES/mub_Bb_Cb_kernel.dat
+
+dimensions:
+  x-range min/max = 0.000000 / 1000.000000
+  y-range min/max = 0.000000 / 1000.000000
+
+statistics:
+         K_mub : min/max = -5.494400e-03 / 5.380000e-03
+          K_Bb : min/max = -1.033400e-03 / 1.396000e-03
+          K_Cb : min/max = -9.594900e-04 / 3.616300e-04
+
+  data max =  0.0054944
+
+plot: color scale max =  1e-05
+
+*****
+plotted file:  OUTPUT_FILES/mub_Bb_Cb_kernel.png
+*****
+
+plotting kernel file:  OUTPUT_FILES/M_rho_rhof_kernel.dat
+
+dimensions:
+  x-range min/max = 0.000000 / 1000.000000
+  y-range min/max = 0.000000 / 1000.000000
+
+statistics:
+           K_M : min/max = -4.120300e-05 / 1.097300e-04
+         K_rho : min/max = -3.023200e-04 / 7.858700e-04
+        K_rhof : min/max = -1.871400e-04 / 4.370100e-04
+
+  data max =  0.00078587
+
+plot: color scale max =  1e-05
+
+*****
+plotted file:  OUTPUT_FILES/M_rho_rhof_kernel.png
+*****
+
+plotting kernel file:  OUTPUT_FILES/Mb_rhob_rhofb_kernel.dat
+
+dimensions:
+  x-range min/max = 0.000000 / 1000.000000
+  y-range min/max = 0.000000 / 1000.000000
+
+statistics:
+          K_Mb : min/max = -4.120300e-05 / 1.097300e-04
+        K_rhob : min/max = -5.741900e-03 / 6.502300e-03
+       K_rhofb : min/max = -6.266800e-04 / 3.952900e-04
+
+  data max =  0.0065023
+
+plot: color scale max =  1e-05
+
+*****
+plotted file:  OUTPUT_FILES/Mb_rhob_rhofb_kernel.png
+*****
+
+
+see results in directory: OUTPUT_FILES/
+
+done
+Wed Sep 21 21:26:42 CEST 2022
