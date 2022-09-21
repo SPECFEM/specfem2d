@@ -483,6 +483,8 @@
   double precision :: afactor,bfactor,cfactor
   double precision :: gamma1,gamma2,gamma3,gamma4
   double precision :: cpIsquare,cpIIsquare,cssquare
+  ! helper parameters
+  double precision :: phi_over_tort,phi_over_tort_ratio,ratio_square
 
   ! safety check
   if (GPU_MODE) call stop_the_code('Error poroelastic kernels not implemented on GPUs yet')
@@ -533,9 +535,11 @@
         rho_bar = (1.d0 - phi)*rho_s + phi * rho_f
 
         ! Approximated velocities (no viscous dissipation)
-        afactor = rho_bar - phi/tort*rho_f
-        bfactor = H_biot + phi*rho_bar/(tort*rho_f)*M_biot - TWO*phi/tort*C_biot
-        cfactor = phi/(tort*rho_f)*(H_biot*M_biot - C_biot*C_biot)
+        phi_over_tort = phi / tort
+
+        afactor = rho_bar - phi_over_tort * rho_f
+        bfactor = H_biot + phi_over_tort * rho_bar/rho_f * M_biot - TWO * phi_over_tort * C_biot
+        cfactor = phi_over_tort / rho_f * (H_biot * M_biot - C_biot * C_biot)
 
         cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
         cpIIsquare = (bfactor - sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
@@ -544,16 +548,20 @@
         ! Approximated ratio r = amplitude "w" field/amplitude "s" field (no viscous dissipation)
         ! used later for wavespeed kernels calculation, which are presently implemented for inviscid case,
         ! contrary to primary and density-normalized kernels, which are consistent with viscous fluid case.
-        gamma1 = H_biot - phi/tort*C_biot
-        gamma2 = C_biot - phi/tort*M_biot
-        gamma3 = phi/tort*( M_biot*(afactor/rho_f + phi/tort) - C_biot)
-        gamma4 = phi/tort*( C_biot*(afactor/rho_f + phi/tort) - H_biot)
+        gamma1 = H_biot - phi_over_tort * C_biot
+        gamma2 = C_biot - phi_over_tort * M_biot
+        gamma3 = phi_over_tort * ( M_biot * (afactor/rho_f + phi_over_tort) - C_biot)
+        gamma4 = phi_over_tort * ( C_biot * (afactor/rho_f + phi_over_tort) - H_biot)
 
         ratio = HALF*(gamma1 - gamma3)/gamma4 + HALF*sqrt((gamma1-gamma3)**2/gamma4**2 + 4.d0 * gamma2/gamma4)
 
+        ! helper
+        phi_over_tort_ratio = phi_over_tort * ratio
+        ratio_square = ratio**2
+
         rhot_kl(i,j,ispec) = rhot_kl(i,j,ispec) - (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * rho_bar * rhot_k_loc
         rhof_kl(i,j,ispec) = rhof_kl(i,j,ispec) - (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * rho_f * rhof_k_loc
-        sm_kl(i,j,ispec) = sm_kl(i,j,ispec) - (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * rho_f*tort/phi * sm_k_loc
+        sm_kl(i,j,ispec) = sm_kl(i,j,ispec) - (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * rho_f * tort/phi * sm_k_loc
 
         !at the moment works with constant permeability
         eta_kl(i,j,ispec) = eta_kl(i,j,ispec) - (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * eta_f/perm_xx * eta_k_loc
@@ -616,7 +624,7 @@
         mufr_kl(i,j,ispec) = mufr_kl(i,j,ispec) - TWO * (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS) * mufr_k_loc
 
         ! density kernels
-        rholb = rho_bar - phi*rho_f/tort
+        rholb = rho_bar - phi_over_tort * rho_f
         rhob_kl(i,j,ispec) = rhot_kl(i,j,ispec) + B_kl(i,j,ispec) + mufr_kl(i,j,ispec)
         rhofb_kl(i,j,ispec) = rhof_kl(i,j,ispec) + C_kl(i,j,ispec) + M_kl(i,j,ispec) + sm_kl(i,j,ispec)
 
@@ -624,109 +632,103 @@
         phi_kl(i,j,ispec) = - sm_kl(i,j,ispec) - M_kl(i,j,ispec)
 
         ! wave speed kernels
-        dd1 = (1._CUSTOM_REAL+rholb/rho_f)*ratio**2 + 2._CUSTOM_REAL*ratio + tort/phi
+        dd1 = (1._CUSTOM_REAL+rholb/rho_f) * ratio_square  + 2._CUSTOM_REAL*ratio + tort/phi
 
         rhobb_kl(i,j,ispec) = rhob_kl(i,j,ispec) &
-              - phi*rho_f/(tort*B_biot) * &
-                (cpIIsquare + (cpIsquare - cpIIsquare)*( (phi / &
-                tort*ratio +1._CUSTOM_REAL)/dd1 + &
-                (rho_bar**2*ratio**2/rho_f**2*(phi / tort*ratio+1._CUSTOM_REAL)*(phi/tort*ratio + &
-                phi/tort * &
-                (1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL) )/dd1**2 ) - &
-                FOUR_THIRDS*cssquare ) &
+              - phi_over_tort * rho_f/B_biot * &
+                (cpIIsquare + (cpIsquare - cpIIsquare) * ( (phi_over_tort_ratio + 1._CUSTOM_REAL)/dd1 + &
+                (rho_bar**2 * ratio_square / rho_f**2 * (phi_over_tort_ratio + 1._CUSTOM_REAL)*(phi_over_tort_ratio + &
+                phi_over_tort * (1._CUSTOM_REAL + rho_f/rho_bar) - 1._CUSTOM_REAL) )/dd1**2 ) - FOUR_THIRDS * cssquare ) &
                 * B_kl(i,j,ispec) &
-              - rho_bar*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
-                (phi/tort*ratio + &
-                1._CUSTOM_REAL)**2/dd1**2*M_kl(i,j,ispec) + &
-                rho_bar*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
-                (phi/tort*ratio+1._CUSTOM_REAL)/dd1 - &
-                phi*ratio/tort*(phi / tort*ratio+1._CUSTOM_REAL)*&
-                (1._CUSTOM_REAL+rho_bar*ratio/rho_f)/dd1**2) &
+              - rho_bar * ratio_square / M_biot * (cpIsquare - cpIIsquare) * &
+                (phi_over_tort_ratio + 1._CUSTOM_REAL)**2 / dd1**2 &
+                * M_kl(i,j,ispec) &
+              + rho_bar * ratio / C_biot * (cpIsquare - cpIIsquare) * ( (phi_over_tort_ratio + 1._CUSTOM_REAL)/dd1 - &
+                phi_over_tort_ratio * (phi_over_tort_ratio + 1._CUSTOM_REAL) * &
+                (1._CUSTOM_REAL + rho_bar * ratio / rho_f)/dd1**2) &
                 * C_kl(i,j,ispec) &
-              + phi*rho_f*cssquare / (tort*mu_fr) &
+              + phi_over_tort * rho_f * cssquare / mu_fr &
                 * mufrb_kl(i,j,ispec)
 
         rhofbb_kl(i,j,ispec) = rhofb_kl(i,j,ispec) &
-              + phi*rho_f/(tort*B_biot) * (cpIIsquare + (cpIsquare - cpIIsquare)*( (phi/ &
-                tort*ratio +1._CUSTOM_REAL)/dd1+&
-                (rho_bar**2*ratio**2/rho_f**2*(phi/tort*ratio+1)*(phi/tort*ratio+ &
-                phi/tort*(1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL) )/dd1**2 )- &
-                FOUR_THIRDS*cssquare ) &
+              + phi_over_tort * rho_f/ B_biot * &
+                (cpIIsquare + (cpIsquare - cpIIsquare) * ( (phi_over_tort_ratio  + 1._CUSTOM_REAL)/dd1 + &
+                (rho_bar**2 * ratio_square / rho_f**2 * (phi_over_tort_ratio + 1._CUSTOM_REAL)*(phi_over_tort_ratio + &
+                phi_over_tort * (1._CUSTOM_REAL + rho_f/rho_bar) - 1._CUSTOM_REAL) )/dd1**2 ) - FOUR_THIRDS * cssquare ) &
                 * B_kl(i,j,ispec) &
-              + rho_bar*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
-                (phi/tort*ratio + 1._CUSTOM_REAL)**2/dd1**2 &
+              + rho_bar * ratio_square / M_biot * (cpIsquare - cpIIsquare) * &
+                (phi_over_tort_ratio + 1._CUSTOM_REAL)**2 / dd1**2 &
                 * M_kl(i,j,ispec) &
-              - rho_bar*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
-                (phi/tort*ratio+1._CUSTOM_REAL)/dd1 - &
-                phi*ratio/tort*(phi/tort*ratio+1._CUSTOM_REAL)*&
-                (1._CUSTOM_REAL+rho_bar*ratio/rho_f)/dd1**2) &
+              - rho_bar * ratio / C_biot * (cpIsquare - cpIIsquare)* ( (phi_over_tort_ratio + 1._CUSTOM_REAL)/dd1 - &
+                phi_over_tort_ratio * (phi_over_tort_ratio + 1._CUSTOM_REAL) * &
+                (1._CUSTOM_REAL + rho_bar * ratio / rho_f)/dd1**2) &
                 * C_kl(i,j,ispec) &
-              - phi*rho_f*cssquare/(tort*mu_fr) &
+              - phi_over_tort * rho_f * cssquare/ mu_fr &
                 * mufrb_kl(i,j,ispec)
 
         phib_kl(i,j,ispec) = phi_kl(i,j,ispec) &
-              - phi*rho_bar/(tort*B_biot) * ( cpIsquare - rho_f/rho_bar*cpIIsquare- &
-                (cpIsquare-cpIIsquare)*( (TWO*ratio**2*phi/tort + (1._CUSTOM_REAL+rho_f/rho_bar)* &
-                (TWO*ratio*phi/tort+1._CUSTOM_REAL))/dd1 + (phi/tort*ratio+1._CUSTOM_REAL)*(phi*&
-                ratio/tort+phi/tort*(1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL)*((1._CUSTOM_REAL+ &
-                rho_bar/rho_f-TWO*phi/tort)*ratio**2+TWO*ratio)/dd1**2 ) - &
-                FOUR_THIRDS*rho_f*cssquare/rho_bar ) &
+              - phi_over_tort * rho_bar / B_biot * ( cpIsquare - rho_f/rho_bar * cpIIsquare - &
+                (cpIsquare - cpIIsquare) * ( (TWO * ratio_square * phi_over_tort + (1._CUSTOM_REAL + rho_f/rho_bar) * &
+                (TWO * ratio * phi_over_tort + 1._CUSTOM_REAL))/dd1 + (phi_over_tort_ratio + 1._CUSTOM_REAL) * &
+                (phi_over_tort_ratio + phi_over_tort * (1._CUSTOM_REAL + rho_f/rho_bar) - 1._CUSTOM_REAL) * ((1._CUSTOM_REAL+ &
+                rho_bar/rho_f - TWO * phi_over_tort) * ratio_square + TWO * ratio)/dd1**2 ) - &
+                FOUR_THIRDS * rho_f * cssquare/rho_bar ) &
                 * B_kl(i,j,ispec) &
-              + rho_f/M_biot * (cpIsquare-cpIIsquare) &
-                *( TWO*ratio*(phi/tort*ratio+1._CUSTOM_REAL)/dd1 - &
-                  (phi/tort*ratio+1._CUSTOM_REAL)**2 &
-                  *((1._CUSTOM_REAL+rho_bar/rho_f-TWO*phi/tort)*ratio**2+TWO*ratio)/dd1**2) &
+              + rho_f/M_biot * (cpIsquare-cpIIsquare) * &
+                (TWO * ratio * (phi_over_tort_ratio + 1._CUSTOM_REAL)/dd1 - (phi_over_tort_ratio + 1._CUSTOM_REAL)**2 * &
+                ((1._CUSTOM_REAL + rho_bar/rho_f - TWO * phi_over_tort) * ratio_square + TWO * ratio) / dd1**2) &
                 * M_kl(i,j,ispec) &
-              + phi*rho_f/(tort*C_biot)* (cpIsquare-cpIIsquare)*ratio* (&
-                (1._CUSTOM_REAL+rho_f/rho_bar*ratio)/dd1 - (phi/tort*ratio+1._CUSTOM_REAL)* &
-                (1._CUSTOM_REAL+rho_bar/rho_f*ratio)*((1._CUSTOM_REAL+rho_bar/rho_f-TWO*phi/tort)*ratio+TWO)/dd1**2 ) &
+              + phi_over_tort * rho_f / C_biot * (cpIsquare - cpIIsquare) * ratio * (&
+                (1._CUSTOM_REAL + rho_f/rho_bar * ratio)/dd1 - (phi_over_tort_ratio + 1._CUSTOM_REAL) * &
+                (1._CUSTOM_REAL + rho_bar/rho_f * ratio) * &
+                ((1._CUSTOM_REAL + rho_bar/rho_f - TWO * phi_over_tort) * ratio + TWO) / dd1**2) &
                 * C_kl(i,j,ispec) &
-              - phi*rho_f*cssquare /(tort*mu_fr) &
+              - phi_over_tort * rho_f * cssquare / mu_fr &
                 * mufrb_kl(i,j,ispec)
 
         ! wavespeed kernels
-        cpI_kl(i,j,ispec) = 2._CUSTOM_REAL*cpIsquare/B_biot*rho_bar*( &
-                1._CUSTOM_REAL-phi/tort + (phi/tort*ratio+ 1._CUSTOM_REAL)*(phi/tort*&
-                ratio+phi/tort* (1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL)/dd1 ) &
+        cpI_kl(i,j,ispec) = 2._CUSTOM_REAL * cpIsquare * rho_bar / B_biot * ( &
+                1._CUSTOM_REAL - phi_over_tort + (phi_over_tort_ratio + 1._CUSTOM_REAL) * (phi_over_tort_ratio + &
+                phi_over_tort * (1._CUSTOM_REAL + rho_f/rho_bar) - 1._CUSTOM_REAL) / dd1 ) &
                 * B_kl(i,j,ispec) &
-              + 2._CUSTOM_REAL*cpIsquare*rho_f*tort/(phi*M_biot) *&
-                (phi/tort*ratio+1._CUSTOM_REAL)**2/dd1 &
+              + 2._CUSTOM_REAL * cpIsquare * rho_f * tort / (phi*M_biot) * &
+                (phi_over_tort_ratio + 1._CUSTOM_REAL)**2 /dd1 &
                 * M_kl(i,j,ispec) &
-              + 2._CUSTOM_REAL*cpIsquare*rho_f/C_biot * &
-                (phi/tort*ratio+1._CUSTOM_REAL)* (1._CUSTOM_REAL+rho_bar/rho_f*ratio)/dd1 &
+              + 2._CUSTOM_REAL * cpIsquare * rho_f / C_biot * &
+                (phi_over_tort_ratio + 1._CUSTOM_REAL) * (1._CUSTOM_REAL + rho_bar/rho_f * ratio) / dd1 &
                 * C_kl(i,j,ispec)
-        cpII_kl(i,j,ispec) = 2._CUSTOM_REAL*cpIIsquare*rho_bar/B_biot * (&
-                phi*rho_f/(tort*rho_bar) - (phi/tort*ratio+ 1._CUSTOM_REAL)*(phi/tort*ratio+phi/tort* &
-                (1._CUSTOM_REAL+rho_f/rho_bar)-&
-                1._CUSTOM_REAL)/dd1  ) &
+        cpII_kl(i,j,ispec) = 2._CUSTOM_REAL * cpIIsquare * rho_bar / B_biot * ( &
+                phi_over_tort * rho_f / rho_bar - (phi_over_tort_ratio + 1._CUSTOM_REAL) * (phi_over_tort_ratio + &
+                phi_over_tort * (1._CUSTOM_REAL + rho_f/rho_bar) - 1._CUSTOM_REAL) / dd1  ) &
                 * B_kl(i,j,ispec) &
-              + 2._CUSTOM_REAL*cpIIsquare*rho_f*tort/(phi*M_biot) * (&
-                1._CUSTOM_REAL - (phi/tort*ratio+ 1._CUSTOM_REAL)**2/dd1  ) &
+              + 2._CUSTOM_REAL * cpIIsquare * rho_f * tort / (phi*M_biot) * &
+                (1._CUSTOM_REAL - (phi_over_tort_ratio + 1._CUSTOM_REAL)**2 / dd1 ) &
                 * M_kl(i,j,ispec) &
-              + 2._CUSTOM_REAL*cpIIsquare*rho_f/C_biot * (&
-                1._CUSTOM_REAL - (phi/tort*ratio+ 1._CUSTOM_REAL)*(1._CUSTOM_REAL+&
-                rho_bar/rho_f*ratio)/dd1  ) &
+              + 2._CUSTOM_REAL * cpIIsquare * rho_f / C_biot * &
+                (1._CUSTOM_REAL - (phi_over_tort_ratio + 1._CUSTOM_REAL) * (1._CUSTOM_REAL + rho_bar / rho_f * ratio) / dd1 ) &
                 * C_kl(i,j,ispec)
 
-        cs_kl(i,j,ispec) = - 8._CUSTOM_REAL/3._CUSTOM_REAL*cssquare* rho_bar/B_biot &
-                *(1._CUSTOM_REAL-phi*rho_f/(tort*rho_bar)) &
+        cs_kl(i,j,ispec) = - 8._CUSTOM_REAL / 3._CUSTOM_REAL * cssquare * rho_bar / B_biot * &
+                (1._CUSTOM_REAL - phi_over_tort * rho_f/rho_bar) &
                 * B_kl(i,j,ispec) &
-              + 2._CUSTOM_REAL*(rho_bar-rho_f*phi/tort)/mu_fr*cssquare &
+              + 2._CUSTOM_REAL * (rho_bar - rho_f * phi_over_tort) / mu_fr * cssquare &
                 * mufrb_kl(i,j,ispec)
 
-        ratio_kl(i,j,ispec) = ratio*rho_bar*phi/(tort*B_biot) * (cpIsquare-cpIIsquare) &
-                * (phi/tort*(2._CUSTOM_REAL*ratio+1._CUSTOM_REAL+rho_f/rho_bar)/dd1 - (phi/tort*ratio+1._CUSTOM_REAL)*&
-                  (phi/tort*ratio+phi/tort*( 1._CUSTOM_REAL+rho_f/rho_bar)-1._CUSTOM_REAL)*(2._CUSTOM_REAL*ratio*(&
-                    1._CUSTOM_REAL+rho_bar/rho_f-phi/tort) + 2._CUSTOM_REAL)/dd1**2  ) &
+        ratio_kl(i,j,ispec) = ratio * rho_bar * phi_over_tort / B_biot * (cpIsquare - cpIIsquare) * &
+                (phi_over_tort * (2._CUSTOM_REAL * ratio + 1._CUSTOM_REAL + rho_f / rho_bar) / dd1 - &
+                (phi_over_tort_ratio + 1._CUSTOM_REAL) * &
+                (phi_over_tort_ratio + phi_over_tort * ( 1._CUSTOM_REAL + rho_f / rho_bar) - 1._CUSTOM_REAL) * &
+                (2._CUSTOM_REAL * ratio * (1._CUSTOM_REAL + rho_bar / rho_f - phi_over_tort) + 2._CUSTOM_REAL) / dd1**2  ) &
                 * B_kl(i,j,ispec) &
-              + ratio*rho_f*tort/(phi*M_biot)*(cpIsquare-cpIIsquare) * 2._CUSTOM_REAL*phi/tort &
-                * ( (phi/tort*ratio+1._CUSTOM_REAL)/dd1 - (phi/tort*ratio+1._CUSTOM_REAL)**2 &
-                    * ((1._CUSTOM_REAL+rho_bar/rho_f-phi/tort)*ratio + 1._CUSTOM_REAL)/dd1**2 ) &
+              + ratio * rho_f * tort / (phi * M_biot) * (cpIsquare - cpIIsquare) * 2._CUSTOM_REAL * phi_over_tort * &
+                ( (phi_over_tort_ratio + 1._CUSTOM_REAL) / dd1 - (phi_over_tort_ratio + 1._CUSTOM_REAL)**2 * &
+                ((1._CUSTOM_REAL + rho_bar / rho_f -phi_over_tort) * ratio + 1._CUSTOM_REAL) / dd1**2 ) &
                 * M_kl(i,j,ispec) &
-              + ratio*rho_f/C_biot*(cpIsquare-cpIIsquare) &
-                * ( (2._CUSTOM_REAL*phi*rho_bar*ratio/(tort*rho_f)+phi/tort+rho_bar/rho_f)/dd1 - &
-                     2._CUSTOM_REAL*phi/tort*(phi/tort*ratio+1._CUSTOM_REAL)*(1._CUSTOM_REAL+rho_bar/rho_f*ratio) &
-                    *((1._CUSTOM_REAL + rho_bar/rho_f - phi/tort)*ratio+1._CUSTOM_REAL)/dd1**2 ) &
+              + ratio * rho_f / C_biot * (cpIsquare - cpIIsquare) * &
+                ( (2._CUSTOM_REAL * phi_over_tort_ratio * rho_bar / rho_f + phi_over_tort + rho_bar / rho_f) / dd1 - &
+                2._CUSTOM_REAL * phi_over_tort * (phi_over_tort_ratio + 1._CUSTOM_REAL) * &
+                (1._CUSTOM_REAL + rho_bar / rho_f * ratio) * &
+                ((1._CUSTOM_REAL + rho_bar / rho_f - phi_over_tort) * ratio + 1._CUSTOM_REAL) / dd1**2 ) &
                 * C_kl(i,j,ispec)
       enddo
     enddo
