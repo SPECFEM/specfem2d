@@ -65,7 +65,7 @@
   double precision, external :: comp_source_time_function_Ricker,comp_source_time_function_d2Ricker
 
   ! outputs source time function to file
-  logical, parameter :: PLOT_SOURCE_TIME_FUNCTION = .true.
+  logical, parameter :: PLOT_SOURCE_TIME_function = .true.
 
   ! user output
   if (myrank == 0) then
@@ -476,7 +476,7 @@
   enddo
 
   ! plots source time function to file
-  if (PLOT_SOURCE_TIME_FUNCTION) then
+  if (PLOT_SOURCE_TIME_function) then
 
     ! user output
     if (myrank == 0) then
@@ -540,7 +540,7 @@
 
     endif  ! myrank == islice_selected_source(i_source)
 
-  endif ! PLOT_SOURCE_TIME_FUNCTION
+  endif ! PLOT_SOURCE_TIME_function
 
   !debug
   !call synchronize_all()
