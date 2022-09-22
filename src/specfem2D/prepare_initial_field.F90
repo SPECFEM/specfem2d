@@ -47,7 +47,7 @@
                          potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic
 
   use constants, only: OUTPUT_FILES
-  use specfem_par, only: DT,NSTEP,t0, &
+  use specfem_par, only: DT,NSTEP,t0,P_SV, &
     x_final_receiver,z_final_receiver,station_name,network_name
 
   implicit none
@@ -102,6 +102,12 @@
   initial_field_type = source_type(1)
   initial_field_angle = anglesource(1)
 
+  ! initial field type:
+  !   1 or 4 - for a plane P wave
+  !   2 or 5 - for a plane SV wave
+  !   3      - for a Rayleigh wave
+  !   6      - for a mode initial displacement
+
   if (any_acoustic) then
     ! only use P-waves
     if (initial_field_type == 2) initial_field_type = 1
@@ -109,15 +115,37 @@
     if (initial_field_type == 5) initial_field_type = 4
   endif
 
+  ! the initial wavefield solutions are based on P-SV simulation
+  ! for SH-simulations, this here simply sets the the field type to S-wave always
+  if (.not. P_SV) then
+    ! SH-waves can have only initial S-waves
+    if (initial_field_type == 1) initial_field_type = 2
+    if (initial_field_type == 3) initial_field_type = 2
+  endif
+
   if (myrank == 0) then
     write(IMAIN,*) '*** calculation of the initial plane wave ***'
     write(IMAIN,*)
+    if (P_SV) then
+      write(IMAIN,*)  'P-SV wave simulation       : initial field type = ',initial_field_type
+    else
+      write(IMAIN,*)  'SH/membrane wave simulation: initial field type = ',initial_field_type
+    endif
+    write(IMAIN,*)
     if (any_elastic) then
-      write(IMAIN,*)  'To change the initial plane wave, change source_type in DATA/SOURCE and use:'
-      write(IMAIN,*)  '  1 or 4 - for a plane P wave'
-      write(IMAIN,*)  '  2 or 5 - for a plane SV wave'
-      write(IMAIN,*)  '  3      - for a Rayleigh wave'
-      write(IMAIN,*)  '  6      - for a mode initial displacement'
+      if (P_SV) then
+        ! P-SV waves
+        write(IMAIN,*)  'To change the initial plane wave, change source_type in DATA/SOURCE and use:'
+        write(IMAIN,*)  '  1 or 4 - for a plane P wave'
+        write(IMAIN,*)  '  2 or 5 - for a plane SV wave'
+        write(IMAIN,*)  '  3      - for a Rayleigh wave'
+        write(IMAIN,*)  '  6      - for a mode initial displacement'
+      else
+        ! SH-waves
+        write(IMAIN,*)  'To change the initial plane wave, change source_type in DATA/SOURCE and use:'
+        write(IMAIN,*)  '  2 or 5 - for a plane SH wave'
+        write(IMAIN,*)  '  6      - for a mode initial displacement'
+      endif
       write(IMAIN,*)
       write(IMAIN,*)  'selected source_type = ',initial_field_type
       if (initial_field_type /= 3 .and. initial_field_type /= 6) &
@@ -131,7 +159,11 @@
     case (1,4)
       write(IMAIN,*) 'initial P wave of', initial_field_angle*180.d0/pi, 'degrees introduced.'
     case (2,5)
-      write(IMAIN,*) 'initial SV wave of', initial_field_angle*180.d0/pi, ' degrees introduced.'
+      if (P_SV) then
+        write(IMAIN,*) 'initial SV wave of', initial_field_angle*180.d0/pi, ' degrees introduced.'
+      else
+        write(IMAIN,*) 'initial SH wave of', initial_field_angle*180.d0/pi, ' degrees introduced.'
+      endif
     case (3)
       write(IMAIN,*) 'Rayleigh wave introduced.'
     case (6)
@@ -178,6 +210,8 @@
   cploc = rho_vpstore(1,1,1) / rhostore(1,1,1)
   csloc = rho_vsstore(1,1,1) / rhostore(1,1,1)
 
+  ! the initial wavefield solutions are based on P-SV simulation
+
   ! plane wave type
   select case(initial_field_type)
   case (1,4)
@@ -190,14 +224,14 @@
 
     if (any_elastic) then
       ! from formulas (5.27) and (5.28) p 134 in Aki & Richards (2002)
-      PP = (- cos(2.d0*anglesource_refl)**2/csloc**3 &
-            + 4.d0*p**2*cos(anglesource_abs)*cos(anglesource_refl)/cploc) / &
-                 (  cos(2.d0*anglesource_refl)**2/csloc**3 &
-                  + 4.d0*p**2*cos(anglesource_abs)*cos(anglesource_refl)/cploc)
+      PP = (- cos(2.d0*anglesource_refl)**2 / csloc**3 &
+            + 4.d0 * p**2 * cos(anglesource_abs) * cos(anglesource_refl) / cploc) / &
+                 (  cos(2.d0*anglesource_refl)**2 / csloc**3 &
+                  + 4.d0 * p**2 * cos(anglesource_abs) * cos(anglesource_refl) / cploc)
 
-      PS = 4.d0*p*cos(anglesource_abs)*cos(2.d0*anglesource_refl) / &
-                 (csloc**2*(cos(2.d0*anglesource_refl)**2/csloc**3 &
-                 +4.d0*p**2*cos(anglesource_abs)*cos(anglesource_refl)/cploc))
+      PS = 4.d0 * p * cos(anglesource_abs) * cos(2.d0*anglesource_refl) / &
+                 (csloc**2 * (cos(2.d0*anglesource_refl)**2 / csloc**3 &
+                 + 4.d0 * p**2 * cos(anglesource_abs) * cos(anglesource_refl)/cploc))
     else if (any_acoustic) then
       PP = 1.d0
       PS = 0.d0
@@ -214,23 +248,36 @@
     C_plane(1) = PS * cos(anglesource_refl);     C_plane(2) = PS * sin(anglesource_refl)
 
   case (2,5)
-    ! SV wave case
-    p = sin(anglesource_abs)/csloc
-    c_inc  = csloc
-    c_refl = cploc
+    if (P_SV) then
+      ! SV wave case
+      p = sin(anglesource_abs)/csloc
+      c_inc  = csloc
+      c_refl = cploc
+    else
+      ! SH wave
+      p = sin(anglesource_abs)/csloc
+      c_inc  = csloc
+      c_refl = csloc
+    endif
 
     ! if this coefficient is greater than 1, we are beyond the critical SV wave angle and there cannot be a converted P wave
     if (p*c_refl <= 1.d0) then
       anglesource_refl = asin(p*c_refl)
 
-      ! from formulas (5.30) and (5.31) p 140 in Aki & Richards (1980)
-      SS = (cos(2.d0*anglesource_abs)**2/csloc**3 &
-          - 4.d0*p**2*cos(anglesource_abs)*cos(anglesource_refl)/cploc) / &
-            (cos(2.d0*anglesource_abs)**2/csloc**3 &
-              + 4.d0*p**2*cos(anglesource_abs)*cos(anglesource_refl)/cploc)
-      SP = 4.d0*p*cos(anglesource_abs)*cos(2*anglesource_abs) / &
-            (cploc*csloc*(cos(2.d0*anglesource_abs)**2/csloc**3&
-            +4.d0*p**2*cos(anglesource_refl)*cos(anglesource_abs)/cploc))
+      if (P_SV) then
+        ! from formulas (5.30) and (5.31) p 140 in Aki & Richards (1980)
+        SS = (cos(2.d0*anglesource_abs)**2 / csloc**3 &
+              - 4.d0 * p**2 * cos(anglesource_abs) * cos(anglesource_refl) / cploc) / &
+             (cos(2.d0*anglesource_abs)**2 / csloc**3 &
+              + 4.d0 * p**2 * cos(anglesource_abs) * cos(anglesource_refl) / cploc)
+        SP = 4.d0 * p * cos(anglesource_abs) * cos(2*anglesource_abs) / &
+              (cploc * csloc * (cos(2.d0*anglesource_abs)**2 / csloc**3 &
+              + 4.d0 * p**2 * cos(anglesource_refl) * cos(anglesource_abs) / cploc))
+      else
+        ! SH waves
+        SS = 1.d0
+        SP = 0.d0
+      endif
 
       if (myrank == 0) then
         write(IMAIN,*) 'reflected convert plane wave angle: ', anglesource_refl*180.d0/pi
