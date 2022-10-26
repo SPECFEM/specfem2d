@@ -1,0 +1,78 @@
+\chapter*{Simulation features supported in SPECFEM2D}
+\addcontentsline{toc}{chapter}{Simulation features supported in SPECFEM2D}
+
+The following lists all available features for a SPECFEM2D simulation,
+where {\it CPU} and {\it CUDA} denote the code versions for CPU-only simulations and
+CUDA hardware support, respectively.
+%
+\begin{table}[htp]
+\vspace{-1cm}
+\label{table:features}
+\begin{center}
+\begin{tabular}{ l l c c}
+\hline
+%{\bf Feature}    &   & \multicolumn{3}{c}{{\bf Code version}} \\
+%\cmidrule(lr){3-5}
+%           &     & {\it CPU} & {\it CUDA} \\
+%% to have proper title w/ pandoc
+{\bf Feature}   &   & {\it CPU} & {\it CUDA} \\
+\hline
+& & & \\
+%%
+{\bf Physics}   & P-SV waves                & X  & X \\
+                & SH/membrane waves         & X  & X \\
+                & Acoustic                  & X  & X \\
+                & Elastic                   & X  & X \\
+                & Poroelastic               & X  & - \\
+                & Anisotropy                & X  & X \\
+                & Attenuation               & X  & X \\
+\hline
+& & & \\
+%%
+{\bf Simulation Setup}  & Axisymmetric (2.5D) simulations   & X  & - \\
+                        & Noise simulations                 & X  & X \\
+                        & initial field                     & X  & X \\
+                        & C-PML                             & X  & - \\
+                        & Periodic boundaries               & X  & - \\
+                        & Simultaneous runs                 & X  & X \\
+\hline
+& & & \\
+%%
+{\bf Meshing}           & in-house mesher                       & X  & - \\
+                        & external (CUBIT/Trelis,Gmsh)          & X  & - \\
+                        & SCOTCH/Metis/Analytical partitioning  & X  & - \\
+\hline
+& & & \\
+%%
+{\bf Sensitivity kernels} & Undoing of attenuation          & X  & X \\
+                          & Anisotropic kernels             & X  & X \\
+                          & Isotropic kernels               & X  & X \\
+                          & Approximate Hessian             & X  & X \\
+\hline
+& & & \\
+%%
+{\bf Time schemes}  & Newmark           & X  & X \\
+                    & LDDRK             & X  & - \\
+                    & RK4               & X  & - \\
+                    & symplectic PEFRL  & X  & - \\
+\hline
+& & & \\
+%%
+{\bf Visualization} & JPEG images          & X  & X \\
+                    & Postscript snapshots & X  & X \\
+                    & Wavefield dumps      & X  & X \\
+\hline
+& & & \\
+%%
+{\bf Seismogram formats}  & Ascii          & X  & X \\
+                          & Binary         & X  & X \\
+                          & SU             & X  & X \\
+                          & down-sampling  & X  & X \\
+%
+\hline
+& & & \\ % to avoid clashes with pandoc
+\end{tabular}
+\end{center}
+\end{table}
+
+
