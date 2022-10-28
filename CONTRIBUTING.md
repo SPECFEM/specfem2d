@@ -1,0 +1,1 @@
+Instruction for how to contribute to SPECFEM2D are available at https://github.com/geodynamics/specfem3d/wiki.
