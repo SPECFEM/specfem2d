@@ -5,8 +5,8 @@ of acoustic, elastic, viscoelastic, and poroelastic seismic wave propagation.
 The package can also be used for full waveform imaging (FWI) or adjoint tomography.
 
 
-Main "historical" developers: Dimitri Komatitsch and Jeroen Tromp
-  (there are currently many more!)
+SPECFEM2D was founded by Dimitri Komatitsch and Jeroen Tromp, and is now being developed by a large, collaborative, and inclusive community. A complete list of authors can be found at
+https://specfem2d.readthedocs.io/en/latest/authors/
 
 
 ## Installation
@@ -46,10 +46,14 @@ Development is hosted on GitHub in the
 [geodynamics/specfem2d repository](https://github.com/geodynamics/specfem2d).
 
 
-To contribute, please follow the guidelines in the SPECFEM3D github wiki:
+SPECFEM2D is a community project that lives by the participation of its
+members — i.e., including you! It is our goal to build an inclusive and
+participatory community so we are happy that you are interested in
+participating! We have collected a set of guidelines and advice on how to get
+involved in the community and keep them in the specfem3d github wiki:
 [specfem3d wiki](https://github.com/geodynamics/specfem3d/wiki)
 
 
 ## Computational Infrastructure for Geodynamics (CIG)
 
-Seismology software repository: [SPECFEM2D](https://geodynamics.org/cig/software/specfem2d/)
+SPECFEM2D is part of the software that is hosted by the Computational Infrastructure for Geodynamics (CIG). It is available on the CIG website [here (SPECFEM2D)](https://geodynamics.org/resources/specfem2d).
