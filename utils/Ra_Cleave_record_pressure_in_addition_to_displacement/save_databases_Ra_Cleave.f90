@@ -1,7 +1,7 @@
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 7 . 0
-!                   --------------------------------
+!                            S P E C F E M 2 D
+!                            -----------------
 !
 ! Copyright CNRS, Inria and University of Pau, France,
 ! and Princeton University / California Institute of Technology, USA.
