@@ -1,7 +1,7 @@
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 7 . 0
-!                   --------------------------------
+!                            S P E C F E M 2 D
+!                            -----------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA

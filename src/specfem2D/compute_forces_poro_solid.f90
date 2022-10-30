@@ -1,7 +1,7 @@
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 7 . 0
-!                   --------------------------------
+!                            S P E C F E M 2 D
+!                            -----------------
 !
 ! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
