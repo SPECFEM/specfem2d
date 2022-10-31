@@ -70,6 +70,12 @@
     call read_binary_database_part1()
   endif
 
+  ! allocates movie simulation arrays
+  call prepare_timerun_movies()
+
+  ! check the mesh, stability and number of points per wavelength
+  call check_grid()
+
   ! Test compatibility with axisymmetric formulation
   if (AXISYM) call check_compatibility_axisym()
 
@@ -128,9 +134,6 @@
     call read_binary_database_part2()
   endif
 
-  ! movie simulations
-  call prepare_timerun_movies()
-
   ! init specific to NO_BACKWARD_RECONSTRUCTION option
   call prepare_timerun_no_backward_reconstruction()
 
@@ -138,9 +141,6 @@
   if (GPU_MODE) call prepare_GPU()
 
   !-------------------------------------------------------------
-
-  ! check the mesh, stability and number of points per wavelength
-  call check_grid()
 
   ! creates a Gnuplot script to display the energy curve in log scale
   if (OUTPUT_ENERGY .and. myrank == 0) then

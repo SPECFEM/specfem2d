@@ -222,7 +222,6 @@
 
           case (2)
             ! first derivative of a Gaussian
-
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
               ! use the second derivative of the source for the source time function instead of the source itself,
@@ -242,7 +241,6 @@
 
           case (3,4)
             ! Gaussian/Dirac type
-
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
               ! use the second derivative of the source for the source time function instead of the source itself,
