@@ -62,27 +62,27 @@ running mesher on 4 processors...
 
  --------
  Material #           1  isotropic
- rho,cp,cs   =    3320.0000000000000        8040.0000000000000        4480.0000000000000     
- Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ rho,cp,cs   =    3320.0000000000000        8040.0000000000000        4480.0000000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
  Material is solid
  --------
  Material #           2  isotropic
- rho,cp,cs   =    4985.0000000000000        12503.000000000000        6805.0000000000000     
- Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ rho,cp,cs   =    4985.0000000000000        12503.000000000000        6805.0000000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
  Material is solid
  --------
  Material #           3  isotropic
- rho,cp,cs   =    11539.000000000000        9751.0000000000000        0.0000000000000000     
- Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ rho,cp,cs   =    11539.000000000000        9751.0000000000000        0.0000000000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
  Material is fluid
  --------
  Material #           4  isotropic
- rho,cp,cs   =    13004.000000000000        11256.000000000000        3663.0000000000000     
- Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ rho,cp,cs   =    13004.000000000000        11256.000000000000        3663.0000000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
  Material is solid
  --------
 
- Parameter file successfully read 
+ Parameter file successfully read
 
 
  Mesh from external meshing:
@@ -103,16 +103,16 @@ running mesher on 4 processors...
  Reading in SOURCE file...
 
  Source           1
-   Position xs, zs =    0.0000000000000000        6103278.0000000000     
+   Position xs, zs =    0.0000000000000000        6103278.0000000000
 
    Source type (1=force, 2=moment tensor):            1
    Force source:
-   Angle of the source (deg) =    0.0000000000000000     
+   Angle of the source (deg) =    0.0000000000000000
 
    Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 6,7=ocean type, 8=Read from file, 9=burst, 10=Sinusoidal, 11=Ormsby):           1
    Ricker wavelet (second-derivative):
-   Frequency, delay =    1.4000000000000000E-002   0.0000000000000000     
-   Multiplying factor  =    10000000000.000000     
+   Frequency, delay =    1.4000000000000000E-002   0.0000000000000000
+   Multiplying factor  =    10000000000.000000
 
  all sources are okay
 
@@ -120,8 +120,8 @@ running mesher on 4 processors...
 
  Node coordinates:
    Reading node coords from external mesh file: ./DATA/Nodes_AK135F_NO_MUD
-     node coords: X min/max =    0.0000000000000000      /   6371000.0000000000     
-                  Z min/max =   -6371000.0000000000      /   6371000.0000000000     
+     node coords: X min/max =    0.0000000000000000      /   6371000.0000000000
+                  Z min/max =   -6371000.0000000000      /   6371000.0000000000
 
  Mesh surfaces:
    Reading acoustic surface from external mesh file: ./DATA/Surf_free_AK135F_NO_MUD
@@ -140,9 +140,9 @@ running mesher on 4 processors...
  Axial elements:          192
 
 
- Mesh dimensions: 
-   Min and max value of X in the grid =    0.0000000000000000        6371000.0000000000     
-   Min and max value of Z in the grid =   -6371000.0000000000        6371000.0000000000     
+ Mesh dimensions:
+   Min and max value of X in the grid =    0.0000000000000000        6371000.0000000000
+   Min and max value of Z in the grid =   -6371000.0000000000        6371000.0000000000
 
  Mesh partitioning:
    decomposing mesh using NPROC =            4
@@ -203,8 +203,8 @@ running mesher on 4 processors...
 
  Target positions (x,z) of the            2  receivers
 
- Receiver            1  =    6050000.0000000000        900000.00000000000     
- Receiver            2  =    6050000.0000000000       -900000.00000000000     
+ Receiver            1  =    6050000.0000000000        900000.00000000000
+ Receiver            2  =    6050000.0000000000       -900000.00000000000
 
  This will be a parallel simulation on            4  processor cores
 
@@ -240,21 +240,21 @@ running solver on 4 processors...
 
  Axisymmetric simulation
 
- Parameter file successfully read 
+ Parameter file successfully read
 
  Reading in SOURCE file...
 
  Source           1
-   Position xs, zs =    0.0000000000000000        6103278.0000000000     
+   Position xs, zs =    0.0000000000000000        6103278.0000000000
 
    Source type (1=force, 2=moment tensor):            1
    Force source:
-   Angle of the source (deg) =    0.0000000000000000     
+   Angle of the source (deg) =    0.0000000000000000
 
    Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 6,7=ocean type, 8=Read from file, 9=burst, 10=Sinusoidal, 11=Ormsby):           1
    Ricker wavelet (second-derivative):
-   Frequency, delay =    1.4000000000000000E-002   0.0000000000000000     
-   Multiplying factor  =    10000000000.000000     
+   Frequency, delay =    1.4000000000000000E-002   0.0000000000000000
+   Multiplying factor  =    10000000000.000000
 
  all sources are okay
 
@@ -262,7 +262,7 @@ running solver on 4 processors...
 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Program SPECFEM2D: 
+ Program SPECFEM2D:
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
  AK135F for half a disk for axisymmetric runs
@@ -290,11 +290,11 @@ running solver on 4 processors...
 
      Display frequency . . . (NTSTEP_BETWEEN_OUTPUT_INFO) =    500
      Color display . . . . . . . . . . . . . . . (colors) =      1
-      == 0     black and white display              
-      == 1     color display                        
+      == 0     black and white display
+      == 1     color display
      Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
-      == 0     do not number the mesh               
-      == 1     number the mesh                      
+      == 0     do not number the mesh
+      == 1     number the mesh
 
 
  C o n t r o l
@@ -326,7 +326,7 @@ running solver on 4 processors...
      Subsampling of velocity model display. (subsamp_postscript) =      1
 
 
- I t e r a t i o n s 
+ I t e r a t i o n s
  ===================
 
      Number of time iterations . . . . .(NSTEP) =    8000
@@ -479,8 +479,8 @@ running solver on 4 processors...
    in reality they have more degrees of freedom)
 
  Mesh dimensions:
-   Xmin,Xmax of the whole mesh =    0.0000000000000000        6371000.0000000000     
-   Zmin,Zmax of the whole mesh =   -6371000.0000000000        6371000.0000000000     
+   Xmin,Xmax of the whole mesh =    0.0000000000000000        6371000.0000000000
+   Zmin,Zmax of the whole mesh =   -6371000.0000000000        6371000.0000000000
 
  Material properties:
    MODEL                 : external
@@ -564,8 +564,8 @@ running solver on 4 processors...
 
 
    Source:            1
-     Onset time. . . . . . =   -85.714285714285708     
-     Fundamental period. . =    71.428571428571431     
+     Onset time. . . . . . =   -85.714285714285708
+     Fundamental period. . =    71.428571428571431
      Fundamental frequency =    1.4000000000000000E-002
      The onset time is ok
 
@@ -575,13 +575,13 @@ running solver on 4 processors...
  *******************************
 
  Force source:
-             original x:    0.00000000    
-             original z:    6103278.00    
+             original x:    0.00000000
+             original z:    6103278.00
  Closest estimate found:    4.79826953E-13  m away
   in rank            2
   in element          436
   in elastic domain
-  at xi,gamma coordinates =   -1.0000000000000100       0.88721212121217763     
+  at xi,gamma coordinates =   -1.0000000000000100       0.88721212121217763
 
 
  end of force source detection
@@ -599,25 +599,25 @@ running solver on 4 processors...
  reading receiver information from the ./DATA/STATIONS file
 
 
- Station #            1     AA      S0001                           
-             original x:    6050000.00    
-             original z:    900000.000    
+ Station #            1     AA      S0001
+             original x:    6050000.00
+             original z:    900000.000
  Closest estimate found:    1.87714067E-09  m away
   in rank            0
   in element          605
   in elastic domain
-  at xi,gamma coordinates =   0.93233671493243520      -0.70982304260175078     
+  at xi,gamma coordinates =   0.93233671493243520      -0.70982304260175078
  Distance from source:    7979762.00      m
 
 
- Station #            2     AA      S0002                           
-             original x:    6050000.00    
-             original z:   -900000.000    
+ Station #            2     AA      S0002
+             original x:    6050000.00
+             original z:   -900000.000
  Closest estimate found:    0.00000000      m away
   in rank            0
   in element          630
   in elastic domain
-  at xi,gamma coordinates =  -0.93233671493243997      -0.70982304260171403     
+  at xi,gamma coordinates =  -0.93233671493243997      -0.70982304260171403
  Distance from source:    9254642.00      m
 
  maximum error in location of all the receivers:    1.87714067E-09  m
@@ -649,7 +649,7 @@ running solver on 4 processors...
  Preparing source time function
    time stepping scheme:   Newmark
    time stepping stages:            1
-   time step size      :   0.250000000    
+   time step size      :   0.250000000
 
    number of time steps:         8000
    number of sources   :            1
@@ -668,9 +668,9 @@ running solver on 4 processors...
  Checking mesh and stability
 
  ********
- Model: P (or PI) velocity min,max =    5799.9999389928935        13660.099673101240     
- Model: S velocity min,max         =    3459.9999818030528        7281.7002992599237     
- Model: density min,max            =    2.7200000286102295        13.012200355529785     
+ Model: P (or PI) velocity min,max =    5799.9999389928935        13660.099673101240
+ Model: S velocity min,max         =    3459.9999818030528        7281.7002992599237
+ Model: density min,max            =    2.7200000286102295        13.012200355529785
  ********
 
 
@@ -678,21 +678,21 @@ running solver on 4 processors...
  *** Verification of simulation parameters ***
  *********************************************
 
- *** Max grid size =    138209.51475059666     
- *** Min grid size =    31668.000134825172     
- *** Max/min ratio =    4.3643272123965993     
+ *** Max grid size =    138209.51475059666
+ *** Min grid size =    31668.000134825172
+ *** Max/min ratio =    4.3643272123965993
 
- *** Minimum GLL point distance  =    5468.2138012905780     
- *** Average GLL point distance  =    7917.0000337062929     
+ *** Minimum GLL point distance  =    5468.2138012905780
+ *** Average GLL point distance  =    7917.0000337062929
 
- *** Minimum period resolved     =    28.491691517294907     
+ *** Minimum period resolved     =    28.491691517294907
  *** Maximum frequency resolved  =    3.5097951253367468E-002 Hz
 
- *** Maximum suggested time step                 =   0.28824154109830941     
+ *** Maximum suggested time step                 =   0.28824154109830941
  *** Maximum suggested (Ricker) source frequency =    1.4039180501346988E-002
 
- *** for DT :   0.250000000    
- *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.43366407050039590     
+ *** for DT :   0.250000000
+ *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =   0.43366407050039590
 
  ----
  Number of points per wavelength:
@@ -700,11 +700,11 @@ running solver on 4 processors...
    Source            1
    maximum dominant source frequency =    3.5000000000000003E-002 Hz
 
-   Nb pts / lambdaP_fmax min =    8.47822952    
-   Nb pts / lambdaP_fmax max =    30.3741722    
+   Nb pts / lambdaP_fmax min =    8.47822952
+   Nb pts / lambdaP_fmax max =    30.3741722
 
-   Nb pts / lambdaS_fmax min =    5.01399326    
-   Nb pts / lambdaS_fmax max =    9.75706959    
+   Nb pts / lambdaS_fmax min =    5.01399326
+   Nb pts / lambdaS_fmax max =    9.75706959
 
  -----------------------------------------
 
@@ -796,14 +796,14 @@ Time step number       5   t =    1.0000 s out of    8000
  ******************************************************************
  We have done    5.00062518E-02 % of the total
  Max norm of vector field in solid (elastic) =    8.34181435E-08
- Max absolute value of scalar field in fluid (acoustic) =    0.00000000    
+ Max absolute value of scalar field in fluid (acoustic) =    0.00000000
  Elapsed time in seconds =    1.6999959945678711E-002
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
  Mean elapsed time per time step in seconds =    3.3999919891357423E-003
  Time steps remaining =         7995
- Estimated remaining time in seconds =    27.182935953140259     
+ Estimated remaining time in seconds =    27.182935953140259
  Estimated remaining time in hh:mm:ss =      0 h 00 m 27 s
- Estimated total run time in seconds =    27.199935913085938     
+ Estimated total run time in seconds =    27.199935913085938
  Estimated total run time in hh:mm:ss =      0 h 00 m 27 s
  The run will finish approximately on: Mon May 02, 2022 15:27
 
@@ -819,13 +819,13 @@ Time step number     500   t =  124.7500 s out of    8000
  We have done    6.23827982     % of the total
  Max norm of vector field in solid (elastic) =    6.41646096E-03
  Max absolute value of scalar field in fluid (acoustic) =    4.79825857E-20
- Elapsed time in seconds =    1.9699997901916504     
+ Elapsed time in seconds =    1.9699997901916504
  Elapsed time in hh:mm:ss =      0 h 00 m 01 s
  Mean elapsed time per time step in seconds =    3.9399995803833009E-003
  Time steps remaining =         7500
- Estimated remaining time in seconds =    29.549996852874756     
+ Estimated remaining time in seconds =    29.549996852874756
  Estimated remaining time in hh:mm:ss =      0 h 00 m 29 s
- Estimated total run time in seconds =    31.519996643066406     
+ Estimated total run time in seconds =    31.519996643066406
  Estimated total run time in hh:mm:ss =      0 h 00 m 31 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -841,13 +841,13 @@ Time step number    1000   t =  249.7500 s out of    8000
  We have done    12.4890614     % of the total
  Max norm of vector field in solid (elastic) =    1.68606581E-04
  Max absolute value of scalar field in fluid (acoustic) =    2.37345286E-02
- Elapsed time in seconds =    3.9099998474121094     
+ Elapsed time in seconds =    3.9099998474121094
  Elapsed time in hh:mm:ss =      0 h 00 m 03 s
  Mean elapsed time per time step in seconds =    3.9099998474121092E-003
  Time steps remaining =         7000
- Estimated remaining time in seconds =    27.369998931884766     
+ Estimated remaining time in seconds =    27.369998931884766
  Estimated remaining time in hh:mm:ss =      0 h 00 m 27 s
- Estimated total run time in seconds =    31.279998779296875     
+ Estimated total run time in seconds =    31.279998779296875
  Estimated total run time in hh:mm:ss =      0 h 00 m 31 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -866,14 +866,14 @@ Time step number    1500   t =  374.7500 s out of    8000
  ******************************************************************
  We have done    18.7398434     % of the total
  Max norm of vector field in solid (elastic) =    1.02402788E-04
- Max absolute value of scalar field in fluid (acoustic) =    2.76084900    
- Elapsed time in seconds =    5.7619998455047607     
+ Max absolute value of scalar field in fluid (acoustic) =    2.76084900
+ Elapsed time in seconds =    5.7619998455047607
  Elapsed time in hh:mm:ss =      0 h 00 m 05 s
  Mean elapsed time per time step in seconds =    3.8413332303365070E-003
  Time steps remaining =         6500
- Estimated remaining time in seconds =    24.968665997187294     
+ Estimated remaining time in seconds =    24.968665997187294
  Estimated remaining time in hh:mm:ss =      0 h 00 m 24 s
- Estimated total run time in seconds =    30.730665842692055     
+ Estimated total run time in seconds =    30.730665842692055
  Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -888,14 +888,14 @@ Time step number    2000   t =  499.7500 s out of    8000
  ******************************************************************
  We have done    24.9906235     % of the total
  Max norm of vector field in solid (elastic) =    6.97221112E-05
- Max absolute value of scalar field in fluid (acoustic) =    2.38402414    
- Elapsed time in seconds =    7.5559999942779541     
+ Max absolute value of scalar field in fluid (acoustic) =    2.38402414
+ Elapsed time in seconds =    7.5559999942779541
  Elapsed time in hh:mm:ss =      0 h 00 m 07 s
  Mean elapsed time per time step in seconds =    3.7779999971389771E-003
  Time steps remaining =         6000
- Estimated remaining time in seconds =    22.667999982833862     
+ Estimated remaining time in seconds =    22.667999982833862
  Estimated remaining time in hh:mm:ss =      0 h 00 m 22 s
- Estimated total run time in seconds =    30.223999977111816     
+ Estimated total run time in seconds =    30.223999977111816
  Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -914,14 +914,14 @@ Time step number    2500   t =  624.7500 s out of    8000
  ******************************************************************
  We have done    31.2414055     % of the total
  Max norm of vector field in solid (elastic) =    7.81275739E-05
- Max absolute value of scalar field in fluid (acoustic) =    2.55331326    
- Elapsed time in seconds =    9.4969999790191650     
+ Max absolute value of scalar field in fluid (acoustic) =    2.55331326
+ Elapsed time in seconds =    9.4969999790191650
  Elapsed time in hh:mm:ss =      0 h 00 m 09 s
  Mean elapsed time per time step in seconds =    3.7987999916076660E-003
  Time steps remaining =         5500
- Estimated remaining time in seconds =    20.893399953842163     
+ Estimated remaining time in seconds =    20.893399953842163
  Estimated remaining time in hh:mm:ss =      0 h 00 m 20 s
- Estimated total run time in seconds =    30.390399932861328     
+ Estimated total run time in seconds =    30.390399932861328
  Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -936,14 +936,14 @@ Time step number    3000   t =  749.7500 s out of    8000
  ******************************************************************
  We have done    37.4921875     % of the total
  Max norm of vector field in solid (elastic) =    5.45047951E-05
- Max absolute value of scalar field in fluid (acoustic) =    3.49020004    
- Elapsed time in seconds =    11.292999982833862     
+ Max absolute value of scalar field in fluid (acoustic) =    3.49020004
+ Elapsed time in seconds =    11.292999982833862
  Elapsed time in hh:mm:ss =      0 h 00 m 11 s
  Mean elapsed time per time step in seconds =    3.7643333276112874E-003
  Time steps remaining =         5000
- Estimated remaining time in seconds =    18.821666638056438     
+ Estimated remaining time in seconds =    18.821666638056438
  Estimated remaining time in hh:mm:ss =      0 h 00 m 18 s
- Estimated total run time in seconds =    30.114666620890301     
+ Estimated total run time in seconds =    30.114666620890301
  Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -962,14 +962,14 @@ Time step number    3500   t =  874.7500 s out of    8000
  ******************************************************************
  We have done    43.7429695     % of the total
  Max norm of vector field in solid (elastic) =    5.12744082E-05
- Max absolute value of scalar field in fluid (acoustic) =    1.69785857    
- Elapsed time in seconds =    13.263999938964844     
+ Max absolute value of scalar field in fluid (acoustic) =    1.69785857
+ Elapsed time in seconds =    13.263999938964844
  Elapsed time in hh:mm:ss =      0 h 00 m 13 s
  Mean elapsed time per time step in seconds =    3.7897142682756695E-003
  Time steps remaining =         4500
- Estimated remaining time in seconds =    17.053714207240514     
+ Estimated remaining time in seconds =    17.053714207240514
  Estimated remaining time in hh:mm:ss =      0 h 00 m 17 s
- Estimated total run time in seconds =    30.317714146205358     
+ Estimated total run time in seconds =    30.317714146205358
  Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -984,14 +984,14 @@ Time step number    4000   t =  999.7500 s out of    8000
  ******************************************************************
  We have done    49.9937477     % of the total
  Max norm of vector field in solid (elastic) =    4.57096357E-05
- Max absolute value of scalar field in fluid (acoustic) =    1.21813786    
- Elapsed time in seconds =    15.187999963760376     
+ Max absolute value of scalar field in fluid (acoustic) =    1.21813786
+ Elapsed time in seconds =    15.187999963760376
  Elapsed time in hh:mm:ss =      0 h 00 m 15 s
  Mean elapsed time per time step in seconds =    3.7969999909400940E-003
  Time steps remaining =         4000
- Estimated remaining time in seconds =    15.187999963760376     
+ Estimated remaining time in seconds =    15.187999963760376
  Estimated remaining time in hh:mm:ss =      0 h 00 m 15 s
- Estimated total run time in seconds =    30.375999927520752     
+ Estimated total run time in seconds =    30.375999927520752
  Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -1010,14 +1010,14 @@ Time step number    4500   t =  1.124750E+03 s out of    8000
  ******************************************************************
  We have done    56.2445297     % of the total
  Max norm of vector field in solid (elastic) =    4.93883053E-05
- Max absolute value of scalar field in fluid (acoustic) =    1.25220573    
- Elapsed time in seconds =    17.162999868392944     
+ Max absolute value of scalar field in fluid (acoustic) =    1.25220573
+ Elapsed time in seconds =    17.162999868392944
  Elapsed time in hh:mm:ss =      0 h 00 m 17 s
  Mean elapsed time per time step in seconds =    3.8139999707539878E-003
  Time steps remaining =         3500
- Estimated remaining time in seconds =    13.348999897638958     
+ Estimated remaining time in seconds =    13.348999897638958
  Estimated remaining time in hh:mm:ss =      0 h 00 m 13 s
- Estimated total run time in seconds =    30.511999766031902     
+ Estimated total run time in seconds =    30.511999766031902
  Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -1032,14 +1032,14 @@ Time step number    5000   t =  1.249750E+03 s out of    8000
  ******************************************************************
  We have done    62.4953117     % of the total
  Max norm of vector field in solid (elastic) =    4.30716318E-05
- Max absolute value of scalar field in fluid (acoustic) =    1.48743737    
- Elapsed time in seconds =    19.208999872207642     
+ Max absolute value of scalar field in fluid (acoustic) =    1.48743737
+ Elapsed time in seconds =    19.208999872207642
  Elapsed time in hh:mm:ss =      0 h 00 m 19 s
  Mean elapsed time per time step in seconds =    3.8417999744415282E-003
  Time steps remaining =         3000
- Estimated remaining time in seconds =    11.525399923324585     
+ Estimated remaining time in seconds =    11.525399923324585
  Estimated remaining time in hh:mm:ss =      0 h 00 m 11 s
- Estimated total run time in seconds =    30.734399795532227     
+ Estimated total run time in seconds =    30.734399795532227
  Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -1058,14 +1058,14 @@ Time step number    5500   t =  1.374750E+03 s out of    8000
  ******************************************************************
  We have done    68.7460938     % of the total
  Max norm of vector field in solid (elastic) =    4.36512892E-05
- Max absolute value of scalar field in fluid (acoustic) =    1.22366154    
- Elapsed time in seconds =    21.213999986648560     
+ Max absolute value of scalar field in fluid (acoustic) =    1.22366154
+ Elapsed time in seconds =    21.213999986648560
  Elapsed time in hh:mm:ss =      0 h 00 m 21 s
  Mean elapsed time per time step in seconds =    3.8570909066633747E-003
  Time steps remaining =         2500
- Estimated remaining time in seconds =    9.6427272666584365     
+ Estimated remaining time in seconds =    9.6427272666584365
  Estimated remaining time in hh:mm:ss =      0 h 00 m 09 s
- Estimated total run time in seconds =    30.856727253306996     
+ Estimated total run time in seconds =    30.856727253306996
  Estimated total run time in hh:mm:ss =      0 h 00 m 30 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -1080,14 +1080,14 @@ Time step number    6000   t =  1.499750E+03 s out of    8000
  ******************************************************************
  We have done    74.9968719     % of the total
  Max norm of vector field in solid (elastic) =    4.04859384E-05
- Max absolute value of scalar field in fluid (acoustic) =    5.14326668    
- Elapsed time in seconds =    23.265999794006348     
+ Max absolute value of scalar field in fluid (acoustic) =    5.14326668
+ Elapsed time in seconds =    23.265999794006348
  Elapsed time in hh:mm:ss =      0 h 00 m 23 s
  Mean elapsed time per time step in seconds =    3.8776666323343911E-003
  Time steps remaining =         2000
- Estimated remaining time in seconds =    7.7553332646687823     
+ Estimated remaining time in seconds =    7.7553332646687823
  Estimated remaining time in hh:mm:ss =      0 h 00 m 07 s
- Estimated total run time in seconds =    31.021333058675129     
+ Estimated total run time in seconds =    31.021333058675129
  Estimated total run time in hh:mm:ss =      0 h 00 m 31 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -1106,14 +1106,14 @@ Time step number    6500   t =  1.624750E+03 s out of    8000
  ******************************************************************
  We have done    81.2476578     % of the total
  Max norm of vector field in solid (elastic) =    3.94607414E-05
- Max absolute value of scalar field in fluid (acoustic) =    3.85555673    
- Elapsed time in seconds =    25.361999988555908     
+ Max absolute value of scalar field in fluid (acoustic) =    3.85555673
+ Elapsed time in seconds =    25.361999988555908
  Elapsed time in hh:mm:ss =      0 h 00 m 25 s
  Mean elapsed time per time step in seconds =    3.9018461520855243E-003
  Time steps remaining =         1500
- Estimated remaining time in seconds =    5.8527692281282864     
+ Estimated remaining time in seconds =    5.8527692281282864
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    31.214769216684196     
+ Estimated total run time in seconds =    31.214769216684196
  Estimated total run time in hh:mm:ss =      0 h 00 m 31 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -1128,14 +1128,14 @@ Time step number    7000   t =  1.749750E+03 s out of    8000
  ******************************************************************
  We have done    87.4984360     % of the total
  Max norm of vector field in solid (elastic) =    4.01669422E-05
- Max absolute value of scalar field in fluid (acoustic) =    10.5352840    
- Elapsed time in seconds =    27.370999813079834     
+ Max absolute value of scalar field in fluid (acoustic) =    10.5352840
+ Elapsed time in seconds =    27.370999813079834
  Elapsed time in hh:mm:ss =      0 h 00 m 27 s
  Mean elapsed time per time step in seconds =    3.9101428304399765E-003
  Time steps remaining =         1000
- Estimated remaining time in seconds =    3.9101428304399763     
+ Estimated remaining time in seconds =    3.9101428304399763
  Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    31.281142643519811     
+ Estimated total run time in seconds =    31.281142643519811
  Estimated total run time in hh:mm:ss =      0 h 00 m 31 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -1154,14 +1154,14 @@ Time step number    7500   t =  1.874750E+03 s out of    8000
  ******************************************************************
  We have done    93.7492218     % of the total
  Max norm of vector field in solid (elastic) =    3.73716539E-05
- Max absolute value of scalar field in fluid (acoustic) =    4.44441462    
- Elapsed time in seconds =    29.462999820709229     
+ Max absolute value of scalar field in fluid (acoustic) =    4.44441462
+ Elapsed time in seconds =    29.462999820709229
  Elapsed time in hh:mm:ss =      0 h 00 m 29 s
  Mean elapsed time per time step in seconds =    3.9283999760945636E-003
  Time steps remaining =          500
- Estimated remaining time in seconds =    1.9641999880472818     
+ Estimated remaining time in seconds =    1.9641999880472818
  Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
- Estimated total run time in seconds =    31.427199808756509     
+ Estimated total run time in seconds =    31.427199808756509
  Estimated total run time in hh:mm:ss =      0 h 00 m 31 s
  The run will finish approximately on: Mon May 02, 2022 15:28
 
@@ -1176,14 +1176,14 @@ Time step number    8000   t =  1.999750E+03 s out of    8000
  ******************************************************************
  We have done    100.000000     % of the total
  Max norm of vector field in solid (elastic) =    3.86177344E-05
- Max absolute value of scalar field in fluid (acoustic) =    6.48495579    
- Elapsed time in seconds =    31.465999841690063     
+ Max absolute value of scalar field in fluid (acoustic) =    6.48495579
+ Elapsed time in seconds =    31.465999841690063
  Elapsed time in hh:mm:ss =      0 h 00 m 31 s
  Mean elapsed time per time step in seconds =    3.9332499802112583E-003
  Time steps remaining =            0
- Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    31.465999841690063     
+ Estimated total run time in seconds =    31.465999841690063
  Estimated total run time in hh:mm:ss =      0 h 00 m 31 s
 
 
@@ -1205,13 +1205,13 @@ Time step number    8000   t =  1.999750E+03 s out of    8000
  Average duration of the calculation per spectral element =    1.86545287E-06  s
 
 
- Total duration of the timeloop in seconds, measured using 
+ Total duration of the timeloop in seconds, measured using
  date and time of the system :    31.6399994      s
 
 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Program SPECFEM2D: 
+ Program SPECFEM2D:
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
  AK135F for half a disk for axisymmetric runs
