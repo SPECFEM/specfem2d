@@ -739,4 +739,118 @@ def check_parameter_file_type(file):
 
 
 #
-#---------------
+#----------------------------------------------------------------------------
+#
+
+def update_Par_files(main_file,replace=False):
+    """
+    uses a main to update other parameter files
+    """
+    global main_parameters
+    global is_Par_file_with_data
+
+    # user info
+    print("")
+    print("main file: ",main_file)
+    print("")
+
+    # determines file type
+    check_parameter_file_type(main_file)
+
+    # reads in parameters
+    read_Par_file_sections(main_parameters,main_file,verbose=True)
+
+    # opens temporary file with main info
+    tmp_file = "_____temp01_____"
+    write_template_file(main_parameters,tmp_file,verbose=True)
+
+    # notifies user if template is different than main
+    # (e.g. by different indentation or white space)
+    print("checking differences between new format and main:")
+    print("  (different formatting or whitespace can lead to differences)")
+    print("")
+    compare_and_replace_file(main_file,tmp_file,verbose=True,replace=replace)
+
+    # clean up temporary file
+    command = "rm -f " + tmp_file
+    os.system(command)
+
+    # finds all Par_files
+    basename = os.path.basename(main_file)
+    current_dir = os.getcwd()
+
+    # user info
+    print("")
+    print("finding all files with name: ",basename)
+    print("in current directory: ",current_dir)
+
+    # gets all files in subdirectories
+    files = []
+    get_files_in_subdirectories("./",files,basename)
+
+    nfiles = len(files)
+    print("")
+    print("found ",nfiles," parameter files")
+    print("")
+
+    ifile = 0
+    for file in files:
+        # updates counter
+        ifile += 1
+
+        # determines parameter file typ
+        check_parameter_file_type(file)
+
+        # user info
+        print("")
+        print("file ",ifile," out of ",nfiles)
+        print("processing file: ",file)
+        if is_Par_file_with_data:
+            print("  file type is ","Par_file with data lines")
+        else:
+            print("  file type is ","Par_file")
+
+        # read in parameters
+        my_parameters = collections.OrderedDict()
+        read_Par_file_sections(my_parameters,file)
+
+        # check and update
+        check_and_update_Par_file(my_parameters,file)
+        # clean up
+        del my_parameters
+
+    # user info
+    print("")
+    print("done")
+    os.system("date")
+    print("")
+
+#
+#----------------------------------------------------------------------------
+#
+
+def usage():
+    print("usage:")
+    print("    ./process_DATA_Par_files_to_update_their_parameters_from_a_main.py Main-Par-file replace")
+    print("  with")
+    print("    Main-Par_file - Par_file which serves as main template (e.g. DATA/Par_file)")
+    print("    replace         = flag to force replacing of file [0==check-only/1==replace]")
+
+#
+#----------------------------------------------------------------------------
+#
+
+if __name__ == '__main__':
+    # gets arguments
+    if len(sys.argv) != 3:
+        usage()
+        sys.exit(1)
+    else:
+        main_file = sys.argv[1]
+        if int(sys.argv[2]) == 1:
+            replace = True
+        else:
+            replace = False
+
+    update_Par_files(main_file,replace=replace)
+
