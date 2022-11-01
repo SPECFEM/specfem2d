@@ -232,7 +232,7 @@
     ! based on minimum GLL point distance and maximum velocity
     ! i.e. on the maximum ratio of ( velocity / gridsize )
     courant_stability_number_max = max(courant_stability_number_max, &
-                                       vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX)))
+                                       vpImax_local * DT / (distance_min_local * percent_GLL(NGLLX)))
 
     ! estimation of minimum period resolved
     ! based on average GLL distance within element and minimum velocity
@@ -368,7 +368,7 @@
       ! for a Ricker wavelet: dominant frequency f0_dominant = 2.5 * f0 -> f0 = 1/2.5 * f0_dominant
       write(IMAIN,*) '*** Maximum suggested (Ricker) source frequency = ',1.d0/2.5d0 * (1.d0/pmax_glob)
       write(IMAIN,*)
-      write(IMAIN,*) '*** for DT : ',deltat
+      write(IMAIN,*) '*** for DT : ',sngl(DT)
       write(IMAIN,*) '*** Max CFL stability condition of the time scheme &
                          &based on P wave velocity (must be below about 0.50 or so) = ',courant_stability_number_max
       write(IMAIN,*)
@@ -1123,7 +1123,7 @@
     distance_min_local = min(distance_1,distance_2,distance_3,distance_4)
     distance_max_local = max(distance_1,distance_2,distance_3,distance_4)
 
-    courant_stability_number = vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX))
+    courant_stability_number = vpImax_local * DT / (distance_min_local * percent_GLL(NGLLX))
 
 ! display bad elements that are above the threshold
     if (courant_stability_number >= THRESHOLD_POSTSCRIPT * courant_stability_number_max) then
