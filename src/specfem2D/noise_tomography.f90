@@ -467,14 +467,19 @@
 
   use constants, only: NGLLX,NGLLZ
 
-  use specfem_par, only: P_SV,it,ibool,accel_elastic
+  use specfem_par, only: P_SV,it,ibool,accel_elastic,islice_selected_rec,myrank
 
-  use specfem_par_noise, only: ispec_noise,angle_noise,noise_sourcearray
+  use specfem_par_noise, only: ispec_noise,angle_noise,noise_sourcearray,irec_main_noise
 
   implicit none
 
   !local
   integer :: i,j,iglob
+
+  !only add source in the slice where the master receiver is located
+  if (myrank .ne. islice_selected_rec(irec_main_noise)) then
+    return
+  endif
 
   if (P_SV) then
     ! P-SV calculation
