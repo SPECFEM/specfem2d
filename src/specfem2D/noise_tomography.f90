@@ -163,7 +163,7 @@
   implicit none
 
   ! local parameters
-  integer :: ier,irec_main_noise
+  integer :: ier
 
   ! main noise source angle (in rad) use for P_SV-case: 0 for vertical along z-direction
   angle_noise = 0._CUSTOM_REAL
