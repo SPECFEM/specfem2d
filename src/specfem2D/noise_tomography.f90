@@ -163,7 +163,7 @@
   implicit none
 
   ! local parameters
-  integer :: ier,irec_main
+  integer :: ier
 
   ! main noise source angle (in rad) use for P_SV-case: 0 for vertical along z-direction
   angle_noise = 0._CUSTOM_REAL
@@ -179,7 +179,7 @@
     call stop_the_code('Error opening NOISE_TOMOGRAPHY/irec_main_noise file')
   endif
 
-  read(IIN,*) irec_main
+  read(IIN,*) irec_main_noise
   close(IIN)
 
   ! user output
@@ -187,7 +187,9 @@
     write(IMAIN,*) '  noise simulation type           = ',NOISE_TOMOGRAPHY
     write(IMAIN,*) '  noise source time function type = ',noise_source_time_function_type
     write(IMAIN,*)
-    write(IMAIN,*) '  main station is #',irec_main,': ',trim(network_name(irec_main))//'.'//trim(station_name(irec_main))
+    write(IMAIN,*) '  main station is #',irec_main_noise,': ',trim(network_name(irec_main_noise))&
+      //'.'//trim(station_name(irec_main_noise))
+
     if (P_SV) then
       write(IMAIN,*) '  using P_SV waves'
       write(IMAIN,*) '  angle of the noise source is ',angle_noise * 180./PI,'degrees (0=vertical)'
@@ -201,12 +203,12 @@
   endif
 
   ! checks value
-  if ((NOISE_TOMOGRAPHY == 1) .and. (irec_main > nrec .or. irec_main < 1) ) &
-    call exit_MPI(myrank,'irec_main out of range of given number of receivers. Exiting.')
+  if ((NOISE_TOMOGRAPHY == 1) .and. (irec_main_noise > nrec .or. irec_main_noise < 1) ) &
+    call exit_MPI(myrank,'irec_main_noise out of range of given number of receivers. Exiting.')
 
-  xi_noise    = xi_receiver(irec_main)
-  gamma_noise = gamma_receiver(irec_main)
-  ispec_noise = ispec_selected_rec(irec_main)
+  xi_noise    = xi_receiver(irec_main_noise)
+  gamma_noise = gamma_receiver(irec_main_noise)
+  ispec_noise = ispec_selected_rec(irec_main_noise)
 
   ! check simulation parameters
   if ((NOISE_TOMOGRAPHY /= 0) .and. (P_SV)) write(*,*) 'Warning: For P-SV case, noise tomography subroutines not yet fully tested'
@@ -465,14 +467,19 @@
 
   use constants, only: NGLLX,NGLLZ
 
-  use specfem_par, only: P_SV,it,ibool,accel_elastic
+  use specfem_par, only: P_SV,it,ibool,accel_elastic,islice_selected_rec,myrank
 
-  use specfem_par_noise, only: ispec_noise,angle_noise,noise_sourcearray
+  use specfem_par_noise, only: ispec_noise,angle_noise,noise_sourcearray,irec_main_noise
 
   implicit none
 
   !local
   integer :: i,j,iglob
+
+  !only add source in the slice where the master receiver is located
+  if (myrank .ne. islice_selected_rec(irec_main_noise)) then
+    return
+  endif
 
   if (P_SV) then
     ! P-SV calculation

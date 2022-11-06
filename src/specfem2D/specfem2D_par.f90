@@ -741,7 +741,7 @@ module specfem_par_noise
 
   ! noise simulations:
   ! main station
-  integer :: ispec_noise
+  integer :: ispec_noise, irec_main_noise
   double precision :: xi_noise, gamma_noise
 
   ! for P_SV case, 0 for vertical along z-direction
