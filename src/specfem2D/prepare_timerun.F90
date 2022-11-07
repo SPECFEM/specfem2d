@@ -1161,7 +1161,7 @@
 
   use specfem_par, only: myrank,NSTEP,nglob,nspec,ibool,coord, &
                          rhostore,rho_vpstore,rho_vsstore, &
-                         NOISE_TOMOGRAPHY
+                         NOISE_TOMOGRAPHY,islice_selected_rec
 
   use specfem_par_noise
 
@@ -1200,7 +1200,9 @@
 
   if (NOISE_TOMOGRAPHY == 1) then
     ! creates generating noise source
-    call compute_source_array_noise()
+    if (myrank == islice_selected_rec(irec_main_noise)) then
+      call compute_source_array_noise()
+    endif
 
     ! write out coordinates of mesh
     open(unit=504,file=trim(OUTPUT_FILES)//'mesh_spec',status='unknown',action='write')

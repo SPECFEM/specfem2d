@@ -525,7 +525,7 @@
   integer :: iglob,ier
   logical :: ex,is_opened
   real(kind=CUSTOM_REAL) :: rho_k_loc
-  character(len=MAX_STRING_LEN) :: noise_output_file
+  character(len=MAX_STRING_LEN) :: noise_output_file,noise_input_file
 
   ! checks if anything to do
   if (NOISE_TOMOGRAPHY /= 3) return
@@ -534,8 +534,9 @@
     ! load ensemble forward source
     inquire(unit=501,exist=ex,opened=is_opened)
     if (.not. is_opened) then
-      open(unit=501,file=trim(OUTPUT_FILES)//'noise_eta.bin',access='direct', &
-           recl=nglob*CUSTOM_REAL,action='read',iostat=ier)
+      write(noise_input_file,'(a,i6.6,a)') 'noise_eta',myrank,'.bin'
+      open(unit=501,file=trim(OUTPUT_FILES)//noise_input_file,access='direct', &
+        recl=nglob*CUSTOM_REAL,action='read',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening noise eta file')
     endif
     ! for both P_SV/SH cases
@@ -580,7 +581,8 @@
 ! read in and inject the "source" that drives the "enemble forward wavefield"
 ! (recall that the ensemble forward wavefield has a spatially distributed source)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,NOISE_SAVE_EVERYWHERE,OUTPUT_FILES
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,NOISE_SAVE_EVERYWHERE,&
+    OUTPUT_FILES,MAX_STRING_LEN
 
   use specfem_par, only: P_SV,it,NSTEP,nspec,nglob,ibool,jacobian,wxgll,wzgll,myrank,NOISE_TOMOGRAPHY
 
@@ -592,6 +594,7 @@
 
   !local
   integer :: ier, i, j, ispec, iglob
+  character(len=MAX_STRING_LEN) :: noise_input_file
 
   ! checks if anything to do
   if (NOISE_TOMOGRAPHY /= 2 .and. NOISE_TOMOGRAPHY /= 3) return
@@ -601,7 +604,8 @@
 
   ! opens noise source file
   if (it == 1) then
-    open(unit=501,file=trim(OUTPUT_FILES)//'noise_eta.bin',access='direct', &
+    write(noise_input_file,'(a,i6.6,a)') 'noise_eta',myrank,'.bin'
+    open(unit=501,file=trim(OUTPUT_FILES)//noise_input_file,access='direct', &
          recl=nglob*CUSTOM_REAL,action='read',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error retrieving generating wavefield.')
   endif
@@ -659,7 +663,7 @@
 ! save a snapshot of the "generating wavefield" eta that will be used to drive
 ! the "ensemble forward wavefield"
 
-  use constants, only: CUSTOM_REAL,NDIM,IMAIN,OUTPUT_FILES
+  use constants, only: CUSTOM_REAL,NDIM,IMAIN,OUTPUT_FILES,MAX_STRING_LEN
 
   use specfem_par, only: myrank,it,NSTEP,nglob,P_SV, &
     displ_elastic,veloc_elastic,accel_elastic, &
@@ -673,6 +677,7 @@
   ! local parameter
   integer :: ier
   real(kind=CUSTOM_REAL), dimension(nglob) :: wavefield
+  character(len=MAX_STRING_LEN) :: noise_output_file
 
   ! checks if anything to do
   if (NOISE_TOMOGRAPHY /= 1 .and. NOISE_TOMOGRAPHY /= 2) return
@@ -696,8 +701,10 @@
     if (it == 1) then
       ! user output
       if (myrank == 0) write(IMAIN,*) 'noise simulation: storing generating wavefield in file noise_eta.bin'
+
       ! opens file
-      open(unit=501,file=trim(OUTPUT_FILES)//'noise_eta.bin',access='direct',recl=nglob*CUSTOM_REAL,action='write',iostat=ier)
+      write(noise_output_file,'(a,i6.6,a)') 'noise_eta',myrank,'.bin'
+      open(unit=501,file=trim(OUTPUT_FILES)//noise_output_file,access='direct',recl=nglob*CUSTOM_REAL,action='write',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error saving generating wavefield.')
     endif
 
@@ -725,8 +732,11 @@
     if (it == 1) then
       ! user output
       if (myrank == 0) write(IMAIN,*) 'noise simulation: storing forward wavefield in file noise_phi.bin'
+
       ! opens file
-      open(unit=502,file=trim(OUTPUT_FILES)//'noise_phi.bin',access='direct',recl=NDIM*nglob*CUSTOM_REAL,action='write',iostat=ier)
+      write(noise_output_file,'(a,i6.6,a)') 'noise_phi',myrank,'.bin'
+      open(unit=502,file=trim(OUTPUT_FILES)//noise_output_file,access='direct',recl=NDIM*nglob*CUSTOM_REAL,action='write',&
+        iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error saving ensemble forward wavefield.')
     endif
 
@@ -750,20 +760,22 @@
 
 ! reads in backward wavefield
 
-  use constants, only: CUSTOM_REAL,NDIM,OUTPUT_FILES
+  use constants, only: CUSTOM_REAL,NDIM,OUTPUT_FILES,MAX_STRING_LEN
 
   use specfem_par, only: myrank,it,NSTEP,nglob,b_displ_elastic,NOISE_TOMOGRAPHY
 
   implicit none
   ! local parameters
   integer :: ier
+  character(len=MAX_STRING_LEN) :: noise_input_file
 
   ! checks if anything to do
   if (NOISE_TOMOGRAPHY /= 3) return
 
   ! opens noise file
   if (it == 1) then
-    open(unit=503,file=trim(OUTPUT_FILES)//'noise_phi.bin',access='direct',recl=NDIM*nglob*CUSTOM_REAL,action='read',iostat=ier)
+    write(noise_input_file,'(a,i6.6,a)') 'noise_phi',myrank,'.bin'
+    open(unit=503,file=trim(OUTPUT_FILES)//noise_input_file,access='direct',recl=NDIM*nglob*CUSTOM_REAL,action='read',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error retrieving noise ensemble forward wavefield')
   endif
 
