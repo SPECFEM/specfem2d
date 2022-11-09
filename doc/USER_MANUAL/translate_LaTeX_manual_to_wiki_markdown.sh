@@ -13,7 +13,7 @@ if [ ! -f translate_user_manual_to_markdown.pl ]; then
 ######## echo "translation script is not available, exiting..."
 ######## exit 1
 # if not, get it from GitHub
-  git clone https://github.com/geodynamics/specfem2d.wiki.git
+  git clone https://github.com/SPECFEM/specfem2d.wiki.git
   mv -f specfem2d.wiki/translate_user_manual_to_markdown.pl .
   mv -f specfem2d.wiki/*.md .
 fi
