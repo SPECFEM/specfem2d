@@ -27,6 +27,10 @@ make all
 ```
 and check the output files in `./OUTPUT_FILES/`
 
+>__NOTE__: Do not modify the 'configure' script directly. Please modify the 
+    'configure.ac' file instead, and generate a new 'configure' script with 
+    the command: `autoreconf -i`
+
 
 ## Development
 
