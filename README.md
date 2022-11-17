@@ -34,10 +34,6 @@ and check the output files in `./OUTPUT_FILES/`
 
 ## Development
 
-Development is hosted on GitHub in the
-[geodynamics/specfem2d repository](https://github.com/SPECFEM/specfem2d).
-
-
 [![Actions Status](https://github.com/SPECFEM/specfem2d/workflows/CI/badge.svg)](https://github.com/SPECFEM/specfem2d/actions)
 [![Travis Status](https://app.travis-ci.com/SPECFEM/specfem2d.svg?branch=devel)](https://app.travis-ci.com/SPECFEM/specfem2d)
 [![Azure Status](https://dev.azure.com/danielpeter22/SPECFEM2D/_apis/build/status/geodynamics.specfem2d?branchName=devel)](https://dev.azure.com/danielpeter22/SPECFEM2D/_build/latest?definitionId=6&branchName=devel)
