@@ -93,9 +93,10 @@
   endif
 
   if (NPROC > 1) then
-    write(IOUT) ninterface_acoustic,ninterface_elastic,inum_interfaces_acoustic,inum_interfaces_elastic, &
-                nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_ext_mesh, &
-                ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_ext_mesh
+    write(IOUT) ninterface,ninterface_acoustic,ninterface_elastic, &
+                inum_interfaces_acoustic,inum_interfaces_elastic, &
+                nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_ext_mesh
+    write(IOUT) ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_ext_mesh
   endif
 
   close(IOUT)
@@ -111,6 +112,7 @@
   if (ier /= 0) call stop_the_code('Error writing sources info file to disk')
 
   write(IOUT) source_time_function,nsources_local,sourcearrays,islice_selected_source,ispec_selected_source,iglob_source
+  write(IOUT) t0
   close(IOUT)
 
   ! saves all data regarding receivers in a binary file
@@ -129,6 +131,12 @@
   write(IOUT) nlength_seismogram
 
   close(IOUT)
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   end subroutine save_binary_database
 
@@ -152,7 +160,12 @@
   write(outputname,'(a,i6.6,a)') trim(OUTPUT_FILES)//'proc',myrank,'_data.bin'
 
   ! user output
-  if (myrank == 0) write(IMAIN,*) 'reading binary databases (part1) : ',trim(outputname)
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'reading binary databases (part1) : ',trim(outputname)
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   ! note: adding access='stream' would further decrease file size
   open(unit=IIN,file=trim(outputname),status='old',form='unformatted',iostat=ier)
@@ -196,7 +209,12 @@
   integer :: ier,n_sls_loc
 
   ! user output
-  if (myrank == 0) write(IMAIN,*) 'reading binary databases (part2)'
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'reading binary databases (part2)'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   ! reads setup data from a binary file
   allocate(ispec_is_inner(nspec), &
@@ -249,13 +267,20 @@
   endif
 
   if (NPROC > 1) then
-    read(IIN) ninterface_acoustic,ninterface_elastic,inum_interfaces_acoustic,inum_interfaces_elastic, &
-               nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_ext_mesh, &
-               ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_ext_mesh
+    read(IIN) ninterface,ninterface_acoustic,ninterface_elastic, &
+              inum_interfaces_acoustic,inum_interfaces_elastic, &
+              nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_ext_mesh
 
     max_nibool_interfaces_ext_mesh = maxval(nibool_interfaces_ext_mesh(:))
     max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
     max_ibool_interfaces_size_el = NDIM*maxval(nibool_interfaces_elastic(:))
+
+    ! MPI interfaces arrays
+    allocate(ibool_interfaces_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface),stat=ier)
+    if (ier /= 0) call stop_the_code('error in allocation of array ibool_interfaces_ext_mesh')
+    ibool_interfaces_ext_mesh(:,:) = 0
+
+    read(IIN) ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_ext_mesh
 
     ! allocations
     if (ACOUSTIC_SIMULATION) then
@@ -277,7 +302,9 @@
       allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic),stat=ier)
       if (ier /= 0) call stop_the_code('error in allocation of array buffer_recv_faces_vector_el')
     endif
-
+  else
+    ! dummy array
+    allocate(ibool_interfaces_ext_mesh(1,1))
   endif
 
   close(IIN)
@@ -299,6 +326,14 @@
 
   integer ier
   character(len=MAX_STRING_LEN) :: outputname
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) "Reading binary databases w/ sources/receivers"
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   ! reads all data regarding sources from a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_sources_info.bin'
@@ -330,7 +365,7 @@
   if (ier /= 0) call stop_the_code('Error allocating ispec source arrays')
 
   read(IIN) source_time_function,nsources_local,sourcearrays,islice_selected_source,ispec_selected_source,iglob_source
-
+  read(IIN) t0
   close(IIN)
 
   ! reads all data from receivers a binary file
