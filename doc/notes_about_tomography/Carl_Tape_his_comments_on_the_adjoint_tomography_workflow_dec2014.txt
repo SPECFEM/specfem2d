@@ -47,7 +47,7 @@ discussed APPROXIMATE_HESS_KL (inversion), USER_T0 (inversion), and
 NGLLX (minimum resolvable period).
 
 constants file:
-https://github.com/geodynamics/specfem3d/blob/devel/setup/constants.h.in
+https://github.com/SPECFEM/specfem3d/blob/devel/setup/constants.h.in
 
 + Are the src/tomograhy/ files different in SPECFEM3D and SPECFEM3D_GLOBE?
 

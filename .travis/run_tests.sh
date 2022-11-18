@@ -193,7 +193,7 @@ echo
 echo -en 'travis_fold:end:tests\\r'
 echo
 
-# code coverage: https://codecov.io/gh/geodynamics/specfem2d/
+# code coverage: https://app.codecov.io/gh/SPECFEM/specfem2d/
 # additional runs for coverage
 #
 # note: log becomes too long, trying to fold each test output

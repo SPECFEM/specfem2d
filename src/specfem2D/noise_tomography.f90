@@ -578,7 +578,7 @@
 
   subroutine add_surface_movie_noise(accel_elastic)
 
-! read in and inject the "source" that drives the "enemble forward wavefield"
+! read in and inject the "source" that drives the "ensemble forward wavefield"
 ! (recall that the ensemble forward wavefield has a spatially distributed source)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,NOISE_SAVE_EVERYWHERE,&
