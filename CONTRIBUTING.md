@@ -45,10 +45,7 @@ git rebase --interactive upstream/devel
 ```
  
 3. Apply your modifications to your local code and commit your changes:<br>
-```
-git submit -m "<my-commit-description-message>"
-``` 
-with a short descriptive message. Note that you can check the status of the files, and/or differences applied before committing, by
+Check first the status of the files, and/or differences applied before committing, by typing
 ``` 
 git status
 ```
@@ -56,7 +53,11 @@ and
 ``` 
 git diff
 ```
-
+Then, create the commit with a short descriptive message by
+```
+git commit -m "<my-commit-description-message>"
+```
+Remember that it is good practice to have small commits with a single purpose.
 
 4. Push your modifications to your github repository:<br>
 ```
