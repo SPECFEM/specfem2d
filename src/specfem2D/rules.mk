@@ -140,6 +140,7 @@ specfem2D_OBJECTS = \
 	$O/prepare_color_image.spec.o \
 	$O/prepare_gpu.spec.o \
 	$O/prepare_initial_field.spec.o \
+	$O/prepare_noise.spec.o \
 	$O/prepare_pml.spec.o \
 	$O/prepare_source_time_function.spec.o \
 	$O/prepare_timerun.spec.o \

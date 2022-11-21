@@ -117,7 +117,7 @@
     call prepare_source_time_function()
 
     ! prepares noise simulations
-    if (NOISE_TOMOGRAPHY /= 0) call prepare_timerun_noise()
+    call prepare_noise()
 
     ! saves setup as binary database to skip these steps for repeated runs (mode == 2 used reading database)
     !
@@ -1153,126 +1153,6 @@
 !-------------------------------------------------------------------------------------
 !
 
-  subroutine prepare_timerun_noise()
-
-! for noise simulations
-
-  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT,TWO_THIRDS,OUTPUT_FILES
-
-  use specfem_par, only: myrank,NSTEP,nglob,nspec,ibool,coord, &
-                         rhostore,rho_vpstore,rho_vsstore, &
-                         NOISE_TOMOGRAPHY,islice_selected_rec
-
-  use specfem_par_noise
-
-  implicit none
-
-  integer :: i,j,iglob,ispec,ier
-  double precision :: rhol,vs,vp
-
-  ! checks if anything to do
-  if (NOISE_TOMOGRAPHY <= 0) return
-
-  ! user output
-  if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Preparing noise simulation'
-    call flush_IMAIN()
-  endif
-
-  ! allocates arrays for noise tomography
-  allocate(noise_sourcearray(NDIM,NGLLX,NGLLZ,NSTEP), &
-           mask_noise(nglob), &
-           noise_surface_movie_y_or_z(nglob),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating noise arrays')
-  noise_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
-  mask_noise(:) = 0._CUSTOM_REAL
-  noise_surface_movie_y_or_z(:) = 0._CUSTOM_REAL
-
-  ! user output
-  if (myrank == 0) then
-    write(IMAIN,*) '  reading noise parameters'
-    call flush_IMAIN()
-  endif
-
-  !read in parameters for noise tomography
-  call read_parameters_noise()
-
-  if (NOISE_TOMOGRAPHY == 1) then
-    ! creates generating noise source
-    if (myrank == islice_selected_rec(irec_main_noise)) then
-      call compute_source_array_noise()
-    endif
-
-    ! write out coordinates of mesh
-    open(unit=504,file=trim(OUTPUT_FILES)//'mesh_spec',status='unknown',action='write')
-    do ispec = 1, nspec
-      do j = 1, NGLLZ
-        do i = 1, NGLLX
-          iglob = ibool(i,j,ispec)
-          write(504,'(1pe11.3,1pe11.3,2i3,i7)') coord(1,iglob), coord(2,iglob), i, j, ispec
-       enddo
-      enddo
-    enddo
-    close(504)
-
-    open(unit=504,file=trim(OUTPUT_FILES)//'mesh_glob',status='unknown',action='write')
-    do iglob = 1, nglob
-      write(504,'(1pe11.3,1pe11.3,i7)') coord(1,iglob), coord(2,iglob), iglob
-    enddo
-    close(504)
-
-    ! write out spatial distribution of noise sources
-    call create_mask_noise()
-
-    open(unit=504,file=trim(OUTPUT_FILES)//'mask_noise',status='unknown',action='write')
-    do iglob = 1, nglob
-      write(504,'(1pe11.3,1pe11.3,1pe11.3)') coord(1,iglob), coord(2,iglob), mask_noise(iglob)
-    enddo
-    close(504)
-
-    ! write out velocity model
-    open(unit=504,file=trim(OUTPUT_FILES)//'model_rho_vp_vs',status='unknown',action='write')
-    do ispec = 1, nspec
-      do j = 1, NGLLZ
-        do i = 1, NGLLX
-          iglob = ibool(i,j,ispec)
-          rhol = dble(rhostore(i,j,ispec))
-          vs = dble(rho_vsstore(i,j,ispec)/rhol)
-          vp = dble(rho_vpstore(i,j,ispec)/rhol)
-
-          write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') coord(1,iglob), coord(2,iglob), rhol, vp, vs
-        enddo
-      enddo
-    enddo
-    close(504)
-
-  else if (NOISE_TOMOGRAPHY == 2) then
-    call create_mask_noise()
-
-  else if (NOISE_TOMOGRAPHY == 3) then
-    ! noise movie
-    if (NOISE_MOVIE_OUTPUT) then
-      call create_mask_noise()
-
-      ! prepare array that will hold wavefield snapshots
-      noise_output_ncol = 5
-      allocate(noise_output_array(noise_output_ncol,nglob), &
-               noise_output_rhokl(nglob))
-      noise_output_array(:,:) = 0._CUSTOM_REAL
-      noise_output_rhokl(:) = 0._CUSTOM_REAL
-    endif
-
-  endif
-
-  ! synchronizes all processes
-  call synchronize_all()
-
-  end subroutine prepare_timerun_noise
-
-!
-!-------------------------------------------------------------------------------------
-!
 
   subroutine prepare_timerun_no_backward_reconstruction()
 

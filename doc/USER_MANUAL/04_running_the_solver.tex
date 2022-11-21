@@ -222,7 +222,7 @@ To go from strike / dip / slip to CMTSOLUTION moment-tensor format using the cla
 \texttt{./utils/CMTSOLUTION\_to\_AkiRichards.c}
 
 but then it is another story to make a good 2D approximation of that, because in plain-strain P-SV what you get is the equivalent of a line source in the third direction (orthogonal to the plane) rather than a 3D point source
-For more details on this see e.g. Section 7.3 "Two-dimensional point sources" of the book of \cite{Pil79}. That book being hard to find, we scanned the related pages in file\\
+For more details on this see e.g. Section 7.3 "Two-dimensional point sources" of the book of \cite{Pil79}. That book being hard to find, we scanned the related pages in file\newline
 \texttt{discussion\_of\_2D\_sources\_and\_approximations\_from\_Pilant\_1979.pdf} in the same directory as this users manual.
 Another very useful reference addressing that is \cite{HeVi88} and its recent extension \citep{LiHeClSu14}.
 
@@ -275,22 +275,26 @@ To set the geometry as axisymmetric turn the flag \texttt{AXISYM} to \texttt{.tr
    AXISYM                          = .true.
 \end{verbatim}
 The left border of the model becomes then a symmetry axis. The wavefield calculated is then physically a 3D wavefield obtained by revolution of a 2D wavefield
-around its left border.
-\\\\
-Note about the source:\\
+around its left border.\newline
+
+
+Note about the source:\newline
 In axisymmetric geometry the whole model is symmetric with respect to this axis, including the source. Hence if the source is not on the axis it will physically
 have a circular shape. This is still possible and relevant for some applications as non destructive testing but
 is most of the time unwanted. This has to be kept in mind. In acoustic medium, as an explosion in a fluid is naturally axisymmetric, the wavefield generated has the
-correct 3D shape. However, if the source is put in an elastic solid, its 3D radiation pattern will be axisymmetric.
-\\\\
-Getting started:\\
+correct 3D shape. However, if the source is put in an elastic solid, its 3D radiation pattern will be axisymmetric.\newline
+
+
+Getting started:\newline
 To get started a simple example is available in
 \texttt{EXAMPLES/axisymmetric\_case\_AXISYM\_option}, we encourage you to read the \texttt{README} file you will find there.
 This example contains an example of the use of \texttt{AXISYM} option plus a validation using the semi-analytical code OASES (\cite{Oases2004}).
-In this example the domain studied is a water layer lying above a viscoelastic medium. The source is an explosion in the water and the domain is bounded with PMLs.
-\\\\
-Note about external meshers:\\
-Using external meshers is possible in axisymmetric geometry. An example is available in \\ \texttt{EXAMPLES/paper\_axisymmetry\_example} with the mesher
+In this example the domain studied is a water layer lying above a viscoelastic medium. The source is an explosion in the water and the domain is bounded with PMLs.\newline
+
+
+Note about external meshers:\newline
+Using external meshers is possible in axisymmetric geometry. An example is available in \newline
+\texttt{EXAMPLES/paper\_axisymmetry\_example} with the mesher
 Cubit/Trelis (\url{http://www.csimsoft.com/trelis}).
 We invite you to check this example and read the previous chapter for more details. The only difference with plane-strain geometry is that SPECFEM2D needs an additional file defining
 axial elements. The path to this file has to be given in the \texttt{Par\_file}:
@@ -322,18 +326,21 @@ This amounts to imposing that the leftmost layer of elements in the mesh be stru
 \caption{\label{fig:meshrestrictionontheaxis} For simplicity we exclude cases in which the mesh elements that are in contact with the symmetry axis
 are in contact with it by a single point instead of by a full edge, such as element $\bar{\Omega}_2$ here.
 This amounts to imposing that the leftmost layer of elements in the mesh be structured rather than non structured; The rest of the mesh can be non structured.}
-\end{figure}
-\\\\
-Note about the resolution:\\
+\end{figure}\newline
+
+Note about the resolution:\newline
 In axisymmetry a different quadrature is used in the axial elements making the number of points per wavelength necessary a slightly
-bigger ($\approx 25\%$) than in plane-strain.
-\\\\
-Note about a small remaining bug:\\
+bigger ($\approx 25\%$) than in plane-strain.\newline
+
+
+Note about a small remaining bug:\newline
 It has to be noted that a small bug is still hiding somewhere in the code. Indeed the output signals generated are correct in the
-whole domain except in the element containing the source. This small bug has not been solved so far but not prevent to use the code.
-\\\\
-Note about a demo code to learn:\\
-A simplistic demo code is available in \\ \texttt{utils/small\_SEM\_solver\_in\_Fortran\_without\_MPI\_to\_learn}.
+whole domain except in the element containing the source. This small bug has not been solved so far but not prevent to use the code.\newline
+
+
+Note about a demo code to learn:\newline
+A simplistic demo code is available in \newline
+\texttt{utils/small\_SEM\_solver\_in\_Fortran\_without\_MPI\_to\_learn}.
 This simple code is useful to learn how the spectral-element method works in both plane-strain and axisymmetric geometries.
 Have a look to it if interested. Once in its directory, type \texttt{./make\_Fortran\_2D\_axisymmetric.csh} and then \texttt{./xspecfem2D}
 to compile and run. The bug discussed above is not present in this small code.
@@ -597,7 +604,7 @@ To simulate propagation of incoming plane waves in the simulation domain, initia
 
 \noindent
 The model used is a constant $Q$, thus with no dependence on frequency ($Q(f)$ = constant).
-See e.g. \cite{BlKoChLoXi16}. \\
+See e.g. \cite{BlKoChLoXi16}. \newline
 
 \noindent
 However in practice for technical reasons it is approximated based on the sum of different Generalized Zener body mechanisms
@@ -611,7 +618,7 @@ The logarithmic center of that frequency band is the \texttt{f0} parameter defin
 \noindent
 In 2D plane strain, one spatial dimension is much greater than the others (see for example: \url{http://www.engineering.ucsb.edu/~hpscicom/projects/stress/introge.pdf})
 and thus $\kappa = \lambda + \mu$ in 2D plane strain (instead of $\kappa = \lambda + \frac{2}{3} \mu$ in 3D).
-See for example \cite{CaKoKo88b} equation (A9), and equation 6 in \url{http://cherrypit.princeton.edu/papers/paper-99.pdf}. \\
+See for example \cite{CaKoKo88b} equation (A9), and equation 6 in \url{http://cherrypit.princeton.edu/papers/paper-99.pdf}. \newline
 
 \noindent
 In 2D axisymmetric I think the 2/3 coefficient is OK, but it would be worth doublechecking.

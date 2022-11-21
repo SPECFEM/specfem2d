@@ -21,13 +21,13 @@ To run the mesher, please follow these steps:
 %
 \begin{itemize}
 
-\item edit the input file \texttt{DATA/Par\_file}, which describes the simulation.\\
+\item edit the input file \texttt{DATA/Par\_file}, which describes the simulation.\newline
 {\textbf{The default \texttt{DATA/Par\_file} provided in the root directory of the code contains detailed comments and should be almost self-explanatory
 (note that some of the older \texttt{DATA/Par\_file} files provided in the \texttt{EXAMPLES} directory work fine but some of the comments
-they contain may be obsolete or even wrong; thus refer to the default \texttt{DATA/Par\_file} instead for reliable explanations).}}\\
+they contain may be obsolete or even wrong; thus refer to the default \texttt{DATA/Par\_file} instead for reliable explanations).}}\newline
 If you need more details we do not have a detailed description of all the parameters for the 2D version in this manual
 but you can find useful information in the manuals of the 3D versions, since many parameters and the general philosophy is similar. They are available at
-\urlwithparentheses{https://github.com/SPECFEM/specfem3d/tree/master/doc/USER_MANUAL}.\\
+\urlwithparentheses{https://github.com/SPECFEM/specfem3d/tree/master/doc/USER_MANUAL}.\newline
 To create acoustic (fluid) regions, just set the S wave speed to zero and the code will see that these elements are fluid and switch to the right equations there automatically, and automatically match them with the solid regions
 
 \item if you are using an external mesher (like GiD or CUBIT / Trelis), you should set \texttt{read\_external\_mesh} to \texttt{.true.}:
@@ -230,7 +230,8 @@ play:
     utils/cubit2specfem2d/cubit2specfem2d.py
 \end{verbatim}
 This script will create (in current directory) all the mesh files necessary for a SPECFEM2D simulation.
-Other commented examples are available. We particularly recommend you to look at the folder \\ \texttt{EXAMPLES/paper\_axisymmetry\_example}
+Other commented examples are available. We particularly recommend you to look at the folder \newline
+\texttt{EXAMPLES/paper\_axisymmetry\_example}
 beginning by reading the README available there.
 Read carefully the comments in these scripts, they are helpful.
 Another way to use Python together with Cubit/Trelis is to use the script tab.
@@ -246,22 +247,22 @@ With this you should be able to understand how to create meshes and export them 
 \subsection{Note about Cubit/Trelis built-in Python}
 Beware, there are some (annoying) differences between cubit built-in Python and the actual Python langage:
 \begin{itemize}
-\item \texttt{"aString" + 'anotherString'} can cause problems even after being stored: \\
-      \texttt{a = "aString"} \\
-      \texttt{b = a + 'anotherString'} \\
+\item \texttt{"aString" + 'anotherString'} can cause problems even after being stored: \newline
+      \texttt{a = "aString"} \newline
+      \texttt{b = a + 'anotherString'} \newline
       Example which is not working:
 \begin{verbatim}
 pathToMeshDir = pathToSpecfem + 'EXAMPLES/paper_axisymmetry_example/MESH'
 cubit.cmd('cd \"'+pathToMeshDir+'\"')
 \end{verbatim}
-\item No comments after double dots: \\
+\item No comments after double dots: \newline
       Example which is not working:
 \begin{verbatim}
 if True: # Just a dummy comment
     print "Ok!"
 \end{verbatim}
       This example works without the comment.
-\item \texttt{os.makedirs("\texttildelow/aDirectory/")} does not work. It creates a directory named \texttt{\texttildelow} \\
+\item \texttt{os.makedirs("\texttildelow/aDirectory/")} does not work. It creates a directory named \texttt{\texttildelow} \newline
        !!!!! To remove that do: \texttt{rm -R ./\texttildelow} AND NEVER \texttt{rm -rf \texttildelow} !!!!!
 \item \texttt{sys.argv} can not be used
 \item No comments \texttt{""" """} at the beginning of a script
@@ -309,7 +310,7 @@ Then, when defining your model, you should define these absorbing elements as ei
 If you forget to do that, the code will fix the problem by automatically converting the viscoelastic or poroelastic PML
 elements to elastic. This means that strictly speaking the PML layer will not be perfectly matched any more, since the physical
 model will change from viscoelastic or poroelastic to elastic at the entrance of the PML, but in practice this is sufficient and
-produces only tiny / negligible spurious reflections.\\
+produces only tiny / negligible spurious reflections.\newline
 
 If you use PML and an external mesh (created using an external meshing tool
 such as Gmsh, CUBIT/TRELIS or similar), try to have elements inside the PML as regular as possible,
@@ -328,11 +329,11 @@ However you still need to specify the boundary of the mesh as you where doing in
 The script will automatically extract the elements on the PML. It will ask you for a thickness for the PML layers.
 Suppose that you have created a region with a 1-meter size element, when it will prompt for the PML thickness
 you can enter 3.1 and it will create a PML 3 element thick. Always input a slightly larger (5-10\%) size because the element might be slightly skewed,
-or if you have not created your PML region via extrusion/webcut in CUBIT/TRELIS.\\
+or if you have not created your PML region via extrusion/webcut in CUBIT/TRELIS.\newline
 
 To stabilize PMLs it also helps to add a transition layer of geometrically-regular non-PML elements, in which attenuation is also
 turned off (i.e. $Q_\kappa = Q_\mu = 9999$ in that layer), as in the red layer of Figure~\ref{fig:mesh_extrusion}.
-Our tools in directory in directory \texttt{utils/CPML} will implement that transition layer automatically in future.\\
+Our tools in directory in directory \texttt{utils/CPML} will implement that transition layer automatically in future.\newline
 
 \noindent
 To be more precise:
@@ -356,7 +357,7 @@ direction.
 Thus, you need to modify your velocity and density model in order for it to be 1D inside
 the PML, as shown in Figure~\ref{fig:modify_external_velocity_model_to_use_PML}.
 This applies to the bottom layer as well; there you should make sure
-that your model is 1D and thus constant along the vertical direction.\\
+that your model is 1D and thus constant along the vertical direction.\newline
 
 To summarize, only use a 2D velocity and density model inside the physical region, and in
 all the PML layers extend it by continuity from its values along the
