@@ -76,5 +76,5 @@ Finally, if the are no merge conflicts, the new version still compiles and tests
 
 ## Further informations
 
-More detailed developer informations and instructions for how to contribute to SPECFEM codes are available at:<br>
+More detailed developer informations and instructions for how to contribute in general to SPECFEM codes are available at:<br>
 [https://github.com/SPECFEM/specfem3d/wiki](https://github.com/SPECFEM/specfem3d/wiki).
