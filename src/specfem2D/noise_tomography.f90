@@ -43,22 +43,62 @@
   subroutine create_mask_noise()
 
 ! specify spatial distribution of microseismic noise sources
-! **** USERS need to modify this subroutine **** to suit their own needs
+
+! **** USERS can modify this subroutine **** to suit their own needs
+
+  use constants, only: IIN,IMAIN,MAX_STRING_LEN,myrank
 
   implicit none
 
-  !local
+  ! local parameters
+  logical :: file_exists
+  integer :: noise_distribution_type,ier
+  character(len=MAX_STRING_LEN) :: filename
 
   ! parameter helps choosing between different noise distributions
   ! users can add their own mask implementation...
   ! (default is a uniform distribution)
-  integer,parameter :: NOISE_DIST_TYPE = 0
+  integer :: NOISE_DIST_TYPE
+
+  ! initializes, by default uniform noise
+  ! (0 == uniform / 1 == non-uniform noise distribution routine will be used)
+  NOISE_DIST_TYPE = 0
+
+  ! check if non-uniform noise distribution should be used
+  ! takes value specified in additional file NOISE_TOMOGRAPHY/use_non_uniform_noise_distribution
+  filename = 'NOISE_TOMOGRAPHY/use_non_uniform_noise_distribution'
+  inquire(file=trim(filename), exist=file_exists)
+  if (file_exists) then
+    open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ier)
+    if (ier == 0) then
+      ! read in flag
+      read(IIN,*) noise_distribution_type
+      close(IIN)
+
+      ! user output
+      if (myrank == 0) then
+        write(IMAIN,*) '  noise distribution: found file ',trim(filename)
+        write(IMAIN,*) '                      read noise_distribution_type = ',noise_distribution_type
+      endif
+
+      ! sets distribution type
+      NOISE_DIST_TYPE = noise_distribution_type
+    endif
+  endif
 
   ! chooses noise distribution
   select case (NOISE_DIST_TYPE)
+  case (0)
+    ! uniform noise distribution
+    if (myrank == 0) write(IMAIN,*) '  noise distribution: using uniform distribution'
+    call create_mask_noise_uniform()
   case (1)
+    ! non-uniform noise distribution
+    if (myrank == 0) write(IMAIN,*) '  noise distribution: using non-uniform distribution'
     call create_mask_noise_nonuniform()
   case default
+    ! default is uniform distribution
+    if (myrank == 0) write(IMAIN,*) '  noise distribution: using uniform distribution'
     call create_mask_noise_uniform()
   end select
 
@@ -156,7 +196,9 @@
 
   use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,NOISE_TOMOGRAPHY, &
                          any_acoustic,any_poroelastic,P_SV, &
-                         xi_receiver,gamma_receiver,ispec_selected_rec,nrec,station_name,network_name
+                         xi_receiver,gamma_receiver, &
+                         ispec_selected_rec,islice_selected_rec,nrec, &
+                         station_name,network_name
 
   use specfem_par_noise
 
@@ -202,14 +244,6 @@
     call flush_IMAIN()
   endif
 
-  ! checks value
-  if ((NOISE_TOMOGRAPHY == 1) .and. (irec_main_noise > nrec .or. irec_main_noise < 1) ) &
-    call exit_MPI(myrank,'irec_main_noise out of range of given number of receivers. Exiting.')
-
-  xi_noise    = xi_receiver(irec_main_noise)
-  gamma_noise = gamma_receiver(irec_main_noise)
-  ispec_noise = ispec_selected_rec(irec_main_noise)
-
   ! check simulation parameters
   if ((NOISE_TOMOGRAPHY /= 0) .and. (P_SV)) write(*,*) 'Warning: For P-SV case, noise tomography subroutines not yet fully tested'
 
@@ -233,13 +267,31 @@
 
   ! note that moment tensor source elements specified in file DATA/SOURCE will be ignored for noise simulations
 
+  xi_noise    = xi_receiver(irec_main_noise)
+  gamma_noise = gamma_receiver(irec_main_noise)
+  ispec_noise = ispec_selected_rec(irec_main_noise)
+
+  if (NOISE_TOMOGRAPHY == 1) then
+    ! checks value
+    if (irec_main_noise > nrec .or. irec_main_noise < 1) &
+      call exit_MPI(myrank,'irec_main_noise out of range of given number of receivers. Exiting.')
+
+    ! creates generating noise source
+    if (myrank == islice_selected_rec(irec_main_noise)) then
+      call compute_arrays_source_noise()
+    endif
+  endif
+
+  ! sets up noise distribution and noise direction
+  call create_mask_noise()
+
   end subroutine read_parameters_noise
 
 !
 !========================================================================
 !
 
-  subroutine compute_source_array_noise()
+  subroutine compute_arrays_source_noise()
 
 ! reads in time series based on noise spectrum and construct noise "source" array
 
@@ -409,7 +461,7 @@
     enddo
 
   else
-    call exit_MPI(myrank,'Bad noise_source_time_function_type in compute_source_array_noise. Please check setting in constants.h')
+    call exit_MPI(myrank,'Bad noise_source_time_function_type in compute_arrays_source_noise. Please check setting in constants.h')
   endif
 
   ! saves source time function
@@ -455,7 +507,7 @@
     enddo
   endif
 
-  end subroutine compute_source_array_noise
+  end subroutine compute_arrays_source_noise
 
 !
 !========================================================================
@@ -473,10 +525,10 @@
 
   implicit none
 
-  !local
+  ! local parameters
   integer :: i,j,iglob
 
-  !only add source in the slice where the master receiver is located
+  ! only add source in the slice where the main receiver is located
   if (myrank .ne. islice_selected_rec(irec_main_noise)) then
     return
   endif
@@ -536,7 +588,7 @@
     if (.not. is_opened) then
       write(noise_input_file,'(a,i6.6,a)') 'noise_eta',myrank,'.bin'
       open(unit=501,file=trim(OUTPUT_FILES)//noise_input_file,access='direct', &
-        recl=nglob*CUSTOM_REAL,action='read',iostat=ier)
+           recl=nglob*CUSTOM_REAL,action='read',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening noise eta file')
     endif
     ! for both P_SV/SH cases
@@ -704,7 +756,8 @@
 
       ! opens file
       write(noise_output_file,'(a,i6.6,a)') 'noise_eta',myrank,'.bin'
-      open(unit=501,file=trim(OUTPUT_FILES)//noise_output_file,access='direct',recl=nglob*CUSTOM_REAL,action='write',iostat=ier)
+      open(unit=501,file=trim(OUTPUT_FILES)//noise_output_file,access='direct', &
+           recl=nglob*CUSTOM_REAL,action='write',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error saving generating wavefield.')
     endif
 
@@ -735,13 +788,13 @@
 
       ! opens file
       write(noise_output_file,'(a,i6.6,a)') 'noise_phi',myrank,'.bin'
-      open(unit=502,file=trim(OUTPUT_FILES)//noise_output_file,access='direct',recl=NDIM*nglob*CUSTOM_REAL,action='write',&
-        iostat=ier)
+      open(unit=502,file=trim(OUTPUT_FILES)//noise_output_file,access='direct', &
+           recl=NDIM*nglob*CUSTOM_REAL,action='write',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error saving ensemble forward wavefield.')
     endif
 
     ! stores complete wavefield
-    write(unit=502,rec=it) displ_elastic(1,:),displ_elastic(2,:)
+    write(unit=502,rec=it) displ_elastic  ! full array, avoids temporary copies when using: displ_elastic(1,:),displ_elastic(2,:)
 
     ! closes file at the end of simulation
     if (it == NSTEP) then
@@ -775,12 +828,13 @@
   ! opens noise file
   if (it == 1) then
     write(noise_input_file,'(a,i6.6,a)') 'noise_phi',myrank,'.bin'
-    open(unit=503,file=trim(OUTPUT_FILES)//noise_input_file,access='direct',recl=NDIM*nglob*CUSTOM_REAL,action='read',iostat=ier)
+    open(unit=503,file=trim(OUTPUT_FILES)//noise_input_file,access='direct', &
+         recl=NDIM*nglob*CUSTOM_REAL,action='read',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error retrieving noise ensemble forward wavefield')
   endif
 
   ! reads stored wavefield for reconstructed/backward wavefield
-  read(unit=503,rec=NSTEP-it+1) b_displ_elastic(1,:),b_displ_elastic(2,:)
+  read(unit=503,rec=NSTEP-it+1) b_displ_elastic  ! full array, avoids temporary copies
 
   ! closes file
   if (it == NSTEP) then
