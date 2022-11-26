@@ -20,7 +20,7 @@ Go to the main [SPECFEM2D github repository](https://github.com/SPECFEM/specfem2
 
 #### 2. Clone your fork to your local workstation/laptop:
 ```
-git clone --recursive --branch devel https://github.com/SPECFEM/specfem2d.git
+git clone --recursive --branch devel https://github.com/<your-github-account-name>/specfem2d.git
 ```
 Once you change into your local folder `cd specfem2d/`, all git commands will be recognized.  
 Now, add the remote address of the SPECFEM2D repository:
