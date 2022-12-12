@@ -346,17 +346,24 @@ AS_IF([test x"$want_cuda" != xno], [
 ##
 AS_BOX([git version info])
 CIG_PKG_GIT(SPECFEM2D)
+
 AC_DEFINE_UNQUOTED([SPECFEM2D_VERSION], ["$PACKAGE_VERSION"], [Define SPECFEM2D version])
 #AC_DEFINE_UNQUOTED([SPECFEM2D_DOI], ["10.5281/zenodo.xxxxx"], [Define SPECFEM2D doi])
-AS_IF([test -d $srcdir/.git], [
-    GIT_VERSION_DEPS="$srcdir/.git/logs/HEAD"
-    AC_MSG_NOTICE([building from git repository])
-    AC_SUBST(GIT_VERSION_DEPS)
-], [
-    dnl Only substitute if not in a git repository.
-    AC_MSG_NOTICE([not a git repository])
-    AC_CONFIG_FILES([setup/version.fh])
+
+AS_IF([test x"$SPECFEM2D_RELEASE_VERSION" = x0],[
+  AC_MSG_NOTICE([building from git repository])
+  GIT_PACKAGE_VERSION=$SPECFEM2D_GIT_REVISION
+  GIT_COMMIT_VERSION=$SPECFEM2D_GIT_HASH
+  GIT_DATE_VERSION=$SPECFEM2D_GIT_DATE
+],[
+  AC_MSG_NOTICE([not a git repository])
+  GIT_PACKAGE_VERSION=$PACKAGE_VERSION
+  GIT_COMMIT_VERSION="unknown"
+  GIT_DATE_VERSION="unknown"
 ])
+AC_SUBST([GIT_PACKAGE_VERSION])
+AC_SUBST([GIT_COMMIT_VERSION])
+AC_SUBST([GIT_DATE_VERSION])
 
 ############################################################
 
@@ -369,6 +376,7 @@ AC_CONFIG_FILES([
   setup/constants_tomography.h
   setup/precision.h
   setup/config.fh
+  setup/version.fh
 ])
 
 # Scotch makefile
