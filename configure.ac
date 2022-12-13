@@ -9,7 +9,7 @@ dnl You must have recent versions of Autoconf and Automake installed.
 ############################################################
 
 AC_PREREQ(2.61)
-AC_INIT([Specfem 2D], [7.0.0], [see the wiki], [Specfem2D])
+AC_INIT([Specfem 2D], m4_normalize(m4_include([VERSION])), [see the wiki], [Specfem2D])
 AC_CONFIG_SRCDIR([README.md])
 
 AC_CONFIG_HEADERS([setup/config.h])
