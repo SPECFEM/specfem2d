@@ -1,5 +1,7 @@
 # SPECFEM2D
 
+[![DOI](https://zenodo.org/badge/14293189.svg)](https://zenodo.org/badge/latestdoi/14293189)<br>
+
 SPECFEM2D allows users to perform 2D and 2.5D (i.e., axisymmetric) simulations
 of acoustic, elastic, viscoelastic, and poroelastic seismic wave propagation.
 The package can also be used for full waveform imaging (FWI) or adjoint tomography.
