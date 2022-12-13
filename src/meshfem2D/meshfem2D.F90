@@ -207,7 +207,7 @@
 ! volume=175,
 ! pages={301-345}}
 !
-! and/or other articles from http://web.univ-pau.fr/~dkomati1/publications.html
+! and/or other articles from https://specfem.org/komatitsch.free.fr/publications.html
 !
 ! If you use the kernel capabilities of the code, please cite at least one article
 ! written by the developers of the package, for instance:
@@ -264,6 +264,14 @@
 ! volume = {5336},
 ! pages = {350-363}}
 !
+!
+! version 8.0, Etienne Bachmann, Alexis Bottero, Bryant Chow, Paul Cristini, Rene Gassmoeller, Michael Gineste,
+!              Felix Halpaap, Dimitri Komatitsch, Matthieu Lefebvre, Qiancheng Liu, Qinya Liu, Zhaolun Liu,
+!              David Luet, Ryan Modrak, Christina Morency, Daniel Peter, Eric Rosenkrantz, Herurisa Rusmanugroho,
+!              Elliott Sales de Andrade, Eduardo Valero Cano, Zhinan Xie, Zhendong Zhang, December 2022:
+!               - various code improvements
+!               - GPU support
+!               - axisymmetric 2.5D simulations
 !
 ! version 7.0, Dimitri Komatitsch, Zhinan Xie, Paul Cristini, Roland Martin and Rene Matzen, July 2012:
 !               - added support for Convolution PML absorbing layers
