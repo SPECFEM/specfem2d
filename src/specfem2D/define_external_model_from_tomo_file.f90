@@ -430,7 +430,7 @@ end module interpolation
           QKappa_attenuationcoef(kmato(ispec)) = QKappa_attenuationext(i,j,ispec)
           Qmu_attenuationcoef(kmato(ispec)) = Qmu_attenuationext(i,j,ispec)
 
-          ! counting gll points with tomography model values assigned
+          ! counting GLL points with tomography model values assigned
           npoint_tomo = npoint_tomo + 1
 
         else
@@ -453,7 +453,7 @@ end module interpolation
           c25ext(i,j,ispec) = anisotropycoef(9,kmato(ispec))
           c22ext(i,j,ispec) = anisotropycoef(10,kmato(ispec)) ! for AXISYM
 
-          ! counting gll points with internal model values assigned
+          ! counting GLL points with internal model values assigned
           npoint_tomo = npoint_tomo + 1
         endif
       enddo

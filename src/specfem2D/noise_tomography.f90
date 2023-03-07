@@ -529,7 +529,7 @@
   integer :: i,j,iglob
 
   ! only add source in the slice where the main receiver is located
-  if (myrank .ne. islice_selected_rec(irec_main_noise)) then
+  if (myrank /= islice_selected_rec(irec_main_noise)) then
     return
   endif
 
@@ -633,7 +633,7 @@
 ! read in and inject the "source" that drives the "ensemble forward wavefield"
 ! (recall that the ensemble forward wavefield has a spatially distributed source)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,NOISE_SAVE_EVERYWHERE,&
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,NOISE_SAVE_EVERYWHERE, &
     OUTPUT_FILES,MAX_STRING_LEN
 
   use specfem_par, only: P_SV,it,NSTEP,nspec,nglob,ibool,jacobian,wxgll,wzgll,myrank,NOISE_TOMOGRAPHY

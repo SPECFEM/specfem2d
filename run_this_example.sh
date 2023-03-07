@@ -1,14 +1,14 @@
 #!/bin/bash
 #
-# This script runs the main directory SPECFEM2D example problem, which is shown 
+# This script runs the main directory SPECFEM2D example problem, which is shown
 # on the cover of the User Manual (https://specfem2d.readthedocs.io/en/latest/)
 #
 # Under the hood it runs the mesher and the solver (in serial or parallel) for
-# a multi-layered 2D domain with topography and a cavity. 
+# a multi-layered 2D domain with topography and a cavity.
 #
 # To create a movie of the results, have a look at the script:
 # ./utils/create_main_repo_example_movie.sh
-# 
+#
 
 echo "running example: `date`"
 currentdir=`pwd`
