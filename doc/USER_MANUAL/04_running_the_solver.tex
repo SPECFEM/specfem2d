@@ -58,9 +58,9 @@ The \texttt{DATA/Par\_file} contains detailed comments and should be almost self
 Please see also the corresponding explanations in generating the mesh.
 Some more detailed informations are listed here for a few parameters affecting the solver:
 
-\begin{description}[font=\ttfamily]
+\begin{description}
 
-\item[ATTENUATION\_VISCOELASTIC or ATTENUATION\_VISCOACOUSTIC]
+\item[{\texttt{ATTENUATION\_VISCOELASTIC}} or {\texttt{ATTENUATION\_VISCOACOUSTIC}}]
  Regarding attenuation (viscoelasticity and viscoacoustic), in the \texttt{Par\_file} you need to select the number of standard linear solids (N\_SLS) to mimic a constant $Q$ quality factor.
 Using N\_SLS = 3 is always safe. If (and only if) you know what you are doing, you can try to reduce that in order to reduce the cost of the simulations.
 Figure~\ref{fig:selectNSLS} shows values that you can consider using (again, if and only if you know what you are doing). That table has been created by Zhinan Xie using
@@ -68,7 +68,7 @@ a comparison between results obtained with a truly-constant $Q$ and results obta
 The comparison is performed using the time-frequency misfit and goodness-of-fit criteria proposed by \cite{Kristekova_2009}.
 The table is drawn for a dimensionless parameter representing the distance of propagation.
 
-\item[USE\_TRICK\_FOR\_BETTER\_PRESSURE]
+\item[{\texttt{USE\_TRICK\_FOR\_BETTER\_PRESSURE}}]
  This option can only be used so far if all the receivers record pressure and are in acoustic elements.
 Use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
 use the second derivative of the source for the source time function instead of the source itself,
@@ -99,21 +99,21 @@ is accurate at second order and thus contains significantly less numerical noise
 
 The \texttt{SOURCE} file located in the \texttt{DATA/} directory should be edited in the following way:
 %
-\begin{description}[font=\ttfamily]
-\item[source\_surf] Set this flag to \texttt{.true.} to force the source to be located at the surface of the model, otherwise
+\begin{description}
+\item[{\texttt{source\_surf}}] Set this flag to \texttt{.true.} to force the source to be located at the surface of the model, otherwise
 the sol be placed inside the medium
 
-\item[xs] source location $x$ in meters
+\item[{\texttt{xs}}] source location $x$ in meters
 
-\item[zs] source location $z$ in meters
+\item[{\texttt{zs}}] source location $z$ in meters
 
-\item[source\_type] Set this value equal to \texttt{1} for elastic forces or acoustic pressure,
+\item[{\texttt{source\_type}}] Set this value equal to \texttt{1} for elastic forces or acoustic pressure,
 set this to \texttt{2} for moment tensor sources.
 For a plane wave including converted and reflected waves at the free surface, P wave = 1, S wave = 2, Rayleigh wave = 3;
 for a plane wave without converted nor reflected waves at the free surface, i.e. the incident wave only, P wave = 4, S wave = 5.
 (incident plane waves are turned on by parameter \texttt{initialfield} in \texttt{DATA/Par\_file}).
 
-\item[time\_function\_type] Choose a source-time function: set this value to \texttt{1} to use a Ricker, i.e. the second derivative of a Gaussian,
+\item[{\texttt{time\_function\_type}}] Choose a source-time function: set this value to \texttt{1} to use a Ricker, i.e. the second derivative of a Gaussian,
 \texttt{2} to use the first derivative of a Gaussian, \texttt{3} to use a Gaussian, \texttt{4} to use a Dirac or \texttt{5} to use a Heaviside source-time function.
 Note that we use the standard definition of a Ricker, for a dominant frequency $f_0$:
 $\mathrm{Ricker}(t) = (1 - 2 a t^2) e^{-a t^2}$, with $a = \pi^2 f_0^2$,
@@ -129,7 +129,7 @@ This gives the wavelet of Figure~\ref{fig:RickerWavelet}.
 \end{figure}
 %%
 
-\item[f0] Set this to the dominant frequency of the source.
+\item[{\texttt{f0}}] Set this to the dominant frequency of the source.
 For point-source simulations using a Heaviside source-time function (\texttt{time\_function\_type = 5}),
 we recommend setting the source frequency parameter \texttt{f0}
 equal to a high value, which corresponds to simulating a step source-time
@@ -168,14 +168,14 @@ used.}
 \end{figure}
 %%
 
-\item[t0] For single sources, we recommend to set the time shift parameter \texttt{t0} equal to $0.0$.
+\item[{\texttt{t0}}] For single sources, we recommend to set the time shift parameter \texttt{t0} equal to $0.0$.
 The time shift parameter would simply apply
 an overall time shift to the synthetics (according to the time shift of the first source), something that can be done
 in the post-processing. This time shift parameter can be non-zero when using multiple sources.
 
-\item[anglesource] angle of the source (for a force only); for a plane wave, this is the incidence angle. For moment tensor sources this parameter is unused.
+\item[{\texttt{anglesource}}] angle of the source (for a force only); for a plane wave, this is the incidence angle. For moment tensor sources this parameter is unused.
 
-\item[Mxx,Mzz,Mxz] Moment tensor components (valid only for moment tensor sources, \texttt{source\_type = 2}).
+\item[{\texttt{Mxx}},{\texttt{Mzz}},{\texttt{Mxz}}] Moment tensor components (valid only for moment tensor sources, \texttt{source\_type = 2}).
 Note that the units for the components of a moment tensor source are different in SPECFEM2D and in SPECFEM3D:
 %
 \begin{description}
@@ -194,7 +194,7 @@ For more details on this see e.g. Section 7.3 "Two-dimensional point sources" of
 \texttt{discussion\_of\_2D\_sources\_and\_approximations\_from\_Pilant\_1979.pdf} in the same directory as this users manual.
 Another very useful reference addressing that is \cite{HeVi88} and its recent extension \citep{LiHeClSu14}.
 
-\item[factor] amplification factor
+\item[{\texttt{factor}}] amplification factor
 
 \end{description}
 
@@ -427,20 +427,20 @@ or seismogram recording purposes. Thus, if you do not know these parameters for 
 can ignore them and set them to zero. When pressure is used these three parameters are needed because the code needs to compute $\sigma_{yy}$,
 which is not equal to zero in the plane strain formulation.
 
-\begin{description}[font=\ttfamily, labelindent=1em, labelsep=1ex]
-\item[rho\_s] = solid density
-\item[rho\_f] = fluid density
-\item[phi] = porosity
-\item[tort] = tortuosity
-\item[permxx] = xx component of permeability tensor
-\item[permxz] = xz,zx components of permeability tensor
-\item[permzz] = zz component of permeability tensor
-\item[kappa\_s] = solid bulk modulus
-\item[kappa\_f] = fluid bulk modulus
-\item[kappa\_fr] = frame bulk modulus
-\item[eta\_f] = fluid viscosity
-\item[mu\_fr] = frame shear modulus
-\item[Qmu] = shear quality factor
+\begin{description}
+\item[{\texttt{rho\_s}}] = solid density
+\item[{\texttt{rho\_f}}] = fluid density
+\item[{\texttt{phi}}] = porosity
+\item[{\texttt{tort}}] = tortuosity
+\item[{\texttt{permxx}}] = xx component of permeability tensor
+\item[{\texttt{permxz}}] = xz,zx components of permeability tensor
+\item[{\texttt{permzz}}] = zz component of permeability tensor
+\item[{\texttt{kappa\_s}}] = solid bulk modulus
+\item[{\texttt{kappa\_f}}] = fluid bulk modulus
+\item[{\texttt{kappa\_fr}}] = frame bulk modulus
+\item[{\texttt{eta\_f}}] = fluid viscosity
+\item[{\texttt{mu\_fr}}] = frame shear modulus
+\item[{\texttt{Qmu}}] = shear quality factor
 \end{description}
 
 Note: for the poroelastic case, \texttt{mu\_s} is irrelevant.
