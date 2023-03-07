@@ -7,7 +7,19 @@
 %------------------------------------------------------------------------------------------------%
 \section{How to use SPECFEM2D}
 %------------------------------------------------------------------------------------------------%
-
+The first step in running a spectral-element simulation consists of
+constructing a high-quality mesh for the region under consideration.
+We provide two possibilities to do so: (1) relying on an external,
+hexahedral mesher, like Gmsh and CUBIT, or (2) using the provided, internal capabilities.
+To run the mesher, please edit the main input file \texttt{DATA/Par\_file}, describing the setup of your simulation.
+Then type:
+%
+\begin{verbatim}
+    ./bin/xmeshfem2D
+\end{verbatim}
+%
+to create the mesh, which will be stored in directory \texttt{OUTPUT\_FILES/}. \texttt{xmeshfem2D} will output several files called \texttt{Database??????.bin}, one for each process. These files are required for running the solver in a subsequent step.
+%
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=.6\textwidth]{figures/workflow.pdf}
@@ -17,20 +29,89 @@
 \label{fig:workflow.databases}
 \end{figure}
 
-To run the mesher, please follow these steps:
-%
-\begin{itemize}
 
-\item edit the input file \texttt{DATA/Par\_file}, which describes the simulation.\newline
-{\textbf{The default \texttt{DATA/Par\_file} provided in the root directory of the code contains detailed comments and should be almost self-explanatory
+%------------------------------------------------------------------------------------------------%
+\section*{Notes about \texttt{DATA/Par\_file} parameters}
+%------------------------------------------------------------------------------------------------%
+
+The default \texttt{DATA/Par\_file} provided in the root directory of the code contains detailed comments and should be almost self-explanatory
 (note that some of the older \texttt{DATA/Par\_file} files provided in the \texttt{EXAMPLES} directory work fine but some of the comments
-they contain may be obsolete or even wrong; thus refer to the default \texttt{DATA/Par\_file} instead for reliable explanations).}}\newline
+they contain may be obsolete or even wrong; thus refer to the default \texttt{DATA/Par\_file} instead for reliable explanations).\newline
+
 If you need more details we do not have a detailed description of all the parameters for the 2D version in this manual
 but you can find useful information in the manuals of the 3D versions, since many parameters and the general philosophy is similar. They are available at
 \urlwithparentheses{https://github.com/SPECFEM/specfem3d/tree/master/doc/USER_MANUAL}.\newline
-To create acoustic (fluid) regions, just set the S wave speed to zero and the code will see that these elements are fluid and switch to the right equations there automatically, and automatically match them with the solid regions
 
-\item if you are using an external mesher (like GiD or CUBIT / Trelis), you should set \texttt{read\_external\_mesh} to \texttt{.true.}:
+\begin{description}[font=\ttfamily]
+
+\item[NPROC]
+ If you have the code compiled with MPI support, you can specify the number of processes ($>1$) for the simulation to run on. Otherwise, this has to be set to 1 for a serial run. The mesher will use the partitioner specified by parameter \texttt{PARTITIONING\_TYPE} to load-balance the mesh for multiple processes.
+
+\item[NGNOD]
+ Regarding mesh point numbering in the files created by the mesher, we use the classical convention of 4-node and 9-node finite elements (\texttt{NGNOD = 4} or \texttt{NGNOD = 9}, respectively):
+%
+\begin{verbatim}
+         4 . . . . 7 . . . . 3
+         .                   .
+         .         eta       .
+         .         |         .
+         8         9--xi     6
+         .                   .
+         .                   .
+         .                   .
+         1 . . . . 5 . . . . 2
+\end{verbatim}
+%
+the local coordinate system being $\xi$ and $\eta$ (\texttt{xi} and \texttt{eta}).
+Note that this convention is used to describe the geometry only. In the solver the wave field is then described based on high-order Lagrange interpolants
+at Gauss-Lobatto-Legendre points, as is classical in spectral-element methods.
+
+
+\item[MODEL]
+ With \texttt{MODEL = default} chosen, a variety of simple velocity and density models can be defined using the \texttt{nbmodels} section in the \texttt{Par\_file}.
+
+The material types can be specified by one of the following line formats:
+%
+\begin{verbatim}
+I:  model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0
+II:  model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 QKappa Qmu
+III: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
+IV: model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
+\end{verbatim}
+%
+\begin{description}
+\item[I] To make a given region acoustic, use (I) and make \texttt{Vs} be zero. To make a given region isotropic elastic, use (I) and make \texttt{Vs} be nonzero.  See Section 4.1 for more details.
+
+Thus, to create acoustic (fluid) regions, just set the S wave speed to zero and the code will see that these elements are fluid and switch to the right equations there automatically, and automatically match them with the solid regions.
+
+\item[II] To make a given region anisotropic, use (II).  See Section 4.3 for more details.
+
+\item[III] To make a given region poroelastic, use (III).  See Section 4.4 for more details.
+
+\item[IV] To impose a tomographic model on a given region, use (IV).  For now, we only allow for a single tomography file and region.
+Note that the \texttt{model\_number} must be strictly positive, but the following domain number must be negative (-1) for tomographic models.
+The values for density (rho) and Vp are ignored, however the value for Vs, i.e., \texttt{A}, must be either zero (0.0) to be recognized as an acoustic region or a positive non-zero value (e.g., 1.0) for an elastic region. The tomographic model values are overimposed on this region, and defined in the file specified by the parameter \texttt{TOMOGRAPHY\_FILE}.
+\end{description}
+
+When viscoelasticity is turned on, the \texttt{Vp} and \texttt{Vs} values that are read here are the UNRELAXED ones i.e. the values at infinite frequency
+unless the \texttt{READ\_VELOCITIES\_AT\_f0} parameter is set to true, in which case they are the values at frequency $f_0$.
+Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp. To convert one to the other see \texttt{doc/note\_on\_Qkappa\_versus\_Qp.pdf} and \texttt{utils/attenuation/conversion\_from\_Qkappa\_Qmu\_to\_Qp\_Qs\_from\_Dahlen\_Tromp\_959\_960.f90}.
+
+ With \texttt{MODEL = default} chosen, a variety of simple layered model configurations can be specified using the \texttt{nbregions} section in the \texttt{Par\_file}. Please see the comment in the \texttt{Par\_file} how to specify different material regions in the mesh for internal meshes. Meshes defined by an external mesher will have to specify these informations in separate files, please find more explanations below for the parameter \texttt{read\_external\_mesh}.
+
+The parameter \texttt{MODEL} can also have other values specified than \texttt{default}. Possible selections are:
+\begin{itemize}
+\item \texttt{ascii}: for reading in a single ASCII model file (\texttt{DATA/proc***\_rho\_vp\_vs.dat})
+\item \texttt{binary} or \texttt{gll}: for reading in binary model files (\texttt{DATA/proc***\_rho.bin}, \texttt{DATA/proc***\_vp.bin}, \texttt{DATA/proc***\_vs.bin}). In case attenuation is turned on for the simulation, it will also read in attenuation files (\texttt{DATA/proc***\_Qmu.bin}, \texttt{DATA/proc***\_Qkappa.bin}).
+\item \texttt{binary\_voigt}: for reading in an anisotropic model specified by binary files (\texttt{DATA/proc***\_rho.bin}, \texttt{DATA/proc***\_c11.bin}, \texttt{DATA/proc***\_c13.bin}, \texttt{DATA/proc***\_c15.bin}, \texttt{DATA/proc***\_c33.bin}, \texttt{DATA/proc***\_c35.bin}, \texttt{DATA/proc***\_c55.bin})
+\item \texttt{external}: for reading in a velocity model specified in the source code routine \texttt{define\_external\_model()} in file \texttt{src/specfem2d/define\_external\_model.f90}. The user can implement his own routine here as explained in the source file. By default, the routine implements the spherically symmetric isotropic AK135 model.
+\item \texttt{legacy}: for reading in a single ASCII model file with a legacy format of very old SPECFEM2D versions (\texttt{DATA/proc***\_model\_velocity.dat\_input})
+%\item \texttt{marmousi}: for imposing the Marmousi benchmark velocity model.
+\end{itemize}
+
+
+\item[read\_external\_mesh]
+ If you are using an external mesher (like Gmsh, CUBIT/Trelis or GiD), you should set this parameter to \texttt{.true.}, with the following files defined for the mesher:
   \begin{description}[font=\ttfamily]
      \item[mesh\_file] is the file describing the mesh : first line is the number of elements, then a list of 4 nodes (quadrilaterals only) forming each elements on each line.
 
@@ -58,49 +139,30 @@ located around the middle of the edge; the right 9-node curvature will be restor
      \item[tangential\_detection\_curve\_file] contains points describing the envelope, that are used for the \texttt{source\_normal\_to\_surface} and \texttt{rec\_normal\_to\_surface}. Should be fine grained, and ordered clockwise. Number of points on the first line, then (x,z) coordinates on each line.
   \end{description}
 
-\item if you have compiled with MPI, you must specify the number of processes.
 
-\end{itemize}
-%
-Then type
-%
-\begin{verbatim}
-    ./bin/xmeshfem2D
-\end{verbatim}
-%
-to create the mesh (which will be stored in directory \texttt{OUTPUT\_FILES/}). \texttt{xmeshfem2D} is serial; it will output several files called \texttt{Database??????.bin}, one for each process.
+\item[READ\_VELOCITIES\_AT\_f0]
+ shift (i.e. change) velocities read from the input file to take average physical dispersion into account, i.e. if needed change the reference frequency at which these velocities are defined internally in the code: by default, the velocity values that are read at the end of this \texttt{Par\_file} of the code are supposed to be the unrelaxed values, i.e. the velocities at infinite frequency. If you set this flag to \texttt{.true.}, the values read are then those for a given frequency called \texttt{ATTENUATION\_f0\_REFERENCE}.
+
+Note this only has an effect, if attenuation is turned on for the simulation, i.e., either \texttt{ATTENUATION\_VISCOELASTIC} or \texttt{ATTENUATION\_VISCOACOUSTIC} is set to \texttt{.true.}. Otherwise, the simulation is for a purely elastic or acoustic medium and the concept of a reference frequency is not needed.
+
+\end{description}
+
+
 
 %%
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=3in]{figures/example-gridfile.pdf}
-\caption{Example of a grid file generated by \texttt{xmeshfem2D} and visualized with gnuplot
+\caption{Example of a grid file generated by \texttt{xmeshfem2D} when parameter \texttt{output\_grid\_Gnuplot} is set to \texttt{.true.}, and visualized with gnuplot
 (within gnuplot, type `\texttt{plot "OUTPUT\_FILES/gridfile.gnu" w l}').}
 \label{fig:example.mesh}
 \end{figure}
 
-Regarding mesh point numbering in the files created by the mesher, we use the classical convention of 4-node and 9-node finite elements:
-%
-\begin{verbatim}
-         4 . . . . 7 . . . . 3
-         .                   .
-         .         eta       .
-         .         |         .
-         8         9--xi     6
-         .                   .
-         .                   .
-         .                   .
-         1 . . . . 5 . . . . 2
-\end{verbatim}
-%
-the local coordinate system being $\xi$ and $\eta$ (\texttt{xi} and \texttt{eta}).
-Note that this convention is used to describe the geometry only. In the solver the wave field is then described based on high-order Lagrange interpolants
-at Gauss-Lobatto-Legendre points, as is classical in spectral-element methods.
 
 \section{How to use Gmsh to generate an external mesh}
 
 Gmsh%
-\footnote{freely available at the following address : \url{http://www.geuz.org/gmsh/}}
+\footnote{freely available at the following address : \url{http://gmsh.info/}}
 is a 3D finite element grid generator which can be used for the generation
 of quadrangle and hexahedral meshes. It is therefore a good candidate
 for generating meshes which can be processed by SPECFEM2D. Only two
@@ -302,7 +364,7 @@ Flag& Meaning\\ [0.5ex]
 % is used to refer this table in the text
 \end{table}
 
-In order to see how to add PML layers to a mesh / model created with an external mesher such as `Gmsh', see the examples in directory
+In order to see how to add PML layers to a mesh / model created with an external mesher such as Gmsh, see the examples in directory
 \texttt{EXAMPLES/CPML\_absorbing\_layers}.
 
 If you use PML, the mesh elements that belong to the PML layers can be acoustic or elastic, but not viscoelastic nor poroelastic.
@@ -349,7 +411,7 @@ that flags the PML elements does not create additional elements; it simply takes
 \end{itemize}
 
 \noindent
-If you use PML and an external velocity and density model (e.g., setting flag ``\texttt{MODEL}'' to \texttt{tomography}),
+If you use PML and an external velocity and density model (e.g., setting flag \texttt{MODEL} to \texttt{external}),
 you should be careful because mathematically a PML cannot handle heterogeneities along the
 normal to the PML edge inside the PML layer. This comes from the fact that the damping profile
 that is defined assumes a constant velocity and density model along the normal

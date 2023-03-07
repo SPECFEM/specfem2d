@@ -38,17 +38,17 @@ Before running the \texttt{configure} script, you should probably edit file \tex
 \item [Intel ifort compiler] See if you need to add \texttt{-assume byterecl} for your machine.\newline
 
 In the case of that compiler, we have noticed that initial release versions sometimes have bugs or issues that can lead to wrong results when running the code, thus we \emph{strongly} recommend using a version for which at least one service pack or update has been installed.
-\red{In particular, for version 17 of that compiler, users have reported problems (making the code crash at run time) with the \texttt{-assume buffered\_io} option; if you notice problems,
-remove that option from file \texttt{flags.guess} or change it to \texttt{-assume nobuffered\_io} and try again.}
+In particular, for \red{version 17} of that compiler, users have reported problems (making the code crash at run time) with the \texttt{-assume buffered\_io} option; if you notice problems,
+remove that option from file \texttt{flags.guess} or change it to \texttt{-assume nobuffered\_io} and try again.
 \item [IBM compiler] See if you need to add \texttt{-qsave} or \texttt{-qnosave} for your machine.
-\item [Mac OS] You will probably need to install \texttt{XCODE}.
+\item [Mac OS] You will probably need to install \texttt{Xcode}.
 \item [IBM Blue Gene machines] Please refer to the manual of SPECFEM3D\_Cartesian, which contains detailed instructions on how to run on Blue Gene.
 \end{description}
 
 The SPECFEM2D software package relies on the SCOTCH library to partition meshes.
 The SCOTCH library \citep{PeRo96}
 provides efficient static mapping, graph and mesh partitioning routines. SCOTCH is a free software package developed by
-Fran\c{c}ois Pellegrini et al. from LaBRI and Inria in Bordeaux, France, downloadable from the web page \url{https://gforge.inria.fr/projects/scotch/}.
+Fran\c{c}ois Pellegrini et al. from LaBRI and Inria in Bordeaux, France, downloadable from the web page \url{https://gitlab.inria.fr/scotch/scotch}.
 In case no SCOTCH libraries can be found on the system, the configuration will bundle the version provided with the source code for compilation.
 The path to an existing SCOTCH installation can to be set explicitly with the option \texttt{-{}-with-scotch-dir}.
 Just as an example:
