@@ -1305,6 +1305,7 @@
   if (myrank == 0) then
     write(IMAIN,*) 'reading free surface information...'
     write(IMAIN,*) '  number of acoustic free surface boundary elements = ',nelem_acoustic_surface
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
@@ -1345,7 +1346,6 @@
   if (nelem_acoustic_surface_all > 0) then
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*)
       write(IMAIN,*) '  Total number of acoustic free surface elements: ',nelem_acoustic_surface_all
       write(IMAIN,*)
       call flush_IMAIN()

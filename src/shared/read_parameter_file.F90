@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine read_parameter_file(imesher,BROADCAST_AFTER_READ)
+  subroutine read_parameter_file(is_mesher,BROADCAST_AFTER_READ)
 
 ! reads in DATA/Par_file
 
@@ -40,7 +40,7 @@
 
   implicit none
 
-  integer, intent(in) :: imesher
+  logical, intent(in) :: is_mesher
   logical, intent(in) :: BROADCAST_AFTER_READ
 
   ! initializes
@@ -63,12 +63,14 @@
     ! user output
     write(IMAIN,*) 'Title of the simulation: ',trim(title)
     write(IMAIN,*)
-    if (AXISYM) write(IMAIN,*) 'Axisymmetric simulation'
-    write(IMAIN,*)
+    if (AXISYM) then
+      write(IMAIN,*) 'Axisymmetric simulation'
+      write(IMAIN,*)
+    endif
     call flush_IMAIN()
 
     ! reads receiver lines
-    if (imesher == 1) then
+    if (is_mesher) then
       ! user output
       write(IMAIN,*) 'Receiver lines:'
       write(IMAIN,*) '  Nb of line sets = ',nreceiversets
@@ -78,7 +80,7 @@
     call read_parameter_file_receiversets()
 
     ! only mesher needs to reads this
-    if (imesher == 1) then
+    if (is_mesher) then
       ! reads material definitions
       call read_material_table()
 

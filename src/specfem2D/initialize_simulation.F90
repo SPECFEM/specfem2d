@@ -128,7 +128,7 @@
 
   ! read the parameter file
   BROADCAST_AFTER_READ = .true.
-  call read_parameter_file(0,BROADCAST_AFTER_READ)
+  call read_parameter_file(.false.,BROADCAST_AFTER_READ)
 
   ! reads in source descriptions
   ! note: we will need a source frequency for outputting poroelastic velocities when reading the mesh databases

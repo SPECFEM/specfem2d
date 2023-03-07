@@ -365,6 +365,8 @@ end module interpolation
   ! local parameters
   integer :: i,j,ispec,iglob
   double precision :: xmesh,zmesh
+  ! stats
+  integer :: npoint_tomo,npoint_internal
 
   ! user output
   if (myrank == 0) then
@@ -392,6 +394,8 @@ end module interpolation
   c22ext(:,:,:) = 0.d0 ! for AXISYM only
 
   ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
+  npoint_tomo = 0
+  npoint_internal = 0
   do ispec = 1,nspec
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -425,6 +429,10 @@ end module interpolation
 
           QKappa_attenuationcoef(kmato(ispec)) = QKappa_attenuationext(i,j,ispec)
           Qmu_attenuationcoef(kmato(ispec)) = Qmu_attenuationext(i,j,ispec)
+
+          ! counting gll points with tomography model values assigned
+          npoint_tomo = npoint_tomo + 1
+
         else
           ! Internal model
           rhoext(i,j,ispec) = density(1,kmato(ispec))
@@ -444,10 +452,31 @@ end module interpolation
           c23ext(i,j,ispec) = anisotropycoef(8,kmato(ispec))
           c25ext(i,j,ispec) = anisotropycoef(9,kmato(ispec))
           c22ext(i,j,ispec) = anisotropycoef(10,kmato(ispec)) ! for AXISYM
+
+          ! counting gll points with internal model values assigned
+          npoint_tomo = npoint_tomo + 1
         endif
       enddo
     enddo
   enddo
+
+  call synchronize_all()
+
+  ! collect totals
+  iglob = npoint_tomo
+  call max_all_i(iglob,npoint_tomo)
+  iglob = npoint_internal
+  call max_all_i(iglob,npoint_internal)
+
+  ! user output
+  if (myrank == 0) then
+    if (npoint_tomo > 0) &
+      write(IMAIN,*) '  number of GLL points with tomographic model values: ',npoint_tomo
+    if (npoint_internal > 0) &
+      write(IMAIN,*) '  number of GLL points with internal model values   : ',npoint_internal
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   end subroutine define_external_model_from_tomo_file
 
@@ -509,7 +538,7 @@ end module interpolation
   use specfem_par, only: myrank,TOMOGRAPHY_FILE
 
   use model_tomography_par
-  use constants, only: IIN,IMAIN
+  use constants, only: IIN,IMAIN,HUGEVAL
 
   implicit none
 
@@ -518,6 +547,7 @@ end module interpolation
   character(len=150) :: string_read
 
   double precision, dimension(:), allocatable :: x_tomography,z_tomography,vp_tomography,vs_tomography,rho_tomography
+  double precision :: read_rho_min,read_rho_max,read_vp_min,read_vp_max,read_vs_min,read_vs_max,tmp_dp
 
   ! opens file for reading
   open(unit=IIN,file=trim(TOMOGRAPHY_FILE),status='old',action='read',iostat=ier)
@@ -562,11 +592,26 @@ end module interpolation
   ! allocate models parameter records
   allocate(x_tomography(nrecord),z_tomography(nrecord),vp_tomography(nrecord),vs_tomography(nrecord), &
            rho_tomography(nrecord),stat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'not enough memory to allocate tomo arrays')
+  x_tomography(:) = 0.d0; z_tomography(:) = 0.d0
+  vp_tomography(:) = 0.d0; vs_tomography(:) = 0.d0; rho_tomography(:) = 0.d0
+
   allocate(x_tomo(NX),z_tomo(NZ),vp_tomo(NX,NZ),vs_tomo(NX,NZ),rho_tomo(NX,NZ),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'not enough memory to allocate tomo arrays')
+  x_tomo(:) = 0.d0; z_tomo(:) = 0.d0
+  vp_tomo(:,:) = 0.d0; vs_tomo(:,:) = 0.d0; rho_tomo(:,:) = 0.d0
 
   ! Checks the number of records for points definition while storing them
   irecord = 0
+
+  ! stats
+  read_vp_min = + HUGEVAL
+  read_vp_max = - HUGEVAL
+  read_vs_min = + HUGEVAL
+  read_vs_max = - HUGEVAL
+  read_rho_min = + HUGEVAL
+  read_rho_max = - HUGEVAL
+
   do while (irecord < nrecord)
     call tomo_read_next_line(IIN,string_read)
     read(string_read,*) x_tomography(irecord+1),z_tomography(irecord+1), &
@@ -574,6 +619,15 @@ end module interpolation
 
     if (irecord < NX) x_tomo(irecord+1) = x_tomography(irecord+1)
 
+    ! stats
+    if (vp_tomography(irecord+1) > read_vp_max) read_vp_max = vp_tomography(irecord+1)
+    if (vp_tomography(irecord+1) < read_vp_min) read_vp_min = vp_tomography(irecord+1)
+    if (vs_tomography(irecord+1) > read_vs_max) read_vs_max = vs_tomography(irecord+1)
+    if (vs_tomography(irecord+1) < read_vs_min) read_vs_min = vs_tomography(irecord+1)
+    if (rho_tomography(irecord+1) > read_rho_max) read_rho_max = rho_tomography(irecord+1)
+    if (rho_tomography(irecord+1) < read_rho_min) read_rho_min = rho_tomography(irecord+1)
+
+    ! counter
     irecord = irecord + 1
   enddo
 
@@ -587,15 +641,38 @@ end module interpolation
     enddo
   enddo
 
+  call synchronize_all()
+
   if (irecord /= nrecord .and. myrank == 0) then
      print *, 'Error: ',trim(TOMOGRAPHY_FILE),' has invalid number of records'
-     print *, '     number of grid points specified (= NX*NZ):',nrecord
+     print *, '     number of grid points specified (= NX*NZ)   :',nrecord
      print *, '     number of file lines for grid points        :',irecord
      call stop_the_code('Error in tomography data file for the grid points definition')
   endif
 
+  ! collects stats
+  tmp_dp = read_vp_min
+  call min_all_dp(tmp_dp,read_vp_min)
+  tmp_dp = read_vp_max
+  call max_all_dp(tmp_dp,read_vp_max)
+
+  tmp_dp = read_vs_min
+  call min_all_dp(tmp_dp,read_vs_min)
+  tmp_dp = read_vs_max
+  call max_all_dp(tmp_dp,read_vs_max)
+
+  tmp_dp = read_rho_min
+  call min_all_dp(tmp_dp,read_rho_min)
+  tmp_dp = read_rho_max
+  call max_all_dp(tmp_dp,read_rho_max)
+
+  ! user output
   if (myrank == 0) then
     write(IMAIN,*) '     Number of grid points = NX*NZ:',nrecord
+    write(IMAIN,*)
+    write(IMAIN,*) '     read model vp : min/max = ',sngl(read_vp_min),' / ',sngl(read_vp_max)
+    write(IMAIN,*) '                vs : min/max = ',sngl(read_vs_min),' / ',sngl(read_vs_max)
+    write(IMAIN,*) '                rho: min/max = ',sngl(read_rho_min),' / ',sngl(read_rho_max)
     write(IMAIN,*)
     call flush_IMAIN()
   endif

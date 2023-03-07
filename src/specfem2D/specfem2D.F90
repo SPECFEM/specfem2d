@@ -38,7 +38,7 @@
 !   for the anelastic anisotropic or poroelastic wave equation.
 !
 !====================================================================================
-
+!
 ! If you use this code for your own research, please cite at least one article
 ! written by the developers of the package, for instance:
 !
@@ -266,6 +266,13 @@
 ! volume = {5336},
 ! pages = {350-363}}
 !
+!
+! To report bugs or suggest improvements to the code, please use our online
+! Issues tracking system at https://github.com/SPECFEM/specfem2d/ .
+!
+! Evolution of the code:
+! ---------------------
+!
 ! version 8.0, Etienne Bachmann, Alexis Bottero, Bryant Chow, Paul Cristini, Rene Gassmoeller, Michael Gineste,
 !              Felix Halpaap, Dimitri Komatitsch, Matthieu Lefebvre, Qiancheng Liu, Qinya Liu, Zhaolun Liu,
 !              David Luet, Ryan Modrak, Christina Morency, Daniel Peter, Eric Rosenkrantz, Herurisa Rusmanugroho,
@@ -335,15 +342,23 @@
 ! (c) by Dimitri Komatitsch and Jean-Pierre Vilotte,
 ! Institut de Physique du Globe de Paris, France
 !
-
-! in case of an acoustic medium, a potential Chi of (density * displacement) is used as in Chaljub and Valette,
+!
+! In case of an acoustic medium, a potential Chi of (density * displacement) is used as in Chaljub and Valette,
 ! Geophysical Journal International, vol. 158, p. 131-141 (2004) and *NOT* a velocity potential
 ! as in Komatitsch and Tromp, Geophysical Journal International, vol. 150, p. 303-318 (2002).
+!
 ! This permits acoustic-elastic coupling based on a non-iterative time scheme.
-! Displacement is then: u = grad(Chi) / rho
-! Velocity is then: v = grad(Chi_dot) / rho (Chi_dot being the time derivative of Chi)
-! and pressure is: p = - Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
+! Displacement is then:
+!     u = grad(Chi) / rho
+! Velocity is then:
+!     v = grad(Chi_dot) / rho
+! (Chi_dot being the time derivative of Chi)
+! and pressure is:
+!     p = - Chi_dot_dot
+! (Chi_dot_dot being the time second derivative of Chi).
+!
 ! The source in an acoustic element is a pressure source.
+!
 ! First-order acoustic-acoustic discontinuities are also handled automatically
 ! because pressure is continuous at such an interface, therefore Chi_dot_dot
 ! is continuous, therefore Chi is also continuous, which is consistent with
@@ -351,6 +366,8 @@
 ! This is the reason why a simple displacement potential u = grad(Chi) would
 ! not work because it would be discontinuous at such an interface and would
 ! therefore not be consistent with the basis functions.
+!
+! ************** PROGRAM STARTS HERE **************
 
   program specfem2D
 

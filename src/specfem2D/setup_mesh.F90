@@ -605,7 +605,11 @@
   if (assign_external_model) then
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*) '  assigning an external velocity and density model'
+      if (trim(MODEL) == 'tomo') then
+        write(IMAIN,*) '  assigning an external tomography velocity and density model'
+      else
+        write(IMAIN,*) '  assigning an external velocity and density model'
+      endif
       call flush_IMAIN()
     endif
 

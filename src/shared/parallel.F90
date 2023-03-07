@@ -691,7 +691,7 @@ end module my_mpi
 
   implicit none
 
-  integer:: sendbuf, recvbuf
+  integer :: sendbuf, recvbuf
 
 #ifdef WITH_MPI
   ! local parameters
@@ -726,6 +726,52 @@ end module my_mpi
 #endif
 
   end subroutine max_all_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine min_all_dp(sendbuf, recvbuf)
+
+  use my_mpi
+
+  implicit none
+
+  double precision :: sendbuf, recvbuf
+
+#ifdef WITH_MPI
+  ! local parameters
+  integer ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_MIN,0,my_local_mpi_comm_world,ier)
+#else
+  recvbuf = sendbuf
+#endif
+
+  end subroutine min_all_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine max_all_dp(sendbuf, recvbuf)
+
+  use my_mpi
+
+  implicit none
+
+  double precision :: sendbuf, recvbuf
+
+#ifdef WITH_MPI
+  ! local parameters
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_MAX,0,my_local_mpi_comm_world,ier)
+#else
+  recvbuf = sendbuf
+#endif
+
+  end subroutine max_all_dp
 
 !
 !-------------------------------------------------------------------------------------------------
