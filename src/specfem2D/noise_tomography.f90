@@ -910,3 +910,112 @@
 
   end subroutine spec2glob
 
+!
+!========================================================================
+!
+
+  subroutine compute_kernels_strength_noise(displ_elastic,sigma_kl)
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,MAX_STRING_LEN,OUTPUT_FILES
+
+  use specfem_par, only: deltat,ibool,it,myrank,nspec,nglob,NSTEP, &
+                         NTSTEP_BETWEEN_COMPUTE_KERNELS,P_SV
+
+  use specfem_par_noise, only: noise_surface_movie_y_or_z
+
+  implicit none
+
+  !input
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: displ_elastic
+
+  !local
+  logical :: ex,is_opened
+  integer :: ier, i, j, ispec, iglob
+  character(len=MAX_STRING_LEN) :: noise_input_file
+
+  !output
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec),intent(inout) :: sigma_kl
+
+  ! opens noise source file
+  inquire(unit=501,exist=ex,opened=is_opened)
+  if (.not. is_opened) then
+    write(noise_input_file,'(a,i6.6,a)') 'noise_eta',myrank,'.bin'
+    open(unit=501,file=trim(OUTPUT_FILES)//noise_input_file,access='direct', &
+         recl=nglob*CUSTOM_REAL,action='read',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening noise eta file')
+  endif
+
+  ! for both P_SV/SH cases
+  read(unit=501,rec=it) noise_surface_movie_y_or_z ! either y (SH) or z (P_SV) component
+
+  ! close noise source file at simulation end
+  if (it == NSTEP) then
+    close(501)
+  endif
+
+  do ispec = 1, nspec
+    do j = 1, NGLLZ
+      do i = 1, NGLLX
+        iglob = ibool(i,j,ispec)
+        if (P_SV) then
+          sigma_kl(i,j,ispec) = sigma_kl(i,j,ispec) + noise_surface_movie_y_or_z(iglob) * &
+                                displ_elastic(2, iglob) * (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS)
+        else
+          ! SH (membrane) calculation
+          sigma_kl(i,j,ispec) = sigma_kl(i,j,ispec) + noise_surface_movie_y_or_z(iglob) * &
+                                displ_elastic(1, iglob) * (deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS)
+        endif
+      enddo
+    enddo
+  enddo
+
+  end subroutine compute_kernels_strength_noise
+
+!
+!========================================================================
+!
+
+  subroutine save_kernels_strength_noise(sigma_kl)
+
+  use constants, only: CUSTOM_REAL,IIN,NGLLX,NGLLZ,MAX_STRING_LEN,OUTPUT_FILES, &
+                       myrank,IMAIN
+
+  use specfem_par, only: nspec,save_ASCII_kernels,ibool,coord
+
+  implicit none
+
+  !input
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec),intent(in) :: sigma_kl
+
+  !local
+  integer :: i,j,iglob,ispec,ier
+  double precision :: xx,zz
+  character(len=MAX_STRING_LEN) :: fname
+
+  if (save_ASCII_kernels) then
+    write(fname,'(a,i6.6,a)') 'proc',myrank,'_sigma_kernel.dat'
+    open(unit=IIN,file=trim(OUTPUT_FILES)//fname,status='unknown',iostat=ier)
+    if (ier /= 0) call exit_mpi(myrank,'  error writing noise strength kernel')
+    if (myrank == 0) write(IMAIN,*) '  ',trim(OUTPUT_FILES)//trim(fname)
+
+    do ispec = 1, nspec
+      do j = 1, NGLLZ
+        do i = 1, NGLLX
+          iglob = ibool(i,j,ispec)
+          xx = coord(1, iglob)
+          zz = coord(2, iglob)
+          write(IIN,'(5e15.5e4)') xx,zz,sigma_kl(i,j,ispec)
+        enddo
+      enddo
+    enddo
+
+    close(IIN)
+  else
+    write(fname,'(a,i6.6,a)') 'proc',myrank,'_sigma_kernel.bin'
+    open(unit=IIN,file=trim(OUTPUT_FILES)//fname,status='unknown',action='write',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_mpi(myrank,'  error writing noise strength kernel')
+    write(IIN) sigma_kl
+    close(IIN)
+  endif
+
+  end subroutine save_kernels_strength_noise

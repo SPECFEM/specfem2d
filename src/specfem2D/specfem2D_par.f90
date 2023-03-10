@@ -762,6 +762,9 @@ module specfem_par_noise
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: noise_output_array
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: noise_output_rhokl
 
+  ! noise strength kernel
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: sigma_kl
+
 end module specfem_par_noise
 
 !=====================================================================

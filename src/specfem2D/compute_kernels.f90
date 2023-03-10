@@ -83,13 +83,15 @@
                          nspec,ibool,accel_elastic,b_displ_elastic, &
                          P_SV,displ_elastic, &
                          ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
-                         GPU_MODE
+                         GPU_MODE,NOISE_TOMOGRAPHY
 
   use specfem_par_gpu, only: Mesh_pointer
 
   use specfem_par, only: deltat,ispec_is_anisotropic, &
                          rho_kl,mu_kl,kappa_kl, &
                          c11_kl,c13_kl,c15_kl,c33_kl,c35_kl,c55_kl
+
+  use specfem_par_noise, only: sigma_kl
 
   ! AXISYM case
   use specfem_par, only: AXISYM,is_on_the_axis,hprimeBar_xx,NGLJ
@@ -276,6 +278,10 @@
   else
     ! updates kernels on GPU
     call compute_kernels_elastic_cuda(Mesh_pointer,deltat)
+  endif
+
+  if (NOISE_TOMOGRAPHY == 3) then
+    call compute_kernels_strength_noise(displ_elastic,sigma_kl)
   endif
 
   end subroutine compute_kernels_el

@@ -35,6 +35,7 @@
 
   use constants, only: IMAIN,USE_ENFORCE_FIELDS
   use specfem_par
+  use specfem_par_noise, only: sigma_kl
 
   implicit none
 
@@ -266,6 +267,13 @@
   bulk_c_kl(:,:,:) = 0.0_CUSTOM_REAL; bulk_beta_kl(:,:,:) = 0.0_CUSTOM_REAL
   c11_kl(:,:,:) = 0.0_CUSTOM_REAL; c13_kl(:,:,:) = 0.0_CUSTOM_REAL; c15_kl(:,:,:) = 0.0_CUSTOM_REAL
   c33_kl(:,:,:) = 0.0_CUSTOM_REAL; c35_kl(:,:,:) = 0.0_CUSTOM_REAL; c55_kl(:,:,:) = 0.0_CUSTOM_REAL
+
+  ! noise source strength kernel
+  if (NOISE_TOMOGRAPHY == 3) then
+    allocate(sigma_kl(NGLLX,NGLLZ,b_nspec_elastic),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating noise source kernel array')
+    sigma_kl(:,:,:) = 0.0_CUSTOM_REAL
+  endif
 
   ! for APPROXIMATE_HESS_KL
   allocate(rhorho_el_Hessian_final2(NGLLX,NGLLZ,b_nspec_elastic), &

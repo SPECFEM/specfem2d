@@ -37,7 +37,10 @@
 
   use constants, only: IMAIN,SAVE_WEIGHTS
 
-  use specfem_par, only: myrank, any_acoustic, any_elastic, any_poroelastic
+  use specfem_par, only: myrank, any_acoustic, any_elastic, any_poroelastic, &
+                         NOISE_TOMOGRAPHY
+
+  use specfem_par_noise, only: sigma_kl
 
   implicit none
 
@@ -61,6 +64,11 @@
   ! save weights for volume integration,
   ! in order to benchmark the kernels with analytical expressions
   if (SAVE_WEIGHTS) call save_weights_kernel()
+
+  ! for noise simulations -- noise strength kernel
+  if (NOISE_TOMOGRAPHY == 3) then
+    call save_kernels_strength_noise(sigma_kl)
+  endif
 
   end subroutine save_adjoint_kernels
 
