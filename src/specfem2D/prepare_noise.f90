@@ -36,7 +36,8 @@
 
 ! for noise simulations
 
-  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT,TWO_THIRDS,OUTPUT_FILES
+  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT,TWO_THIRDS,OUTPUT_FILES, &
+                       MAX_STRING_LEN
 
   use specfem_par, only: myrank,NSTEP,nglob,nspec,ibool,coord, &
                          rhostore,rho_vpstore,rho_vsstore, &
@@ -48,6 +49,7 @@
 
   integer :: i,j,iglob,ispec,ier
   double precision :: rhol,vs,vp
+  character(len=MAX_STRING_LEN) :: fname
 
   ! checks if anything to do
   if (NOISE_TOMOGRAPHY <= 0) return
@@ -83,7 +85,8 @@
   ! file outputs for visualization/debugging
   if (NOISE_TOMOGRAPHY == 1) then
     ! write out coordinates of mesh
-    open(unit=504,file=trim(OUTPUT_FILES)//'mesh_spec',status='unknown',action='write')
+    write(fname,'(a,i6.6)') 'mesh_spec',myrank
+    open(unit=504,file=trim(OUTPUT_FILES)//fname,status='unknown',action='write')
     do ispec = 1, nspec
       do j = 1, NGLLZ
         do i = 1, NGLLX
@@ -94,21 +97,24 @@
     enddo
     close(504)
 
-    open(unit=504,file=trim(OUTPUT_FILES)//'mesh_glob',status='unknown',action='write')
+    write(fname,'(a,i6.6)') 'mesh_glob',myrank
+    open(unit=504,file=trim(OUTPUT_FILES)//fname,status='unknown',action='write')
     do iglob = 1, nglob
       write(504,'(1pe11.3,1pe11.3,i7)') coord(1,iglob), coord(2,iglob), iglob
     enddo
     close(504)
 
     ! write out spatial distribution of noise sources
-    open(unit=504,file=trim(OUTPUT_FILES)//'mask_noise',status='unknown',action='write')
+    write(fname,'(a,i6.6)') 'mask_noise',myrank
+    open(unit=504,file=trim(OUTPUT_FILES)//fname,status='unknown',action='write')
     do iglob = 1, nglob
       write(504,'(1pe11.3,1pe11.3,1pe11.3)') coord(1,iglob), coord(2,iglob), mask_noise(iglob)
     enddo
     close(504)
 
     ! write out velocity model
-    open(unit=504,file=trim(OUTPUT_FILES)//'model_rho_vp_vs',status='unknown',action='write')
+    write(fname,'(a,i6.6)') 'model_rho_vp_vs',myrank
+    open(unit=504,file=trim(OUTPUT_FILES)//fname,status='unknown',action='write')
     do ispec = 1, nspec
       do j = 1, NGLLZ
         do i = 1, NGLLX
