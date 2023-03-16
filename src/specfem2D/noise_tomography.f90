@@ -234,7 +234,7 @@
   read(IIN) mask_noise
   close(IIN)
 
-  endsubroutine read_noise_distribution
+  end subroutine read_noise_distribution
 
 !
 !========================================================================
