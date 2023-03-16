@@ -186,6 +186,60 @@
 !========================================================================
 !
 
+  subroutine read_noise_distribution(mask_noise)
+
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IMAIN,IIN,IN_DATA_FILES,OUTPUT_FILES,myrank
+
+  use specfem_par, only: nglob
+
+  implicit none
+
+  ! output parameter
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: mask_noise
+
+  ! local parameters
+  integer ier,use_external_noise_distribution
+  character(len=MAX_STRING_LEN) :: fname
+
+  ! check if external noise distribution should be used
+  fname = trim(OUTPUT_FILES)//'/..//NOISE_TOMOGRAPHY/use_external_noise_distribution'
+  open(unit=IIN,file=trim(fname),status='old',action='read',iostat=ier)
+  if (ier /= 0) then
+    if (myrank == 0) then
+      write(IMAIN,*) '  file '//trim(fname)//' not found, using noise distribution defined in noise_tomography.f90'
+    endif
+    ! finish subroutine
+    return
+  else
+    read(IIN,*) use_external_noise_distribution
+    close(IIN)
+    if (use_external_noise_distribution == 0) then
+      if (myrank == 0) then
+        write(IMAIN,*) '  using noise distribution defined in noise_tomography.f90'
+      endif
+      ! finish subroutine
+      return
+    endif
+  endif
+
+  ! read noise distribution
+  if (myrank == 0) then
+    write(IMAIN,*) '  reading noise distribution'
+    call flush_IMAIN
+  endif
+
+  write(fname,'(a,i6.6,a)') 'proc',myrank,'_mask_noise.bin'
+  open(unit=IIN,file=trim(IN_DATA_FILES)//trim(fname),status='old',action='read',form='unformatted',iostat=ier)
+  if (ier /= 0) call exit_mpi(myrank,'error reading noise distribution')
+  read(IIN) mask_noise
+  close(IIN)
+
+  endsubroutine read_noise_distribution
+
+!
+!========================================================================
+!
+
   subroutine read_parameters_noise()
 
 ! read noise parameters and check for consistency

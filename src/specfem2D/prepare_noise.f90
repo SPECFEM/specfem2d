@@ -77,6 +77,9 @@
   !read in parameters for noise tomography
   call read_parameters_noise()
 
+  !read noise distribution
+  call read_noise_distribution(mask_noise)
+
   ! file outputs for visualization/debugging
   if (NOISE_TOMOGRAPHY == 1) then
     ! write out coordinates of mesh
