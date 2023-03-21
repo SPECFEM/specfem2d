@@ -133,7 +133,7 @@ mv -v OUTPUT_FILES/output*.log  OUTPUT_ALL/step_1
 cp -v DATA/Par_file             OUTPUT_ALL/step_1
 
 mv -v OUTPUT_FILES/mask*        OUTPUT_ALL/
-mv -v OUTPUT_FILES/mesh_????    OUTPUT_ALL/
+mv -v OUTPUT_FILES/mesh*        OUTPUT_ALL/
 mv -v OUTPUT_FILES/model*       OUTPUT_ALL/
 echo
 
