@@ -231,7 +231,7 @@ void FC_FUNC_(kernel_3_a_cuda,
 
   int size = mp->NGLOB_AB;
 
-  int blocksize = BLOCKSIZE_KERNEL1;
+  int blocksize = BLOCKSIZE_KERNEL3;
   int size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
 
   int num_blocks_x, num_blocks_y;
@@ -332,7 +332,7 @@ void FC_FUNC_(kernel_3_acoustic_cuda,
 
   int size = mp->NGLOB_AB;
 
-  int blocksize = BLOCKSIZE_KERNEL1;
+  int blocksize = BLOCKSIZE_KERNEL3;
   int size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
 
   int num_blocks_x, num_blocks_y;

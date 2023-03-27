@@ -240,7 +240,7 @@
 
 // cuda kernel block size for updating displacements/potential (newmark time scheme)
 // current hardware: 128 is slightly faster than 256 ( ~ 4%)
-#define BLOCKSIZE_KERNEL1 32
+#define BLOCKSIZE_KERNEL1 128
 #define BLOCKSIZE_KERNEL3 128
 #define BLOCKSIZE_TRANSFER 256
 
