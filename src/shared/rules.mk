@@ -48,6 +48,7 @@ shared_OBJECTS = \
 	$O/exit_mpi.shared.o \
 	$O/force_ftz.cc.o \
 	$O/gll_library.shared.o \
+	$O/init_openmp.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \

@@ -143,6 +143,9 @@
   ! initializes GPU cards
   if (GPU_MODE) call initialize_GPU()
 
+  ! output info for possible OpenMP
+  call init_openmp()
+
   ! ----------- initialization and determining parameters
   ! allocates mesh
   ! local to global indexing

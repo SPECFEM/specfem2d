@@ -103,6 +103,24 @@ AM_CONDITIONAL([COND_CUDA_PLUS],
      -o "$want_cuda" = cuda11 \]
 )
 
+###
+### OpenMP
+###
+
+AC_ARG_WITH([openmp],
+    [AS_HELP_STRING([--with-openmp],
+        [build OpenMP enabled version @<:@default=no@:>@])],
+    [with_omp="$withval"],
+    [with_omp=no])
+AC_ARG_ENABLE([openmp],
+    [AS_HELP_STRING([--enable-openmp],
+        [build OpenMP enabled version @<:@default=no@:>@])],
+    [enable_omp="$enableval"],
+    [enable_omp=no])
+AS_IF([test x"$enable_omp" != xno || test x"$with_omp" != xno],
+    [want_omp=yes],[want_omp=no])
+AM_CONDITIONAL([COND_OMP], [test x"$want_omp" != xno])
+
 ############################################################
 
 # Checks for programs.
@@ -142,17 +160,9 @@ AC_FC_FREEFORM()
 
 AC_FC_PP_DEFINE()
 AC_SUBST([FC_DEFINE])
-AC_FC_PP_SRCEXT(F90)dnl Because AC_FC_PP_DEFINE messes with things.
+AC_FC_PP_SRCEXT(F90) dnl Because AC_FC_PP_DEFINE messes with things.
 
 AC_PROG_CC
-
-AC_LANG_PUSH(C)
-AC_CHECK_HEADER(emmintrin.h,AC_DEFINE([HAVE_EMMINTRIN],[1],[Define if emmintrin.h]))
-AC_CHECK_HEADER(xmmintrin.h,AC_DEFINE([HAVE_XMMINTRIN],[1],[Define if xmmintrin.h]))
-# AIX doesn't have err.h so we need to check
-AC_CHECK_HEADER(err.h,      AC_DEFINE([HAVE_ERR],      [1],[Define if err.h]))
-AC_LANG_POP(C)
-
 
 ############################################################
 
@@ -235,14 +245,25 @@ if test "x${scotch_usable}" = "xyes"; then
 else
  AC_DEFINE([HAVE_SCOTCH],[1],[defined if Scotch is installed])
  AC_MSG_RESULT([no, using bundled scotch instead])
- AC_PROG_LEX
+
+ dnl autoconf 2.69 AC_PROG_LEX has no parameters
+ dnl autoconf 2.70 AC_PROG_LEX prints a deprecation warning without params
+ m4_if(m4_version_compare(m4_defn([AC_AUTOCONF_VERSION]), [2.70]), [-1], [dnl
+   dnl autoconf < 2.70
+   AC_PROG_LEX
+ ], [
+   dnl autoconf >= 2.70
+   AC_PROG_LEX([noyywrap])
+ ])
  if test -z "$LEX" || test "X$LEX" = "Xno"; then
    AC_MSG_ERROR([No suitable lex found])
  fi
+
  AC_PROG_YACC
  if test -z "$YACC" || test "X$YACC" = "Xno"; then
    AC_MSG_ERROR([No suitable yacc or bison found])
  fi
+
  ACX_PTHREAD(AC_MSG_RESULT([pthread found]), AC_MSG_ERROR([pthread not found]))
 
  # scotch only needed with mpi support
@@ -319,6 +340,14 @@ AC_FC_MODULE_OUTPUT_FLAG([
 ])
 AC_SUBST([FC_MODDIR])
 
+# Checks for header files.
+
+AC_LANG_PUSH(C)
+AC_CHECK_HEADER(emmintrin.h,AC_DEFINE([HAVE_EMMINTRIN],[1],[Define if emmintrin.h]))
+AC_CHECK_HEADER(xmmintrin.h,AC_DEFINE([HAVE_XMMINTRIN],[1],[Define if xmmintrin.h]))
+# AIX doesn't have err.h so we need to check
+AC_CHECK_HEADER(err.h,      AC_DEFINE([HAVE_ERR],      [1],[Define if err.h]))
+AC_LANG_POP(C)
 
 # Checks for libraries.
 
@@ -339,6 +368,22 @@ AS_IF([test "$want_mpi" = yes], [
 AS_IF([test x"$want_cuda" != xno], [
     AS_BOX([CUDA])
     CIT_CUDA_CONFIG
+])
+
+###
+### OpenMP
+###
+
+AS_IF([test x"$want_omp" != xno], [
+  AS_BOX([OpenMP])
+  AC_MSG_NOTICE([OpenMP compilation is enabled])
+
+  AC_ARG_VAR(OMP_FCFLAGS, [OpenMP Fortran compiler flags])
+  AC_ARG_VAR(OMP_LIB, [Location of extra OpenMP libraries])
+
+  # openmp checking
+  AC_MSG_NOTICE([OpenMP flag $OMP_FCFLAGS])
+  CIT_FC_OPENMP_MODULE([$FC], [$OMP_FCFLAGS])
 ])
 
 ##
@@ -371,12 +416,12 @@ AS_BOX([setting up default simulation setup])
 
 # Output results.
 AC_CONFIG_FILES([
-  Makefile
-  setup/constants.h
-  setup/constants_tomography.h
-  setup/precision.h
-  setup/config.fh
-  setup/version.fh
+    Makefile
+    setup/constants.h
+    setup/constants_tomography.h
+    setup/precision.h
+    setup/config.fh
+    setup/version.fh
 ])
 
 # Scotch makefile

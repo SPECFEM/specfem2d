@@ -652,6 +652,8 @@ LIBOBJS
 GIT_DATE_VERSION
 GIT_COMMIT_VERSION
 GIT_PACKAGE_VERSION
+OMP_LIB
+OMP_FCFLAGS
 CUDA_LIBS
 CUDA_LDFLAGS
 CUDA_CPPFLAGS
@@ -709,6 +711,8 @@ ac_ct_FC
 LDFLAGS
 FCFLAGS
 FC
+COND_OMP_FALSE
+COND_OMP_TRUE
 COND_CUDA_PLUS_FALSE
 COND_CUDA_PLUS_TRUE
 COND_CUDA11_FALSE
@@ -789,6 +793,8 @@ enable_double_precision
 enable_debug
 with_mpi
 with_cuda
+with_openmp
+enable_openmp
 with_scotch_dir
 with_scotch_includedir
 with_scotch_libdir
@@ -823,7 +829,9 @@ NVCC
 CUDA_FLAGS
 CUDA_INC
 CUDA_LIB
-CPP'
+CPP
+OMP_FCFLAGS
+OMP_LIB'
 
 
 # Initialize some variables set by options.
@@ -1449,12 +1457,14 @@ Optional Features:
   --enable-double-precision
                           solver in double precision [default=no]
   --enable-debug          build with debugging options enabled [default=no]
+  --enable-openmp         build OpenMP enabled version [default=no]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-mpi              build parallel version [default=no]
   --with-cuda             build CUDA GPU enabled version [default=no]
+  --with-openmp           build OpenMP enabled version [default=no]
   --with-scotch-dir=DIR   define the root path to Scotch (e.g. /opt/scotch/)
   --with-scotch-includedir=DIR
                           define the path to the Scotch headers (e.g.
@@ -1503,6 +1513,8 @@ Some influential environment variables:
   CUDA_INC    Location of CUDA include files
   CUDA_LIB    Location of CUDA library libcudart
   CPP         C preprocessor
+  OMP_FCFLAGS OpenMP Fortran compiler flags
+  OMP_LIB     Location of extra OpenMP libraries
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -1710,39 +1722,6 @@ fi
 
 } # ac_fn_c_try_link
 
-# ac_fn_c_check_header_compile LINENO HEADER VAR INCLUDES
-# -------------------------------------------------------
-# Tests whether HEADER exists and can be compiled using the include files in
-# INCLUDES, setting the cache variable VAR accordingly.
-ac_fn_c_check_header_compile ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-printf %s "checking for $2... " >&6; }
-if eval test \${$3+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-#include <$2>
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  eval "$3=yes"
-else $as_nop
-  eval "$3=no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_header_compile
-
 # ac_fn_fc_try_link LINENO
 # ------------------------
 # Try to link conftest.$ac_ext, and return whether this succeeded.
@@ -1789,6 +1768,39 @@ fi
   as_fn_set_status $ac_retval
 
 } # ac_fn_fc_try_link
+
+# ac_fn_c_check_header_compile LINENO HEADER VAR INCLUDES
+# -------------------------------------------------------
+# Tests whether HEADER exists and can be compiled using the include files in
+# INCLUDES, setting the cache variable VAR accordingly.
+ac_fn_c_check_header_compile ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+printf %s "checking for $2... " >&6; }
+if eval test \${$3+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+#include <$2>
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  eval "$3=yes"
+else $as_nop
+  eval "$3=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+eval ac_res=\$$3
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_c_check_header_compile
 
 # ac_fn_cxx_try_compile LINENO
 # ----------------------------
@@ -3330,6 +3342,42 @@ fi
 else
   COND_CUDA_PLUS_TRUE='#'
   COND_CUDA_PLUS_FALSE=
+fi
+
+
+###
+### OpenMP
+###
+
+
+# Check whether --with-openmp was given.
+if test ${with_openmp+y}
+then :
+  withval=$with_openmp; with_omp="$withval"
+else $as_nop
+  with_omp=no
+fi
+
+# Check whether --enable-openmp was given.
+if test ${enable_openmp+y}
+then :
+  enableval=$enable_openmp; enable_omp="$enableval"
+else $as_nop
+  enable_omp=no
+fi
+
+if test x"$enable_omp" != xno || test x"$with_omp" != xno
+then :
+  want_omp=yes
+else $as_nop
+  want_omp=no
+fi
+ if test x"$want_omp" != xno; then
+  COND_OMP_TRUE=
+  COND_OMP_FALSE='#'
+else
+  COND_OMP_TRUE='#'
+  COND_OMP_FALSE=
 fi
 
 
@@ -6390,73 +6438,6 @@ ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
-ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-ac_header= ac_cache=
-for ac_item in $ac_header_c_list
-do
-  if test $ac_cache; then
-    ac_fn_c_check_header_compile "$LINENO" $ac_header ac_cv_header_$ac_cache "$ac_includes_default"
-    if eval test \"x\$ac_cv_header_$ac_cache\" = xyes; then
-      printf "%s\n" "#define $ac_item 1" >> confdefs.h
-    fi
-    ac_header= ac_cache=
-  elif test $ac_header; then
-    ac_cache=$ac_item
-  else
-    ac_header=$ac_item
-  fi
-done
-
-
-
-
-
-
-
-
-if test $ac_cv_header_stdlib_h = yes && test $ac_cv_header_string_h = yes
-then :
-
-printf "%s\n" "#define STDC_HEADERS 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "emmintrin.h" "ac_cv_header_emmintrin_h" "$ac_includes_default"
-if test "x$ac_cv_header_emmintrin_h" = xyes
-then :
-
-printf "%s\n" "#define HAVE_EMMINTRIN 1" >>confdefs.h
-
-fi
-
-ac_fn_c_check_header_compile "$LINENO" "xmmintrin.h" "ac_cv_header_xmmintrin_h" "$ac_includes_default"
-if test "x$ac_cv_header_xmmintrin_h" = xyes
-then :
-
-printf "%s\n" "#define HAVE_XMMINTRIN 1" >>confdefs.h
-
-fi
-
-# AIX doesn't have err.h so we need to check
-ac_fn_c_check_header_compile "$LINENO" "err.h" "ac_cv_header_err_h" "$ac_includes_default"
-if test "x$ac_cv_header_err_h" = xyes
-then :
-
-printf "%s\n" "#define HAVE_ERR 1" >>confdefs.h
-
-fi
-
-ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-
-
 ############################################################
 
 #checks for Scotch
@@ -6586,7 +6567,9 @@ printf "%s\n" "#define HAVE_SCOTCH 1" >>confdefs.h
 
  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no, using bundled scotch instead" >&5
 printf "%s\n" "no, using bundled scotch instead" >&6; }
- for ac_prog in flex lex
+
+
+      for ac_prog in flex lex
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -6761,58 +6744,7 @@ then :
 else $as_nop
   LEXLIB=$ac_cv_lib_lex
 fi
-  ac_save_LIBS="$LIBS"
-      LIBS=
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing yywrap" >&5
-printf %s "checking for library containing yywrap... " >&6; }
-if test ${ac_cv_search_yywrap+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_func_search_save_LIBS=$LIBS
-cat > conftest.$ac_ext <<_ACEOF
-      program main
-      call yywrap
-      end
-_ACEOF
-for ac_lib in '' fl l
-do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_fc_try_link "$LINENO"
-then :
-  ac_cv_search_yywrap=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext
-  if test ${ac_cv_search_yywrap+y}
-then :
-  break
-fi
-done
-if test ${ac_cv_search_yywrap+y}
-then :
 
-else $as_nop
-  ac_cv_search_yywrap=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_yywrap" >&5
-printf "%s\n" "$ac_cv_search_yywrap" >&6; }
-ac_res=$ac_cv_search_yywrap
-if test "$ac_res" != no
-then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-  LEXLIB="$LIBS"
-fi
-
-      LIBS="$ac_save_LIBS"
 fi
 
 
@@ -6853,9 +6785,11 @@ fi
 rm -f conftest.l $LEX_OUTPUT_ROOT.c
 
 fi
+
  if test -z "$LEX" || test "X$LEX" = "Xno"; then
    as_fn_error $? "No suitable lex found" "$LINENO" 5
  fi
+
  for ac_prog in 'bison -y' byacc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -6907,6 +6841,7 @@ test -n "$YACC" || YACC="yacc"
  if test -z "$YACC" || test "X$YACC" = "Xno"; then
    as_fn_error $? "No suitable yacc or bison found" "$LINENO" 5
  fi
+
 
 
 
@@ -7578,6 +7513,73 @@ ac_empty=""
 
 
 
+
+# Checks for header files.
+
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+ac_header= ac_cache=
+for ac_item in $ac_header_c_list
+do
+  if test $ac_cache; then
+    ac_fn_c_check_header_compile "$LINENO" $ac_header ac_cv_header_$ac_cache "$ac_includes_default"
+    if eval test \"x\$ac_cv_header_$ac_cache\" = xyes; then
+      printf "%s\n" "#define $ac_item 1" >> confdefs.h
+    fi
+    ac_header= ac_cache=
+  elif test $ac_header; then
+    ac_cache=$ac_item
+  else
+    ac_header=$ac_item
+  fi
+done
+
+
+
+
+
+
+
+
+if test $ac_cv_header_stdlib_h = yes && test $ac_cv_header_string_h = yes
+then :
+
+printf "%s\n" "#define STDC_HEADERS 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "emmintrin.h" "ac_cv_header_emmintrin_h" "$ac_includes_default"
+if test "x$ac_cv_header_emmintrin_h" = xyes
+then :
+
+printf "%s\n" "#define HAVE_EMMINTRIN 1" >>confdefs.h
+
+fi
+
+ac_fn_c_check_header_compile "$LINENO" "xmmintrin.h" "ac_cv_header_xmmintrin_h" "$ac_includes_default"
+if test "x$ac_cv_header_xmmintrin_h" = xyes
+then :
+
+printf "%s\n" "#define HAVE_XMMINTRIN 1" >>confdefs.h
+
+fi
+
+# AIX doesn't have err.h so we need to check
+ac_fn_c_check_header_compile "$LINENO" "err.h" "ac_cv_header_err_h" "$ac_includes_default"
+if test "x$ac_cv_header_err_h" = xyes
+then :
+
+printf "%s\n" "#define HAVE_ERR 1" >>confdefs.h
+
+fi
+
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 # Checks for libraries.
@@ -8595,6 +8597,96 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 fi
 
+###
+### OpenMP
+###
+
+if test x"$want_omp" != xno
+then :
+
+  printf "%s\n" "## ------ ##
+## OpenMP ##
+## ------ ##"
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: OpenMP compilation is enabled" >&5
+printf "%s\n" "$as_me: OpenMP compilation is enabled" >&6;}
+
+
+
+
+  # openmp checking
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: OpenMP flag $OMP_FCFLAGS" >&5
+printf "%s\n" "$as_me: OpenMP flag $OMP_FCFLAGS" >&6;}
+
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+cit_fc_save_fc=$FC
+cit_fc_save_fcflags=$FCFLAGS
+FC=$FC
+FCFLAGS="$FCFLAGS $OMP_FCFLAGS"
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether OpenMP directives work" >&5
+printf %s "checking whether OpenMP directives work... " >&6; }
+
+#AC_COMPILE_IFELSE(_CIT_FC_TRIVIAL_OPENMP_PROGRAM, [
+#    AC_MSG_RESULT(yes)
+#], [
+#    AC_MSG_RESULT(no)
+#    AC_MSG_FAILURE([cannot compile a trivial OpenMP program using $FC])
+#])
+
+cat > conftest.$ac_ext <<_ACEOF
+
+      program main
+
+       implicit none
+       integer OMP_get_thread_num
+       integer OMP_GET_MAX_THREADS
+       integer NUM_THREADS
+       integer thread_id
+
+       NUM_THREADS = OMP_GET_MAX_THREADS()
+       !$OMP PARALLEL DEFAULT(SHARED) PRIVATE(thread_id)
+       thread_id = OMP_get_thread_num()+1
+       !$OMP END PARALLEL
+
+      end
+
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"
+then :
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+
+else $as_nop
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+printf "%s\n" "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot link a trivial OpenMP program using $FC with flags: $OMP_FCFLAGS
+See \`config.log' for more details" "$LINENO" 5; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+
+FC=$cit_fc_save_fc
+FCFLAGS=$cit_fc_save_fcflags
+
+
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+
+fi
+
 ##
 ## Git version info
 ##
@@ -8866,6 +8958,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_CUDA_PLUS_TRUE}" && test -z "${COND_CUDA_PLUS_FALSE}"; then
   as_fn_error $? "conditional \"COND_CUDA_PLUS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_OMP_TRUE}" && test -z "${COND_OMP_FALSE}"; then
+  as_fn_error $? "conditional \"COND_OMP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_SCOTCH_TRUE}" && test -z "${COND_SCOTCH_FALSE}"; then

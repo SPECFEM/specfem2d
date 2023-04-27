@@ -143,7 +143,30 @@
     num_elements = nspec_inner_elastic
   endif
 
+! openmp solver
+!$OMP PARALLEL if (num_elements > 100) &
+!$OMP DEFAULT(PRIVATE) &
+!$OMP SHARED( &
+!$OMP num_elements,ibool,ispec_is_elastic,ispec_is_anisotropic, &
+!$OMP phase_ispec_inner_elastic,iphase, &
+!$OMP displ_elastic,veloc_elastic,accel_elastic, &
+!$OMP xix,xiz,gammax,gammaz,jacobian, &
+!$OMP rho_vpstore,mustore,rhostore,qkappa_attenuation_store,qmu_attenuation_store, &
+!$OMP c11store,c12store,c13store,c15store,c22store,c23store,c25store,c33store,c35store,c55store, &
+!$OMP AXISYM,is_on_the_axis,coord,iglob_is_forced, &
+!$OMP nglob,P_SV,ATTENUATION_VISCOELASTIC,nspec_ATT_el,N_SLS, &
+!$OMP PML_BOUNDARY_CONDITIONS,nspec_PML,ispec_is_PML,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE, &
+!$OMP displ_elastic_old,dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old,e1,e11,e13 &
+!$OMP ) &
+!$OMP FIRSTPRIVATE( &
+!$OMP hprime_xx,hprimewgll_xx,  &
+!$OMP hprime_zz,hprimewgll_zz, &
+!$OMP hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
+!$OMP wxgll,wzgll &
+!$OMP )
+
   ! loop over spectral elements
+!$OMP DO
   do ispec_p = 1,num_elements
 
     ! returns element id from stored element list
@@ -695,9 +718,11 @@
                 tempz2l = tempz2l + tempz2(i,k) * hprimewgll_zz(k,j)
               enddo
               ! sums contributions from each element to the global values
+!$OMP ATOMIC
               accel_elastic(1,iglob) = accel_elastic(1,iglob) - (wzgll(j) * tempx1l + wxglj(i) * tempx2l)
+!$OMP ATOMIC
               accel_elastic(2,iglob) = accel_elastic(2,iglob) - (wzgll(j) * tempz1l + wxglj(i) * tempz2l)
-
+!$OMP ATOMIC
               accel_elastic(1,iglob) = accel_elastic(1,iglob) - wzgll(j) * tempx3(i,j)
             endif
           enddo
@@ -720,9 +745,11 @@
                 tempz2l = tempz2l + tempz2(i,k) * hprimewgll_zz(k,j)
               enddo
               ! sums contributions from each element to the global values
+!$OMP ATOMIC
               accel_elastic(1,iglob) = accel_elastic(1,iglob) - (wzgll(j) * tempx1l + wxgll(i) * tempx2l)
+!$OMP ATOMIC
               accel_elastic(2,iglob) = accel_elastic(2,iglob) - (wzgll(j) * tempz1l + wxgll(i) * tempz2l)
-
+!$OMP ATOMIC
               accel_elastic(1,iglob) = accel_elastic(1,iglob) - wzgll(j) * tempx3(i,j)
             endif
           enddo
@@ -746,7 +773,9 @@
               tempz2l = tempz2l + tempz2(i,k) * hprimewgll_zz(k,j)
             enddo
             ! sums contributions from each element to the global values
+!$OMP ATOMIC
             accel_elastic(1,iglob) = accel_elastic(1,iglob) - (wzgll(j) * tempx1l + wxgll(i) * tempx2l)
+!$OMP ATOMIC
             accel_elastic(2,iglob) = accel_elastic(2,iglob) - (wzgll(j) * tempz1l + wxgll(i) * tempz2l)
           endif
         enddo
@@ -760,7 +789,9 @@
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec)
             if (.not. iglob_is_forced(iglob)) then
+!$OMP ATOMIC
               accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j)
+!$OMP ATOMIC
               accel_elastic(2,iglob) = accel_elastic(2,iglob) - accel_elastic_PML(2,i,j)
             endif
           enddo
@@ -769,6 +800,8 @@
     endif
 
   enddo ! end of loop over all spectral elements
+!$OMP ENDDO
+!$OMP END PARALLEL
 
   contains
 
