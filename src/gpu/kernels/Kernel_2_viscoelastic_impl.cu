@@ -35,7 +35,6 @@
 
 
 #ifdef USE_TEXTURES_FIELDS
-
 realw_texture d_displ_tex;
 realw_texture d_accel_tex;
 // backward/reconstructed
@@ -59,7 +58,6 @@ template<> __device__ float texfetch_accel<1>(int x) { return tex1Dfetch(d_accel
 // FORWARD_OR_ADJOINT == 3 <- backward/reconstructed arrays
 template<> __device__ float texfetch_displ<3>(int x) { return tex1Dfetch(d_b_displ_tex, x); }
 template<> __device__ float texfetch_accel<3>(int x) { return tex1Dfetch(d_b_accel_tex, x); }
-
 #endif
 
 #ifdef USE_TEXTURES_CONSTANTS

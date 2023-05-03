@@ -153,11 +153,11 @@
 //#define USE_TEXTURES_CONSTANTS  // might not working properly yet, please test on your card...
 
 #ifdef USE_CUDA
-// CUDA version >= 4.0 needed for cudaTextureType1D and cudaDeviceSynchronize()
-#if CUDA_VERSION < 4000
-#undef USE_TEXTURES_FIELDS
-#undef USE_TEXTURES_CONSTANTS
-#endif
+  // CUDA version >= 4.0 needed for cudaTextureType1D and cudaDeviceSynchronize()
+  #if CUDA_VERSION < 4000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 4))
+    #undef USE_TEXTURES_FIELDS
+    #undef USE_TEXTURES_CONSTANTS
+  #endif
 #endif
 
 // CUDA compiler specifications
@@ -236,6 +236,14 @@
 #undef USE_LAUNCH_BOUNDS
 #endif
 
+#ifdef GPU_DEVICE_Hopper
+// specifics see: https://docs.nvidia.com/cuda/hopper-tuning-guide/index.html
+// register file size 64k 32-bit registers per SM
+// shared memory size 228KB per SM (maximum shared memory, 227KB per thread block)
+// maximum registers 255 per thread
+#undef USE_LAUNCH_BOUNDS
+#endif
+
 /* ----------------------------------------------------------------------------------------------- */
 
 // cuda kernel block size for updating displacements/potential (newmark time scheme)
@@ -287,7 +295,12 @@
 typedef float realw;
 
 // textures
+// note: texture templates are supported only for CUDA versions <= 11.x
+//       since CUDA 12.x, these are deprecated and texture objects should be used instead
+//       see: https://developer.nvidia.com/blog/cuda-pro-tip-kepler-texture-objects-improve-performance-and-flexibility/
+#if defined(USE_TEXTURES_FIELDS) || defined(USE_TEXTURES_CONSTANTS)
 typedef texture<float, cudaTextureType1D, cudaReadModeElementType> realw_texture;
+#endif
 
 // pointer declarations
 // restricted pointers: can improve performance on Kepler ~ 10%
