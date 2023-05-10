@@ -35,7 +35,7 @@
                                          rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
                                          c11,c12,c13,c15,c23,c25,c33,c35,c55)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN,ATTENUATION_COMP_MAXIMUM
 
   use specfem_par, only: myrank,nspec,nglob
 
@@ -75,8 +75,8 @@
   endif
 
   ! default no attenuation
-  QKappa_attenuation(:,:,:) = 9999.d0
-  Qmu_attenuation(:,:,:) = 9999.d0
+  QKappa_attenuation(:,:,:) = ATTENUATION_COMP_MAXIMUM
+  Qmu_attenuation(:,:,:) = ATTENUATION_COMP_MAXIMUM
 
 ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
   do ispec = 1,nspec
@@ -92,8 +92,8 @@
           rho(i,j,ispec) = 2000.d0 + 10.d0*x - 32.17d0*z**3
           vp(i,j,ispec) = 3000.d0 - 7.12d0*cos(x)
           vs(i,j,ispec) = vp(i,j,ispec) / sqrt(3.d0)
-          QKappa_attenuation(i,j,ispec) = 9999. ! this means no attenuation
-          Qmu_attenuation(i,j,ispec)    = 9999. ! this means no attenuation
+          QKappa_attenuation(i,j,ispec) = ATTENUATION_COMP_MAXIMUM ! this means no attenuation
+          Qmu_attenuation(i,j,ispec)    = ATTENUATION_COMP_MAXIMUM ! this means no attenuation
           c11(i,j,ispec) = 169.d9
           c13(i,j,ispec) = 122.d9
           c15(i,j,ispec) = 0.d0
@@ -142,7 +142,7 @@
                                    rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
                                    c11,c12,c13,c15,c23,c25,c33,c35,c55)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN,ATTENUATION_COMP_MAXIMUM
 
   use specfem_par, only: myrank,nspec,nglob
 
@@ -214,8 +214,8 @@
   endif
 
   ! default no attenuation
-  QKappa_attenuation(:,:,:) = 9999.d0
-  Qmu_attenuation(:,:,:) = 9999.d0
+  QKappa_attenuation(:,:,:) = ATTENUATION_COMP_MAXIMUM
+  Qmu_attenuation(:,:,:) = ATTENUATION_COMP_MAXIMUM
 
   ! default no anisotropy
   c11(:,:,:) = 0.d0
@@ -1118,8 +1118,8 @@
         ! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
         if (material_element(ispec) == IREGION_OUTER_CORE) then
           vs(i,j,ispec) = 0.d0
-          Qkappa_attenuation(i,j,ispec) = 9999.d0
-          Qmu_attenuation(i,j,ispec) = 9999.d0
+          Qkappa_attenuation(i,j,ispec) = ATTENUATION_COMP_MAXIMUM
+          Qmu_attenuation(i,j,ispec) = ATTENUATION_COMP_MAXIMUM
         endif
 
       enddo

@@ -37,7 +37,7 @@
 ! reads in external model using a marmousi format which defines a compaction gradient
 
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN,ATTENUATION_COMP_MAXIMUM
 
   use specfem_par, only: poroelastcoef,density,kmato,myrank,nspec,nglob
 
@@ -66,8 +66,8 @@
   endif
 
   ! default no attenuation
-  QKappa_attenuation(:,:,:) = 9999.d0
-  Qmu_attenuation(:,:,:) = 9999.d0
+  QKappa_attenuation(:,:,:) = ATTENUATION_COMP_MAXIMUM
+  Qmu_attenuation(:,:,:) = ATTENUATION_COMP_MAXIMUM
 
 ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
   do ispec = 1,nspec
@@ -93,8 +93,8 @@
   ! assumes Poisson solids
         vs(i,j,ispec) = vp(i,j,ispec) / sqrt(3.d0)
 
-        QKappa_attenuation(i,j,ispec) = 9999. ! this means no attenuation
-        Qmu_attenuation(i,j,ispec)    = 9999. ! this means no attenuation
+        QKappa_attenuation(i,j,ispec) = ATTENUATION_COMP_MAXIMUM ! this means no attenuation
+        Qmu_attenuation(i,j,ispec)    = ATTENUATION_COMP_MAXIMUM ! this means no attenuation
 
         c11(i,j,ispec) = 0.d0   ! this means no anisotropy
         c13(i,j,ispec) = 0.d0

@@ -7,6 +7,14 @@ with topography variations.
 
 The tomographic file will be created by script createTomographyFile.py provided in utils/ directory.
 
+The default tomography file will provide Vp, Vs and density on a data line like:
+  #x #z #vp #vs #rho
+Optionally, attenuation Q-values can be added to these data lines, like:
+  #x #z #vp #vs #rho #Qp #Qs
+to specify a 2D velocity and attenuation model.
+You could for example modify the script createTomographyFile.py accordingly.
+
+
 To run this example, type:
    ./run_this_example.sh
 

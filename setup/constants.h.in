@@ -121,6 +121,9 @@
 ! for viscoacousticity
   logical, parameter :: USE_A_STRONG_FORMULATION_FOR_E1 = .false.
 
+! maximum attenuation Q-value
+  double precision, parameter :: ATTENUATION_COMP_MAXIMUM    = 9999.d0
+
 !!-----------------------------------------------------------
 !!
 !! noise simulations
