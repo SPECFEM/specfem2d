@@ -36,7 +36,8 @@
 
 ! reads in external model files
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL,IMAIN,IN_DATA_FILES,IIN,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL,IMAIN,IN_DATA_FILES,IIN,MAX_STRING_LEN, &
+    ATTENUATION_COMP_MAXIMUM
 
   use specfem_par, only: nspec,ibool,ispec_is_elastic,ispec_is_anisotropic, &
     coord,kmato,MODEL,myrank,setup_with_binary_database
@@ -135,8 +136,8 @@
     close(IIN)
 
     ! default no attenuation
-    QKappa_attenuationext(:,:,:) = 9999.d0
-    Qmu_attenuationext(:,:,:) = 9999.d0
+    QKappa_attenuationext(:,:,:) = ATTENUATION_COMP_MAXIMUM
+    Qmu_attenuationext(:,:,:) = ATTENUATION_COMP_MAXIMUM
 
   case ('ascii')
     ! ascii model format
@@ -159,8 +160,8 @@
     enddo
     close(IIN)
     ! default no attenuation
-    QKappa_attenuationext(:,:,:) = 9999.d0
-    Qmu_attenuationext(:,:,:) = 9999.d0
+    QKappa_attenuationext(:,:,:) = ATTENUATION_COMP_MAXIMUM
+    Qmu_attenuationext(:,:,:) = ATTENUATION_COMP_MAXIMUM
 
   case ('binary','gll')
     ! binary formats
@@ -205,7 +206,7 @@
 
       read(IIN) QKappa_attenuationext
       close(IIN)
-      Qmu_attenuationext(:,:,:) = 9999.d0
+      Qmu_attenuationext(:,:,:) = ATTENUATION_COMP_MAXIMUM
 
       ! user output
       if (myrank == 0) then
@@ -240,8 +241,8 @@
 
     else
       ! default no attenuation
-      QKappa_attenuationext(:,:,:) = 9999.d0
-      Qmu_attenuationext(:,:,:) = 9999.d0
+      QKappa_attenuationext(:,:,:) = ATTENUATION_COMP_MAXIMUM
+      Qmu_attenuationext(:,:,:) = ATTENUATION_COMP_MAXIMUM
     endif
 
 
@@ -326,8 +327,8 @@
     enddo
 
     ! default no attenuation
-    QKappa_attenuationext(:,:,:) = 9999.d0
-    Qmu_attenuationext(:,:,:) = 9999.d0
+    QKappa_attenuationext(:,:,:) = ATTENUATION_COMP_MAXIMUM
+    Qmu_attenuationext(:,:,:) = ATTENUATION_COMP_MAXIMUM
 
   case ('external')
     ! generic model defined in external files

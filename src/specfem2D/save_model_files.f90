@@ -88,6 +88,7 @@
   endif
 
   if (ATTENUATION_VISCOELASTIC) then
+    ! safety stop
     if (ATTENUATION_VISCOACOUSTIC) &
       call exit_MPI(myrank,'Not possible yet to save model with both acoustic and elastic attenuation')
 

@@ -36,7 +36,8 @@
 ! reads properties of a 2D isotropic or anisotropic linear elastic element
 
   use constants, only: IIN,IMAIN,ZERO,FOUR_THIRDS,TWO_THIRDS,HALF,TINYVAL, &
-                       ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL
+                       ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL, &
+                       ATTENUATION_COMP_MAXIMUM
 
   use specfem_par, only: AXISYM,density,porosity,tortuosity,anisotropycoef,permeability,poroelastcoef, &
                           numat,myrank,QKappa_attenuationcoef,Qmu_attenuationcoef, &
@@ -72,8 +73,8 @@
   poroelastcoef(:,:,:) = ZERO
   anisotropycoef(:,:) = ZERO
 
-  QKappa_attenuationcoef(:) = 9999.
-  Qmu_attenuationcoef(:) = 9999.
+  QKappa_attenuationcoef(:) = ATTENUATION_COMP_MAXIMUM
+  Qmu_attenuationcoef(:) = ATTENUATION_COMP_MAXIMUM
 
   ! Index of the material that will be defined by an external tomo file if needed (TOMOGRAPHY_FILE)
   tomo_material = 0
@@ -97,8 +98,8 @@
     c23 = ZERO
     c25 = ZERO
     c22 = ZERO
-    Qkappa = 9999.
-    Qmu = 9999.
+    Qkappa = ATTENUATION_COMP_MAXIMUM
+    Qmu = ATTENUATION_COMP_MAXIMUM
 
     ! supported model formats:
     !  acoustic                - model_number  1 rho    Vp   0   0   0 QKappa Qmu   0   0   0    0      0   0
@@ -393,8 +394,8 @@
       poroelastcoef(3,1,n) = -1.0d0
       poroelastcoef(4,1,n) = ZERO
 
-      QKappa_attenuationcoef(n) = 9999.
-      Qmu_attenuationcoef(n) = 9999.
+      QKappa_attenuationcoef(n) = ATTENUATION_COMP_MAXIMUM
+      Qmu_attenuationcoef(n) = ATTENUATION_COMP_MAXIMUM
 
       if (mu > TINYVAL) then
         porosity(n) = 0.d0

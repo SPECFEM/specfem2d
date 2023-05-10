@@ -195,6 +195,7 @@ specfem2D_SHARED_OBJECTS = \
 	$O/exit_mpi.shared.o \
 	$O/force_ftz.cc.o \
 	$O/gll_library.shared.o \
+	$O/init_openmp.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/parallel.sharedmpi.o \
 	$O/read_parameter_file.shared.o \

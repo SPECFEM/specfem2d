@@ -50,6 +50,7 @@ module model_tomography_par
   ! models parameter records
   double precision, dimension(:), allocatable :: x_tomo,z_tomo
   double precision, dimension(:,:), allocatable :: vp_tomo,vs_tomo,rho_tomo
+  double precision, dimension(:,:), allocatable :: qp_tomo,qs_tomo
 
   ! models entries
   integer :: NX,NZ
@@ -57,6 +58,9 @@ module model_tomography_par
 
   ! min/max statistics
   double precision :: VP_MIN,VS_MIN,RHO_MIN,VP_MAX,VS_MAX,RHO_MAX
+
+  ! (optional) Q values
+  logical :: has_q_values
 
 end module model_tomography_par
 
@@ -345,7 +349,7 @@ end module interpolation
 ! ----------------------------------------------------------------------------------------
 
   use specfem_par, only: tomo_material,coord,nspec,ibool,kmato, &
-                         QKappa_attenuationcoef,Qmu_attenuationcoef,anisotropycoef, &
+                         Qkappa_attenuationcoef,Qmu_attenuationcoef,anisotropycoef, &
                          poroelastcoef,density
 
   use specfem_par, only: myrank,TOMOGRAPHY_FILE
@@ -353,18 +357,22 @@ end module interpolation
   use model_tomography_par
   use interpolation
 
-  use constants, only: NGLLX,NGLLZ,TINYVAL,IMAIN,CUSTOM_REAL
+  use constants, only: NGLLX,NGLLZ,TINYVAL,IMAIN,CUSTOM_REAL,ATTENUATION_COMP_MAXIMUM
 
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rhoext,vpext,vsext
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: QKappa_attenuationext,Qmu_attenuationext
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: Qkappa_attenuationext,Qmu_attenuationext
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: c11ext,c12ext,c13ext,c15ext,c22ext,c23ext,c25ext, &
                                                                        c33ext,c35ext,c55ext
 
   ! local parameters
   integer :: i,j,ispec,iglob
   double precision :: xmesh,zmesh
+  double precision :: rho_final
+  double precision :: vp_final,vs_final
+  double precision :: qp_final,qs_final
+  double precision :: L_val,qmu_atten,qkappa_atten
   ! stats
   integer :: npoint_tomo,npoint_internal
 
@@ -378,8 +386,8 @@ end module interpolation
   call read_tomo_file()
 
   ! default no attenuation
-  QKappa_attenuationext(:,:,:) = 9999.d0
-  Qmu_attenuationext(:,:,:) = 9999.d0
+  QKappa_attenuationext(:,:,:) = ATTENUATION_COMP_MAXIMUM
+  Qmu_attenuationext(:,:,:) = ATTENUATION_COMP_MAXIMUM
 
   ! default no anisotropy
   c11ext(:,:,:) = 0.d0
@@ -405,9 +413,50 @@ end module interpolation
           xmesh = coord(1,iglob)
           zmesh = coord(2,iglob)
 
-          rhoext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, rho_tomo, xmesh, zmesh,TINYVAL)
-          vpext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, vp_tomo, xmesh, zmesh,TINYVAL)
-          vsext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, vs_tomo, xmesh, zmesh,TINYVAL)
+          rho_final = interpolate(NX, x_tomo, NZ, z_tomo, rho_tomo, xmesh, zmesh, TINYVAL)
+          vp_final = interpolate(NX, x_tomo, NZ, z_tomo, vp_tomo, xmesh, zmesh, TINYVAL)
+          vs_final = interpolate(NX, x_tomo, NZ, z_tomo, vs_tomo, xmesh, zmesh, TINYVAL)
+
+          rhoext(i,j,ispec) = rho_final
+          vpext(i,j,ispec) = vp_final
+          vsext(i,j,ispec) = vs_final
+
+          if (has_q_values) then
+            qp_final = interpolate(NX, x_tomo, NZ, z_tomo, qp_tomo, xmesh, zmesh, TINYVAL)
+            qs_final = interpolate(NX, x_tomo, NZ, z_tomo, qs_tomo, xmesh, zmesh, TINYVAL)
+
+            ! attenuation zero (means negligible attenuation)
+            if (qs_final <= TINYVAL) qs_final = ATTENUATION_COMP_MAXIMUM
+            if (qp_final <= TINYVAL) qp_final = ATTENUATION_COMP_MAXIMUM
+
+            ! Anderson & Hart (1978) conversion between (Qp,Qs) and (Qkappa,Qmu)
+            ! factor L
+            L_val = 4.d0/3.d0 * (vs_final/vp_final)**2
+
+            ! shear attenuation
+            qmu_atten = qs_final
+
+            ! converts to bulk attenuation
+            if (abs(qs_final - L_val * qp_final) <= TINYVAL) then
+              ! negligible bulk attenuation
+              qkappa_atten = ATTENUATION_COMP_MAXIMUM
+            else
+              qkappa_atten = (1.d0 - L_val) * qp_final * qs_final / (qs_final - L_val * qp_final)
+            endif
+
+            ! attenuation zero (means negligible attenuation)
+            if (qmu_atten <= TINYVAL) qmu_atten = ATTENUATION_COMP_MAXIMUM
+            if (qkappa_atten <= TINYVAL) qkappa_atten = ATTENUATION_COMP_MAXIMUM
+
+            ! limits Q values
+            if (qmu_atten < 1.0d0) qmu_atten = 1.0d0
+            if (qmu_atten > ATTENUATION_COMP_MAXIMUM) qmu_atten = ATTENUATION_COMP_MAXIMUM
+            if (qkappa_atten < 1.0d0) qkappa_atten = 1.0d0
+            if (qkappa_atten > ATTENUATION_COMP_MAXIMUM) qkappa_atten = ATTENUATION_COMP_MAXIMUM
+
+            Qkappa_attenuationext(i,j,ispec) = qkappa_atten
+            Qmu_attenuationext(i,j,ispec) = qmu_atten
+          endif
 
           !! ABAB : The 3 following lines are important, otherwise PMLs won't work. TODO check that
           !! (we assign these values several times: indeed for each kmato(ispec) it can exist a lot of rhoext(i,j,ispec) )
@@ -514,6 +563,11 @@ end module interpolation
 ! ...
 ! x(NX) z(NZ) vp vs rho
 !
+!
+! in case Q-values are also provided, the data lines here would have a format like:
+! x(1) z(1) vp vs rho Qp Qs
+! ..
+
 ! Where :
 ! _x and z must be increasing
 ! _ORIGIN_X, END_X are, respectively, the coordinates of the initial and final tomographic
@@ -538,16 +592,23 @@ end module interpolation
   use specfem_par, only: myrank,TOMOGRAPHY_FILE
 
   use model_tomography_par
-  use constants, only: IIN,IMAIN,HUGEVAL
+  use constants, only: IIN,IMAIN,HUGEVAL,MAX_STRING_LEN
 
   implicit none
 
   ! local parameters
   integer :: ier,irecord,i,j
-  character(len=150) :: string_read
+  character(len=MAX_STRING_LEN) :: string_read
 
   double precision, dimension(:), allocatable :: x_tomography,z_tomography,vp_tomography,vs_tomography,rho_tomography
-  double precision :: read_rho_min,read_rho_max,read_vp_min,read_vp_max,read_vs_min,read_vs_max,tmp_dp
+  double precision, dimension(:), allocatable :: qp_tomography,qs_tomography
+  double precision :: read_rho_min,read_rho_max
+  double precision :: read_vp_min,read_vp_max
+  double precision :: read_vs_min,read_vs_max
+  double precision :: read_qp_min,read_qp_max
+  double precision :: read_qs_min,read_qs_max
+  double precision :: tmp_dp
+  integer :: ntokens
 
   ! opens file for reading
   open(unit=IIN,file=trim(TOMOGRAPHY_FILE),status='old',action='read',iostat=ier)
@@ -611,11 +672,60 @@ end module interpolation
   read_vs_max = - HUGEVAL
   read_rho_min = + HUGEVAL
   read_rho_max = - HUGEVAL
+  read_qp_min = + HUGEVAL
+  read_qp_max = - HUGEVAL
+  read_qs_min = + HUGEVAL
+  read_qs_max = - HUGEVAL
 
   do while (irecord < nrecord)
     call tomo_read_next_line(IIN,string_read)
-    read(string_read,*) x_tomography(irecord+1),z_tomography(irecord+1), &
-                        vp_tomography(irecord+1),vs_tomography(irecord+1),rho_tomography(irecord+1)
+
+    if (irecord == 0) then
+      ! checks number of entries of first data line
+      call tomo_get_number_of_tokens(string_read,ntokens)
+
+      !debug
+      !print *,'tomography file: number of tokens on first data line: ',ntokens,' line: ***'//trim(string_read)//'***'
+
+      ! data line formats:
+      ! #x(1) #z(1) #vp #vs #rho
+      ! or
+      ! #x(1) #z(1) #vp #vs #rho #Qp #Qs
+      if (ntokens /= 5 .and. ntokens /= 7) then
+        print *,'Error reading tomography file, data line has wrong number of entries: ',trim(string_read)
+        stop 'Error reading tomography file'
+      endif
+
+      ! determines data format
+      if (ntokens == 7) then
+        has_q_values = .true.
+      else
+        has_q_values = .false.
+      endif
+
+      if (has_q_values) then
+        ! allocate models parameter records
+        allocate(qp_tomography(nrecord),qs_tomography(nrecord),stat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'not enough memory to allocate tomo Q arrays')
+        qp_tomography(:) = 0.d0; qs_tomography(:) = 0.d0
+
+        allocate(qp_tomo(NX,NZ),qs_tomo(NX,NZ),stat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'not enough memory to allocate tomo arrays')
+        qp_tomo(:,:) = 0.d0; qs_tomo(:,:) = 0.d0
+      endif
+    endif
+
+    ! reads in tomo values
+    if (has_q_values) then
+      ! #x(1) #z(1) #vp #vs #rho #Qp #Qs
+      read(string_read,*) x_tomography(irecord+1),z_tomography(irecord+1), &
+                          vp_tomography(irecord+1),vs_tomography(irecord+1),rho_tomography(irecord+1), &
+                          qp_tomography(irecord+1),qs_tomography(irecord+1)
+    else
+      ! #x(1) #z(1) #vp #vs #rho
+      read(string_read,*) x_tomography(irecord+1),z_tomography(irecord+1), &
+                          vp_tomography(irecord+1),vs_tomography(irecord+1),rho_tomography(irecord+1)
+    endif
 
     if (irecord < NX) x_tomo(irecord+1) = x_tomography(irecord+1)
 
@@ -626,6 +736,13 @@ end module interpolation
     if (vs_tomography(irecord+1) < read_vs_min) read_vs_min = vs_tomography(irecord+1)
     if (rho_tomography(irecord+1) > read_rho_max) read_rho_max = rho_tomography(irecord+1)
     if (rho_tomography(irecord+1) < read_rho_min) read_rho_min = rho_tomography(irecord+1)
+
+    if (has_q_values) then
+      if (qp_tomography(irecord+1) > read_qp_max) read_qp_max = qp_tomography(irecord+1)
+      if (qp_tomography(irecord+1) < read_qp_min) read_qp_min = qp_tomography(irecord+1)
+      if (qs_tomography(irecord+1) > read_qs_max) read_qs_max = qs_tomography(irecord+1)
+      if (qs_tomography(irecord+1) < read_qs_min) read_qs_min = qs_tomography(irecord+1)
+    endif
 
     ! counter
     irecord = irecord + 1
@@ -640,6 +757,15 @@ end module interpolation
       rho_tomo(i,j) = rho_tomography(NX*(j-1)+i)
     enddo
   enddo
+
+  if (has_q_values) then
+    do i = 1,NX
+      do j = 1,NZ
+        qp_tomo(i,j) = qp_tomography(NX*(j-1)+i)
+        qs_tomo(i,j) = qs_tomography(NX*(j-1)+i)
+      enddo
+    enddo
+  endif
 
   call synchronize_all()
 
@@ -666,6 +792,19 @@ end module interpolation
   tmp_dp = read_rho_max
   call max_all_dp(tmp_dp,read_rho_max)
 
+  if (has_q_values) then
+    ! Q-model values
+    tmp_dp = read_qp_min
+    call min_all_dp(tmp_dp,read_qp_min)
+    tmp_dp = read_qp_max
+    call max_all_dp(tmp_dp,read_qp_max)
+
+    tmp_dp = read_qs_min
+    call min_all_dp(tmp_dp,read_qs_min)
+    tmp_dp = read_qs_max
+    call max_all_dp(tmp_dp,read_qs_max)
+  endif
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '     Number of grid points = NX*NZ:',nrecord
@@ -674,12 +813,20 @@ end module interpolation
     write(IMAIN,*) '                vs : min/max = ',sngl(read_vs_min),' / ',sngl(read_vs_max)
     write(IMAIN,*) '                rho: min/max = ',sngl(read_rho_min),' / ',sngl(read_rho_max)
     write(IMAIN,*)
+    if (has_q_values) then
+      write(IMAIN,*) '                Qp : min/max = ',sngl(read_qp_min),' / ',sngl(read_qp_max)
+      write(IMAIN,*) '                Qs : min/max = ',sngl(read_qs_min),' / ',sngl(read_qs_max)
+      write(IMAIN,*)
+    endif
     call flush_IMAIN()
   endif
 
   ! closes file
   close(IIN)
   deallocate(x_tomography,z_tomography,vp_tomography,vs_tomography,rho_tomography)
+  if (has_q_values) then
+    deallocate(qp_tomography,qs_tomography)
+  endif
 
   end subroutine read_tomo_file
 
@@ -691,10 +838,11 @@ end module interpolation
 
 ! Store next line of file unit_in in string_read
 
+  use constants, only: MAX_STRING_LEN
   implicit none
 
   integer :: unit_in
-  character(len=150) :: string_read
+  character(len=MAX_STRING_LEN) :: string_read
 
   integer :: ier
 
@@ -708,8 +856,10 @@ end module interpolation
      ! suppress trailing carriage return (ASCII code 13) if any (e.g. if input text file coming from Windows/DOS)
      if (index(string_read,achar(13)) > 0) string_read = string_read(1:index(string_read,achar(13))-1)
 
-     ! exit loop when we find the first line that is not a comment or a white line
+     ! reads next line if empty
      if (len_trim(string_read) == 0) cycle
+
+     ! exit loop when we find the first line that is not a comment or a white line
      if (string_read(1:1) /= '#') exit
   enddo
 
@@ -724,4 +874,45 @@ end module interpolation
   string_read = string_read(1:len_trim(string_read))
 
   end subroutine tomo_read_next_line
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine tomo_get_number_of_tokens(string_read,ntokens)
+
+  use constants, only: MAX_STRING_LEN
+  implicit none
+
+  character(len=MAX_STRING_LEN),intent(in) :: string_read
+  integer,intent(out) :: ntokens
+
+  ! local parameters
+  integer :: i
+  logical :: previous_is_delim
+  character(len=1), parameter :: delim_space = ' '
+  character(len=1), parameter :: delim_tab = achar(9) ! tab delimiter
+
+  ! initializes
+  ntokens = 0
+
+  ! checks if anything to do
+  if (len_trim(string_read) == 0) return
+
+  ! counts tokens
+  ntokens = 1
+  previous_is_delim = .true.
+  do i = 1, len_trim(string_read)
+    ! finds next delimiter (space or tabular)
+    if (string_read(i:i) == delim_space .or. string_read(i:i) == delim_tab) then
+      if (.not. previous_is_delim) then
+        ntokens = ntokens + 1
+        previous_is_delim = .true.
+      endif
+    else
+      if (previous_is_delim) previous_is_delim = .false.
+    endif
+  enddo
+
+  end subroutine tomo_get_number_of_tokens
 

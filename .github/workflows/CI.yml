@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Check for changes
       id: diff
@@ -29,9 +29,20 @@ jobs:
           export DIFF=$( git diff --name-only ${{ github.event.before }} $GITHUB_SHA )
           echo "  diff between ${{ github.event.before }} and $GITHUB_SHA"
         fi
-        echo "$DIFF"
+        echo "***"; echo "$DIFF"; echo "***"
         # Escape newlines (replace \n with %0A)
-        echo "::set-output name=diff::$( echo "$DIFF" | sed ':a;N;$!ba;s/\n/%0A/g' )"
+        # deprecated:
+        #echo "::set-output name=diff::$( echo "$DIFF" | sed ':a;N;$!ba;s/\n/%0A/g' )"
+        # new:
+        # replace new line with %0A - will result finding only one file with a very long name...
+        #echo "diff=$( echo "$DIFF" | sed ':a;N;$!ba;s/\n/%0A/g' )" >> $GITHUB_OUTPUT
+        # doesn't work...
+        #echo "diff=\"$DIFF\"" >> "$GITHUB_OUTPUT"
+        # new multi-line format:
+        # (https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings)
+        echo "diff<<EOF" >> $GITHUB_OUTPUT
+        echo "$DIFF" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Output changes
       run: echo "${{ steps.diff.outputs.diff }}"
@@ -75,7 +86,7 @@ jobs:
     needs: changesCheck
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install dependencies
       run: |
@@ -125,10 +136,10 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest,ubuntu-18.04]
+        os: [ubuntu-latest,ubuntu-20.04]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -147,11 +158,11 @@ jobs:
     needs: changesCheck
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Cache Intel oneapi packages
       id: cache-intel-oneapi
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: /opt/intel/oneapi
         key: install-${{ runner.os }}-all
@@ -242,7 +253,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -260,7 +271,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -284,7 +295,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -309,7 +320,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -334,7 +345,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -358,7 +369,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -382,7 +393,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -407,7 +418,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -431,7 +442,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -455,7 +466,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -479,7 +490,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -504,7 +515,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
