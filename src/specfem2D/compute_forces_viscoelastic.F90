@@ -159,7 +159,7 @@
 !$OMP displ_elastic_old,dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old,e1,e11,e13 &
 !$OMP ) &
 !$OMP FIRSTPRIVATE( &
-!$OMP hprime_xx,hprimewgll_xx,  &
+!$OMP hprime_xx,hprimewgll_xx, &
 !$OMP hprime_zz,hprimewgll_zz, &
 !$OMP hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
 !$OMP wxgll,wzgll &
