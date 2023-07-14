@@ -31,7 +31,7 @@
 #
 # The names of the block and the entities types must match the ones given during the definition of the class mesh on this file :
 # Below :
-# class mesh(object,mesh_tools):
+# class mesh(mesh_tools):
 #     """ A class to store the mesh """
 #     def __init__(self):
 #
@@ -39,7 +39,18 @@
 # On this case the blocks are used to gather faces corresponding to different materials and edges corresponding to free surfaces,
 # absorbing surfaces, topography or axis
 from __future__ import print_function
-import cubit
+import sys
+
+try:
+    import cubit
+except:
+    print('error importing cubit')
+    sys.exit()
+
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 class mtools(object):
     """docstring for mtools"""
@@ -70,7 +81,7 @@ class mtools(object):
             command = "mesh surf "+str(surf)
             cubit.cmd(command)
 
-class block_tools:
+class block_tools(object):
     def __int__(self):
         pass
     def create_blocks(self,mesh_entity,list_entity = None,):
@@ -251,10 +262,12 @@ class mesh_tools(block_tools):
         print(self.ddt,self.dr)
         print('Deltat minimum => edge:'+str(self.ddt[0][0])+' dt: '+str(self.ddt[0][1]))
         print('Minimum frequency resolved => edge:'+str(self.dr[0][0])+' frequency: '+str(self.dr[0][1]))
+        cubit.cmd('set info on')
+        cubit.cmd('set echo on')
         return self.ddt[0],self.dr[0]
 
 
-class mesh(object,mesh_tools):
+class mesh(mesh_tools):
     """ A class to store the mesh """
     def __init__(self):
         super(mesh, self).__init__()
@@ -309,12 +322,13 @@ class mesh(object,mesh_tools):
             name = cubit.get_exodus_entity_name('block',block) # Contains the name of the blocks
             ty = cubit.get_block_element_type(block) # Contains the block element type (QUAD4...)
             if ty == self.face: # If we are dealing with a block containing faces
+                print("block: ",name," contains faces")
                 nAttributes = cubit.get_block_attribute_count(block)
                 if (nAttributes != 1 and nAttributes != 6):
                     print('Blocks not properly defined, 2d blocks must have one attribute (material id) or 6 attributes')
                     return None,None,None,None,None,None,None,None
                 flag=int(cubit.get_block_attribute_value(block,0)) # Fetch the first attribute value (containing material id)
-                print("nAttributes : ",nAttributes)
+                print("  nAttributes : ",nAttributes)
                 if nAttributes == 6:
                     self.write_nummaterial_velocity_file = True
                     velP = cubit.get_block_attribute_value(block,1)  # Fetch the first attribute value (containing P wave velocity)
@@ -343,21 +357,26 @@ class mesh(object,mesh_tools):
                 #    # (index 0 : pml_x_acoust, index 1 : pml_z_acoust, index 2 : pml_xz_acoust,
                 #    #  index 3 : pml_x_elast, index 4 : pml_z_elast, index 5 : pml_xz_elast)
             elif ty == self.edge: # If we are dealing with a block containing edges
+                print("block: ",name," contains edges")
                 block_bc_flag.append(2) # Append "2" to block_bc_flag
                 block_bc.append(block) # Append block id to block_bc
                 bc[name] = 2 # Associate the name of the block with its connectivity : an edge has connectivity = 2
                 if name == self.topo:
                     self.topo_mesh = True
+                    print("  topo_mesh: ",self.topo_mesh)
                     topography = block # If the block considered refered to topography store its id in "topography"
                 if name in self.forcing_boun_name:
                     self.forcing_mesh = True
+                    print("  forcing_mesh: ",self.forcing_mesh)
                     forcing_boun[self.forcing_boun_name.index(name)] = block
                     # -> Put it at the correct position in abs_boun (index 0 : bottom, index 1 : right, index 2 : top, index 3 : left)
                 if name == self.axisname:
                     self.axisymmetric_mesh = True
+                    print("  axisymmetric_mesh: ",self.axisymmetric_mesh)
                     axisId = block # AXISYM If the block considered refered to the axis store its id in "axisId"
                 if name in self.abs_boun_name : # If the block considered refered to one of the boundaries
                     self.abs_mesh = True
+                    print("  abs_mesh: ",self.abs_mesh)
                     abs_boun[self.abs_boun_name.index(name)] = block
                     # -> Put it at the correct position in abs_boun (index 0 : bottom, index 1 : right, index 2 : top, index 3 : left)
             else:
@@ -415,6 +434,8 @@ class mesh(object,mesh_tools):
         """ Write mesh (quads ids with their corresponding nodes ids) on file : mesh_name """
         meshfile = open(mesh_name,'w')
         print('Writing '+mesh_name+'.....')
+        cubit.cmd('set info off') # Turn off return messages from Cubit commands
+        cubit.cmd('set echo off') # Turn off echo of Cubit commands
         num_elems = cubit.get_quad_count() # Store the number of elements
         toWritetoFile = [""]*(num_elems+1)
         toWritetoFile[0] = str(num_elems)+'\n'
@@ -433,10 +454,14 @@ class mesh(object,mesh_tools):
         meshfile.writelines(toWritetoFile)
         meshfile.close()
         print('Ok num elements/write =',str(num_elems), str(num_write))
+        cubit.cmd('set info on')
+        cubit.cmd('set echo on')
     def material_write(self,mat_name):
         """ Write quads material on file : mat_name """
         mat = open(mat_name,'w')
         print('Writing '+mat_name+'.....')
+        cubit.cmd('set info off') # Turn off return messages from Cubit commands
+        cubit.cmd('set echo off') # Turn off echo of Cubit commands
         num_elems = cubit.get_quad_count() # Store the number of elements
         toWritetoFile = [""]*num_elems
         print('block_mat:',self.block_mat)
@@ -450,12 +475,14 @@ class mesh(object,mesh_tools):
         mat.writelines(toWritetoFile)
         mat.close()
         print('Ok')
+        cubit.cmd('set info on')
+        cubit.cmd('set echo on')
     def pmls_write(self,pml_name):
         """ Write pml elements on file : mat_name """
-        cubit.cmd('set info off') # Turn off return messages from Cubit commands
-        cubit.cmd('set echo off') # Turn off echo of Cubit commands
         pml_file = open(pml_name,'w')
         print('Writing '+pml_name+'.....')
+        cubit.cmd('set info off') # Turn off return messages from Cubit commands
+        cubit.cmd('set echo off') # Turn off echo of Cubit commands
         npml_elements = 0
         #id_element = 0 # Global id
         indexFile = 1
@@ -493,6 +520,8 @@ class mesh(object,mesh_tools):
         """ Write nodes coordinates on file : nodecoord_name """
         nodecoord = open(nodecoord_name,'w')
         print('Writing '+nodecoord_name+'.....')
+        cubit.cmd('set info off') # Turn off return messages from Cubit commands
+        cubit.cmd('set echo off') # Turn off echo of Cubit commands
         node_list = cubit.parse_cubit_list('node','all') # Import all the nodes of the model
         num_nodes = len(node_list) # Total number of nodes
         nodecoord.write('%10i\n' % num_nodes) # Write the number of nodes on the first line
@@ -502,26 +531,27 @@ class mesh(object,mesh_tools):
             nodecoord.write(txt) # Write x and z coordinates on the file -> Model must be in x,z coordinates. TODO
         nodecoord.close()
         print('Ok')
+        cubit.cmd('set info on') # Turn on return messages from Cubit commands
+        cubit.cmd('set echo on') # Turn on echo of Cubit commands
     def free_write(self,freename): #freename = None):
         """ Write free surface on file : freename """
-        cubit.cmd('set info off') # Turn off return messages from Cubit commands
-        cubit.cmd('set echo off') # Turn off echo of Cubit commands
-        cubit.cmd('set journal off') # Do not save journal file
-        from sets import Set
         # if not freename: freename = self.freename
         freeedge = open(freename,'w')
         print('Writing '+freename+'.....')
+        cubit.cmd('set info off') # Turn off return messages from Cubit commands
+        cubit.cmd('set echo off') # Turn off echo of Cubit commands
+        cubit.cmd('set journal off') # Do not save journal file
         if self.topo_mesh:
             for block,flag in zip(self.block_bc,self.block_bc_flag): # For each 1D block
                 if block == self.topography: # If the block correspond to topography
-                    edges_all = Set(cubit.get_block_edges(block)) # Import all topo edges id as a Set
+                    edges_all = set(cubit.get_block_edges(block)) # Import all topo edges id as a Set
             toWritetoFile = [] #[""]*(len(edges_all)+1)
             toWritetoFile.append('%10i\n' % len(edges_all)) # Print the number of edges on the free surface
             for block,flag in zip(self.block_mat,self.block_flag): # For each 2D block
                 print(block,flag)
                 quads = cubit.get_block_faces(block) # Import quads id
                 for quad in quads: # For each quad
-                    edges = Set(cubit.get_sub_elements("face", quad, 1)) # Get the lower dimension entities associated with a higher dimension entities.
+                    edges = set(cubit.get_sub_elements("face", quad, 1)) # Get the lower dimension entities associated with a higher dimension entities.
                     # Here it gets the 1D edges associates with the face of id "quad". Store it as a Set
                     intersection = edges & edges_all # Contains the edges of the considered quad that is on the free surface
                     if len(intersection) != 0: # If this quad touch the free surface
@@ -550,19 +580,18 @@ class mesh(object,mesh_tools):
         cubit.cmd('set echo on') # Turn on echo of Cubit commands
     def forcing_write(self,forcname):
         """ Write forcing surfaces on file : forcname """
+        forceedge = open(forcname,'w')
+        print('Writing '+forcname+'.....')
         cubit.cmd('set info off') # Turn off return messages from Cubit commands
         cubit.cmd('set echo off') # Turn off echo of Cubit commands
         cubit.cmd('set journal off') # Do not save journal file
-        from sets import Set
-        forceedge = open(forcname,'w')
-        print('Writing '+forcname+'.....')
-        edges_forc = [Set()]*self.nforc # edges_forc[0] will be a Set containing the nodes describing the forcing boundary
+        edges_forc = [set()]*self.nforc # edges_forc[0] will be a Set containing the nodes describing the forcing boundary
         # (index 0 : bottom, index 1 : right, index 2 : top, index 3 : left)
         nedges_all = 0 # To count the total number of forcing edges
         for block,flag in zip(self.block_bc,self.block_bc_flag): # For each 1D block
             for iforc in range(0, self.nforc): # iforc = 0,1,2,3 : for each forcing boundaries
                 if block == self.forcing_boun[iforc]: # If the block considered correspond to the boundary
-                    edges_forc[iforc] = Set(cubit.get_block_edges(block)) # Store each edge on edges_forc
+                    edges_forc[iforc] = set(cubit.get_block_edges(block)) # Store each edge on edges_forc
                     nedges_all = nedges_all+len(edges_forc[iforc]) # add the number of edges to nedges_all
         toWritetoFile = [""]*(nedges_all+1)
         toWritetoFile[0] = '%10i\n' % nedges_all # Write the total number of forcing edges to the first line of file
@@ -574,7 +603,7 @@ class mesh(object,mesh_tools):
                 quads = cubit.get_block_faces(block) # Import quads id
                 for quad in quads: # For each quad
                     #id_element = id_element+1 # id of this quad
-                    edges = Set(cubit.get_sub_elements("face", quad, 1)) # Get the lower dimension entities associated with a higher dimension entities.
+                    edges = set(cubit.get_sub_elements("face", quad, 1)) # Get the lower dimension entities associated with a higher dimension entities.
                     # Here it gets the 1D edges associates with the face of id "quad". Store it as a Set
                     for iforc in range(0,self.nforc): # iforc = 0,1,2,3 : for each forcing boundaries
                         intersection = edges & edges_forc[iforc]  # Contains the edges of the considered quad that is on the forcing boundary considered
@@ -605,20 +634,19 @@ class mesh(object,mesh_tools):
         cubit.cmd('set echo on') # Turn on echo of Cubit commands
     def abs_write(self,absname):
         """ Write absorbing surfaces on file : absname """
-        cubit.cmd('set info off') # Turn off return messages from Cubit commands
-        cubit.cmd('set echo off') # Turn off echo of Cubit commands
-        cubit.cmd('set journal off') # Do not save journal file.
-        from sets import Set
         # if not absname: absname = self.absname
         absedge = open(absname,'w')
         print('Writing '+absname+'.....')
-        edges_abs = [Set()]*self.nabs # edges_abs[0] will be a Set containing the nodes describing bottom adsorbing boundary
+        cubit.cmd('set info off') # Turn off return messages from Cubit commands
+        cubit.cmd('set echo off') # Turn off echo of Cubit commands
+        cubit.cmd('set journal off') # Do not save journal file.
+        edges_abs = [set()]*self.nabs # edges_abs[0] will be a Set containing the nodes describing bottom adsorbing boundary
         # (index 0 : bottom, index 1 : right, index 2 : top, index 3 : left)
         nedges_all = 0 # To count the total number of absorbing edges
         for block,flag in zip(self.block_bc,self.block_bc_flag): # For each 1D block
             for iabs in range(0, self.nabs): # iabs = 0,1,2,3 : for each absorbing boundaries
                 if block == self.abs_boun[iabs]: # If the block considered correspond to the boundary
-                    edges_abs[iabs] = Set(cubit.get_block_edges(block)) # Store each edge on edges_abs
+                    edges_abs[iabs] = set(cubit.get_block_edges(block)) # Store each edge on edges_abs
                     nedges_all = nedges_all+len(edges_abs[iabs]); # add the number of edges to nedges_all
         toWritetoFile = [""]*(nedges_all+1)
         toWritetoFile[0] = '%10i\n' % nedges_all # Write the total number of absorbing edges to the first line of file
@@ -630,7 +658,7 @@ class mesh(object,mesh_tools):
                 quads = cubit.get_block_faces(block) # Import quads id
                 for quad in quads: # For each quad
                     #id_element = id_element+1 # id of this quad
-                    edges = Set(cubit.get_sub_elements("face", quad, 1)) # Get the lower dimension entities associated with a higher dimension entities.
+                    edges = set(cubit.get_sub_elements("face", quad, 1)) # Get the lower dimension entities associated with a higher dimension entities.
                     # Here it gets the 1D edges associates with the face of id "quad". Store it as a Set
                     for iabs in range(0,self.nabs): # iabs = 0,1,2,3 : for each absorbing boundaries
                         intersection = edges & edges_abs[iabs]  # Contains the edges of the considered quad that is on the absorbing boundary considered
@@ -656,15 +684,14 @@ class mesh(object,mesh_tools):
         cubit.cmd('set echo on') # Turn on echo of Cubit commands
     def axis_write(self,axis_name):
         """ Write axis on file """
+        axisedge = open(axis_name,'w')
+        print('Writing '+axis_name+'.....')
         cubit.cmd('set info off') # Turn off return messages from Cubit commands
         cubit.cmd('set echo off') # Turn off echo of Cubit commands
         cubit.cmd('set journal off') # Do not save journal file
-        from sets import Set
-        axisedge = open(axis_name,'w')
-        print('Writing '+axis_name+'.....')
         for block,flag in zip(self.block_bc,self.block_bc_flag): # For each 1D block
             if block == self.axisId: # If the block correspond to the axis
-                edges_all = Set(cubit.get_block_edges(block)) # Import all axis edges id as a Set
+                edges_all = set(cubit.get_block_edges(block)) # Import all axis edges id as a Set
         toWritetoFile = [""]*(len(edges_all)+1)
         toWritetoFile[0] = '%10i\n' % len(edges_all) # Write the number of edges on the axis
         #axisedge.write('%10i\n' % len(edges_all)) # Write the number of edges on the axis
@@ -675,7 +702,7 @@ class mesh(object,mesh_tools):
                 quads = cubit.get_block_faces(block) # Import quads id
                 for quad in quads: # For each quad
                     #id_element = id_element+1 # id of this quad
-                    edges = Set(cubit.get_sub_elements("face", quad, 1)) # Get the lower dimension entities associated with a higher dimension entities.
+                    edges = set(cubit.get_sub_elements("face", quad, 1)) # Get the lower dimension entities associated with a higher dimension entities.
                     # Here it gets the 1D edges associates with the face of id "quad". Store it as a Set
                     intersection = edges & edges_all # Contains the edges of the considered quad that are on the axis
                     if len(intersection) != 0: # If this quad touch the axis
@@ -710,11 +737,11 @@ class mesh(object,mesh_tools):
         print('Ok')
     def write(self,path = ''):
         """ Write mesh in specfem2d format """
-        print('Writing '+self.recname+'.....')
+        print('Writing '+path+'.....')
         import os
-        cubit.cmd('set info off') # Turn off return messages from Cubit commands
-        cubit.cmd('set echo off') # Turn off echo of Cubit commands
-        cubit.cmd('set journal off') # Do not save journal file
+        #cubit.cmd('set info off') # Turn off return messages from Cubit commands
+        #cubit.cmd('set echo off') # Turn off echo of Cubit commands
+        #cubit.cmd('set journal off') # Do not save journal file
         if len(path) != 0: # If a path is supplied add a / at the end if needed
             if path[-1] != '/': path = path+'/'
         else:
@@ -736,8 +763,8 @@ class mesh(object,mesh_tools):
         if self.receivers:
             self.rec_write(path+self.recname) # If receivers has been set (as nodeset) write receiver file as well
         print('Mesh files has been writen in '+path)
-        cubit.cmd('set info on') # Turn on return messages from Cubit commands
-        cubit.cmd('set echo on') # Turn on echo of Cubit commands
+        #cubit.cmd('set info on') # Turn on return messages from Cubit commands
+        #cubit.cmd('set echo on') # Turn on echo of Cubit commands
 
 def export2SPECFEM2D(path_exporting_mesh_SPECFEM2D='.'):
     # reads in mesh from cubit
@@ -747,7 +774,7 @@ def export2SPECFEM2D(path_exporting_mesh_SPECFEM2D='.'):
     print("END SPECFEM2D exporting process......")
 
 # gets executed when run as script within cubit
-export2SPECFEM2D()
+#export2SPECFEM2D()
 
 
 
