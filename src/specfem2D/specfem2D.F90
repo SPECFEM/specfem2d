@@ -273,6 +273,11 @@
 ! Evolution of the code:
 ! ---------------------
 !
+! version 8.1, Hom Nath Gharti, Daniel Peter, Eduardo Valero Cano, December 2023:
+!               - adds support for Q values in tomographic models
+!               - updates GPU support, OpenMP and test workflows
+!               - various code updates and improvements (noise simulations)
+!
 ! version 8.0, Etienne Bachmann, Alexis Bottero, Bryant Chow, Paul Cristini, Rene Gassmoeller, Michael Gineste,
 !              Felix Halpaap, Dimitri Komatitsch, Matthieu Lefebvre, Qiancheng Liu, Qinya Liu, Zhaolun Liu,
 !              David Luet, Ryan Modrak, Christina Morency, Daniel Peter, Eric Rosenkrantz, Herurisa Rusmanugroho,
