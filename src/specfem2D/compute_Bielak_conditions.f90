@@ -78,7 +78,7 @@
 !!$
 !!$
 !!$! derivatives of analytical expression of horizontal and vertical displacements,
-!!$! computed using the "Mathematica" script in UTILS/deriv_ricker_spatial.m
+!!$! computed using the "Mathematica" script in utils/small_utilities/deriv_ricker_spatial.m
 !!$  dxUx = (sqrt(3.d0)*a*((-8*t + 4*x)*exp(-a*(t - x/2.d0)**2) + &
 !!$      ((2*t - x)*(-2 + a*(-2*t + x)**2))*exp(-a*(t - x/2.d0)**2) + &
 !!$      (2*(-2*t + x - sqrt(3.d0)*(-9 + z)))*exp(-(a*(2*t - x + sqrt(3.d0)*(-9 + z))**2)/4.d0) + &
