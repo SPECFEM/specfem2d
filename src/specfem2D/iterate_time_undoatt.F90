@@ -58,7 +58,7 @@
 
   ! timing
   double precision, external :: wtime
-  double precision :: start_time_of_time_loop,duration_of_time_loop_in_seconds
+
   logical :: compute_b_wavefield
 
   ! checks if anything to do
@@ -226,8 +226,6 @@
       do it_of_this_subset = 1, it_subset_end
 
         it = it + 1
-        ! compute current time
-        current_timeval = (it-1) * DT
 
         ! display time step and max of norm of displacement
         if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) call check_stability()
@@ -484,9 +482,6 @@
 
         endif ! mod(it,NTSTEP_BETWEEN_COMPUTE_KERNELS) == 0
 
-        ! compute current time
-        current_timeval = (it-1) * DT
-
         ! display time step and max of norm of displacement
         if ((.not. GPU_MODE) .and. mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
           call check_stability()
@@ -614,25 +609,11 @@
   !---- end of time iteration loop
   !
 
-  if (myrank == 0) then
-    duration_of_time_loop_in_seconds = wtime() - start_time_of_time_loop
-
-    write(IMAIN,*)
-    write(IMAIN,*) 'Total duration of the time loop in seconds = ',sngl(duration_of_time_loop_in_seconds),' s'
-    write(IMAIN,*) 'Total number of time steps = ',NSTEP
-    write(IMAIN,*) 'Average duration of a time step of the time loop = ',sngl(duration_of_time_loop_in_seconds / NSTEP),' s'
-    write(IMAIN,*) 'Total number of spectral elements in the mesh = ',NSPEC
-    write(IMAIN,*) '    of which ',NSPEC - count(ispec_is_PML),' are regular elements'
-    write(IMAIN,*) '    and ',count(ispec_is_PML),' are PML elements.'
-    write(IMAIN,*) 'Average duration of the calculation per spectral element = ', &
-                         sngl(duration_of_time_loop_in_seconds / (NSTEP * NSPEC)),' s'
-    write(IMAIN,*)
-    call flush_IMAIN()
-  endif
+  ! output elapsed time
+  call print_elapsed_time()
 
   ! Transfer fields from GPU card to host for further analysis
   if (GPU_MODE) call it_transfer_from_GPU()
-
 
   ! frees undo_attenuation buffers
   if (SIMULATION_TYPE == 3) then

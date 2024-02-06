@@ -56,7 +56,6 @@
 
   ! timing
   double precision,external :: wtime
-  double precision :: start_time_of_time_loop,duration_of_time_loop_in_seconds
 
   if (myrank == 0) write(IMAIN,400) ! Write = T i m e  e v o l u t i o n  l o o p =
 !
@@ -144,8 +143,6 @@
 ! *********************************************************
 
   do it = it_begin,it_end
-    ! compute current time
-    current_timeval = (it-1) * DT
 
     ! display time step and max of norm of displacement
     if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
@@ -413,35 +410,8 @@
 
   enddo ! end of the main time loop
 
-  if (myrank == 0) then
-    duration_of_time_loop_in_seconds = wtime() - start_time_of_time_loop
-    write(IMAIN,*)
-    write(IMAIN,*) 'Total duration of the time loop in seconds = ',sngl(duration_of_time_loop_in_seconds),' s'
-    write(IMAIN,*) 'Total number of time steps = ',NSTEP
-    write(IMAIN,*) 'Average duration of a time step of the time loop = ',sngl(duration_of_time_loop_in_seconds / NSTEP),' s'
-    write(IMAIN,*) 'Total number of spectral elements in the mesh = ',NSPEC
-    write(IMAIN,*) '    of which ',NSPEC - count(ispec_is_PML),' are regular elements'
-    write(IMAIN,*) '    and ',count(ispec_is_PML),' are PML elements.'
-    write(IMAIN,*) 'Average duration of the calculation per spectral element = ', &
-                         sngl(duration_of_time_loop_in_seconds / (NSTEP * NSPEC)),' s'
-    write(IMAIN,*)
-    call flush_IMAIN()
-  endif
-
-  call date_and_time(datein,timein,zone,time_values)
-  year = time_values(1)
-  mon = time_values(2)
-  day = time_values(3)
-  hr = time_values(5)
-  minutes = time_values(6)
-  call convtime(timestamp,year,mon,day,hr,minutes)
-
-  if (myrank == 0) then
-   write(IMAIN,*)
-   write(IMAIN,*) 'Total duration of the timeloop in seconds, measured using '
-   write(IMAIN,*)  'date and time of the system : ',sngl(timestamp*60.d0 + time_values(7) + &
-                   time_values(8)/1000.d0 - timestamp_seconds_start),' s'
-  endif
+  ! output elapsed time
+  call print_elapsed_time()
 
 ! *********************************************************
 ! ************* END MAIN LOOP OVER THE TIME STEPS *********
@@ -557,3 +527,95 @@
   endif ! SIMULATION == 3
 
   end subroutine  manage_no_backward_reconstruction_io
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine print_elapsed_time()
+
+  use constants, only: IMAIN,myrank
+  use specfem_par, only: NSTEP,NSPEC,ispec_is_PML, &
+    timestamp_seconds_start,start_time_of_time_loop
+
+  implicit none
+
+  ! local parameters
+  integer :: ihours,iminutes,iseconds,int_tCPU
+  integer :: nspec_total,nspec_pml,nspec_total_pml
+
+  ! time
+  character(len=8) :: datein
+  character(len=10) :: timein
+  character(len=5) :: zone
+  integer, dimension(8) :: time_values
+  integer :: year,mon,day,hr,minutes,timestamp
+  double precision :: timestamp_seconds_end
+
+  ! timing
+  double precision :: tCPU
+  double precision, external :: wtime
+
+  nspec_pml = count(ispec_is_PML)
+
+  ! gather info
+  call sum_all_i(NSPEC,nspec_total)
+  call sum_all_i(nspec_pml,nspec_total_pml)
+
+  ! output info
+  if (myrank == 0) then
+    ! elapsed time since beginning of the simulation
+    tCPU = wtime() - start_time_of_time_loop
+
+    int_tCPU = int(tCPU)
+    ihours = int_tCPU / 3600
+    iminutes = (int_tCPU - 3600*ihours) / 60
+    iseconds = int_tCPU - 3600*ihours - 60*iminutes
+
+    write(IMAIN,*)
+    write(IMAIN,*) 'Time loop finished. Timing info:'
+    write(IMAIN,*) 'Total duration of the time loop in seconds  = ',sngl(tCPU),' s'
+    write(IMAIN,"(' Total duration of the time loop in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total number of time steps = ',NSTEP
+    write(IMAIN,*) 'Average duration of a time step of the time loop = ',sngl(tCPU / NSTEP),' s'
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total number of spectral elements in the mesh = ',nspec_total
+    write(IMAIN,*) '    of which ',nspec_total - nspec_total_pml,' are regular elements'
+    write(IMAIN,*) '    and ',nspec_total_pml,' are PML elements.'
+    write(IMAIN,*) 'Average duration of the calculation per spectral element = ', &
+                   sngl(tCPU / (NSTEP * nspec_total)),' s'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  call date_and_time(datein,timein,zone,time_values)
+  year = time_values(1)
+  mon = time_values(2)
+  day = time_values(3)
+  hr = time_values(5)
+  minutes = time_values(6)
+  call convtime(timestamp,year,mon,day,hr,minutes)
+
+  ! convert to seconds instead of minutes, to be more precise for 2D runs, which can be fast
+  timestamp_seconds_end = timestamp*60.d0 + time_values(7) + time_values(8)/1000.d0
+
+  ! elapsed time since beginning of the simulation
+  tCPU = timestamp_seconds_end - timestamp_seconds_start
+
+  int_tCPU = int(tCPU)
+  ihours = int_tCPU / 3600
+  iminutes = (int_tCPU - 3600*ihours) / 60
+  iseconds = int_tCPU - 3600*ihours - 60*iminutes
+
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total duration of the timeloop measured using date and time of the system'
+    write(IMAIN,*) '    in seconds     = ',sngl(tCPU),' s'
+    write(IMAIN,"('     in in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  end subroutine print_elapsed_time

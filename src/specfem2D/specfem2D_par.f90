@@ -313,16 +313,14 @@ module specfem_par
   ! for backward simulation in adjoint inversion
   real(kind=CUSTOM_REAL) :: b_deltatover2,b_deltatsquareover2,b_deltat ! coefficients of the explicit Newmark time scheme
 
-  ! current time
-  double precision :: current_timeval
-
   ! UNDO_ATTENUATION_AND_OR_PML
   integer :: NSUBSET_ITERATIONS
   integer :: iteration_on_subset,it_of_this_subset
   integer :: it_subset_end
 
   ! to determine date and time at which the run will finish
-  double precision :: timestamp_seconds_start
+  double precision :: timestamp_seconds_start    ! based on date_and_time()
+  double precision :: start_time_of_time_loop    ! based on wtime()
 
   !---------------------------------------------------------------------
   ! global variable shared by acoustic/elastic/poroelastic simulation
