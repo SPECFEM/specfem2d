@@ -1,6 +1,18 @@
 #!python
 #!/usr/bin/env python
 #
+#
+##########################################################################################
+#
+# INFO: this script has become obsolete as the cubit2specfem2d.py file supports now
+#       both QUAD4 and QUAD9 elements.
+#
+#       Please use cubit2specfem2d.py to convert Cubit/Trelis meshes to SPECFEM2D format.
+#
+# the script here is left for historic purposes, but might be removed in future...
+#
+###########################################################################################
+#
 # Script to export a Cubit13+/Trelis 2D mesh in specfem2d format for the elements QUAD9
 # pour creer des fichiers correspondant a Specfem2d a partir du maillage de Cubit
 # Initial author unknown, comments and modifications by Alexis Bottero (alexis dot bottero At gmail dot com) et Ting YU, CNRS and EDF, France, December 2015
