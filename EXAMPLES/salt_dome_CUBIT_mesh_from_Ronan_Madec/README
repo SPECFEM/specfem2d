@@ -1,0 +1,9 @@
+-----------------------------------------
+README
+-----------------------------------------
+
+This folder provides different examples using an external mesh. The mesh was created by Cubit/Trelis with an included salt dome.
+The examples show how to setup and use such an external mesh with and without PML elements.
+
+
+(originally added by Dimitri Komatitsch, Nov. 2012)

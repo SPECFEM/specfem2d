@@ -1,0 +1,39 @@
+# nummaterial_velocity_file
+# format:
+#(1)domain_id #(2)material_id #(3)rho #(4)vp #(5)vs #(6)Q_k #(7)Q_mu #(8)ani
+#
+#  where
+#     domain_id          : 1=acoustic / 2=elastic / 3=poroelastic
+#     material_id        : POSITIVE integer identifier of material block
+#     rho                : density
+#     vp                 : P-velocity
+#     vs                 : S-velocity
+#     Q_k                : 9999 = no Q_kappa attenuation
+#     Q_mu               : 9999 = no Q_mu attenuation
+#     ani                : 0=no anisotropy/ 1,2,.. check with aniso_model.f90
+#
+# example:
+# 2   1 2300 2800 1500 9999.0 9999.0 0
+#
+# or
+#
+#(1)domain_id #(2)material_id  tomography elastic  #(3)filename #(4)positive
+#
+#  where
+#     domain_id : 1=acoustic / 2=elastic / 3=poroelastic
+#     material_id        : NEGATIVE integer identifier of material block
+#     filename           : filename of the tomography file
+#     positive           : a positive unique identifier
+#
+# example:
+# 2  -1 tomography elastic tomo.xyz 1
+#
+# materials
+2 1 2000.d0 4000.d0 2300.d0 9999 9999 0
+2 2 1800.d0 3000.d0 1500.d0 9999 9999 0
+2 3 2000.d0 3500.d0 2000.d0 9999 9999 0
+2 4 1800.d0 2700.d0 1300.d0 9999 9999 0
+1 5 1000.d0 1500.d0    0.d0 9999 9999 0
+2 6 1800.d0 2500.d0 1000.d0 9999 9999 0
+2 7 1600.d0 2200.d0  800.d0 9999 9999 0
+2 8 1600.d0 5000.d0 3000.d0 9999 9999 0

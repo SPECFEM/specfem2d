@@ -14,16 +14,10 @@ echo " Setting up the simulation..."
 echo
 
 mkdir -p OUTPUT_FILES
-mkdir -p DATA
 
 # Clean output files
-rm -rf OUTPUT_FILES/* DATA/*
+rm -rf OUTPUT_FILES/*
 
-# Sets up local DATA/ directory
-cd DATA/
-ln -s ../Par_file Par_file
-ln -s ../SOURCE SOURCE
-cd ../
 
 # Compiles executables in root directory
 cd ../../
@@ -49,18 +43,32 @@ cp DATA/SOURCE OUTPUT_FILES/
 # Get the number of processors
 NPROC=`grep NPROC DATA/Par_file | cut -d = -f 2 | cut -d \# -f 1 | tr -d ' '`
 
-# Run database generation
-echo
-echo " Running mesher..."
-echo
-./bin/xmeshfem2D
+# runs database generation
+if [ "$NPROC" -eq 1 ]; then
+  # This is a serial simulation
+  echo
+  echo "running mesher..."
+  echo
+  ./bin/xmeshfem2D
+else
+  # This is a MPI simulation
+  echo
+  echo "running mesher on $NPROC processors..."
+  echo
+  mpirun -np $NPROC ./bin/xmeshfem2D
+fi
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
-if [ "$NPROC" -eq 1 ]; then # This is a serial simulation
+# runs simulation
+if [ "$NPROC" -eq 1 ]; then
+  # This is a serial simulation
   echo
   echo " Running solver..."
   echo
   ./bin/xspecfem2D
-else # This is a MPI simulation
+else
+  # This is a MPI simulation
   echo
   echo " Running solver on $NPROC processors..."
   echo

@@ -6,7 +6,7 @@ This example creates the fluid-solid example with flat ocean bottom from the 200
 
 To run the example, type:
 
-  ./process.sh
+  ./run_this_example.sh
 
 in this directory.
 

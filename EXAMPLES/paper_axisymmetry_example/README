@@ -53,6 +53,6 @@ To speed up the results the calculation are made at low resolution, you can obta
 If you change the number of receivers you will have to change the factor at the beginning of the script in make_comparison.sh
 It is just a multiplying factor that set the reference.
 
-To clean this directory : rm -rf DATA/ OUTPUT_FILES/ x* *~
+To clean this directory : rm -rf OUTPUT_FILES/ x* *~
 
 If you have any questions feel free to contact me : alexis dot bottero at gmail doT com

@@ -20,23 +20,25 @@
 #                   mesh_file                       = MESH_SMALL/mesh_file         # file containing the mesh
 #                   nodes_coords_file               = MESH_SMALL/nodes_coords_file # file containing the nodes coordinates
 #                   materials_file                  = MESH_SMALL/materials_file    # file containing the material number for each element
+#                   nummaterial_velocity_file       = MESH_SMALL/nummaterial_velocity_file              # file containing the material properties for each material
 #                   free_surface_file               = MESH_SMALL/free_surface_file # file containing the free surface
 #                   axial_elements_file             = MESH_SMALL/elements_axis          # file containing the axial elements if AXISYM is true
 #                   absorbing_surface_file          = MESH_SMALL/absorbing_surface_file # file containing the absorbing surface
-#                   acoustic_forcing_surface_file   = ./DATA_PML/MSH/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
+#                   acoustic_forcing_surface_file   = MESH_SMALL/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
 #                   CPML_element_file               = MESH_SMALL/elements_cpml_list     # file containing the CPML element numbers
-#                   tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the curve delimiting the velocity model
+#                   tangential_detection_curve_file = MESH_SMALL/courbe_eros_nodes # file containing the curve delimiting the velocity model
 #
 #                 Has to be changed to:
 #                   mesh_file                       = MESH/mesh_file         # file containing the mesh
 #                   nodes_coords_file               = MESH/nodes_coords_file # file containing the nodes coordinates
 #                   materials_file                  = MESH/materials_file    # file containing the material number for each element
+#                   nummaterial_velocity_file       = MESH/nummaterial_velocity_file              # file containing the material properties for each material
 #                   free_surface_file               = MESH/free_surface_file # file containing the free surface
 #                   axial_elements_file             = MESH/elements_axis          # file containing the axial elements if AXISYM is true
 #                   absorbing_surface_file          = MESH/absorbing_surface_file # file containing the absorbing surface
-#                   acoustic_forcing_surface_file   = ./DATA_PML/MSH/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
+#                   acoustic_forcing_surface_file   = MESH/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
 #                   CPML_element_file               = MESH/elements_cpml_list     # file containing the CPML element numbers
-#                   tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the curve delimiting the velocity model
+#                   tangential_detection_curve_file = MESH/courbe_eros_nodes # file containing the curve delimiting the velocity model
 #
 
 PATH_TO_CUBIT=/opt/Trelis-15.0/bin/trelis # TODO update that line: path to cubit executable
@@ -57,7 +59,7 @@ echo "Making mesh ..."
 
 $PATH_TO_CUBIT -nographics -batch ./JensenMesh.py # >> /dev/null 2>&1
 
-echo "Done! Mesh files has been written in directory MESH"
+echo "Done! Mesh files has been written in directory MESH/"
 
 rm -rf history* free_surface_file materials_file mesh_file nodes_coords_file elements_cpml_list absorbing_surface_file
 

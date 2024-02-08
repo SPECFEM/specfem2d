@@ -17,6 +17,8 @@ rm -f bin/xcreate_mesh_files
 # compile
 $f90 $flags -o bin/xcreate_mesh_files create_mesh_AK135F_2D_with_central_cube_no_PML.F90
 
+mkdir -p MESH/
+
 ./bin/xcreate_mesh_files
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi

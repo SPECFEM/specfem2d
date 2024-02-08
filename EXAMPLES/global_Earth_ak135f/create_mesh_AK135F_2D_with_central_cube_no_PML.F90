@@ -1174,10 +1174,10 @@
 
 ! write the mesh points
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  open(unit=22,file='DATA/Nodes_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
+  open(unit=22,file='MESH/Nodes_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
   write(22) npoin
 #else
-  open(unit=22,file='DATA/Nodes_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
+  open(unit=22,file='MESH/Nodes_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
   write(22,*) npoin
 #endif
   do ipoin = 1,npoin
@@ -1191,10 +1191,10 @@
 
 ! write the mesh elements
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  open(unit=22,file='DATA/Mesh_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
+  open(unit=22,file='MESH/Mesh_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
   write(22) nspec
 #else
-  open(unit=22,file='DATA/Mesh_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
+  open(unit=22,file='MESH/Mesh_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
   write(22,*) nspec
 #endif
   do ispec = 1,nspec
@@ -1208,9 +1208,9 @@
 
 ! write the material properties
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  open(unit=22,file='DATA/Material_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
+  open(unit=22,file='MESH/Material_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
 #else
-  open(unit=22,file='DATA/Material_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
+  open(unit=22,file='MESH/Material_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
 #endif
   do ispec = 1,nspec
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -1223,20 +1223,20 @@
 
 ! write empty file for the absorbing boundary
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  open(unit=22,file='DATA/Surf_abs_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
+  open(unit=22,file='MESH/Surf_abs_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
   write(22) 0
 #else
-  open(unit=22,file='DATA/Surf_abs_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
+  open(unit=22,file='MESH/Surf_abs_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
   write(22,*) 0
 #endif
   close(22)
 
 ! write empty file for the acoustic free surface boundary (since there is no acoustic free surface in the 1D Earth without oceans)
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  open(unit=22,file='DATA/Surf_free_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
+  open(unit=22,file='MESH/Surf_free_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
   write(22) 0
 #else
-  open(unit=22,file='DATA/Surf_free_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
+  open(unit=22,file='MESH/Surf_free_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
   write(22,*) 0
 #endif
   close(22)
@@ -1271,10 +1271,10 @@
 
 ! then save them to a file and also save the (only) edge that is in contact
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  open(unit=22,file='DATA/Symmetry_axis_elements_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
+  open(unit=22,file='MESH/Symmetry_axis_elements_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
   write(22) ispec_count
 #else
-  open(unit=22,file='DATA/Symmetry_axis_elements_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
+  open(unit=22,file='MESH/Symmetry_axis_elements_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
   write(22,*) ispec_count
 #endif
 

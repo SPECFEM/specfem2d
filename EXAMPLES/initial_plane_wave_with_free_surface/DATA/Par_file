@@ -262,6 +262,7 @@ read_external_mesh              = .false.
 mesh_file                       = ./DATA/ice_water_rock_1D/ice_water_rock_1D_elements   # file containing the mesh
 nodes_coords_file               = ./DATA/ice_water_rock_1D/ice_water_rock_1D_nodes   # file containing the nodes coordinates
 materials_file                  = ./DATA/ice_water_rock_1D/ice_water_rock_1D_material   # file containing the material number for each element
+nummaterial_velocity_file       = ./MESH/nummaterial_velocity_file   # file containing the material properties for each material
 free_surface_file               = ./DATA/ice_water_rock_1D/ice_water_rock_1D_surface_free   # file containing the free surface
 axial_elements_file             = ./DATA/axial_elements_file   # file containing the axial elements if AXISYM is true
 absorbing_surface_file          = ./DATA/ice_water_rock_1D/ice_water_rock_1D_surface_absorb   # file containing the absorbing surface
