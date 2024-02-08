@@ -41,7 +41,8 @@
 
   use specfem_par, only: AXISYM,density,porosity,tortuosity,anisotropycoef,permeability,poroelastcoef, &
                           numat,myrank,QKappa_attenuationcoef,Qmu_attenuationcoef, &
-                          freq0_poroelastic,Q0_poroelastic,ATTENUATION_PORO_FLUID_PART,assign_external_model,tomo_material,myrank
+                          freq0_poroelastic,Q0_poroelastic,ATTENUATION_PORO_FLUID_PART, &
+                          use_external_velocity_model,tomo_material,myrank
 
   implicit none
 
@@ -303,7 +304,7 @@
 
       ! line format:
       !  #model_number #-1 #(val0)0 #(val1)0 #(val2)A  0 0 0 0 0 0 0 0 0 0
-      assign_external_model = .true.
+      use_external_velocity_model = .true.
       tomo_material = n
       mu = val2 ! for acoustic medium vs must be 0 anyway
 

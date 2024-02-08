@@ -128,7 +128,7 @@
 
   ! read the parameter file
   BROADCAST_AFTER_READ = .true.
-  call read_parameter_file(.false.,BROADCAST_AFTER_READ)
+  call read_parameter_file(BROADCAST_AFTER_READ)
 
   ! reads in source descriptions
   ! note: we will need a source frequency for outputting poroelastic velocities when reading the mesh databases
@@ -213,9 +213,9 @@
 
   ! sets model flag
   if (trim(MODEL) == 'default') then
-    assign_external_model = .false.
+    use_external_velocity_model = .false.
   else
-    assign_external_model = .true.
+    use_external_velocity_model = .true.
   endif
 
   end subroutine initialize_simulation

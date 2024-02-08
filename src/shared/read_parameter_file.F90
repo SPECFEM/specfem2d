@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine read_parameter_file(is_mesher,BROADCAST_AFTER_READ)
+  subroutine read_parameter_file(BROADCAST_AFTER_READ)
 
 ! reads in DATA/Par_file
 
@@ -40,7 +40,6 @@
 
   implicit none
 
-  logical, intent(in) :: is_mesher
   logical, intent(in) :: BROADCAST_AFTER_READ
 
   ! initializes
@@ -69,52 +68,8 @@
     endif
     call flush_IMAIN()
 
-    ! reads receiver lines
-    if (is_mesher) then
-      ! user output
-      write(IMAIN,*) 'Receiver lines:'
-      write(IMAIN,*) '  Nb of line sets = ',nreceiversets
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
+    ! reads receivers
     call read_parameter_file_receiversets()
-
-    ! only mesher needs to reads this
-    if (is_mesher) then
-      ! reads material definitions
-      call read_material_table()
-
-      ! mesher reads in internal region table for setting up mesh elements
-      if (.not. read_external_mesh) then
-        ! internal meshing
-        ! user output
-        write(IMAIN,*)
-        write(IMAIN,*) 'Mesh from internal meshing:'
-        write(IMAIN,*)
-        call flush_IMAIN()
-
-        ! reads interface definitions from interface file (we need to have nxread & nzread value for checking regions)
-        call read_interfaces_file()
-
-        ! internal meshing
-        nx_elem_internal = nxread
-        nz_elem_internal = nzread
-
-        ! setup mesh array
-        ! multiply by 2 if elements have 9 nodes
-        if (NGNOD == 9) then
-          nx_elem_internal = nx_elem_internal * 2
-          nz_elem_internal = nz_elem_internal * 2
-          nz_layer(:) = nz_layer(:) * 2
-        endif
-
-        ! total number of elements
-        nelmnts = nxread * nzread
-
-        ! reads material regions defined in Par_file
-        call read_regions()
-      endif
-    endif
 
     ! closes file Par_file
     call close_parameter_file()
@@ -210,14 +165,18 @@
     call bcast_all_singledp(PERIODIC_HORIZ_DIST)
 
     ! velocity and density models
-    call bcast_all_singlei(nbmodels)
     call bcast_all_string(TOMOGRAPHY_FILE)
     call bcast_all_singlel(read_external_mesh)
 
+    ! infos for mesher
+    ! note: the mesher doesn't need to broadcast as only the main process (myrank==0)
+    !       is doing work in the mesher.
+    !       thus, this could be removed at the moment, but left for possible future use...
     if (read_external_mesh) then
       call bcast_all_string(mesh_file)
       call bcast_all_string(nodes_coords_file)
       call bcast_all_string(materials_file)
+      call bcast_all_string(nummaterial_velocity_file)
       call bcast_all_string(free_surface_file)
       call bcast_all_string(axial_elements_file)
       call bcast_all_string(absorbing_surface_file)
@@ -225,6 +184,7 @@
       call bcast_all_string(absorbing_cpml_file)
       call bcast_all_string(tangential_detection_curve_file)
     else
+      call bcast_all_singlei(nbmodels)
       call bcast_all_string(interfacesfile)
       call bcast_all_singledp(xmin_param)
       call bcast_all_singledp(xmax_param)
@@ -306,6 +266,7 @@
   mesh_file = ''
   nodes_coords_file = ''
   materials_file = ''
+  nummaterial_velocity_file = ''
   free_surface_file = ''
   axial_elements_file = ''
   absorbing_surface_file = ''
@@ -324,6 +285,7 @@
   absorbtop = .false.
   absorbleft = .false.
 
+  nbmodels = 0
   nbregions = 0
 
   end subroutine read_parameter_file_init
@@ -928,15 +890,8 @@
   !
   !--------------------------------------------------------------------
 
-  ! read the different material materials (i.e. the number of models)
-  call read_value_integer_p(nbmodels, 'nbmodels')
-  if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'nbmodels                        = 1'
-    write(*,*)
-  endif
-
-  ! material definitions will be read later on...
+  ! material definitions in the Par_file are only needed for internal meshes;
+  ! external meshes have to define the materials in MESH/nummaterial_velocity_file
 
   call read_value_string_p(TOMOGRAPHY_FILE, 'TOMOGRAPHY_FILE')
   if (err_occurred() /= 0) then
@@ -968,63 +923,70 @@
     call read_value_string_p(mesh_file, 'mesh_file')
     if (err_occurred() /= 0) then
       some_parameters_missing_from_Par_file = .true.
-      write(*,'(a)') 'mesh_file                       = ./DATA/mesh_file'
+      write(*,'(a)') 'mesh_file                       = ./MESH/mesh_file'
       write(*,*)
     endif
 
     call read_value_string_p(nodes_coords_file, 'nodes_coords_file')
     if (err_occurred() /= 0) then
       some_parameters_missing_from_Par_file = .true.
-      write(*,'(a)') 'nodes_coords_file               = ./DATA/nodes_coords_file'
+      write(*,'(a)') 'nodes_coords_file               = ./MESH/nodes_coords_file'
       write(*,*)
     endif
 
     call read_value_string_p(materials_file, 'materials_file')
     if (err_occurred() /= 0) then
       some_parameters_missing_from_Par_file = .true.
-      write(*,'(a)') 'materials_file                  = ./DATA/materials_file'
+      write(*,'(a)') 'materials_file                  = ./MESH/materials_file'
+      write(*,*)
+    endif
+
+    call read_value_string_p(nummaterial_velocity_file, 'nummaterial_velocity_file')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'nummaterial_velocity_file       = ./MESH/nummaterial_velocity_file'
       write(*,*)
     endif
 
     call read_value_string_p(free_surface_file, 'free_surface_file')
     if (err_occurred() /= 0) then
       some_parameters_missing_from_Par_file = .true.
-      write(*,'(a)') 'free_surface_file               = ./DATA/free_surface_file'
+      write(*,'(a)') 'free_surface_file               = ./MESH/free_surface_file'
       write(*,*)
     endif
 
     call read_value_string_p(axial_elements_file, 'axial_elements_file')
     if (err_occurred() /= 0) then
       some_parameters_missing_from_Par_file = .true.
-      write(*,'(a)') 'axial_elements_file             = ./DATA/axial_elements_file'
+      write(*,'(a)') 'axial_elements_file             = ./MESH/axial_elements_file'
       write(*,*)
     endif
 
     call read_value_string_p(absorbing_surface_file, 'absorbing_surface_file')
     if (err_occurred() /= 0) then
       some_parameters_missing_from_Par_file = .true.
-      write(*,'(a)') 'absorbing_surface_file          = ./DATA/absorbing_surface_file'
+      write(*,'(a)') 'absorbing_surface_file          = ./MESH/absorbing_surface_file'
       write(*,*)
     endif
 
     call read_value_string_p(acoustic_forcing_surface_file, 'acoustic_forcing_surface_file')
     if (err_occurred() /= 0) then
       some_parameters_missing_from_Par_file = .true.
-      write(*,'(a)') 'acoustic_forcing_surface_file   = ./DATA/MSH/Surf_acforcing_Bottom_enforcing_mesh'
+      write(*,'(a)') 'acoustic_forcing_surface_file   = ./MESH/acoustic_forcing_surface_file'
       write(*,*)
     endif
 
     call read_value_string_p(absorbing_cpml_file, 'absorbing_cpml_file')
     if (err_occurred() /= 0) then
       some_parameters_missing_from_Par_file = .true.
-      write(*,'(a)') 'absorbing_cpml_file             = ./DATA/absorbing_cpml_file'
+      write(*,'(a)') 'absorbing_cpml_file             = ./MESH/absorbing_cpml_file'
       write(*,*)
     endif
 
     call read_value_string_p(tangential_detection_curve_file, 'tangential_detection_curve_file')
     if (err_occurred() /= 0) then
       some_parameters_missing_from_Par_file = .true.
-      write(*,'(a)') 'tangential_detection_curve_file = ./DATA/courbe_eros_nodes'
+      write(*,'(a)') 'tangential_detection_curve_file = ./MESH/tangential_detection_curve_file'
       write(*,*)
     endif
 
@@ -1032,6 +994,16 @@
 
     !-----------------
     ! internal mesh parameters
+
+    ! read the different material materials (i.e. the number of models)
+    call read_value_integer_p(nbmodels, 'nbmodels')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'nbmodels                        = 1'
+      write(*,*)
+    endif
+
+    ! material definitions will be read later on...
 
     ! interfaces file
     call read_value_string_p(interfacesfile, 'interfacesfile')
@@ -1487,10 +1459,6 @@
 
   if (DT == 0.d0) call stop_the_code('DT must be non-zero value')
 
-  ! reads in material definitions
-  if (nbmodels <= 0) &
-    call stop_the_code('Non-positive number of materials not allowed!')
-
   ! CPML and Stacey are mutually exclusive
   if (STACEY_ABSORBING_CONDITIONS .and. PML_BOUNDARY_CONDITIONS) &
     call stop_the_code('STACEY_ABSORBING_CONDITIONS and PML_BOUNDARY_CONDITIONS are mutually exclusive but are both set to .true.')
@@ -1513,8 +1481,9 @@
     call stop_the_code('Error bad value for parameter SAVE_MODEL')
   end select
 
-  ! check regions
+  ! check regions and material definitions
   if (read_external_mesh .eqv. .false.) then
+    if (nbmodels <= 0) call stop_the_code('Non-positive number of materials not allowed!')
     if (nbregions <= 0) call stop_the_code('Negative number of regions not allowed for internal meshing!')
   endif
 
@@ -1559,7 +1528,7 @@
   if (reread_rec_normal_to_surface .neqv. rec_normal_to_surface) &
     call stop_the_code('Invalid re-reading of rec_normal_to_surface parameter')
 
-  ! reads in receiver sets
+  ! reads in receivers
   if (use_existing_STATIONS) then
     ! checks if STATIONS file exisits
     stations_filename = trim(IN_DATA_FILES)//'STATIONS'      ! by default: DATA/STATIONS
@@ -1603,9 +1572,16 @@
     write(IMAIN,*) '  file name is ',trim(stations_filename)
     write(IMAIN,*) '  found ',nrec,' receivers'
     write(IMAIN,*)
+    call flush_IMAIN()
 
   else
     ! receiver lines specified in Par_file
+    ! user output
+    write(IMAIN,*) 'Receiver lines:'
+    write(IMAIN,*) '  Nb of line sets = ',nreceiversets
+    write(IMAIN,*)
+    call flush_IMAIN()
+
     ! only valid if at least 1 receiver line is specified
     if (nreceiversets < 1) &
       call stop_the_code('number of receiver sets must be greater than 1')

@@ -66,8 +66,8 @@ module specfem_par
   double precision, dimension(:), allocatable  :: QKappa_attenuationcoef
   double precision, dimension(:), allocatable  :: Qmu_attenuationcoef
 
-  ! external models
-  logical :: assign_external_model
+  ! external velocity models
+  logical :: use_external_velocity_model
 
   integer :: nspec_ATT_el,nspec_ATT_ac,nglob_att
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2

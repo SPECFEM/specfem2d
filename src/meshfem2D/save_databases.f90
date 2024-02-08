@@ -462,13 +462,13 @@
 
     if (indic == ISOTROPIC_MATERIAL) then
       ! isotropic elastic/acoustic
-      val0 = rho_s_read(i)
-      val1 = cp(i)
-      val2 = cs(i)
-      val3 = comp_g(i)
+      val0 = rho_s_read(i)             ! density
+      val1 = cp(i)                     ! Vp
+      val2 = cs(i)                     ! Vs
+      val3 = compaction_grad(i)        ! compaction gradient
       val4 = 0.d0
-      val5 = QKappa(i)
-      val6 = Qmu(i)
+      val5 = QKappa(i)                 ! bulk attenuation
+      val6 = Qmu(i)                    ! shear attenuation
       val7 = 0.d0
       val8 = 0.d0
       val9 = 0.d0

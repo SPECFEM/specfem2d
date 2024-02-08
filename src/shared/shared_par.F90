@@ -275,6 +275,7 @@ module shared_input_parameters
   !#
   !#-----------------------------------------------------------------------------
   character(len=MAX_STRING_LEN) :: mesh_file, nodes_coords_file, materials_file
+  character(len=MAX_STRING_LEN) :: nummaterial_velocity_file
 
   character(len=MAX_STRING_LEN) :: free_surface_file
   character(len=MAX_STRING_LEN) :: absorbing_surface_file
@@ -398,15 +399,22 @@ module shared_parameters
   double precision, dimension(:),allocatable :: rho_s_read
   double precision, dimension(:),allocatable :: rho_f_read
 
-  ! acoustic/elastic/anisotropic
-  double precision, dimension(:),allocatable :: cp,cs, &
-    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12,comp_g,QKappa,Qmu
+  ! acoustic/elastic
+  double precision, dimension(:),allocatable :: cp,cs,QKappa,Qmu
+
+  ! anisotropic
+  double precision, dimension(:),allocatable :: &
+    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12
 
   ! poroelastic
   ! note: adds ending _read to indicate these are readin values and to distinguish from solver arrays
   !       one could check if the solver arrays could be omitted and replaced with this ones in future...
   double precision, dimension(:),allocatable :: phi_read,tortuosity_read,permxx_read,permxz_read, &
        permzz_read,kappa_s_read,kappa_f_read,kappa_fr_read,eta_f_read,mu_fr_read
+
+  ! compaction gradient
+  ! (in particular for Marmousi2 which defines a compaction gradient to increase velocities with depth)
+  double precision, dimension(:),allocatable :: compaction_grad
 
   ! mesh setup
   ! total number of elements

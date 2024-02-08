@@ -124,7 +124,7 @@ void setConst_hprime_xx(realw* array,Mesh* mp)
   if (err != cudaSuccess)
   {
     fprintf(stderr, "Error in setConst_hprime_xx: %s\n", cudaGetErrorString(err));
-    fprintf(stderr, "The problem is maybe -arch sm_13 instead of -arch sm_11 in the Makefile, please doublecheck\n");
+    fprintf(stderr, "The problem is maybe that the architecture specified in the Makefile (-gencode=arch=compute_**,code=\"sm_**,compute_**\") doesn't fit your card, please doublecheck\n");
     exit(1);
   }
 
@@ -147,7 +147,6 @@ void setConst_hprime_xx(realw* array,Mesh* mp)
 //   if (err != cudaSuccess)
 //   {
 //     fprintf(stderr, "Error in setConst_hprime_zz: %s\n", cudaGetErrorString(err));
-//     fprintf(stderr, "The problem is maybe -arch sm_13 instead of -arch sm_11 in the Makefile, please doublecheck\n");
 //     exit(1);
 //   }
 

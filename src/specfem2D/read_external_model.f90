@@ -343,7 +343,7 @@
 
   subroutine read_binary_gll_model(rhoext,vpext,vsext,Qkappa_attenuationext,Qmu_attenuationext)
 
-! reads in binary and gll format model
+! reads in binary and GLL format model
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IMAIN,IN_DATA_FILES,IIN,MAX_STRING_LEN, &
     ATTENUATION_COMP_MAXIMUM
