@@ -27,7 +27,7 @@ cd ../
 
 # scripts
 if [ ! -e createTomographyFile.py ]; then
-  ln -s ../../utils/createTomographyFile.py
+  ln -s ../../utils/scripts/createTomographyFile.py
 fi
 if [ ! -e plot_model_from_gll_or_binary_file.py ]; then
   ln -s ../../utils/Visualization/plot_model_from_gll_or_binary_file.py

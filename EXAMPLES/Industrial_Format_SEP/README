@@ -1,7 +1,18 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This example reads in a Vp velocity model given in SEP (Stanford Exploration Project) file format
+and interpolates it onto a regular SPECFEM2D mesh to produce seismic traces.
+
 1. modify interpolate.f90
    mainly to change the location/names of your SEP/SU models
 
 2. run interpolation:
-	./interpolate.bash
+   ./run_this_example.sh
 
+   The script will compile the interpolate.f90 file and run the xinterpolate binary.
+   This binary will call the mesher xmeshfem2D and solver xspecfem2D to first create and output the regular mesh,
+   then interpolate the velocities onto it and re-run the binaries to run a simulation using the
+   interpolated velocity model (in "legacy" format).
 

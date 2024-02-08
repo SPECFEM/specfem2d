@@ -164,7 +164,8 @@
   !write(*,*) trim(tmpstring)
   write(system_command,*) 'sed -i "s/^xmin .*/',trim(tmpstring),'/" ./DATA/Par_file'
   write (*,*) trim(system_command)
-  call system(trim(system_command))
+  call execute_command_line(trim(system_command),exitstat=ier)
+  if (ier /= 0) stop
 
   write(numstring,*) OX+(NX-1)*DX
   write(tmpstring,*) 'xmax                            =',trim(numstring)
@@ -172,7 +173,8 @@
   !write(*,*) trim(tmpstring)
   write(system_command,*) 'sed -i "s/^xmax .*/',trim(tmpstring),'/" ./DATA/Par_file'
   write (*,*) trim(system_command)
-  call system(system_command)
+  call execute_command_line(system_command,exitstat=ier)
+  if (ier /= 0) stop
 
   write(numstring,*) (NX-1)/INTERPOLATION_POINTS
   write(tmpstring,*) 'nx                              =',trim(numstring)
@@ -180,7 +182,8 @@
   !write(*,*) trim(tmpstring)
   write(system_command,*) 'sed -i "s/^nx .*/',trim(tmpstring),'/" ./DATA/Par_file'
   write (*,*) trim(system_command)
-  call system(trim(system_command))
+  call execute_command_line(trim(system_command),exitstat=ier)
+  if (ier /= 0) stop
 
   ! nbregions
   !call system('sed -i "$ d" ./DATA/Par_file')
@@ -192,7 +195,8 @@
   ! original Par_file line for regions to replace is: 1 20 1 20 1
   write(system_command,*) 'sed -i "s/^1 20 .*/',trim(tmpstring),'/" ./DATA/Par_file'
   write (*,*) trim(system_command)
-  call system(trim(system_command))
+  call execute_command_line(trim(system_command),exitstat=ier)
+  if (ier /= 0) stop
 
   ! number of processes
   if (USER_INPUT) then
@@ -201,12 +205,14 @@
     !write(*,*) trim(tmpstring)
     write(system_command,*) 'sed -i "s/^NPROC .*/',trim(tmpstring),'/" ./DATA/Par_file'
     write (*,*) trim(system_command)
-    call system(trim(system_command))
+    call execute_command_line(trim(system_command),exitstat=ier)
+    if (ier /= 0) stop
   endif
   print *
 
   ! backup Par_file
-  call system('cp ./DATA/Par_file ./DATA/Par_file.org')
+  call execute_command_line('cp ./DATA/Par_file ./DATA/Par_file.org',exitstat=ier)
+  if (ier /= 0) stop
 
   call sleep(1)
 
@@ -219,20 +225,32 @@
   print *
 
   ! Par_file flags to create new mesh files
-  call system('cp ./DATA/Par_file.org ./DATA/Par_file')
-  call system('sed -i "s/^MODEL .*/MODEL                            = default/" ./DATA/Par_file')
-  call system('sed -i "s/^SAVE_MODEL .*/SAVE_MODEL                  = legacy/" ./DATA/Par_file')
-  call system('sed -i "s/^NSTEP .*/NSTEP                            = 5 /" ./DATA/Par_file')
-  call system('cp ./DATA/Par_file ./OUTPUT_FILES/Par_file.step_1')
+  call execute_command_line('cp ./DATA/Par_file.org ./DATA/Par_file',exitstat=ier)
+  if (ier /= 0) stop
+
+  call execute_command_line('sed -i "s/^MODEL .*/MODEL                            = default/" ./DATA/Par_file',exitstat=ier)
+  if (ier /= 0) stop
+
+  call execute_command_line('sed -i "s/^SAVE_MODEL .*/SAVE_MODEL                  = legacy/" ./DATA/Par_file',exitstat=ier)
+  if (ier /= 0) stop
+
+  call execute_command_line('sed -i "s/^NSTEP .*/NSTEP                            = 5 /" ./DATA/Par_file',exitstat=ier)
+  if (ier /= 0) stop
+
+  call execute_command_line('cp ./DATA/Par_file ./OUTPUT_FILES/Par_file.step_1',exitstat=ier)
+  if (ier /= 0) stop
+
+  write(num,'(i2.2)') nproc
 
   ! runs mesher
   print *,'call xmeshfem2d'
-  call system('./bin/xmeshfem2D > OUTPUT_FILES/output_mesher.step_1.txt')
+  call execute_command_line('mpirun -np ' //num//' ./bin/xmeshfem2D > OUTPUT_FILES/output_mesher.step_1.txt',exitstat=ier)
+  if (ier /= 0) stop
 
   ! runs first forward simulation to generate new specfem files
   print *,'call xspecfem2d'
-  write(num,'(i2.2)') nproc
-  call system('mpirun -np ' //num//' ./bin/xspecfem2D > OUTPUT_FILES/output_solver.step_1.txt')
+  call execute_command_line('mpirun -np ' //num//' ./bin/xspecfem2D > OUTPUT_FILES/output_solver.step_1.txt',exitstat=ier)
+  if (ier /= 0) stop
 
   print *
   print *, '************ Setting up new simulation ************ '
@@ -240,14 +258,22 @@
 
   ! now uses default specfem file format
   ! backup Par_file
-  call system('cp ./DATA/Par_file.org ./DATA/Par_file')
-  call system('sed -i "s/^MODEL .*/MODEL                            = legacy/" ./DATA/Par_file')
-  call system('sed -i "s/^SAVE_MODEL .*/SAVE_MODEL                  = default/" ./DATA/Par_file')
-  call system('cp ./DATA/Par_file ./OUTPUT_FILES/Par_file.step_2')
+  call execute_command_line('cp ./DATA/Par_file.org ./DATA/Par_file',exitstat=ier)
+  if (ier /= 0) stop
+
+  call execute_command_line('sed -i "s/^MODEL .*/MODEL                            = legacy/" ./DATA/Par_file',exitstat=ier)
+  if (ier /= 0) stop
+
+  call execute_command_line('sed -i "s/^SAVE_MODEL .*/SAVE_MODEL                  = default/" ./DATA/Par_file',exitstat=ier)
+  if (ier /= 0) stop
+
+  call execute_command_line('cp ./DATA/Par_file ./OUTPUT_FILES/Par_file.step_2',exitstat=ier)
+  if (ier /= 0) stop
 
   ! runs mesher
   print *,'call xmeshfem2d'
-  call system('./bin/xmeshfem2D')
+  call execute_command_line('mpirun -np ' //num//' ./bin/xmeshfem2D',exitstat=ier)
+  if (ier /= 0) stop
 
   ! scaling model values
   if (SCALE_FROM_VP) then
@@ -286,7 +312,8 @@
 
   ! runs forward simulation
   print *,'call xspecfem2d'
-  call system('mpirun -np ' //num//' ./bin/xspecfem2D ')
+  call execute_command_line('mpirun -np ' //num//' ./bin/xspecfem2D ',exitstat=ier)
+  if (ier /= 0) stop
 
   end program main_interpolate
 
@@ -621,10 +648,13 @@
     print *, 'replacing model file'
     write(system_command,*) 'mv -f ',trim(adjustl(input_file)),' ',trim(adjustl(input_file))//'.org'
     write(*,*) trim(system_command)
-    call system(trim(system_command))
+    call execute_command_line(trim(system_command),exitstat=ier)
+    if (ier /= 0) stop
+
     write(system_command,*) 'mv -f ',trim(adjustl(output_file)),' ',trim(adjustl(input_file))
     write(*,*) trim(system_command)
-    call system(trim(system_command))
+    call execute_command_line(trim(system_command),exitstat=ier)
+    if (ier /= 0) stop
 
   enddo ! iproc
 

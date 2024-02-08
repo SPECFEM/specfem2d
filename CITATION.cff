@@ -1,0 +1,105 @@
+cff-version: 1.2.0
+
+message: "If this software turns out to be helpful for your research, please cite both the article from preferred-citation and the software itself. More detailed citation suggestions can be found in the user manual."
+title: 'SPECFEM/specfem2d: SPECFEM2D v8.1.0'
+version: v8.1.0
+date-released: '2023-12-20'
+repository-code: https://github.com/SPECFEM/specfem2d/tree/v8.1.0
+url: "https://github.com/SPECFEM/specfem2d"
+type: software
+identifiers:
+  - type: doi
+  - value: 10.5281/zenodo.10415228
+license:
+- gpl-3.0-or-later
+
+authors:
+- family-names: Komatitsch
+  given-names: Dimitri
+- family-names: Tromp
+  given-names: Jeroen
+- family-names: Gharti
+  given-names: Hom Nath
+- family-names: Peter
+  given-names: Daniel
+- family-names: Valero Cano
+  given-names: Eduardo
+- family-names: Bachmann
+  given-names: Etienne
+- family-names: Bottero
+  given-names: Alexis
+- family-names: Brissaud
+  given-names: Quentin
+- family-names: Chow
+  given-names: Bryant
+- family-names: Cristini
+  given-names: Paul
+- family-names: Cui
+  given-names: Congyue
+- family-names: Gassmoeller
+  given-names: Rene
+- family-names: Gineste
+  given-names: Michael
+- family-names: Halpaap
+  given-names: Felix
+- family-names: Heien
+  given-names: Eric
+- family-names: Labarta
+  given-names: Jesus
+- family-names: Le Goff
+  given-names: Nicolas
+- family-names: Le Loher
+  given-names: Pieyre
+- family-names: Lefebvre
+  given-names: Matthieu
+- family-names: Liu
+  given-names: Qiancheng
+- family-names: Liu
+  given-names: Qinya
+- family-names: Liu
+  given-names: Youshan
+- family-names: Liu
+  given-names: Zhaolun
+- family-names: Luet
+  given-names: David
+- family-names: Martin
+  given-names: Roland
+- family-names: Matzen
+  given-names: Rene
+- family-names: Modrak
+  given-names: Ryan
+- family-names: Morency
+  given-names: Christina
+- family-names: Nagaso
+  given-names: Masaru
+- family-names: Rosenkrantz
+  given-names: Eric
+- family-names: Rusmanugroho
+  given-names: Herurisa
+- family-names: Sales de Andrade
+  given-names: Elliott
+- family-names: Tape
+  given-names: Carl
+- family-names: Vilotte
+  given-names: Jean-Pierre
+- family-names: Xie
+  given-names: Zhinan
+- family-names: Zhang
+  given-names: Zhendong
+
+
+preferred-citation:
+  type: article
+  authors:
+  - family-names: Komatitsch
+    given-names: Dimitri
+  - family-names: Vilotte
+    given-names: Jean-Pierre
+  title: "The spectral-element method: an efficient tool to simulate the seismic response of 2D and 3D geological structures"
+  journal: "Bull. seism. Soc. Am."
+  volume: 88
+  issue: 2
+  start: 368  # First page number
+  end: 392    # Last page number
+  year: 1998
+  doi: "10.1785/BSSA0880020368"

@@ -38,13 +38,15 @@
   use constants, only: IMAIN,TINYVAL,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL, &
     ATTENUATION_COMP_MAXIMUM
 
-  use shared_parameters, only: AXISYM,nbmodels,icodemat,cp,cs, &
-                              aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
-                              comp_g,QKappa,Qmu, &
-                              rho_s_read,rho_f_read, &
-                              phi_read,tortuosity_read, &
-                              permxx_read,permxz_read,permzz_read,kappa_s_read,kappa_f_read,kappa_fr_read, &
-                              eta_f_read,mu_fr_read
+  use shared_parameters, only: nbmodels,icodemat, &
+                               cp,cs, &
+                               aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
+                               QKappa,Qmu, &
+                               rho_s_read,rho_f_read, &
+                               phi_read,tortuosity_read, &
+                               permxx_read,permxz_read,permzz_read,kappa_s_read,kappa_f_read,kappa_fr_read, &
+                               eta_f_read,mu_fr_read, &
+                               compaction_grad
 
   implicit none
 
@@ -63,76 +65,8 @@
   ! check
   if (reread_nbmodels /= nbmodels) call stop_the_code('Invalid reread value of nbmodels in reading material table')
 
-  ! safety check
-  if (nbmodels <= 0) call stop_the_code('Non-positive number of materials not allowed!')
-
-  ! allocates material tables
-  allocate(icodemat(nbmodels))
-  allocate(cp(nbmodels))
-  allocate(cs(nbmodels))
-
-  allocate(aniso3(nbmodels))
-  allocate(aniso4(nbmodels))
-  allocate(aniso5(nbmodels))
-  allocate(aniso6(nbmodels))
-  allocate(aniso7(nbmodels))
-  allocate(aniso8(nbmodels))
-  allocate(aniso9(nbmodels))
-  allocate(aniso10(nbmodels))
-  allocate(aniso11(nbmodels))
-  allocate(aniso12(nbmodels))
-
-  allocate(comp_g(nbmodels))
-  allocate(QKappa(nbmodels))
-  allocate(Qmu(nbmodels))
-
-  allocate(rho_s_read(nbmodels))
-  allocate(rho_f_read(nbmodels))
-
-  allocate( phi_read(nbmodels), &
-            tortuosity_read(nbmodels), &
-            permxx_read(nbmodels), &
-            permxz_read(nbmodels), &
-            permzz_read(nbmodels), &
-            kappa_s_read(nbmodels), &
-            kappa_f_read(nbmodels), &
-            kappa_fr_read(nbmodels), &
-            eta_f_read(nbmodels), &
-            mu_fr_read(nbmodels))
-
-  ! initializes material properties
-  icodemat(:) = 0
-
-  cp(:) = 0.d0
-  cs(:) = 0.d0
-
-  aniso3(:) = 0.d0
-  aniso4(:) = 0.d0
-  aniso5(:) = 0.d0
-  aniso6(:) = 0.d0
-  aniso7(:) = 0.d0
-  aniso8(:) = 0.d0
-  aniso9(:) = 0.d0
-  aniso10(:) = 0.d0
-  aniso11(:) = 0.d0
-
-  comp_g(:) = 0.0d0
-  QKappa(:) = ATTENUATION_COMP_MAXIMUM
-  Qmu(:) = ATTENUATION_COMP_MAXIMUM
-
-  rho_s_read(:) = 0.d0
-  rho_f_read(:) = 0.d0
-
-  phi_read(:) = 0.d0
-  tortuosity_read(:) = 0.d0
-  permxx_read(:) = 0.d0
-  permxz_read(:) = 0.d0
-  permzz_read(:) = 0.d0
-  kappa_s_read(:) = 0.d0
-  kappa_f_read(:) = 0.d0
-  kappa_fr_read(:) = 0.d0
-  eta_f_read(:) = 0.d0
-  mu_fr_read(:) = 0.d0
+  ! allocates and initializes material arrays
+  call initialize_material_properties()
 
   number_of_materials_defined_by_tomo_file = 0
 
@@ -145,6 +79,9 @@
     !  anisotropic (in AXISYM) - model_number  2 rho   c11 c13 c15 c33    c35 c55 c12 c23 c25  c22 QKappa Qmu
     !  poroelastic             - model_number  3 rhos rhof phi   c kxx    kxz kzz  Ks  Kf Kfr etaf   mufr Qmu
     !  tomo                    - model_number -1 0       0   A   0   0      0   0   0   0   0    0      0   0
+    !
+    ! and specially for Marmousi2-type models with a compaction gradient k
+    !  elastic                 - model_number  1 rho    Vp  Vs   k   0 QKappa Qmu   0   0   0    0      0   0
 
     call read_material_parameters_p(i,icodematread, &
                                     val0read,val1read,val2read,val3read, &
@@ -158,12 +95,12 @@
     ! sets material properties
     if (icodemat(i) == ISOTROPIC_MATERIAL) then
       ! isotropic materials
-      rho_s_read(i) = val0read
-      cp(i) = val1read
-      cs(i) = val2read
-      comp_g(i) = val3read
-      QKappa(i) = val5read
-      Qmu(i) = val6read
+      rho_s_read(i) = val0read         ! density
+      cp(i) = val1read                 ! Vp
+      cs(i) = val2read                 ! Vs
+      compaction_grad(i) = val3read    ! compaction gradient (for Marmousi2)
+      QKappa(i) = val5read             ! bulk attenuation
+      Qmu(i) = val6read                ! shear attenuation
 
       ! for Cs we use a less restrictive test because acoustic media have Cs exactly equal to zero
       if (rho_s_read(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.d0) then
@@ -176,6 +113,8 @@
 
       aniso3(i) = val3read
       aniso4(i) = val4read
+
+      ! phi_read is used to determine element type
       if (abs(cs(i)) > TINYVAL) then
         phi_read(i) = 0.d0           ! elastic
       else
@@ -217,13 +156,13 @@
       if (val12read > 0.1) Qmu(i) = val12read
 
       if (rho_s_read(i) <= 0.d0 .or. rho_f_read(i) <= 0.d0) &
-        call stop_the_code('non-positive value of density')
+        call stop_the_code('Invalid poroelastic material: non-positive value of density')
       if (phi_read(i) <= 0.d0 .or. tortuosity_read(i) <= 0.d0) &
-        call stop_the_code('non-positive value of porosity or tortuosity')
+        call stop_the_code('Invalid poroelastic material: non-positive value of porosity or tortuosity')
       if (kappa_s_read(i) <= 0.d0 .or. kappa_f_read(i) <= 0.d0 .or. kappa_fr_read(i) <= 0.d0 .or. mu_fr_read(i) <= 0.d0) &
-        call stop_the_code('non-positive value of modulus')
+        call stop_the_code('Invalid poroelastic material: non-positive value of modulus')
       if (Qmu(i) <= 0.00000001d0) &
-        call stop_the_code('non-positive value of Qmu')
+        call stop_the_code('Invalid poroelastic material: non-positive value of Qmu')
 
     else if (icodemat(i) <= 0) then
       ! tomographic material
@@ -239,8 +178,11 @@
       cs(i) = val2read
       QKappa(i) = -1.0d0
       Qmu(i) = -1.0d0
+
       aniso3(i) = -1.0d0
       aniso4(i) = -1.0d0
+
+      ! phi_read is used to determine element type
       if (abs(cs(i)) > TINYVAL) then
         phi_read(i) = 0.d0           ! elastic
       else
@@ -256,7 +198,150 @@
   enddo ! nbmodels
 
   ! user output
-  write(IMAIN,*) 'Materials:'
+  call print_materials_info()
+
+  end subroutine read_material_table
+
+!
+!---------------------------------------------------------------------------------------
+!
+
+  subroutine initialize_material_properties()
+
+! allocates and initializes material arrays
+
+  use constants, only: ATTENUATION_COMP_MAXIMUM
+
+  use shared_parameters, only: nbmodels, &
+                               icodemat,compaction_grad
+
+  ! isotropy
+  use shared_parameters, only: cp,cs
+
+  ! anisotropy
+  use shared_parameters, only: aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12
+
+  ! attenuation
+  use shared_parameters, only: QKappa,Qmu
+
+  ! poroelasticity
+  use shared_parameters, only: rho_s_read,rho_f_read, &
+                               phi_read,tortuosity_read, &
+                               permxx_read,permxz_read,permzz_read, &
+                               kappa_s_read,kappa_f_read,kappa_fr_read, &
+                               eta_f_read,mu_fr_read
+
+  implicit none
+
+  ! safety check
+  if (nbmodels <= 0) call stop_the_code('Non-positive number of materials not allowed!')
+
+  ! allocates material tables
+  allocate(icodemat(nbmodels))
+  allocate(cp(nbmodels))
+  allocate(cs(nbmodels))
+
+  allocate(aniso3(nbmodels))
+  allocate(aniso4(nbmodels))
+  allocate(aniso5(nbmodels))
+  allocate(aniso6(nbmodels))
+  allocate(aniso7(nbmodels))
+  allocate(aniso8(nbmodels))
+  allocate(aniso9(nbmodels))
+  allocate(aniso10(nbmodels))
+  allocate(aniso11(nbmodels))
+  allocate(aniso12(nbmodels))
+
+  allocate(QKappa(nbmodels))
+  allocate(Qmu(nbmodels))
+
+  allocate(rho_s_read(nbmodels))
+  allocate(rho_f_read(nbmodels))
+
+  allocate(phi_read(nbmodels), &
+           tortuosity_read(nbmodels), &
+           permxx_read(nbmodels), &
+           permxz_read(nbmodels), &
+           permzz_read(nbmodels), &
+           kappa_s_read(nbmodels), &
+           kappa_f_read(nbmodels), &
+           kappa_fr_read(nbmodels), &
+           eta_f_read(nbmodels), &
+           mu_fr_read(nbmodels))
+
+  allocate(compaction_grad(nbmodels))
+
+  ! initializes material properties
+  icodemat(:) = 0
+
+  cp(:) = 0.d0
+  cs(:) = 0.d0
+
+  aniso3(:) = 0.d0
+  aniso4(:) = 0.d0
+  aniso5(:) = 0.d0
+  aniso6(:) = 0.d0
+  aniso7(:) = 0.d0
+  aniso8(:) = 0.d0
+  aniso9(:) = 0.d0
+  aniso10(:) = 0.d0
+  aniso11(:) = 0.d0
+
+  QKappa(:) = ATTENUATION_COMP_MAXIMUM
+  Qmu(:) = ATTENUATION_COMP_MAXIMUM
+
+  rho_s_read(:) = 0.d0
+  rho_f_read(:) = 0.d0
+
+  phi_read(:) = 0.d0
+  tortuosity_read(:) = 0.d0
+  permxx_read(:) = 0.d0
+  permxz_read(:) = 0.d0
+  permzz_read(:) = 0.d0
+  kappa_s_read(:) = 0.d0
+  kappa_f_read(:) = 0.d0
+  kappa_fr_read(:) = 0.d0
+  eta_f_read(:) = 0.d0
+  mu_fr_read(:) = 0.d0
+
+  compaction_grad(:) = 0.0d0
+
+  end subroutine initialize_material_properties
+
+!
+!---------------------------------------------------------------------------------------
+!
+
+  subroutine print_materials_info()
+
+  use constants, only: IMAIN,TINYVAL, &
+                       ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL
+
+  use shared_parameters, only: nbmodels, &
+                               icodemat,AXISYM
+
+  ! isotropy
+  use shared_parameters, only: cp,cs,rho_s_read
+
+  ! anisotropy
+  use shared_parameters, only: aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12
+
+  ! attenuation
+  use shared_parameters, only: QKappa,Qmu
+
+  ! poroelasticity
+  use shared_parameters, only: rho_f_read, &
+                               phi_read,tortuosity_read, &
+                               permxx_read,permxz_read,permzz_read, &
+                               kappa_s_read,kappa_f_read,kappa_fr_read, &
+                               eta_f_read,mu_fr_read
+
+  implicit none
+  ! local parameters
+  integer :: i
+
+  ! user output
+  write(IMAIN,*) '  Materials:'
   write(IMAIN,*) '  Nb of solid, fluid or porous materials = ',nbmodels
   write(IMAIN,*)
   do i = 1,nbmodels
@@ -304,4 +389,4 @@
   write(IMAIN,*)
   call flush_IMAIN()
 
-  end subroutine read_material_table
+  end subroutine print_materials_info

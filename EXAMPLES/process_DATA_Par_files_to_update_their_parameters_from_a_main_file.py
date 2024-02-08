@@ -383,7 +383,8 @@ def write_template_file(parameters,tmp_file,verbose=False):
             f.write( "%s\n" % comment )
 
         # for slightly different output format
-        external_model_parameter = ['mesh_file','nodes_coords_file','materials_file','free_surface_file', \
+        external_model_parameter = ['mesh_file','nodes_coords_file','materials_file', \
+                                    'nummaterial_velocity_file','free_surface_file', \
                                     'axial_elements_file','absorbing_surface_file','acoustic_forcing_surface_file', \
                                     'absorbing_cpml_file','tangential_detection_curve_file']
 
@@ -393,8 +394,8 @@ def write_template_file(parameters,tmp_file,verbose=False):
             if appendix:
                 # special section with appendix comment moved further to the right
                 if name in external_model_parameter:
-                    if len(value) <= 25:
-                        f.write( "%s = %s %s\n" % (name.ljust(max_name_length),value.ljust(25),appendix) )
+                    if len(value) <= 39:
+                        f.write( "%s = %s %s\n" % (name.ljust(max_name_length),value.ljust(39),appendix) )
                     else:
                         f.write( "%s = %s   %s\n" % (name.ljust(max_name_length),value,appendix) )
                 else:

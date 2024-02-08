@@ -54,7 +54,7 @@
   ! local parameters
   integer :: i,j,ispec,iglob,imat
 
-  double precision :: x,z,rho0,vp0,vs0,comp_grad
+  double precision :: x,z,rho0,vp0,vs0,compaction_grad
 
 ! dummy routine here, just to demonstrate how the model can be assigned
 ! and how such a routine can be written
@@ -81,14 +81,14 @@
         rho0 = density(1,imat)
         vp0 = sqrt(poroelastcoef(3,1,imat)/rho0)
         vs0 = sqrt(poroelastcoef(2,1,imat)/rho0)
-        comp_grad = poroelastcoef(4,1,imat)
+        compaction_grad = poroelastcoef(4,1,imat)
 
         x = coord(1,iglob)
         z = coord(2,iglob)
 
         ! updates model values using depth and compaction gradient information
         rho(i,j,ispec) = rho0
-        vp(i,j,ispec) = vp0 + comp_grad*z
+        vp(i,j,ispec) = vp0 + compaction_grad * z
 
   ! assumes Poisson solids
         vs(i,j,ispec) = vp(i,j,ispec) / sqrt(3.d0)

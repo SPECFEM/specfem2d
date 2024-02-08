@@ -101,7 +101,7 @@
     ! ***
     ! reads in parameters in DATA/Par_file
     BROADCAST_AFTER_READ = .false.
-    call read_parameter_file(.true.,BROADCAST_AFTER_READ)
+    call read_parameter_file(BROADCAST_AFTER_READ)
 
     ! reads in additional files for mesh elements
     if (read_external_mesh) then
@@ -110,6 +110,9 @@
       write(IMAIN,*)
       write(IMAIN,*) 'Mesh from external meshing:'
       call flush_IMAIN()
+
+      ! reads material definitions in external file
+      call read_external_material_properties(nummaterial_velocity_file)
 
       ! reads in mesh
       call read_external_mesh_file(mesh_file, remove_min_to_start_at_zero, NGNOD)
@@ -122,6 +125,41 @@
       ! user output
       write(IMAIN,*)
       write(IMAIN,*) 'Mesh from internal meshing:'
+      call flush_IMAIN()
+
+      ! re-opens file Par_file
+      call open_parameter_file()
+
+      ! reads material definitions
+      call read_material_table()
+
+      ! mesher reads in internal region table for setting up mesh elements
+      ! reads interface definitions from interface file (we need to have nxread & nzread value for checking regions)
+      call read_interfaces_file()
+
+      ! internal meshing
+      nx_elem_internal = nxread
+      nz_elem_internal = nzread
+
+      ! setup mesh array
+      ! multiply by 2 if elements have 9 nodes
+      if (NGNOD == 9) then
+        nx_elem_internal = nx_elem_internal * 2
+        nz_elem_internal = nz_elem_internal * 2
+        nz_layer(:) = nz_layer(:) * 2
+      endif
+
+      ! total number of elements
+      nelmnts = nxread * nzread
+
+      ! reads material regions defined in Par_file
+      call read_regions()
+
+      ! closes file Par_file
+      call close_parameter_file()
+
+      ! user output
+      write(IMAIN,*) 'creating mesh from internal meshing:'
       call flush_IMAIN()
 
       allocate(elmnts(0:NGNOD*nelmnts-1),stat=ier)

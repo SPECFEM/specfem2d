@@ -17,7 +17,7 @@ NOISE_TOMOGRAPHY                = 0
 SAVE_FORWARD                    = .false.
 
 # parameters concerning partitioning
-NPROC                           = 16             # number of processes
+NPROC                           = 8             # number of processes
 
 # time step parameters
 # total number of time steps
@@ -269,15 +269,16 @@ read_external_mesh              = .true.
 
 # data concerning mesh, when generated using third-party app (more info in README)
 # (see also absorbing_conditions above)
-mesh_file                       = MESH_SMALL/mesh_file      # file containing the mesh
-nodes_coords_file               = MESH_SMALL/nodes_coords_file   # file containing the nodes coordinates
-materials_file                  = MESH_SMALL/materials_file # file containing the material number for each element
-free_surface_file               = MESH_SMALL/free_surface_file   # file containing the free surface
-axial_elements_file             = MESH_SMALL/elements_axis  # file containing the axial elements if AXISYM is true
-absorbing_surface_file          = MESH_SMALL/absorbing_surface_file   # file containing the absorbing surface
-acoustic_forcing_surface_file   = ./DATA_PML/MSH/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
-absorbing_cpml_file             = MESH_SMALL/elements_cpml_list   # file containing the CPML element numbers
-tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing the curve delimiting the velocity model
+mesh_file                       = MESH_SMALL/mesh_file                              # file containing the mesh
+nodes_coords_file               = MESH_SMALL/nodes_coords_file                      # file containing the nodes coordinates
+materials_file                  = MESH_SMALL/materials_file                         # file containing the material number for each element
+nummaterial_velocity_file       = MESH_SMALL/nummaterial_velocity_file              # file containing the material properties for each material
+free_surface_file               = MESH_SMALL/free_surface_file                      # file containing the free surface
+axial_elements_file             = MESH_SMALL/elements_axis                          # file containing the axial elements if AXISYM is true
+absorbing_surface_file          = MESH_SMALL/absorbing_surface_file                 # file containing the absorbing surface
+acoustic_forcing_surface_file   = MESH_SMALL/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
+absorbing_cpml_file             = MESH_SMALL/elements_cpml_list                     # file containing the CPML element numbers
+tangential_detection_curve_file = MESH_SMALL/courbe_eros_nodes                      # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------
 #

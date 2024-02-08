@@ -6,6 +6,6 @@ This example creates an external mesh with fluid and solid domains, and topograp
 
 To run the example, type:
 
-  ./process.sh
+  ./run_this_example.sh
 
 in this directory.

@@ -288,6 +288,7 @@ read_external_mesh              = .false.
 mesh_file                       = dummy                     # file containing the mesh
 nodes_coords_file               = dummy                     # file containing the nodes coordinates
 materials_file                  = dummy                     # file containing the material number for each element
+nummaterial_velocity_file       = dummy                     # file containing the material properties for each material
 free_surface_file               = dummy                     # file containing the free surface
 axial_elements_file             = dummy                     # file containing the axial elements if AXISYM is true
 absorbing_surface_file          = dummy                     # file containing the absorbing surface

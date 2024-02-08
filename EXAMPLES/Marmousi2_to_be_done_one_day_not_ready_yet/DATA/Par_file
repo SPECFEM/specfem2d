@@ -17,7 +17,7 @@ NOISE_TOMOGRAPHY                = 0
 SAVE_FORWARD                    = .false.
 
 # parameters concerning partitioning
-NPROC                           = 20             # number of processes
+NPROC                           = 2              # number of processes
 
 # time step parameters
 # total number of time steps
@@ -46,7 +46,7 @@ AXISYM                          = .false.
 PARTITIONING_TYPE               = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 # number of control nodes per element (4 or 9)
-NGNOD                           = 9
+NGNOD                           = 4
 
 # creates/reads a binary database that allows to skip all time consuming setup steps in initialization
 # 0 = does not read/create database
@@ -148,7 +148,7 @@ seismotype                      = 1              # several values can be chosen.
 # every how many time steps we save the seismograms
 # (costly, do not use a very small value; if you use a very large value that is larger than the total number
 #  of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
-NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 1000
+NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 100000
 
 # set to n to reduce the sampling rate of output seismograms by a factor of n
 # defaults to 1, which means no down-sampling
@@ -162,7 +162,7 @@ USER_T0                         = 0.0d0
 
 # seismogram formats
 save_ASCII_seismograms          = .true.         # save seismograms in ASCII format or not
-save_binary_seismograms_single  = .true.         # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
+save_binary_seismograms_single  = .false.        # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
 save_binary_seismograms_double  = .false.        # save seismograms in double precision binary format or not (can be used jointly with both flags above to save all)
 SU_FORMAT                       = .false.        # output single precision binary seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 
@@ -273,15 +273,16 @@ read_external_mesh              = .false.
 
 # data concerning mesh, when generated using third-party app (more info in README)
 # (see also absorbing_conditions above)
-mesh_file                       = ./DATA/Mesh_canyon/canyon_mesh_file   # file containing the mesh
-nodes_coords_file               = ./DATA/Mesh_canyon/canyon_nodes_coords_file   # file containing the nodes coordinates
-materials_file                  = ./DATA/Mesh_canyon/canyon_materials_file   # file containing the material number for each element
-free_surface_file               = ./DATA/Mesh_canyon/canyon_free_surface_file   # file containing the free surface
-axial_elements_file             = ./DATA/axial_elements_file   # file containing the axial elements if AXISYM is true
-absorbing_surface_file          = ./DATA/Mesh_canyon/canyon_absorbing_surface_file   # file containing the absorbing surface
-acoustic_forcing_surface_file   = ./DATA/MSH/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
-absorbing_cpml_file             = Elements_CPML_list        # file containing the CPML element numbers
-tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing the curve delimiting the velocity model
+mesh_file                       = dummy                     # file containing the mesh
+nodes_coords_file               = dummy                     # file containing the nodes coordinates
+materials_file                  = dummy                     # file containing the material number for each element
+nummaterial_velocity_file       = dummy                     # file containing the material properties for each material
+free_surface_file               = dummy                     # file containing the free surface
+axial_elements_file             = dummy                     # file containing the axial elements if AXISYM is true
+absorbing_surface_file          = dummy                     # file containing the absorbing surface
+acoustic_forcing_surface_file   = dummy                     # file containing the acoustic forcing surface
+absorbing_cpml_file             = dummy                     # file containing the CPML element numbers
+tangential_detection_curve_file = dummy                     # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------
 #
@@ -290,7 +291,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing th
 #-----------------------------------------------------------
 
 # file containing interfaces for internal mesh
-interfacesfile                  = ./DATA/interfaces_simple_topo_curved.dat
+interfacesfile                  = interfaces_simple_topo_curved.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model

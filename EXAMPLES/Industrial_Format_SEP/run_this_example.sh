@@ -28,7 +28,7 @@ rm -rf OUTPUT_FILES/*
 # links executables
 mkdir -p bin
 cd bin/
-rm -f xmeshfem2D xspecfem2D
+rm -f xmeshfem2D xspecfem2D xinterpolate
 ln -s ../../../bin/xmeshfem2D
 ln -s ../../../bin/xspecfem2D
 cd ../

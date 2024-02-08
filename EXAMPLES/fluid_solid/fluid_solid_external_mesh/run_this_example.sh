@@ -17,7 +17,6 @@ echo "   setting up example..."
 echo
 
 mkdir -p OUTPUT_FILES
-mkdir -p DATA
 
 # cleans output files
 rm -rf OUTPUT_FILES/*

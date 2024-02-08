@@ -558,15 +558,15 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) 'Material properties:'
-    write(IMAIN,*) '  MODEL                 : ',trim(MODEL)
-    write(IMAIN,*) '  nspec                 : ',nspec_all
-    write(IMAIN,*) '  assign external model : ',assign_external_model
+    write(IMAIN,*) '  MODEL                   : ',trim(MODEL)
+    write(IMAIN,*) '  nspec                   : ',nspec_all
+    write(IMAIN,*) '  external velocity model : ',use_external_velocity_model
     write(IMAIN,*)
     call flush_IMAIN()
   endif
 
   ! allocates material arrays
-  if (assign_external_model) then
+  if (use_external_velocity_model) then
     nspec_ext = nspec
   else
     ! dummy allocations
@@ -602,7 +602,7 @@
   c22ext(:,:,:) = 0.0_CUSTOM_REAL
 
   ! reads in external models
-  if (assign_external_model) then
+  if (use_external_velocity_model) then
     ! user output
     if (myrank == 0) then
       if (trim(MODEL) == 'tomo') then
@@ -673,7 +673,7 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         ! gets material values
-        if (assign_external_model) then
+        if (use_external_velocity_model) then
           ! external model
           rhol = rhoext(i,j,ispec)
           vp = vpext(i,j,ispec)
@@ -844,7 +844,7 @@
       ! for non-elastic elements, the values in arrays c11ext,.. or anistropycoef(..) are just zero
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          if (assign_external_model) then
+          if (use_external_velocity_model) then
             c11store(i,j,ispec) = c11ext(i,j,ispec)
             c12store(i,j,ispec) = c12ext(i,j,ispec)
             c13store(i,j,ispec) = c13ext(i,j,ispec)

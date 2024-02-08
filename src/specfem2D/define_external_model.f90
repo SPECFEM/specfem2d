@@ -31,6 +31,47 @@
 !
 !========================================================================
 
+
+  subroutine define_external_model(coord,material_element,ibool, &
+                                   rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
+                                   c11,c12,c13,c15,c23,c25,c33,c35,c55)
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN,ATTENUATION_COMP_MAXIMUM
+
+  use specfem_par, only: nspec,nglob
+
+  implicit none
+
+  double precision, dimension(NDIM,nglob), intent(in) :: coord
+
+  integer, dimension(nspec), intent(in) :: material_element
+
+  integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: QKappa_attenuation,Qmu_attenuation
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: c11,c15,c13,c33,c35,c55,c12,c23,c25
+
+  ! to implement your own external model:
+  ! modify the *_dummy() routine below and uncomment this following line
+  !
+  !call define_external_model_dummy(coord,material_element,ibool, &
+  !                                 rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
+  !                                 c11,c12,c13,c15,c23,c25,c33,c35,c55)
+
+  ! by default, uses the AK135f external model defined below
+  call define_external_model_ak135f(coord,material_element,ibool, &
+                                    rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
+                                    c11,c12,c13,c15,c23,c25,c33,c35,c55)
+
+  end subroutine define_external_model
+
+!========================================================================
+!
+! dummy example below, to define your own external model
+!
+!========================================================================
+
   subroutine define_external_model_dummy(coord,material_element,ibool, &
                                          rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
                                          c11,c12,c13,c15,c23,c25,c33,c35,c55)
@@ -43,8 +84,9 @@
 
 ! -------------------------------------------------------------------------------------
 ! Dummy example of this routine, to be used as a template that users can modify.
-! To use it you will need to rename it as define_external_model() (i.e., get rid of "_dummy")
-! and suppress the existing define_external_model() routine provided below for the AK135F global Earth model.
+!
+! To use it you will need to uncomment the routine above and/or rename it as define_external_model() (i.e., get rid of "_dummy")
+! and suppress the existing default define_external_model_ak135f() routine provided below for the AK135F global Earth model.
 ! -------------------------------------------------------------------------------------
 
 ! users can modify this routine to assign any different external model (rho, vp, vs)
@@ -138,9 +180,10 @@
 ! another example below, to define the AK135F global Earth model
 !
 !========================================================================
-  subroutine define_external_model(coord,material_element,ibool, &
-                                   rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
-                                   c11,c12,c13,c15,c23,c25,c33,c35,c55)
+
+  subroutine define_external_model_ak135f(coord,material_element,ibool, &
+                                          rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
+                                          c11,c12,c13,c15,c23,c25,c33,c35,c55)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN,ATTENUATION_COMP_MAXIMUM
 
@@ -1130,5 +1173,5 @@
   vp(:,:,:) = vp(:,:,:)*1000.0d0
   vs(:,:,:) = vs(:,:,:)*1000.0d0
 
-  end subroutine define_external_model
+  end subroutine define_external_model_ak135f
 

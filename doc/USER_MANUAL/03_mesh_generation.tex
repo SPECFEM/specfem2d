@@ -119,6 +119,8 @@ The parameter \texttt{MODEL} can also have other values specified than \texttt{d
 
      \item[{\texttt{materials\_file}}] is the number of the material for every element : an integer ranging from 1 to \texttt{nbmodels} on each line.
 
+     \item[{\texttt{nummaterial\_velocity\_file}}] specifies the material properties for each material of the \texttt{nbmodels} defined in the materials file. The material specification follows a format slightly different than the \texttt{nbmodels} section in the \texttt{Par\_file}, but identical to the SPECFEM3D\_Cartesian version where you can find more informations about it. Also, examples of such \texttt{nummaterial\_velocity\_file} files can be found in the \texttt{EXAMPLES/} folder and the format is described in more detail therein in the header of the files.
+
      \item[{\texttt{free\_surface\_file}}] is the file describing the edges forming the acoustic free surface: number of edges on the first line, then on each line: number of the element, number of nodes forming the free surface (1 for a point, 2 for an edge), the nodes forming the free surface for this element. If you do not want any free surface, just put 0 on the first line; you then get a rigid surface instead.
 
      \item[{\texttt{axial\_elements\_file}}] is the file describing the axial elements in the case of an axisymmetric simulation. See Section~\ref{sec:axisym}.

@@ -37,7 +37,8 @@
 
   use constants, only: IMAIN,STABILITY_THRESHOLD,CUSTOM_REAL,myrank
 
-  use specfem_par, only: current_timeval,it,NSTEP,GPU_MODE, &
+  use specfem_par, only: it,NSTEP,DT,t0, &
+                         GPU_MODE, &
                          SIMULATION_TYPE, &
                          ELASTIC_SIMULATION,any_elastic,displ_elastic,b_displ_elastic, &
                          POROELASTIC_SIMULATION,any_poroelastic, &
@@ -53,6 +54,9 @@
   ! local parameters
   real(kind=CUSTOM_REAL) :: displnorm_all,displnorm_all_glob
   real(kind=CUSTOM_REAL) :: b_displnorm_all,b_displnorm_all_glob
+
+  ! current time
+  double precision :: current_timeval
 
   ! timer to count elapsed time
   double precision :: tCPU,t_remain,t_total,timestamp_seconds_current
@@ -72,17 +76,22 @@
   integer :: year,mon,day,hr,minutes,timestamp,julian_day_number,day_of_week
   integer, external :: idaywk
 
-  ! checks if anything to do
+  ! compute current time
+  current_timeval = (it-1) * DT - t0
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '******************************************************************'
-    if (current_timeval >= 1.d-3 .and. current_timeval < 1000.d0) then
-      write(IMAIN,"('Time step number ',i7,'   t = ',f9.4,' s out of ',i7)") it,current_timeval,NSTEP
-    else
-      write(IMAIN,"('Time step number ',i7,'   t = ',1pe13.6,' s out of ',i7)") it,current_timeval,NSTEP
-    endif
+    write(IMAIN,"(' Time step # ',i7,' out of ',i7)") it,NSTEP
     write(IMAIN,*) '******************************************************************'
+    ! simulation time
+    if (current_timeval >= 1.d-3 .and. current_timeval < 1000.d0) then
+      write(IMAIN,"(' Time: ',f9.4,' s')") current_timeval
+    else
+      write(IMAIN,"(' Time: ',1pe13.6,' s')") current_timeval
+    endif
+    ! progress
     write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it-1)/dble(NSTEP-1)),'% of the total'
   endif
 
