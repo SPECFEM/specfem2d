@@ -235,6 +235,39 @@ PERIODIC_HORIZ_DIST             = 0.3597d0
 #
 #-----------------------------------------------------------
 
+# external tomography file
+# (used for tomography materials with negative material ids and/or MODEL==tomo settings)
+TOMOGRAPHY_FILE                 = dummy
+
+# use an external mesh created by an external meshing tool or use the internal mesher
+read_external_mesh              = .false.
+
+#-----------------------------------------------------------
+#
+# PARAMETERS FOR EXTERNAL MESHING
+#
+#-----------------------------------------------------------
+
+# data concerning mesh, when generated using third-party app (more info in README)
+# (see also absorbing_conditions above)
+mesh_file                       = dummy                                   # file containing the mesh
+nodes_coords_file               = dummy                                   # file containing the nodes coordinates
+materials_file                  = dummy                                   # file containing the material number for each element
+nummaterial_velocity_file       = dummy                                   # file containing the material properties for each material
+free_surface_file               = dummy                                   # file containing the free surface
+axial_elements_file             = dummy                                   # file containing the axial elements if AXISYM is true
+absorbing_surface_file          = dummy                                   # file containing the absorbing surface
+acoustic_forcing_surface_file   = dummy                                   # file containing the acoustic forcing surface
+absorbing_cpml_file             = dummy                                   # file containing the CPML element numbers
+tangential_detection_curve_file = dummy                                   # file containing the curve delimiting the velocity model
+
+#-----------------------------------------------------------
+#
+# PARAMETERS FOR INTERNAL MESHING
+#
+#-----------------------------------------------------------
+
+# material properties
 # number of model materials
 nbmodels                        = 3
 # available material types (see user manual for more information)
@@ -255,37 +288,6 @@ nbmodels                        = 3
 1 1 2700.d0 3000.d0 1732.05d0 0 0 20. 10. 0 0 0 0 0 0
 2 2 7100.d0 16.5d10 5.d10 0 6.2d10 0 3.96d10 0 0 0 0 0 0
 3 1 2700.d0 3000.d0 1732.05d0 0 0 20. 10. 0 0 0 0 0 0
-
-# external tomography file
-TOMOGRAPHY_FILE                 = dummy
-
-# use an external mesh created by an external meshing tool or use the internal mesher
-read_external_mesh              = .false.
-
-#-----------------------------------------------------------
-#
-# PARAMETERS FOR EXTERNAL MESHING
-#
-#-----------------------------------------------------------
-
-# data concerning mesh, when generated using third-party app (more info in README)
-# (see also absorbing_conditions above)
-mesh_file                       = dummy                     # file containing the mesh
-nodes_coords_file               = dummy                     # file containing the nodes coordinates
-materials_file                  = dummy                     # file containing the material number for each element
-nummaterial_velocity_file       = dummy                     # file containing the material properties for each material
-free_surface_file               = dummy                     # file containing the free surface
-axial_elements_file             = dummy                     # file containing the axial elements if AXISYM is true
-absorbing_surface_file          = dummy                     # file containing the absorbing surface
-acoustic_forcing_surface_file   = dummy                     # file containing the acoustic forcing surface
-absorbing_cpml_file             = dummy                     # file containing the CPML element numbers
-tangential_detection_curve_file = dummy                     # file containing the curve delimiting the velocity model
-
-#-----------------------------------------------------------
-#
-# PARAMETERS FOR INTERNAL MESHING
-#
-#-----------------------------------------------------------
 
 # file containing interfaces for internal mesh
 interfacesfile                  = interfaces.dat
