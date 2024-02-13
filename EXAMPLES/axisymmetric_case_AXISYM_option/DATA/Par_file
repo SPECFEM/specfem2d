@@ -68,6 +68,9 @@ MODEL                           = default
 # (available output formats: ascii,binary,gll,legacy)
 SAVE_MODEL                      = default
 
+# external tomography file
+# (used for tomography materials with negative material ids and/or MODEL==tomo settings)
+TOMOGRAPHY_FILE                 = ./DATA/essai.xyz
 
 #-----------------------------------------------------------
 #
@@ -247,13 +250,9 @@ PERIODIC_HORIZ_DIST             = 0.3597d0
 
 #-----------------------------------------------------------
 #
-# Velocity and density models
+# MESHING - Velocity and density models
 #
 #-----------------------------------------------------------
-
-# external tomography file
-# (used for tomography materials with negative material ids and/or MODEL==tomo settings)
-TOMOGRAPHY_FILE                 = ./DATA/essai.xyz
 
 # use an external mesh created by an external meshing tool or use the internal mesher
 read_external_mesh              = .false.
