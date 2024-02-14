@@ -78,6 +78,7 @@
 
   ! opens Database file
   write(prname,"(a,i5.5,a)") trim(OUTPUT_FILES)//'Database',myrank,'.bin'
+
   ! note: adding access='stream' would further decrease file size
   open(unit=IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0 ) then
@@ -632,6 +633,9 @@
   ! reads and sets the material properties
   call read_materials(f0_source(1))
 
+  ! sync processes
+  call synchronize_all()
+
   ! add support for using PML in MPI mode with external mesh
   allocate(region_CPML(nspec),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating region_CPML array')
@@ -678,6 +682,9 @@
 
   ! frees temporary array
   deallocate(knods_read)
+
+  ! sync processes
+  call synchronize_all()
 
   end subroutine read_mesh_databases_mato
 

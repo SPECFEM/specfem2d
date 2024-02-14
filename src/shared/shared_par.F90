@@ -275,14 +275,15 @@ module shared_input_parameters
   !#
   !#-----------------------------------------------------------------------------
   character(len=MAX_STRING_LEN) :: mesh_file, nodes_coords_file, materials_file
-  character(len=MAX_STRING_LEN) :: nummaterial_velocity_file
-
   character(len=MAX_STRING_LEN) :: free_surface_file
   character(len=MAX_STRING_LEN) :: absorbing_surface_file
   character(len=MAX_STRING_LEN) :: acoustic_forcing_surface_file
   character(len=MAX_STRING_LEN) :: axial_elements_file
   character(len=MAX_STRING_LEN) :: absorbing_cpml_file
   character(len=MAX_STRING_LEN) :: tangential_detection_curve_file
+
+  character(len=MAX_STRING_LEN) :: nummaterial_velocity_file
+  logical :: has_nummaterial_velocity_file = .false.
 
   !#-----------------------------------------------------------------------------
   !#
