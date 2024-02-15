@@ -57,8 +57,11 @@
   integer :: i,j,ispec,iglob,imat
 
   double precision :: x,z,rho0,vp0,vs0,compaction_grad
-  double precision :: zmin_glob,zmax_glob
+  double precision :: zmin_glob,zmax_glob,ztop_solid
   double precision :: depth
+
+  ! water layer depth of Marmousi2
+  double precision, parameter :: WATER_LAYER_DEPTH = 450.d0   ! in m
 
   ! use compaction gradient
   logical, parameter :: USE_COMPACTION_GRADIENT = .true.
@@ -93,16 +96,26 @@
   c25(:,:,:) = 0.d0
 
   ! get model dimension to estimate depth for a given point
-  zmin_glob = minval(coord(2,:))
-  call min_all_all_dp(zmin_glob,zmin_glob)
-  zmax_glob = maxval(coord(2,:))
-  call max_all_all_dp(zmax_glob,zmax_glob)
+  if (USE_COMPACTION_GRADIENT) then
+    ! z-coordinate min/max
+    zmin_glob = minval(coord(2,:))
+    call min_all_all_dp(zmin_glob,zmin_glob)
+    zmax_glob = maxval(coord(2,:))
+    call max_all_all_dp(zmax_glob,zmax_glob)
 
-  if (myrank == 0) then
-    write(IMAIN,*) '    top    : z_max = ',sngl(zmax_glob)
-    write(IMAIN,*) '    bottom : z_min = ',sngl(zmin_glob)
-    write(IMAIN,*)
-    call flush_IMAIN()
+    ! taking off the water layer depth
+    ztop_solid = zmax_glob - WATER_LAYER_DEPTH
+
+    if (myrank == 0) then
+      write(IMAIN,*) '    for material compaction:'
+      write(IMAIN,*) '    top         : z_max = ',sngl(zmax_glob)
+      write(IMAIN,*) '    bottom      : z_min = ',sngl(zmin_glob)
+      write(IMAIN,*)
+      write(IMAIN,*) '    water layer : depth = ',sngl(WATER_LAYER_DEPTH)
+      write(IMAIN,*) '    top solid   : z_max = ',sngl(ztop_solid)
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
   endif
 
   ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
@@ -130,11 +143,11 @@
           x = coord(1,iglob)
           z = coord(2,iglob)
 
-          ! depth
-          depth = zmax_glob - z
+          ! depth (in solid)
+          depth = ztop_solid - z
 
           !debug
-          !if (i==1 .and. j==1) &
+          !if (i==1 .and. j==1 .and. compaction_grad > 0.01) &
           !  print *,'debug: marmousi ',ispec,' coord x/z = ',x,z, &
           !        ' depth = ',depth,' compaction: ',compaction_grad,' vp compaction: ',compaction_grad * depth, &
           !        ' vp0/vs0/rho0: ',vp0,vs0,rho0
