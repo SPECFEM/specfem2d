@@ -112,7 +112,17 @@
       call flush_IMAIN()
 
       ! reads material definitions in external file
-      call read_external_material_properties(nummaterial_velocity_file)
+      if (has_nummaterial_velocity_file) then
+        call read_external_material_properties(nummaterial_velocity_file)
+      else
+        ! reads material properties from Par_file
+        ! re-opens file Par_file
+        call open_parameter_file()
+        ! reads material definitions
+        call read_material_table()
+        ! closes file Par_file
+        call close_parameter_file()
+      endif
 
       ! reads in mesh
       call read_external_mesh_file(mesh_file, remove_min_to_start_at_zero, NGNOD)

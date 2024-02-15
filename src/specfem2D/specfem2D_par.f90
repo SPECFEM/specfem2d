@@ -423,8 +423,11 @@ module specfem_par
   ! anisotropy
   integer :: nspec_aniso
 
+  ! local flag if any anisotropic element is in this slice
   logical :: any_anisotropy
+  ! local flag if all elements are anisotropic in this slice
   logical :: all_anisotropic
+
   logical, dimension(:), allocatable :: ispec_is_anisotropic
 
   ! inverse mass matrices

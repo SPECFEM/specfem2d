@@ -68,6 +68,9 @@ MODEL                           = default
 # (available output formats: ascii,binary,gll,legacy)
 SAVE_MODEL                      = default
 
+# external tomography file
+# (used for tomography materials with negative material ids and/or MODEL==tomo settings)
+TOMOGRAPHY_FILE                 = dummy
 
 #-----------------------------------------------------------
 #
@@ -239,10 +242,39 @@ PERIODIC_HORIZ_DIST             = 0.3597d0
 
 #-----------------------------------------------------------
 #
-# Velocity and density models
+# MESHING - Velocity and density models
 #
 #-----------------------------------------------------------
 
+# use an external mesh created by an external meshing tool or use the internal mesher
+read_external_mesh              = .false.
+
+#-----------------------------------------------------------
+#
+# PARAMETERS FOR EXTERNAL MESHING
+#
+#-----------------------------------------------------------
+
+# data concerning mesh, when generated using third-party app (more info in README)
+# (see also absorbing_conditions above)
+mesh_file                       = dummy                                   # file containing the mesh
+nodes_coords_file               = dummy                                   # file containing the nodes coordinates
+materials_file                  = dummy                                   # file containing the material number for each element
+nummaterial_velocity_file       = dummy                                   # file containing the material properties for each material
+free_surface_file               = dummy                                   # file containing the free surface
+axial_elements_file             = dummy                                   # file containing the axial elements if AXISYM is true
+absorbing_surface_file          = dummy                                   # file containing the absorbing surface
+acoustic_forcing_surface_file   = dummy                                   # file containing the acoustic forcing surface
+absorbing_cpml_file             = dummy                                   # file containing the CPML element numbers
+tangential_detection_curve_file = dummy                                   # file containing the curve delimiting the velocity model
+
+#-----------------------------------------------------------
+#
+# PARAMETERS FOR INTERNAL MESHING
+#
+#-----------------------------------------------------------
+
+# material properties
 # number of model materials
 nbmodels                        = 2
 # available material types (see user manual for more information)
@@ -266,37 +298,6 @@ nbmodels                        = 2
 1 3 2500.d0 1020.d0 0.4d0 2.0 1d-9 0.d0 1d-9 16.0554d9 2.295d9 10.0d9 0.d0 9.63342d9 50.0
 ## acoustic
 2 1 1020.d0 1500.d0 0.d0 0 0 10.d0 10.d0 0 0 0 0 0 0
-
-# external tomography file
-TOMOGRAPHY_FILE                 = dummy
-
-# use an external mesh created by an external meshing tool or use the internal mesher
-read_external_mesh              = .false.
-
-#-----------------------------------------------------------
-#
-# PARAMETERS FOR EXTERNAL MESHING
-#
-#-----------------------------------------------------------
-
-# data concerning mesh, when generated using third-party app (more info in README)
-# (see also absorbing_conditions above)
-mesh_file                       = dummy                     # file containing the mesh
-nodes_coords_file               = dummy                     # file containing the nodes coordinates
-materials_file                  = dummy                     # file containing the material number for each element
-nummaterial_velocity_file       = dummy                     # file containing the material properties for each material
-free_surface_file               = dummy                     # file containing the free surface
-axial_elements_file             = dummy                     # file containing the axial elements if AXISYM is true
-absorbing_surface_file          = dummy                     # file containing the absorbing surface
-acoustic_forcing_surface_file   = dummy                     # file containing the acoustic forcing surface
-absorbing_cpml_file             = dummy                     # file containing the CPML element numbers
-tangential_detection_curve_file = dummy                     # file containing the curve delimiting the velocity model
-
-#-----------------------------------------------------------
-#
-# PARAMETERS FOR INTERNAL MESHING
-#
-#-----------------------------------------------------------
 
 # file containing interfaces for internal mesh
 interfacesfile                  = ./interfaces.dat

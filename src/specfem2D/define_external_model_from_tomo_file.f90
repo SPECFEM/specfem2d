@@ -367,7 +367,7 @@ end module interpolation
                                                                        c33ext,c35ext,c55ext
 
   ! local parameters
-  integer :: i,j,ispec,iglob
+  integer :: i,j,ispec,iglob,ival
   double precision :: xmesh,zmesh
   double precision :: rho_final
   double precision :: vp_final,vs_final
@@ -407,9 +407,10 @@ end module interpolation
   do ispec = 1,nspec
     do j = 1,NGLLZ
       do i = 1,NGLLX
-        iglob = ibool(i,j,ispec)
+        ! determine material properties
         if (kmato(ispec) == tomo_material) then
           ! If the material has been set to < 0 on the Par_file
+          iglob = ibool(i,j,ispec)
           xmesh = coord(1,iglob)
           zmesh = coord(2,iglob)
 
@@ -512,10 +513,10 @@ end module interpolation
   call synchronize_all()
 
   ! collect totals
-  iglob = npoint_tomo
-  call max_all_i(iglob,npoint_tomo)
-  iglob = npoint_internal
-  call max_all_i(iglob,npoint_internal)
+  ival = npoint_tomo
+  call max_all_i(ival,npoint_tomo)
+  ival = npoint_internal
+  call max_all_i(ival,npoint_internal)
 
   ! user output
   if (myrank == 0) then

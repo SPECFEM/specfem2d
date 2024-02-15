@@ -523,9 +523,13 @@
 
   subroutine setup_mesh_material_properties()
 
-! external models
+! sets up velocity model arrays
 
-  use constants, only: IMAIN,FOUR_THIRDS,TWO_THIRDS
+  use constants, only: IMAIN,FOUR_THIRDS,TWO_THIRDS,HUGEVAL
+
+  ! vtk output
+  use constants, only: SAVE_MESHFILES_VTK_FORMAT,OUTPUT_FILES
+
   use specfem_par
 
   implicit none
@@ -546,6 +550,23 @@
   double precision :: D_biot,H_biot,C_biot,M_biot
   double precision :: cpIsquare,cpIIsquare,cssquare,vpII
   double precision :: perm_xx,perm_xz,perm_zz
+
+  ! stats
+  double precision :: tmp_val
+  double precision :: vpmin_glob,vpmax_glob,vsmin_glob,vsmax_glob,rhomin_glob,rhomax_glob
+  double precision :: qkappamin_glob,qkappamax_glob,qmumin_glob,qmumax_glob
+  double precision :: vpIImin_glob,vpIImax_glob,phimin_glob,phimax_glob
+  double precision :: c11min_glob,c11max_glob,c12min_glob,c12max_glob,c13min_glob,c13max_glob,c15min_glob,c15max_glob
+  double precision :: c22min_glob,c22max_glob,c23min_glob,c23max_glob,c25min_glob,c25max_glob
+  double precision :: c33min_glob,c33max_glob,c35min_glob,c35max_glob
+  double precision :: c55min_glob,c55max_glob
+
+  logical :: has_poroelasticity, has_anisotropy
+
+  ! vtk output
+  character(len=MAX_STRING_LEN) :: filename,prname
+  double precision,dimension(:,:,:),allocatable :: tmp_store
+  double precision,dimension(:),allocatable :: xstore,zstore
 
   ! collects total number
   call sum_all_i(nspec,nspec_all)
@@ -661,6 +682,12 @@
   vpIIstore(:,:,:) = 0.0_CUSTOM_REAL
   mufr_store(:,:,:) = 0.0_CUSTOM_REAL
 
+  ! for stats
+  vpIImin_glob = +HUGEVAL
+  vpIImax_glob = 0.d0
+  phimin_glob = +HUGEVAL
+  phimax_glob = 0.d0
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '  setting up material arrays'
@@ -749,8 +776,9 @@
           vpII = sqrt(cpIIsquare) ! vpII
           vs = sqrt(cssquare)
 
-          rhol = rho_s            ! for density array rhostore used in check_grid()
-          mul = rhol * vs * vs    ! for shear modulus used in check_grid()
+          rhol = rho_s                  ! for density array rhostore used in check_grid()
+          mul = rhol * vs * vs          ! for shear modulus used in check_grid()
+          kappal = rhol * vp * vp - mul ! for bulk modulus
 
           ! stores specific poroelastic properties
           phistore(i,j,ispec) = phi
@@ -771,6 +799,12 @@
           permstore(3,i,j,ispec) = perm_zz
 
           vpIIstore(i,j,ispec) = vpII           ! for stacey and check_grid() routines
+
+          ! stats
+          vpIImin_glob = min(vpIImin_glob,vpII)
+          vpIImax_glob = max(vpIImax_glob,vpII)
+          phimin_glob = min(phimin_glob,phi)
+          phimax_glob = max(phimax_glob,phi)
         endif
 
         ! stores moduli
@@ -877,11 +911,230 @@
   deallocate(QKappa_attenuationext,Qmu_attenuationext)
   deallocate(c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext)
 
+  ! stats
+  ! rho
+  tmp_val = minval(rhostore)
+  call min_all_dp(tmp_val, rhomin_glob)
+  tmp_val = maxval(rhostore)
+  call max_all_dp(tmp_val, rhomax_glob)
+  ! vs
+  tmp_val = minval(sqrt(mustore/rhostore))   ! vs = sqrt(mu/rho)
+  call min_all_dp(tmp_val, vsmin_glob)
+  tmp_val = maxval(sqrt(mustore/rhostore))
+  call max_all_dp(tmp_val, vsmax_glob)
+  ! vp
+  if (AXISYM) then
+    ! vp = sqrt( (kappa + FOUR_THIRDS * mu)/rho) )
+    tmp_val = minval(sqrt((kappastore + FOUR_THIRDS * mustore)/rhostore))
+    call min_all_dp(tmp_val, vpmin_glob)
+    tmp_val = maxval(sqrt((kappastore + FOUR_THIRDS * mustore)/rhostore))
+    call max_all_dp(tmp_val, vpmax_glob)
+  else
+    ! vp = sqrt( (kappa + mu)/rho) )
+    tmp_val = minval(sqrt((kappastore + mustore)/rhostore))
+    call min_all_dp(tmp_val, vpmin_glob)
+    tmp_val = maxval(sqrt((kappastore + mustore)/rhostore))
+    call max_all_dp(tmp_val, vpmax_glob)
+  endif
+  ! Qkappa
+  tmp_val = minval(qkappa_attenuation_store)
+  call min_all_dp(tmp_val, qkappamin_glob)
+  tmp_val = maxval(qkappa_attenuation_store)
+  call max_all_dp(tmp_val, qkappamax_glob)
+  ! Qmu
+  tmp_val = minval(qmu_attenuation_store)
+  call min_all_dp(tmp_val, qmumin_glob)
+  tmp_val = maxval(qmu_attenuation_store)
+  call max_all_dp(tmp_val, qmumax_glob)
+
+  ! poroelasticity
+  ! check if any poroelastic elements in domains
+  call any_all_l(any_poroelastic,has_poroelasticity)
+  if (has_poroelasticity) then
+    ! vpII
+    tmp_val = vpIImin_glob
+    call min_all_dp(tmp_val, vpIImin_glob)
+    tmp_val = vpIImax_glob
+    call max_all_dp(tmp_val, vpIImax_glob)
+    ! phi
+    tmp_val = phimin_glob
+    call min_all_dp(tmp_val, phimin_glob)
+    tmp_val = phimax_glob
+    call max_all_dp(tmp_val, phimax_glob)
+  endif
+
+  ! anisotropy
+  call any_all_l(any_anisotropy,has_anisotropy)
+  if (has_anisotropy) then
+    ! c11
+    tmp_val = minval(c11store)
+    call min_all_dp(tmp_val, c11min_glob)
+    tmp_val = maxval(c11store)
+    call max_all_dp(tmp_val, c11max_glob)
+    ! c12
+    tmp_val = minval(c12store)
+    call min_all_dp(tmp_val, c12min_glob)
+    tmp_val = maxval(c12store)
+    call max_all_dp(tmp_val, c12max_glob)
+    ! c13
+    tmp_val = minval(c13store)
+    call min_all_dp(tmp_val, c13min_glob)
+    tmp_val = maxval(c13store)
+    call max_all_dp(tmp_val, c13max_glob)
+    ! c15
+    tmp_val = minval(c15store)
+    call min_all_dp(tmp_val, c15min_glob)
+    tmp_val = maxval(c15store)
+    call max_all_dp(tmp_val, c15max_glob)
+
+    ! c22 - for Axisym
+    tmp_val = minval(c22store)
+    call min_all_dp(tmp_val, c22min_glob)
+    tmp_val = maxval(c22store)
+    call max_all_dp(tmp_val, c22max_glob)
+    ! c23
+    tmp_val = minval(c23store)
+    call min_all_dp(tmp_val, c23min_glob)
+    tmp_val = maxval(c23store)
+    call max_all_dp(tmp_val, c23max_glob)
+    ! c25
+    tmp_val = minval(c25store)
+    call min_all_dp(tmp_val, c25min_glob)
+    tmp_val = maxval(c25store)
+    call max_all_dp(tmp_val, c25max_glob)
+
+    ! c33
+    tmp_val = minval(c33store)
+    call min_all_dp(tmp_val, c33min_glob)
+    tmp_val = maxval(c33store)
+    call max_all_dp(tmp_val, c33max_glob)
+    ! c35
+    tmp_val = minval(c35store)
+    call min_all_dp(tmp_val, c35min_glob)
+    tmp_val = maxval(c35store)
+    call max_all_dp(tmp_val, c35max_glob)
+
+    ! c55
+    tmp_val = minval(c55store)
+    call min_all_dp(tmp_val, c55min_glob)
+    tmp_val = maxval(c55store)
+    call max_all_dp(tmp_val, c55max_glob)
+  endif
+
   ! user output
   if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) '  rho : min/max = ',sngl(rhomin_glob),'/',sngl(rhomax_glob)
+    write(IMAIN,*) '  vs  : min/max = ',sngl(vsmin_glob),'/',sngl(vsmax_glob)
+    write(IMAIN,*) '  vp  : min/max = ',sngl(vpmin_glob),'/',sngl(vpmax_glob)
+    write(IMAIN,*)
+    if (has_poroelasticity) then
+      write(IMAIN,*) '  poroelasticity:'
+      write(IMAIN,*) '    vpII: min/max = ',sngl(vpIImin_glob),'/',sngl(vpIImax_glob)
+      write(IMAIN,*) '    phi : min/max = ',sngl(phimin_glob),'/',sngl(phimax_glob)
+      write(IMAIN,*)
+    endif
+    if (has_anisotropy) then
+      write(IMAIN,*) '  anisotropy:'
+      write(IMAIN,*) '    c11: min/max = ',sngl(c11min_glob),'/',sngl(c11max_glob)
+      write(IMAIN,*) '    c12: min/max = ',sngl(c12min_glob),'/',sngl(c12max_glob)
+      write(IMAIN,*) '    c13: min/max = ',sngl(c13min_glob),'/',sngl(c13max_glob)
+      write(IMAIN,*) '    c15: min/max = ',sngl(c15min_glob),'/',sngl(c15max_glob)
+      if (AXISYM) &
+        write(IMAIN,*) '    c22: min/max = ',sngl(c22min_glob),'/',sngl(c22max_glob),' -- for AXISYM'
+      write(IMAIN,*) '    c23: min/max = ',sngl(c23min_glob),'/',sngl(c23max_glob)
+      write(IMAIN,*) '    c25: min/max = ',sngl(c25min_glob),'/',sngl(c25max_glob)
+      write(IMAIN,*) '    c33: min/max = ',sngl(c33min_glob),'/',sngl(c33max_glob)
+      write(IMAIN,*) '    c35: min/max = ',sngl(c35min_glob),'/',sngl(c35max_glob)
+      write(IMAIN,*) '    c55: min/max = ',sngl(c55min_glob),'/',sngl(c55max_glob)
+      write(IMAIN,*)
+    endif
     write(IMAIN,*) '  all material arrays done'
     write(IMAIN,*)
     call flush_IMAIN()
+  endif
+
+  ! VTK output
+  if (SAVE_MESHFILES_VTK_FORMAT) then
+    allocate(tmp_store(NGLLX,NGLLZ,nspec), &
+             xstore(nglob), &
+             zstore(nglob),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating tmp_store array')
+    tmp_store(:,:,:) = 0.d0
+    xstore(:) = coord(1,:)
+    zstore(:) = coord(2,:)
+    write(prname,"(a,i5.5,a)") trim(OUTPUT_FILES)//'mesh',myrank,'_'
+
+    ! vs
+    tmp_store(:,:,:) = sqrt( mustore / rhostore )
+    filename = trim(prname) // 'vs'
+    call write_VTK_data_gll_dp(nspec,nglob,ibool,xstore,zstore,tmp_store,filename)
+    ! user output
+    if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename) // '.vtk'
+
+    ! vp
+    if (AXISYM) then
+      ! vp = sqrt( (kappa + FOUR_THIRDS * mu)/rho) )
+      tmp_store(:,:,:) = sqrt( (kappastore + FOUR_THIRDS * mustore) / rhostore )
+    else
+      ! vp = sqrt( (kappa + mu)/rho) )
+      tmp_store(:,:,:) = sqrt( (kappastore + mustore) / rhostore )
+    endif
+    filename = trim(prname) // 'vp'
+    call write_VTK_data_gll_dp(nspec,nglob,ibool,xstore,zstore,tmp_store,filename)
+    ! user output
+    if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename) // '.vtk'
+
+    ! rho
+    tmp_store(:,:,:) = rhostore(:,:,:)
+    filename = trim(prname) // 'rho'
+    call write_VTK_data_gll_dp(nspec,nglob,ibool,xstore,zstore,tmp_store,filename)
+    ! user output
+    if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename) // '.vtk'
+
+
+    if (any_poroelastic) then
+      ! vpII
+      tmp_store(:,:,:) = vpIIstore(:,:,:)
+      filename = trim(prname) // 'vpII'
+      call write_VTK_data_gll_dp(nspec,nglob,ibool,xstore,zstore,tmp_store,filename)
+      ! user output
+      if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename) // '.vtk'
+
+      ! phi
+      tmp_store(:,:,:) = phistore(:,:,:)
+      filename = trim(prname) // 'phi'
+      call write_VTK_data_gll_dp(nspec,nglob,ibool,xstore,zstore,tmp_store,filename)
+      ! user output
+      if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename) // '.vtk'
+    endif
+
+    if (any_anisotropy) then
+      ! c11
+      tmp_store(:,:,:) = c11store(:,:,:)
+      filename = trim(prname) // 'c11'
+      call write_VTK_data_gll_dp(nspec,nglob,ibool,xstore,zstore,tmp_store,filename)
+      ! user output
+      if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename) // '.vtk'
+
+      if (AXISYM) then
+        ! c22
+        tmp_store(:,:,:) = c22store(:,:,:)
+        filename = trim(prname) // 'c22'
+        call write_VTK_data_gll_dp(nspec,nglob,ibool,xstore,zstore,tmp_store,filename)
+        ! user output
+        if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename) // '.vtk'
+      endif
+    endif
+
+    ! finish user output
+    if (myrank == 0) then
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    ! free temporary arrays
+    deallocate(tmp_store,xstore,zstore)
   endif
 
   ! synchronizes all processes

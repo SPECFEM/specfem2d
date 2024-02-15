@@ -68,6 +68,9 @@ MODEL                           = default
 # (available output formats: ascii,binary,gll,legacy)
 SAVE_MODEL                      = default
 
+# external tomography file
+# (used for tomography materials with negative material ids and/or MODEL==tomo settings)
+TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
 
 #-----------------------------------------------------------
 #
@@ -231,23 +234,9 @@ PERIODIC_HORIZ_DIST             = 0.3597d0
 
 #-----------------------------------------------------------
 #
-# Velocity and density models
+# MESHING - Velocity and density models
 #
 #-----------------------------------------------------------
-
-# number of model materials
-nbmodels                        = 2
-# available material types (see user manual for more information)
-#   acoustic:    model_number 1 rho Vp 0  0 0 QKappa Qmu 0 0 0 0 0 0
-#   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0
-#   anistoropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
-#   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
-#   tomo:        model_number -1 0 9999 9999 A 0 0 9999 9999 0 0 0 0 0
-1 1 2500.d0 3400.d0 1963.d0 0 0 9999 9999 0 0 0 0 0 0
-2 1 1020.d0 1500.d0 0.d0 0 0 9999 9999 0 0 0 0 0 0
-
-# external tomography file
-TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
 
 # use an external mesh created by an external meshing tool or use the internal mesher
 read_external_mesh              = .false.
@@ -260,22 +249,34 @@ read_external_mesh              = .false.
 
 # data concerning mesh, when generated using third-party app (more info in README)
 # (see also absorbing_conditions above)
-mesh_file                       = dummy                     # file containing the mesh
-nodes_coords_file               = dummy                     # file containing the nodes coordinates
-materials_file                  = dummy                     # file containing the material number for each element
-nummaterial_velocity_file       = dummy                     # file containing the material properties for each material
-free_surface_file               = dummy                     # file containing the free surface
-axial_elements_file             = dummy                     # file containing the axial elements if AXISYM is true
-absorbing_surface_file          = dummy                     # file containing the absorbing surface
-acoustic_forcing_surface_file   = dummy                     # file containing the acoustic forcing surface
-absorbing_cpml_file             = dummy                     # file containing the CPML element numbers
-tangential_detection_curve_file = dummy                     # file containing the curve delimiting the velocity model
+mesh_file                       = dummy                                   # file containing the mesh
+nodes_coords_file               = dummy                                   # file containing the nodes coordinates
+materials_file                  = dummy                                   # file containing the material number for each element
+nummaterial_velocity_file       = dummy                                   # file containing the material properties for each material
+free_surface_file               = dummy                                   # file containing the free surface
+axial_elements_file             = dummy                                   # file containing the axial elements if AXISYM is true
+absorbing_surface_file          = dummy                                   # file containing the absorbing surface
+acoustic_forcing_surface_file   = dummy                                   # file containing the acoustic forcing surface
+absorbing_cpml_file             = dummy                                   # file containing the CPML element numbers
+tangential_detection_curve_file = dummy                                   # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------
 #
 # PARAMETERS FOR INTERNAL MESHING
 #
 #-----------------------------------------------------------
+
+# material properties
+# number of model materials
+nbmodels                        = 2
+# available material types (see user manual for more information)
+#   acoustic:    model_number 1 rho Vp 0  0 0 QKappa Qmu 0 0 0 0 0 0
+#   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0
+#   anistoropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
+#   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
+#   tomo:        model_number -1 0 9999 9999 A 0 0 9999 9999 0 0 0 0 0
+1 1 2500.d0 3400.d0 1963.d0 0 0 9999 9999 0 0 0 0 0 0
+2 1 1020.d0 1500.d0 0.d0 0 0 9999 9999 0 0 0 0 0 0
 
 # file containing interfaces for internal mesh
 interfacesfile                  = interfaces_fluid_sinusoidal.dat

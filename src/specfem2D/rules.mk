@@ -206,6 +206,7 @@ specfem2D_SHARED_OBJECTS = \
 	$O/read_source_file.shared.o \
 	$O/param_reader.cc.o \
 	$O/set_color_palette.shared.o \
+	$O/write_VTK_data.shared.o \
 	$(EMPTY_MACRO)
 
 JPEGLIB_OBJECTS = \
