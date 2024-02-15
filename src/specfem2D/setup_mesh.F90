@@ -561,6 +561,8 @@
   double precision :: c33min_glob,c33max_glob,c35min_glob,c35max_glob
   double precision :: c55min_glob,c55max_glob
 
+  logical :: has_poroelasticity, has_anisotropy
+
   ! vtk output
   character(len=MAX_STRING_LEN) :: filename,prname
   double precision,dimension(:,:,:),allocatable :: tmp_store
@@ -945,16 +947,25 @@
   tmp_val = maxval(qmu_attenuation_store)
   call max_all_dp(tmp_val, qmumax_glob)
 
-  if (any_poroelastic) then
+  ! poroelasticity
+  ! check if any poroelastic elements in domains
+  call any_all_l(any_poroelastic,has_poroelasticity)
+  if (has_poroelasticity) then
     ! vpII
-    call min_all_dp(vpIImin_glob, vpIImin_glob)
-    call max_all_dp(vpIImax_glob, vpIImax_glob)
+    tmp_val = vpIImin_glob
+    call min_all_dp(tmp_val, vpIImin_glob)
+    tmp_val = vpIImax_glob
+    call max_all_dp(tmp_val, vpIImax_glob)
     ! phi
-    call min_all_dp(phimin_glob, phimin_glob)
-    call max_all_dp(phimax_glob, phimax_glob)
+    tmp_val = phimin_glob
+    call min_all_dp(tmp_val, phimin_glob)
+    tmp_val = phimax_glob
+    call max_all_dp(tmp_val, phimax_glob)
   endif
 
-  if (any_anisotropy) then
+  ! anisotropy
+  call any_all_l(any_anisotropy,has_anisotropy)
+  if (has_anisotropy) then
     ! c11
     tmp_val = minval(c11store)
     call min_all_dp(tmp_val, c11min_glob)
@@ -1017,13 +1028,13 @@
     write(IMAIN,*) '  vs  : min/max = ',sngl(vsmin_glob),'/',sngl(vsmax_glob)
     write(IMAIN,*) '  vp  : min/max = ',sngl(vpmin_glob),'/',sngl(vpmax_glob)
     write(IMAIN,*)
-    if (any_poroelastic) then
+    if (has_poroelasticity) then
       write(IMAIN,*) '  poroelasticity:'
       write(IMAIN,*) '    vpII: min/max = ',sngl(vpIImin_glob),'/',sngl(vpIImax_glob)
       write(IMAIN,*) '    phi : min/max = ',sngl(phimin_glob),'/',sngl(phimax_glob)
       write(IMAIN,*)
     endif
-    if (any_anisotropy) then
+    if (has_anisotropy) then
       write(IMAIN,*) '  anisotropy:'
       write(IMAIN,*) '    c11: min/max = ',sngl(c11min_glob),'/',sngl(c11max_glob)
       write(IMAIN,*) '    c12: min/max = ',sngl(c12min_glob),'/',sngl(c12max_glob)
