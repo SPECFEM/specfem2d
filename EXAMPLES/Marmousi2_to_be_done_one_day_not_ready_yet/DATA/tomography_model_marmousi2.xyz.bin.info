@@ -1,0 +1,26 @@
+# tomography model - converted using script interpolate_Marmousi_2_tomo.py
+#
+# providence
+# created             : 2024-02-17 13:05:58.535336
+# command             : ./interpolate_Marmousi_2_tomo.py --smooth=5.0 --replace-water --binary
+#
+# model format
+# model type          : Marmousi2
+#                       Gaussian smoothed for maximum frequency: 5.0 (Hz)
+#                       using solid domain for water layer in Marmousi2
+# coordinate format   : x / z  # z-direction (positive up)
+#
+#origin_x #origin_z #end_x #end_z
+0.0 0.0 17000.0 3500.0
+#dx #dz
+10.0 10.0
+#nx #nz
+1701 351
+#vp_min #vp_max #vs_min #vs_max #density_min #density_max
+1091.5262451171873 4699.970703125 291.0799255371093 2751.93212890625 1630.2421874999998 2626.977294921875
+#
+# data records - format:
+#x #z #vp #vs #density
+#
+# data file: ./DATA/tomography_model_marmousi2.xyz.bin
+#

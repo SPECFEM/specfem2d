@@ -5,7 +5,7 @@
 #-----------------------------------------------------------
 
 # title of job
-title                           = curved interfaces model w/ compaction gradient (marmousi type)
+title                           = Marmousi2 gridded tomo
 
 # forward or adjoint simulation
 # 1 = forward, 2 = adjoint, 3 = both simultaneously
@@ -17,14 +17,14 @@ NOISE_TOMOGRAPHY                = 0
 SAVE_FORWARD                    = .false.
 
 # parameters concerning partitioning
-NPROC                           = 2              # number of processes
+NPROC                           = 4              # number of processes
 
 # time step parameters
 # total number of time steps
-NSTEP                           = 4000
+NSTEP                           = 5000
 
 # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
-DT                              = 2.5d-4
+DT                              = 1.d-3
 
 # time stepping
 # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
@@ -62,15 +62,15 @@ setup_with_binary_database      = 0
 #   external      - define model using define_external_model subroutine
 #   gll           - read GLL model from binary database file
 #   legacy        - read model from model_velocity.dat_input
-MODEL                           = marmousi
+MODEL                           = default
 
 # Output the model with the requested type, does not save if turn to default or .false.
 # (available output formats: ascii,binary,gll,legacy)
-SAVE_MODEL                      = default
+SAVE_MODEL                      = binary
 
 # external tomography file
 # (used for tomography materials with negative material ids and/or MODEL==tomo settings)
-TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
+TOMOGRAPHY_FILE                 = ./DATA/tomography_model_marmousi2.xyz.bin
 
 #-----------------------------------------------------------
 #
@@ -181,11 +181,11 @@ rec_normal_to_surface           = .false.        # base anglerec normal to surfa
 
 # first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
 nrec                            = 11             # number of receivers
-xdeb                            = 300.           # first receiver x in meters
-zdeb                            = 2200.          # first receiver z in meters
-xfin                            = 3700.          # last receiver x in meters (ignored if only one receiver)
-zfin                            = 2200.          # last receiver z in meters (ignored if only one receiver)
-record_at_surface_same_vertical = .true.         # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
+xdeb                            = 1000.          # first receiver x in meters
+zdeb                            = 3450.          # first receiver z in meters
+xfin                            = 11000.         # last receiver x in meters (ignored if only one receiver)
+zfin                            = 3450.          # last receiver z in meters (ignored if only one receiver)
+record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
 
 
 #-----------------------------------------------------------
@@ -211,7 +211,7 @@ APPROXIMATE_HESS_KL             = .false.
 
 # Perfectly Matched Layer (PML) boundaries
 # absorbing boundary active or not
-PML_BOUNDARY_CONDITIONS         = .true.
+PML_BOUNDARY_CONDITIONS         = .false.
 NELEM_PML_THICKNESS             = 3
 ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
@@ -226,7 +226,7 @@ damping_change_factor_elastic   = 1.0d0
 PML_PARAMETER_ADJUSTMENT        = .false.
 
 # Stacey ABC
-STACEY_ABSORBING_CONDITIONS     = .false.
+STACEY_ABSORBING_CONDITIONS     = .true.
 
 # periodic boundaries
 ADD_PERIODIC_CONDITIONS         = .false.
@@ -268,7 +268,7 @@ tangential_detection_curve_file = dummy                                   # file
 
 # material properties
 # number of model materials
-nbmodels                        = 4
+nbmodels                        = 2
 # available material types (see user manual for more information)
 #   acoustic:              model_number 1 rho Vp 0  0 0 QKappa 9999 0 0 0 0 0 0 (for QKappa use 9999 to ignore it)
 #   elastic:               model_number 1 rho Vp Vs 0 0 QKappa Qmu  0 0 0 0 0 0 (for QKappa and Qmu use 9999 to ignore them)
@@ -286,18 +286,16 @@ nbmodels                        = 4
 #       Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp.
 #       To convert one to the other see doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf and
 #       utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
-1 1 2700.d0 3000.d0 1732.051d0 0.2 0 9999 9999 0 0 0 0 0 0
-2 1 2500.d0 2700.d0 1600.0     0.2 0 9999 9999 0 0 0 0 0 0
-3 1 2200.d0 2500.d0 1443.375d0 0.2 0 9999 9999 0 0 0 0 0 0
-4 1 2200.d0 2200.d0 1343.375d0 0.2 0 9999 9999 0 0 0 0 0 0
+1 -1   0.d0    0.d0    1.d0    0 0    0    0 0 0 0 0 0 0     # solid from tomo file
+2 1 1010.d0 1500.d0    0.d0    0 0 9999 9999 0 0 0 0 0 0     # top water layer
 
 # file containing interfaces for internal mesh
-interfacesfile                  = interfaces_simple_topo_curved.dat
+interfacesfile                  = interfaces.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
-xmax                            = 4000.d0        # abscissa of right side of the model
-nx                              = 400            # number of elements along X
+xmax                            = 17000.d0       # abscissa of right side of the model
+nx                              = 340            # number of elements along X
 
 # absorbing boundary parameters (see absorbing_conditions above)
 absorbbottom                    = .true.
@@ -306,12 +304,10 @@ absorbtop                       = .false.
 absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
-nbregions                       = 4              # then set below the different regions and model number for each region
+nbregions                       = 2              # then set below the different regions and model number for each region
 # format of each line: nxmin nxmax nzmin nzmax material_number
-1 400  1 100 1
-1 400 101 200 2
-1 400 201 300 3
-300 350 101 200 4
+1 340  1 61 1                                    # solid
+1 340 62 70 2                                    # top water layer
 
 #-----------------------------------------------------------
 #
@@ -321,7 +317,7 @@ nbregions                       = 4              # then set below the different 
 
 # interval at which we output time step info and max of norm of displacement
 # (every how many time steps we display information about the simulation. costly, do not use a very small value)
-NTSTEP_BETWEEN_OUTPUT_INFO      = 100
+NTSTEP_BETWEEN_OUTPUT_INFO      = 500
 
 # meshing output
 output_grid_Gnuplot             = .false.        # generate a GNUPLOT file containing the grid, and a script to plot it
@@ -346,7 +342,7 @@ COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
 
 # every how many time steps we draw JPEG or PostScript pictures of the simulation
 # and/or we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
-NTSTEP_BETWEEN_OUTPUT_IMAGES    = 100
+NTSTEP_BETWEEN_OUTPUT_IMAGES    = 500
 
 # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
 cutsnaps                        = 1.
@@ -363,7 +359,7 @@ DRAW_WATER_IN_BLUE              = .true.         # display acoustic layers as co
 USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.        # use snapshot number in the file name of JPEG color snapshots instead of the time step (for instance to create movies in an easier way later)
 
 #### for PostScript snapshots ####
-output_postscript_snapshot      = .true.         # output Postscript snapshot of the results every NTSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
+output_postscript_snapshot      = .false.         # output Postscript snapshot of the results every NTSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
 imagetype_postscript            = 1              # display 1=displ vector 2=veloc vector 3=accel vector; small arrows are displayed for the vectors
 meshvect                        = .true.         # display mesh on PostScript plots or not
 modelvect                       = .false.        # display velocity model on PostScript plots or not
