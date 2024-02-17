@@ -7,3 +7,4 @@
 *.semc binary
 *.adj binary
 *.ascii binary
+*.bin binary
