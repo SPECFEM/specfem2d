@@ -1,10 +1,10 @@
 /* setup/config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to dummy `main' function (if any) required to link to the Fortran
+/* Define to dummy 'main' function (if any) required to link to the Fortran
    libraries. */
 #undef FC_DUMMY_MAIN
 
-/* Define if F77 and FC dummy `main' functions are identical. */
+/* Define if F77 and FC dummy 'main' functions are identical. */
 #undef FC_DUMMY_MAIN_EQ_F77
 
 /* Define to a macro mangling the given C identifier (in lower and upper
@@ -96,11 +96,11 @@
 /* Define SPECFEM2D version */
 #undef SPECFEM2D_VERSION
 
-/* Define to 1 if all of the C90 standard headers exist (not just the ones
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
 
-/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
-   `char[]'. */
+/* Define to 1 if 'lex' declares 'yytext' as a 'char *' by default, not a
+   'char[]'. */
 #undef YYTEXT_POINTER

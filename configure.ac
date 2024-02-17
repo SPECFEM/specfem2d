@@ -68,6 +68,28 @@ AC_ARG_WITH([mpi],
 AM_CONDITIONAL([COND_MPI], [test "$want_mpi" = yes])
 
 ###
+### FORCE_VECTORIZATION
+###
+
+AC_ARG_ENABLE([vectorization],
+    [AS_HELP_STRING([--enable-vectorization],
+        [build FORCE_VECTORIZATION enabled version @<:@default=auto@:>@])],
+    [want_vec="$enableval"],
+    [want_vec=no])
+if test x"$want_vec" == xauto; then
+    if test x"$want_debug" != xno; then
+        want_vec=no
+    else
+        want_vec=yes
+    fi
+else
+    if test x"$want_vec" != xno && test x"$want_debug" != xno; then
+        AC_MSG_ERROR([--enable-debug and --enable-vectorization cannot be specified simultaneously.])
+    fi
+fi
+AM_CONDITIONAL([COND_VECTORIZATION], [test x"$want_vec" != xno])
+
+###
 ### CUDA
 ###
 
@@ -386,6 +408,18 @@ AS_IF([test x"$want_omp" != xno], [
   # openmp checking
   AC_MSG_NOTICE([OpenMP flag $OMP_FCFLAGS])
   CIT_FC_OPENMP_MODULE([$FC], [$OMP_FCFLAGS])
+])
+
+###
+### FORCE_VECTORIZATION
+###
+
+AS_IF([test x"$want_vec" != xno],[
+  AS_BOX([FORCE VECTORIZATION])
+  AC_MSG_NOTICE([FORCE_VECTORIZATION is enabled])
+
+  FLAGS_CHECK="${FLAGS_CHECK} ${FC_DEFINE}FORCE_VECTORIZATION"
+  CPPFLAGS="${CPPFLAGS} -DFORCE_VECTORIZATION"
 ])
 
 ##

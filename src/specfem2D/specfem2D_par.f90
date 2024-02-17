@@ -266,6 +266,9 @@ module specfem_par
   double precision, dimension(:,:,:,:), allocatable :: dershape2D
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable  :: xix,xiz,gammax,gammaz,jacobian
+  ! fused array for xix/xiz/..
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: deriv_mapping
+
   integer, dimension(:,:,:), allocatable :: ibool
 
   integer, dimension(:,:), allocatable  :: knods

@@ -31,6 +31,11 @@
 !
 !========================================================================
 
+! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
+! and macros INDEX_IJ, DO_LOOP_IJ, ENDDO_LOOP_IJ defined in config.fh
+#include "config.fh"
+
+
   subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic, &
                                          displ_elastic_old,dux_dxl_old,duz_dzl_old, &
                                          dux_dzl_plus_duz_dxl_old, &
@@ -43,8 +48,9 @@
   use specfem_par, only: nglob,P_SV, &
                          ATTENUATION_VISCOELASTIC,nspec_ATT_el,N_SLS, &
                          ibool,ispec_is_elastic, &
-                         xix,xiz,gammax,gammaz, &
-                         jacobian,rho_vpstore,mustore,rhostore, &
+                         deriv_mapping, &
+                         gammaz,jacobian, &
+                         rho_vpstore,mustore,rhostore, &
                          qkappa_attenuation_store,qmu_attenuation_store, &
                          c11store,c12store,c13store,c15store,c22store,c23store,c25store,c33store,c35store,c55store, &
                          ispec_is_anisotropic, &
@@ -59,6 +65,10 @@
 
   ! PML arrays
   use specfem_par, only: nspec_PML,ispec_is_PML,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE
+
+#ifdef FORCE_VECTORIZATION
+  use constants, only: NGLLSQUARE
+#endif
 
   implicit none
 
@@ -78,6 +88,9 @@
   !--- local variables
   !---
   integer :: ispec,i,j,k,iglob
+#ifdef FORCE_VECTORIZATION
+  integer :: ij
+#endif
 
   ! spatial derivatives
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLZ) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
@@ -97,9 +110,7 @@
   real(kind=CUSTOM_REAL) :: sigma_xx_prime,sigma_xz_prime,sigma_zz_prime,sigma_zx_prime
   real(kind=CUSTOM_REAL) :: xxi
 
-
   ! Jacobian matrix and determinant
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLZ) :: deriv
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum,e13_sum
@@ -186,13 +197,6 @@
         iglob = ibool(i,j,ispec)
         dummy_loc(1,i,j) = displ_elastic(1,iglob)
         dummy_loc(2,i,j) = displ_elastic(2,iglob)
-
-        ! stores local array for element xi/gamma/jacobian (for better performance)
-        deriv(1,i,j) = xix(i,j,ispec)
-        deriv(2,i,j) = xiz(i,j,ispec)
-        deriv(3,i,j) = gammax(i,j,ispec)
-        deriv(4,i,j) = gammaz(i,j,ispec)
-        deriv(5,i,j) = jacobian(i,j,ispec)
       enddo
     enddo
 
@@ -217,21 +221,19 @@
     endif
 
     ! gets derivatives of ux and uz with respect to x and z
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-        xixl = deriv(1,i,j)
-        xizl = deriv(2,i,j)
-        gammaxl = deriv(3,i,j)
-        gammazl = deriv(4,i,j)
+    DO_LOOP_IJ
+        xixl = deriv_mapping(1,INDEX_IJ,ispec)
+        xizl = deriv_mapping(2,INDEX_IJ,ispec)
+        gammaxl = deriv_mapping(3,INDEX_IJ,ispec)
+        gammazl = deriv_mapping(4,INDEX_IJ,ispec)
 
         ! derivatives of displacement
-        dux_dxl(i,j) = dux_dxi(i,j)*xixl + dux_dgamma(i,j)*gammaxl
-        dux_dzl(i,j) = dux_dxi(i,j)*xizl + dux_dgamma(i,j)*gammazl
+        dux_dxl(INDEX_IJ) = dux_dxi(INDEX_IJ)*xixl + dux_dgamma(INDEX_IJ)*gammaxl
+        dux_dzl(INDEX_IJ) = dux_dxi(INDEX_IJ)*xizl + dux_dgamma(INDEX_IJ)*gammazl
 
-        duz_dxl(i,j) = duz_dxi(i,j)*xixl + duz_dgamma(i,j)*gammaxl
-        duz_dzl(i,j) = duz_dxi(i,j)*xizl + duz_dgamma(i,j)*gammazl
-      enddo
-    enddo
+        duz_dxl(INDEX_IJ) = duz_dxi(INDEX_IJ)*xixl + duz_dgamma(INDEX_IJ)*gammaxl
+        duz_dzl(INDEX_IJ) = duz_dxi(INDEX_IJ)*xizl + duz_dgamma(INDEX_IJ)*gammazl
+    ENDDO_LOOP_IJ
 
     ! AXISYM case overwrite duz_dxl
     if (AXISYM) then
@@ -614,11 +616,11 @@
         endif ! PML_BOUNDARY_CONDITION
 
         ! weak formulation term based on stress tensor (non-symmetric form)
-        xixl = deriv(1,i,j)
-        xizl = deriv(2,i,j)
-        gammaxl = deriv(3,i,j)
-        gammazl = deriv(4,i,j)
-        jacobianl = deriv(5,i,j)
+        xixl = deriv_mapping(1,i,j,ispec)
+        xizl = deriv_mapping(2,i,j,ispec)
+        gammaxl = deriv_mapping(3,i,j,ispec)
+        gammazl = deriv_mapping(4,i,j,ispec)
+        jacobianl = deriv_mapping(5,i,j,ispec)
 
         !! ABAB with the notations of Komatitsch & Tromp 1999 (with 3 -> 2) :
         ! tempx1(i,j) = w.J.F_{11}^{ij}

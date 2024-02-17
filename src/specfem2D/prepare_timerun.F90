@@ -140,6 +140,9 @@
   ! prepares GPU arrays
   if (GPU_MODE) call prepare_GPU()
 
+  ! optimizes array memory layout for better performance
+  call prepare_optimized_arrays()
+
   !-------------------------------------------------------------
 
   ! creates a Gnuplot script to display the energy curve in log scale

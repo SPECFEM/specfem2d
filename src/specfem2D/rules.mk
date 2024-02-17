@@ -141,6 +141,7 @@ specfem2D_OBJECTS = \
 	$O/prepare_gpu.spec.o \
 	$O/prepare_initial_field.spec.o \
 	$O/prepare_noise.spec.o \
+	$O/prepare_optimized_arrays.spec.o \
 	$O/prepare_pml.spec.o \
 	$O/prepare_source_time_function.spec.o \
 	$O/prepare_timerun.spec.o \

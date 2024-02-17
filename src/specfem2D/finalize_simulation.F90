@@ -138,6 +138,12 @@
     endif
   endif
 
+  ! mesh
+  deallocate(ibool)
+  deallocate(xix,xiz,gammax,gammaz,jacobian)
+  deallocate(deriv_mapping)
+  deallocate(ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic)
+
   ! close energy file
   if (OUTPUT_ENERGY .and. myrank == 0) close(IOUT_ENERGY)
 

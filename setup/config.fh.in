@@ -15,22 +15,22 @@
 
 ! switches indexing between: array( i,j, .. ) <-> array( ij,1, .. )
 #ifdef FORCE_VECTORIZATION
-#  define INDEX_IJK  ij,1
+#  define INDEX_IJ  ij,1
 #else
-#  define INDEX_IJK  i,j
+#  define INDEX_IJ  i,j
 #endif
 
 ! switches do-loops between: do j=1,NGLLZ; do i=1,NGLLX <-> do ij=1,NGLLSQUARE
 #ifdef FORCE_VECTORIZATION
-#  define DO_LOOP_IJ  do ijk=1,NGLLSQUARE
+#  define DO_LOOP_IJ  do ij=1,NGLLSQUARE
 #else
 #  define DO_LOOP_IJ  do j=1,NGLLZ; do i=1,NGLLX
 #endif
 
 ! switches enddo-loops between: enddo; enddo ! NGLLZ,NGLLX <-> enddo ! NGLLSQUARE
 #ifdef FORCE_VECTORIZATION
-#  define ENDDO_LOOP_IJK  enddo ! NGLLSQUARE
+#  define ENDDO_LOOP_IJ  enddo ! NGLLSQUARE
 #else
-#  define ENDDO_LOOP_IJK  enddo; enddo ! NGLLZ,NGLLX
+#  define ENDDO_LOOP_IJ  enddo; enddo ! NGLLZ,NGLLX
 #endif
 

@@ -31,6 +31,11 @@
 !
 !========================================================================
 
+! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
+! and macros INDEX_IJ, DO_LOOP_IJ, ENDDO_LOOP_IJ defined in config.fh
+#include "config.fh"
+
+
   subroutine compute_forces_viscoacoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
                                           PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1_acous_sf,sum_forces_old)
 
@@ -42,8 +47,7 @@
 
   use specfem_par, only: nglob,nspec_ATT_ac, &
                          ibool,ispec_is_acoustic, &
-                         rhostore, &
-                         xix,xiz,gammax,gammaz,jacobian, &
+                         deriv_mapping, &
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,coord,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj,ATTENUATION_VISCOACOUSTIC, &
@@ -55,6 +59,10 @@
 
   ! PML arrays
   use specfem_par, only: ispec_is_PML
+
+#ifdef FORCE_VECTORIZATION
+  use constants, only: NGLLSQUARE
+#endif
 
   implicit none
 
@@ -71,6 +79,9 @@
 
   ! local parameters
   integer :: ispec,i,j,k,iglob
+#ifdef FORCE_VECTORIZATION
+  integer :: ij
+#endif
 
   ! spatial derivatives
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: dux_dxi,dux_dgamma
@@ -82,11 +93,10 @@
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
 
   ! Jacobian matrix and determinant
-  real(kind=CUSTOM_REAL), dimension(6,NGLLX,NGLLZ) :: deriv
   real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,N_SLS) :: deriv_e1
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
-  real(kind=CUSTOM_REAL) :: rhol,fac
+  real(kind=CUSTOM_REAL) :: fac
   real(kind=CUSTOM_REAL) :: temp1l,temp2l,sum_forces,forces_attenuation
 
   ! local PML parameters
@@ -118,17 +128,6 @@
         iglob = ibool(i,j,ispec)
         potential_elem(i,j) = potential_acoustic(iglob)
 
-        ! density model
-        rhol = rhostore(i,j,ispec)
-
-        ! stores local array for element xi/gamma/jacobian (for better performance)
-        deriv(1,i,j) = xix(i,j,ispec)
-        deriv(2,i,j) = xiz(i,j,ispec)
-        deriv(3,i,j) = gammax(i,j,ispec)
-        deriv(4,i,j) = gammaz(i,j,ispec)
-        deriv(5,i,j) = jacobian(i,j,ispec)
-        deriv(6,i,j) = jacobian(i,j,ispec) / rhol
-
         if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. time_stepping_scheme > 1) then
           deriv_e1(1,i,j,:) = phi_nu1(i,j,ispec,:)
           deriv_e1(2,i,j,:) = inv_tau_sigma_nu1(i,j,ispec,:)
@@ -155,18 +154,16 @@
     endif
 
     ! gets derivatives of ux and uz with respect to x and z
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-        xixl = deriv(1,i,j)
-        xizl = deriv(2,i,j)
-        gammaxl = deriv(3,i,j)
-        gammazl = deriv(4,i,j)
+    DO_LOOP_IJ
+        xixl = deriv_mapping(1,INDEX_IJ,ispec)
+        xizl = deriv_mapping(2,INDEX_IJ,ispec)
+        gammaxl = deriv_mapping(3,INDEX_IJ,ispec)
+        gammazl = deriv_mapping(4,INDEX_IJ,ispec)
 
         ! derivatives of potential
-        dux_dxl(i,j) = dux_dxi(i,j) * xixl + dux_dgamma(i,j) * gammaxl
-        dux_dzl(i,j) = dux_dxi(i,j) * xizl + dux_dgamma(i,j) * gammazl
-      enddo
-    enddo
+        dux_dxl(INDEX_IJ) = dux_dxi(INDEX_IJ) * xixl + dux_dgamma(INDEX_IJ) * gammaxl
+        dux_dzl(INDEX_IJ) = dux_dxi(INDEX_IJ) * xizl + dux_dgamma(INDEX_IJ) * gammazl
+    ENDDO_LOOP_IJ
 
     ! AXISYM case overwrite dux_dxl
     if (AXISYM) then
@@ -190,17 +187,17 @@
       if (is_on_the_axis(ispec)) then
         do j = 1,NGLLZ
           do i = 1,NGLLX
-            xixl = deriv(1,i,j)
-            xizl = deriv(2,i,j)
-            gammaxl = deriv(3,i,j)
-            gammazl = deriv(4,i,j)
-            jacobianl = deriv(5,i,j)
-            fac = deriv(6,i,j) ! jacobian/rho
+            xixl = deriv_mapping(1,i,j,ispec)
+            xizl = deriv_mapping(2,i,j,ispec)
+            gammaxl = deriv_mapping(3,i,j,ispec)
+            gammazl = deriv_mapping(4,i,j,ispec)
+            jacobianl = deriv_mapping(5,i,j,ispec)
+            fac = deriv_mapping(6,i,j,ispec) ! jacobian/rho
 
             if (i == 1) then
               ! dchi/dr=rho * u_r=0 on the axis
               dux_dxl(i,j) = 0._CUSTOM_REAL
-              r_xiplus1(i,j) = gammaz(i,j,ispec) * jacobianl
+              r_xiplus1(i,j) = gammazl * jacobianl
             else
               r_xiplus1(i,j) = coord(1,ibool(i,j,ispec))/(xiglj(i) + ONE)
             endif
@@ -211,33 +208,32 @@
       else
         do j = 1,NGLLZ
           do i = 1,NGLLX
-            xixl = deriv(1,i,j)
-            xizl = deriv(2,i,j)
-            gammaxl = deriv(3,i,j)
-            gammazl = deriv(4,i,j)
-            jacobianl = deriv(5,i,j)
-            fac = deriv(6,i,j) ! jacobian/rho
+            xixl = deriv_mapping(1,i,j,ispec)
+            xizl = deriv_mapping(2,i,j,ispec)
+            gammaxl = deriv_mapping(3,i,j,ispec)
+            gammazl = deriv_mapping(4,i,j,ispec)
+            jacobianl = deriv_mapping(5,i,j,ispec)
+            fac = deriv_mapping(6,i,j,ispec) ! jacobian/rho
 
-            tempx1(i,j) = coord(1,ibool(i,j,ispec)) * fac * (xixl * dux_dxl(i,j) + xizl * dux_dzl(i,j))
-            tempx2(i,j) = coord(1,ibool(i,j,ispec)) * fac * (gammaxl * dux_dxl(i,j) + gammazl * dux_dzl(i,j))
+            iglob = ibool(i,j,ispec)
+            tempx1(i,j) = coord(1,iglob) * fac * (xixl * dux_dxl(i,j) + xizl * dux_dzl(i,j))
+            tempx2(i,j) = coord(1,iglob) * fac * (gammaxl * dux_dxl(i,j) + gammazl * dux_dzl(i,j))
           enddo
         enddo
       endif
     else
       ! default case
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          xixl = deriv(1,i,j)
-          xizl = deriv(2,i,j)
-          gammaxl = deriv(3,i,j)
-          gammazl = deriv(4,i,j)
-          jacobianl = deriv(5,i,j)
-          fac = deriv(6,i,j) ! jacobian/rho
+      DO_LOOP_IJ
+          xixl = deriv_mapping(1,INDEX_IJ,ispec)
+          xizl = deriv_mapping(2,INDEX_IJ,ispec)
+          gammaxl = deriv_mapping(3,INDEX_IJ,ispec)
+          gammazl = deriv_mapping(4,INDEX_IJ,ispec)
+          jacobianl = deriv_mapping(5,INDEX_IJ,ispec)
+          fac = deriv_mapping(6,INDEX_IJ,ispec) ! jacobian/rho
 
-          tempx1(i,j) = fac * (xixl * dux_dxl(i,j) + xizl * dux_dzl(i,j))
-          tempx2(i,j) = fac * (gammaxl * dux_dxl(i,j) + gammazl * dux_dzl(i,j))
-        enddo
-      enddo
+          tempx1(INDEX_IJ) = fac * (xixl * dux_dxl(INDEX_IJ) + xizl * dux_dzl(INDEX_IJ))
+          tempx2(INDEX_IJ) = fac * (gammaxl * dux_dxl(INDEX_IJ) + gammazl * dux_dzl(INDEX_IJ))
+      ENDDO_LOOP_IJ
     endif
 
     ! first double loop over GLL points to compute and store gradients
@@ -259,12 +255,18 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
+          jacobianl = deriv_mapping(5,i,j,ispec)
+
           ! loop on all the standard linear solids
           do i_sls = 1,N_SLS
             tempx3(i,j) = tempx3(i,j) + e1_acous(iglob,i_sls)
           enddo
-          if (time_stepping_scheme > 1) tempx3_e1(i,j,:) = deriv(5,i,j)*(deriv_e1(2,i,j,:)/deriv_e1(1,i,j,:))*e1_acous(iglob,:)
-          tempx3(i,j) = jacobian(i,j,ispec)  * tempx3(i,j)
+
+          if (time_stepping_scheme > 1) then
+            tempx3_e1(i,j,:) = jacobianl * (deriv_e1(2,i,j,:)/deriv_e1(1,i,j,:)) * e1_acous(iglob,:)
+          endif
+
+          tempx3(i,j) = jacobianl * tempx3(i,j)
         enddo
       enddo
 
