@@ -124,6 +124,9 @@ env:
     # infinite_homogeneous_moment_tensor_vertical_dip_slip example
     - TESTID=29 TESTDIR=21 TESTCOV=0 TESTFLAGS="" CUDA=false
 
+    # Marmousi2
+    - TESTID=30 TESTDIR=22 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
+
 
 # additional ARM tests
 jobs:
