@@ -593,14 +593,14 @@ end module interpolation
   use specfem_par, only: myrank,TOMOGRAPHY_FILE
 
   use model_tomography_par
-  use constants, only: IIN,IMAIN,HUGEVAL,MAX_STRING_LEN
+  use constants, only: IIN,IMAIN,HUGEVAL,MAX_STRING_LEN,CUSTOM_REAL
 
   implicit none
 
   ! local parameters
-  integer :: ier,irecord,i,j
+  integer :: ier,irecord,i,j,str_len
   character(len=MAX_STRING_LEN) :: string_read
-
+  ! temporary arrays
   double precision, dimension(:), allocatable :: x_tomography,z_tomography,vp_tomography,vs_tomography,rho_tomography
   double precision, dimension(:), allocatable :: qp_tomography,qs_tomography
   double precision :: read_rho_min,read_rho_max
@@ -611,8 +611,45 @@ end module interpolation
   double precision :: tmp_dp
   integer :: ntokens
 
+  ! binary format
+  logical :: use_binary_format
+  integer :: filesize
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: binary_header
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: binary_data
+
+  ! checks file ending
+  use_binary_format = .false.
+
+  ! ".bin" ending for binary files
+  str_len = len_trim(TOMOGRAPHY_FILE)
+  if (str_len > 4) then
+    if (TOMOGRAPHY_FILE(str_len-3:str_len) == ".bin") then
+      ! binary file format
+      use_binary_format = .true.
+    endif
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '     reading in tomography model data'
+    if (use_binary_format) then
+      write(IMAIN,*) '     file format: binary'
+    else
+      write(IMAIN,*) '     file format: ascii'
+    endif
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   ! opens file for reading
-  open(unit=IIN,file=trim(TOMOGRAPHY_FILE),status='old',action='read',iostat=ier)
+  if (use_binary_format) then
+    ! binary file format
+    open(unit=IIN,file=trim(TOMOGRAPHY_FILE),form='unformatted',status='old',action='read',iostat=ier)
+  else
+    ! ascii file format
+    open(unit=IIN,file=trim(TOMOGRAPHY_FILE),status='old',action='read',iostat=ier)
+  endif
+
   if (ier /= 0) then
     print *,'Error: could not open tomography file: ',trim(TOMOGRAPHY_FILE)
     print *,'Please check your settings in Par_file ...'
@@ -622,42 +659,82 @@ end module interpolation
   ! --------------------------------------------------------------------------------------
   ! header infos
   ! --------------------------------------------------------------------------------------
-  ! reads in model dimensions
-  ! format: #origin_x #origin_z #end_x #end_z
-  call tomo_read_next_line(IIN,string_read)
-  read(string_read,*) ORIGIN_X, ORIGIN_Z, END_X, END_Z
+  if (use_binary_format) then
+    ! binary file
+    ! note: binary format can only have numbers, no comment lines
+    !       also, it must have the exact number of data entries as no further checks will be done
+    allocate(binary_header(14),stat=ier)
+    if (ier /= 0) stop 'Error allocating binary_header array'
+    binary_header(:) = 0.0_CUSTOM_REAL
 
-  ! --------------------------------------------------------------------------------------
-  ! model increments
-  ! format: #dx #dz
-  ! --------------------------------------------------------------------------------------
-  call tomo_read_next_line(IIN,string_read)
-  read(string_read,*) SPACING_X, SPACING_Z
+    read(IIN) binary_header
 
-  ! --------------------------------------------------------------------------------------
-  ! reads in models entries
-  ! format: #nx #nz
-  ! --------------------------------------------------------------------------------------
-  call tomo_read_next_line(IIN,string_read)
-  read(string_read,*) NX,NZ
+    ! assign header values
+    ORIGIN_X  = binary_header(1)
+    ORIGIN_Z  = binary_header(2)
+    END_X     = binary_header(3)
+    END_Z     = binary_header(4)
+    SPACING_X = binary_header(5)
+    SPACING_Z = binary_header(6)
+    NX        = nint(binary_header(7))
+    NZ        = nint(binary_header(8))
+    VP_MIN    = binary_header(9)
+    VP_MAX    = binary_header(10)
+    VS_MIN    = binary_header(11)
+    VS_MAX    = binary_header(12)
+    RHO_MIN   = binary_header(13)
+    RHO_MAX   = binary_header(14)
 
-  ! --------------------------------------------------------------------------------------
-  ! reads in models min/max statistics
-  ! format: #vp_min #vp_max #vs_min #vs_max #density_min #density_max
-  ! --------------------------------------------------------------------------------------
-  call tomo_read_next_line(IIN,string_read)
-  read(string_read,*)  VP_MIN,VP_MAX,VS_MIN,VS_MAX,RHO_MIN,RHO_MAX
+    ! free temporary array
+    deallocate(binary_header)
+  else
+    ! ascii file
+    ! reads in model dimensions
+    ! format: #origin_x #origin_z #end_x #end_z
+    call tomo_read_next_line(IIN,string_read)
+    read(string_read,*) ORIGIN_X, ORIGIN_Z, END_X, END_Z
+
+    ! --------------------------------------------------------------------------------------
+    ! model increments
+    ! format: #dx #dz
+    ! --------------------------------------------------------------------------------------
+    call tomo_read_next_line(IIN,string_read)
+    read(string_read,*) SPACING_X, SPACING_Z
+
+    ! --------------------------------------------------------------------------------------
+    ! reads in models entries
+    ! format: #nx #nz
+    ! --------------------------------------------------------------------------------------
+    call tomo_read_next_line(IIN,string_read)
+    read(string_read,*) NX,NZ
+
+    ! --------------------------------------------------------------------------------------
+    ! reads in models min/max statistics
+    ! format: #vp_min #vp_max #vs_min #vs_max #density_min #density_max
+    ! --------------------------------------------------------------------------------------
+    call tomo_read_next_line(IIN,string_read)
+    read(string_read,*)  VP_MIN,VP_MAX,VS_MIN,VS_MAX,RHO_MIN,RHO_MAX
+  endif
 
   ! Determines total maximum number of element records
   nrecord = int(NX*NZ)
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '     Number of grid points: NX * NZ = ',nrecord
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   ! allocate models parameter records
+  ! temporary 1D arrays
   allocate(x_tomography(nrecord),z_tomography(nrecord),vp_tomography(nrecord),vs_tomography(nrecord), &
            rho_tomography(nrecord),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'not enough memory to allocate tomo arrays')
   x_tomography(:) = 0.d0; z_tomography(:) = 0.d0
   vp_tomography(:) = 0.d0; vs_tomography(:) = 0.d0; rho_tomography(:) = 0.d0
 
+  ! tomo model arrays
   allocate(x_tomo(NX),z_tomo(NZ),vp_tomo(NX,NZ),vs_tomo(NX,NZ),rho_tomo(NX,NZ),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'not enough memory to allocate tomo arrays')
   x_tomo(:) = 0.d0; z_tomo(:) = 0.d0
@@ -678,77 +755,181 @@ end module interpolation
   read_qs_min = + HUGEVAL
   read_qs_max = - HUGEVAL
 
-  do while (irecord < nrecord)
-    call tomo_read_next_line(IIN,string_read)
+  ! read in tomography model data
+  if (use_binary_format) then
+    ! binary file
+    ! get filesize to determine if it provides 5 (x,z,vp,vs,rho) or 7 (+qp,+qs) values
+    inquire(IIN, size=filesize)
 
-    if (irecord == 0) then
-      ! checks number of entries of first data line
-      call tomo_get_number_of_tokens(string_read,ntokens)
+    ! remove marker sizes around header
+    filesize = filesize - 8                   ! markers
+    filesize = filesize - CUSTOM_REAL * 14    ! header
 
-      !debug
-      !print *,'tomography file: number of tokens on first data line: ',ntokens,' line: ***'//trim(string_read)//'***'
+    ! remove marker sizes around data
+    filesize = filesize - 8
+    ntokens = filesize / (CUSTOM_REAL * nrecord)
 
-      ! data line formats:
-      ! #x(1) #z(1) #vp #vs #rho
-      ! or
-      ! #x(1) #z(1) #vp #vs #rho #Qp #Qs
-      if (ntokens /= 5 .and. ntokens /= 7) then
-        print *,'Error reading tomography file, data line has wrong number of entries: ',trim(string_read)
-        stop 'Error reading tomography file'
+    ! check
+    if (ntokens /= 5 .and. ntokens /= 7) then
+      print *,'Error: invalid number of parameters in file: ',ntokens
+      print *,'       should be 5 (x,z,vp,vs,rho) or 7 (+qp,+qs)'
+      print *,'Please check binary tomography file...'
+      call stop_the_code('Invalid binary tomography file')
+    endif
+
+    ! determines data format
+    if (ntokens == 7) then
+      has_q_values = .true.
+    else
+      has_q_values = .false.
+    endif
+
+    ! allocate temporary arrays
+    if (has_q_values) then
+      ! allocate models parameter records
+      ! temporary 1D arrays
+      allocate(qp_tomography(nrecord),qs_tomography(nrecord),stat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'not enough memory to allocate tomo Q arrays')
+      qp_tomography(:) = 0.d0; qs_tomography(:) = 0.d0
+
+      ! tomo model arrays
+      allocate(qp_tomo(NX,NZ),qs_tomo(NX,NZ),stat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'not enough memory to allocate tomo arrays')
+      qp_tomo(:,:) = 0.d0; qs_tomo(:,:) = 0.d0
+    endif
+
+    ! allocate data array for reading binary block data
+    allocate(binary_data(ntokens,nrecord),stat=ier)
+    if (ier /= 0) stop 'Error allocating binary_data array'
+    binary_data(:,:) = 0.0_CUSTOM_REAL
+
+    read(IIN) binary_data
+
+    ! fill temporary 1D arrays
+    do irecord = 1,nrecord
+      ! positions
+      x_tomography(irecord) = binary_data(1,irecord)
+      z_tomography(irecord) = binary_data(2,irecord)
+
+      ! parameters
+      vp_tomography(irecord) = binary_data(3,irecord)
+      vs_tomography(irecord) = binary_data(4,irecord)
+      rho_tomography(irecord) = binary_data(5,irecord)
+
+      ! optional Q values
+      if (has_q_values) then
+        qp_tomography(irecord) = binary_data(6,irecord)
+        qs_tomography(irecord) = binary_data(7,irecord)
       endif
+    enddo
 
-      ! determines data format
-      if (ntokens == 7) then
-        has_q_values = .true.
-      else
-        has_q_values = .false.
-      endif
+    ! free temporary data array
+    deallocate(binary_data)
+
+    ! sets values for x_tomo and stats
+    do irecord = 1,nrecord
+      ! for tomo model
+      if (irecord <= NX) x_tomo(irecord) = x_tomography(irecord)
+
+      ! stats
+      if (vp_tomography(irecord) > read_vp_max) read_vp_max = vp_tomography(irecord)
+      if (vp_tomography(irecord) < read_vp_min) read_vp_min = vp_tomography(irecord)
+      if (vs_tomography(irecord) > read_vs_max) read_vs_max = vs_tomography(irecord)
+      if (vs_tomography(irecord) < read_vs_min) read_vs_min = vs_tomography(irecord)
+      if (rho_tomography(irecord) > read_rho_max) read_rho_max = rho_tomography(irecord)
+      if (rho_tomography(irecord) < read_rho_min) read_rho_min = rho_tomography(irecord)
 
       if (has_q_values) then
-        ! allocate models parameter records
-        allocate(qp_tomography(nrecord),qs_tomography(nrecord),stat=ier)
-        if (ier /= 0) call exit_MPI(myrank,'not enough memory to allocate tomo Q arrays')
-        qp_tomography(:) = 0.d0; qs_tomography(:) = 0.d0
-
-        allocate(qp_tomo(NX,NZ),qs_tomo(NX,NZ),stat=ier)
-        if (ier /= 0) call exit_MPI(myrank,'not enough memory to allocate tomo arrays')
-        qp_tomo(:,:) = 0.d0; qs_tomo(:,:) = 0.d0
+        if (qp_tomography(irecord) > read_qp_max) read_qp_max = qp_tomography(irecord)
+        if (qp_tomography(irecord) < read_qp_min) read_qp_min = qp_tomography(irecord)
+        if (qs_tomography(irecord) > read_qs_max) read_qs_max = qs_tomography(irecord)
+        if (qs_tomography(irecord) < read_qs_min) read_qs_min = qs_tomography(irecord)
       endif
-    endif
+    enddo
+    ! for check below
+    irecord = nrecord
 
-    ! reads in tomo values
-    if (has_q_values) then
-      ! #x(1) #z(1) #vp #vs #rho #Qp #Qs
-      read(string_read,*) x_tomography(irecord+1),z_tomography(irecord+1), &
-                          vp_tomography(irecord+1),vs_tomography(irecord+1),rho_tomography(irecord+1), &
-                          qp_tomography(irecord+1),qs_tomography(irecord+1)
-    else
-      ! #x(1) #z(1) #vp #vs #rho
-      read(string_read,*) x_tomography(irecord+1),z_tomography(irecord+1), &
-                          vp_tomography(irecord+1),vs_tomography(irecord+1),rho_tomography(irecord+1)
-    endif
+  else
+    ! ascii file
+    do while (irecord < nrecord)
+      call tomo_read_next_line(IIN,string_read)
 
-    if (irecord < NX) x_tomo(irecord+1) = x_tomography(irecord+1)
+      if (irecord == 0) then
+        ! checks number of entries of first data line
+        call tomo_get_number_of_tokens(string_read,ntokens)
 
-    ! stats
-    if (vp_tomography(irecord+1) > read_vp_max) read_vp_max = vp_tomography(irecord+1)
-    if (vp_tomography(irecord+1) < read_vp_min) read_vp_min = vp_tomography(irecord+1)
-    if (vs_tomography(irecord+1) > read_vs_max) read_vs_max = vs_tomography(irecord+1)
-    if (vs_tomography(irecord+1) < read_vs_min) read_vs_min = vs_tomography(irecord+1)
-    if (rho_tomography(irecord+1) > read_rho_max) read_rho_max = rho_tomography(irecord+1)
-    if (rho_tomography(irecord+1) < read_rho_min) read_rho_min = rho_tomography(irecord+1)
+        !debug
+        !print *,'tomography file: number of tokens on first data line: ',ntokens,' line: ***'//trim(string_read)//'***'
 
-    if (has_q_values) then
-      if (qp_tomography(irecord+1) > read_qp_max) read_qp_max = qp_tomography(irecord+1)
-      if (qp_tomography(irecord+1) < read_qp_min) read_qp_min = qp_tomography(irecord+1)
-      if (qs_tomography(irecord+1) > read_qs_max) read_qs_max = qs_tomography(irecord+1)
-      if (qs_tomography(irecord+1) < read_qs_min) read_qs_min = qs_tomography(irecord+1)
-    endif
+        ! data line formats:
+        ! #x(1) #z(1) #vp #vs #rho
+        ! or
+        ! #x(1) #z(1) #vp #vs #rho #Qp #Qs
+        if (ntokens /= 5 .and. ntokens /= 7) then
+          print *,'Error reading tomography file, data line has wrong number of entries: ',trim(string_read)
+          stop 'Error reading tomography file'
+        endif
 
-    ! counter
-    irecord = irecord + 1
-  enddo
+        ! determines data format
+        if (ntokens == 7) then
+          has_q_values = .true.
+        else
+          has_q_values = .false.
+        endif
 
+        if (has_q_values) then
+          ! allocate models parameter records
+          ! temporary 1D arrays
+          allocate(qp_tomography(nrecord),qs_tomography(nrecord),stat=ier)
+          if (ier /= 0) call exit_MPI(myrank,'not enough memory to allocate tomo Q arrays')
+          qp_tomography(:) = 0.d0; qs_tomography(:) = 0.d0
+
+          ! tomo model arrays
+          allocate(qp_tomo(NX,NZ),qs_tomo(NX,NZ),stat=ier)
+          if (ier /= 0) call exit_MPI(myrank,'not enough memory to allocate tomo arrays')
+          qp_tomo(:,:) = 0.d0; qs_tomo(:,:) = 0.d0
+        endif
+      endif
+
+      ! reads in tomo values
+      if (has_q_values) then
+        ! #x(1) #z(1) #vp #vs #rho #Qp #Qs
+        read(string_read,*) x_tomography(irecord+1),z_tomography(irecord+1), &
+                            vp_tomography(irecord+1),vs_tomography(irecord+1),rho_tomography(irecord+1), &
+                            qp_tomography(irecord+1),qs_tomography(irecord+1)
+      else
+        ! #x(1) #z(1) #vp #vs #rho
+        read(string_read,*) x_tomography(irecord+1),z_tomography(irecord+1), &
+                            vp_tomography(irecord+1),vs_tomography(irecord+1),rho_tomography(irecord+1)
+      endif
+
+      ! for tomo model
+      if (irecord < NX) x_tomo(irecord+1) = x_tomography(irecord+1)
+
+      ! stats
+      if (vp_tomography(irecord+1) > read_vp_max) read_vp_max = vp_tomography(irecord+1)
+      if (vp_tomography(irecord+1) < read_vp_min) read_vp_min = vp_tomography(irecord+1)
+      if (vs_tomography(irecord+1) > read_vs_max) read_vs_max = vs_tomography(irecord+1)
+      if (vs_tomography(irecord+1) < read_vs_min) read_vs_min = vs_tomography(irecord+1)
+      if (rho_tomography(irecord+1) > read_rho_max) read_rho_max = rho_tomography(irecord+1)
+      if (rho_tomography(irecord+1) < read_rho_min) read_rho_min = rho_tomography(irecord+1)
+
+      if (has_q_values) then
+        if (qp_tomography(irecord+1) > read_qp_max) read_qp_max = qp_tomography(irecord+1)
+        if (qp_tomography(irecord+1) < read_qp_min) read_qp_min = qp_tomography(irecord+1)
+        if (qs_tomography(irecord+1) > read_qs_max) read_qs_max = qs_tomography(irecord+1)
+        if (qs_tomography(irecord+1) < read_qs_min) read_qs_min = qs_tomography(irecord+1)
+      endif
+
+      ! counter
+      irecord = irecord + 1
+    enddo
+  endif
+
+  ! closes file
+  close(IIN)
+
+  ! fill tomo model arrays
   z_tomo = z_tomography(::NX)
 
   do i = 1,NX
@@ -808,9 +989,7 @@ end module interpolation
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '     Number of grid points = NX*NZ:',nrecord
-    write(IMAIN,*)
-    write(IMAIN,*) '     read model vp : min/max = ',sngl(read_vp_min),' / ',sngl(read_vp_max)
+    write(IMAIN,*) '     tomo model vp : min/max = ',sngl(read_vp_min),' / ',sngl(read_vp_max)
     write(IMAIN,*) '                vs : min/max = ',sngl(read_vs_min),' / ',sngl(read_vs_max)
     write(IMAIN,*) '                rho: min/max = ',sngl(read_rho_min),' / ',sngl(read_rho_max)
     write(IMAIN,*)
@@ -822,8 +1001,7 @@ end module interpolation
     call flush_IMAIN()
   endif
 
-  ! closes file
-  close(IIN)
+  ! free temporary 1D arrays
   deallocate(x_tomography,z_tomography,vp_tomography,vs_tomography,rho_tomography)
   if (has_q_values) then
     deallocate(qp_tomography,qs_tomography)

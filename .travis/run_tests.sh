@@ -40,6 +40,7 @@ case "$TESTDIR" in
 19) dir=EXAMPLES/moving_sources_acoustic/ ;;
 20) dir=EXAMPLES/anisotropic_isotropic_model/ ;;
 21) dir=EXAMPLES/infinite_homogeneous_moment_tensor_vertical_dip_slip/ ;;
+22) dir=EXAMPLES/Marmousi2/ ;;
 *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
 esac
 
@@ -388,9 +389,9 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ## elastic kernel example Tromp2005_kernel/ w/ NO_BACKWARD_RECONSTRUCTION
   ##
   echo "##################################################################"
-  echo "EXAMPLES/Tromp2005_kernel/"
+  echo "EXAMPLES/Tromp2005_kernel"
   echo
-  cd EXAMPLES/Tromp2005_kernel/
+  cd EXAMPLES/Tromp2005_kernel
   sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
   sed -i "s:^NO_BACKWARD_RECONSTRUCTION .*:NO_BACKWARD_RECONSTRUCTION = .true.:" DATA/Par_file
   sed -i "s:^NTSTEP_BETWEEN_COMPUTE_KERNELS .*:NTSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
@@ -402,6 +403,22 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
 fi
 echo -en 'travis_fold:end:coverage.no_backward\\r'
 
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.marmousi2\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## Marmousi2
+  ##
+  echo "##################################################################"
+  echo "EXAMPLES/Marmousi2"
+  echo
+  cd EXAMPLES/Marmousi2
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.marmousi2\\r'
 
 
 #################################################################
