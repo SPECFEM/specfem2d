@@ -588,7 +588,7 @@ jobs:
 
     - name: Run build
       env:
-        TESTFLAGS:      # default w/out MPI
+        TESTFLAGS: --with-mpi --enable-vectorization
       run: ./.github/scripts/run_build.sh
       shell: bash
 
