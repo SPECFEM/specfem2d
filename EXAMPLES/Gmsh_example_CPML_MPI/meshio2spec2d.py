@@ -44,17 +44,17 @@ def get_cpml_data(mesh_sets_x, mesh_sets_y, mesh_sets_xy, cell_id_offset):
     n_elm_pml += len(mesh_sets_x)
     if (len(mesh_sets_x) > 0):
         for elm in mesh_sets_x:
-            str_lines.append(str(int(elm-cell_id_offset)) + " " + str(1) + "\n")
+            str_lines.append(str(int(elm-cell_id_offset)) + " " + str(1))
 
     n_elm_pml += len(mesh_sets_y)
     if (len(mesh_sets_y) > 0):
         for elm in mesh_sets_y:
-            str_lines.append(str(int(elm-cell_id_offset)) + " " + str(2) + "\n")
+            str_lines.append(str(int(elm-cell_id_offset)) + " " + str(2))
 
     n_elm_pml += len(mesh_sets_xy)
     if (len(mesh_sets_xy) > 0):
         for elm in mesh_sets_xy:
-            str_lines.append(str(int(elm-cell_id_offset)) + " " + str(3) + "\n")
+            str_lines.append(str(int(elm-cell_id_offset)) + " " + str(3))
 
     # add number of pml elements to the first line
     str_lines.insert(0, str(n_elm_pml))
