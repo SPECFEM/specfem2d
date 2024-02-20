@@ -39,29 +39,24 @@ def write_str_surface(str_lines, cells_line, cells_quad, bound_edges, bound_node
 def get_cpml_data(mesh_sets_x, mesh_sets_y, mesh_sets_xy, cell_id_offset):
 
     n_elm_pml = 0
-    #pml_x, pml_y, pml_xy = [], [], []
-
     str_lines = []
 
     n_elm_pml += len(mesh_sets_x)
-    #pml_x = [int(elm - cell_id_offset) for elm in mesh_sets["PML_X"][1]]
     if (len(mesh_sets_x) > 0):
         for elm in mesh_sets_x:
             str_lines.append(str(int(elm-cell_id_offset)) + " " + str(1) + "\n")
 
     n_elm_pml += len(mesh_sets_y)
-    #pml_y = [int(elm - cell_id_offset) for elm in mesh_sets["PML_Y"][1]]
     if (len(mesh_sets_y) > 0):
         for elm in mesh_sets_y:
             str_lines.append(str(int(elm-cell_id_offset)) + " " + str(2) + "\n")
 
     n_elm_pml += len(mesh_sets_xy)
-    #pml_xy = [int(elm - cell_id_offset) for elm in mesh_sets["PML_XY"][1]]
     if (len(mesh_sets_xy) > 0):
         for elm in mesh_sets_xy:
             str_lines.append(str(int(elm-cell_id_offset)) + " " + str(3) + "\n")
 
-   # add number of pml elements to the first line
+    # add number of pml elements to the first line
     str_lines.insert(0, str(n_elm_pml))
 
     return str_lines
@@ -103,7 +98,6 @@ class Meshio2Specfem2D:
     right_abs = True
 
     use_cpml = False
-    #cpml_flags = {"PML_X": 1, "PML_Y": 2, "PML_XY": 3} # specfem2d/setup/constants.h
     cell_id_offset = 0
 
 
