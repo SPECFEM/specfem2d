@@ -5,7 +5,7 @@
 #-----------------------------------------------------------
 
 # title of job
-title                           = MERMAIDs_test
+title                           = Gmsh_MeshIO_CPML_Example
 
 # forward or adjoint simulation
 # 1 = forward, 2 = adjoint, 3 = both simultaneously
@@ -244,7 +244,7 @@ PERIODIC_HORIZ_DIST             = 4000.d0
 #-----------------------------------------------------------
 
 # number of model materials
-nbmodels                        = 2
+nbmodels                        = 2 # use MESH/nummaterial_velocity_file instead
 # available material types (see user manual for more information)
 #   acoustic:              model_number 1 rho Vp 0  0 0 QKappa 9999 0 0 0 0 0 0 (for QKappa use 9999 to ignore it)
 #   elastic:               model_number 1 rho Vp Vs 0 0 QKappa Qmu  0 0 0 0 0 0 (for QKappa and Qmu use 9999 to ignore them)
@@ -284,6 +284,7 @@ read_external_mesh              = .true.
 mesh_file                       = ./MESH/Mesh_test          # file containing the mesh
 nodes_coords_file               = ./MESH/Nodes_test  # file containing the nodes coordinates
 materials_file                  = ./MESH/Material_test     # file containing the material number for each element
+nummaterial_velocity_file       = ./MESH/nummaterial_velocity_file        # file containing the material properties for each material
 free_surface_file               = ./MESH/Surf_free_test  # file containing the free surface
 axial_elements_file             = dummy   # file containing the axial elements if AXISYM is true
 absorbing_surface_file          = ./MESH/Surf_abs_test   # file containing the absorbing surface
