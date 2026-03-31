@@ -262,7 +262,14 @@ class Meshio2Specfem2D:
         arr_mflag = np.ones(self.n_cells, dtype=int) * -1
 
         # id offset for quad (subtract the number of lines)
-        self.cell_id_offset = int(np.min(self.mesh.cell_sets_dict["M1"][self.key_quad]))
+        # find the minimum cell id across all materials (not just M1,
+        # since M1 does not necessarily have the smallest cell id)
+        min_cell_id = int(np.min(self.mesh.cell_sets_dict[M_keys[0]][self.key_quad]))
+        for key in M_keys[1:]:
+            c = int(np.min(self.mesh.cell_sets_dict[key][self.key_quad]))
+            if c < min_cell_id:
+                min_cell_id = c
+        self.cell_id_offset = min_cell_id
 
         print("cell_id_offset: ", self.cell_id_offset)
 
