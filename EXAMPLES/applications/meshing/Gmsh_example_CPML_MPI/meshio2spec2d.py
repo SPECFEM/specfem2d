@@ -208,6 +208,13 @@ class Meshio2Specfem2D:
         # check if PML_X is included in the physical groups
         if "PML_X" in self.mesh.cell_sets_dict:
             self.use_cpml = True
+            # When CPML is used, all outer PML boundaries need absorbing edges
+            # for Dirichlet boundary conditions (see pml_init.F90:
+            # determine_boundary_abs_points_PML). Auto-set all abs flags to True.
+            self.top_abs = True
+            self.bot_abs = True
+            self.left_abs = True
+            self.right_abs = True
 
         # check if second order elements are included in the mesh
         if "quad9" in self.mesh.cells_dict:
@@ -407,7 +414,7 @@ class Meshio2Specfem2D:
         np.savetxt(self.fname_CPML, str_lines, fmt="%s")
 
 
-    def write(self, filename_out="TEST", pml_transition_layer=True):
+    def write(self, filename_out="TEST", pml_transition_layer=False):
 
         # measure time
         start_time = time.time()

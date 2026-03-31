@@ -90,7 +90,7 @@ class rectangles:
 
         # add top tag if top_pml is False
         if not top_pml:
-            self.list_rects[irect_top].bound_tag = "Top"
+            self.list_rects[irect_top].bound_tag = "TopFree"
 
         # side of the main rectangles
         tmp_list_rects = self.list_rects.copy()
@@ -313,6 +313,11 @@ class rectangles:
             elif rect.bound_tag == "Top":
                 list_l_top.append(rect.list_lines[2])
                 list_l_top_inner.append(rect.list_lines[0])
+            elif rect.bound_tag == "TopFree":
+                # Top boundary of the domain when top_pml is False.
+                # Only add outer edge to Top group; do NOT create _Top inner
+                # boundary since there is no top PML layer.
+                list_l_top.append(rect.list_lines[2])
             elif rect.bound_tag == "Bottom":
                 list_l_bottom.append(rect.list_lines[0])
                 list_l_bottom_inner.append(rect.list_lines[2])
