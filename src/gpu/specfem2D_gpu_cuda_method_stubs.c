@@ -722,3 +722,10 @@ void FC_FUNC_(compute_seismograms_cuda,
                                         int* itf,
                                         int* it_endf) {}
 
+void FC_FUNC_(flush_seismograms_cuda,
+              FLUSH_SEISMOGRAMS_CUDA)(long* Mesh_pointer_f,
+                                       int* i_sigf,
+                                       double* sisux, double* sisuz,
+                                       int* seismo_currentf,
+                                       int* nlength_seismogramf) {}
+

@@ -219,6 +219,11 @@
     do i_sig = 1,NSIGTYPE
       seismotype_l = seismotypeVec(i_sig)
 
+      if (GPU_MODE .and. seismo_current > 0) then
+        call flush_seismograms_cuda(Mesh_pointer,i_sig,sisux(:,:,i_sig),sisuz(:,:,i_sig), &
+                                    seismo_current,nlength_seismogram)
+      endif
+
       call write_seismograms_to_file(sisux(:,:,i_sig),sisuz(:,:,i_sig),siscurl(:,:,i_sig),seismotype_l,seismo_current, &
                                      seismo_offset)
 
