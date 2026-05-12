@@ -231,7 +231,9 @@
     do i_sig = 1,NSIGTYPE
       seismotype_l = seismotypeVec(i_sig)
 
-      if (GPU_MODE .and. seismo_current > 0) then
+      ! only flush partially filled GPU seismogram buffers here; when the buffer is
+      ! full, compute_seismograms_cuda has already copied it back to the host
+      if (GPU_MODE .and. seismo_current > 0 .and. seismo_current < nlength_seismogram) then
         call flush_seismograms_cuda(Mesh_pointer,i_sig,sisux(:,:,i_sig),sisuz(:,:,i_sig), &
                                     seismo_current,nlength_seismogram)
       endif
