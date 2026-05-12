@@ -243,9 +243,30 @@ void FC_FUNC_(compute_seismograms_cuda,
 
     // seismogram buffers are 1D and components appended; size for one single component record
     int size = mp->nrec_local * nlength_seismogram;
+    int valid_length = seismo_current + 1;
 
-    // copies from GPU to CPU (note: could use async mem copy in future...)
-    print_CUDA_error_if_any(cudaMemcpy(h_seismo, d_seismo, sizeof(realw) * 2 * size, cudaMemcpyDeviceToHost),72001);
+    if (valid_length > nlength_seismogram) valid_length = nlength_seismogram;
+
+    // clears host buffers first, then copies only the samples that were actually written.
+    // This prevents stale tail values from a previous chunk from leaking into the final trace.
+    for (int i = 0; i < 2 * size; i++) {
+      h_seismo[i] = 0.0f;
+    }
+
+    // copies only the valid part from GPU to CPU (note: could use async mem copy in future...)
+    for (int irec = 0; irec < mp->nrec_local; irec++) {
+      int device_offset = irec * nlength_seismogram;
+      int host_offset = irec * nlength_seismogram;
+
+      print_CUDA_error_if_any(cudaMemcpy(h_seismo + host_offset,
+                                         d_seismo + device_offset,
+                                         sizeof(realw) * valid_length,
+                                         cudaMemcpyDeviceToHost),72001);
+      print_CUDA_error_if_any(cudaMemcpy(h_seismo + size + host_offset,
+                                         d_seismo + size + device_offset,
+                                         sizeof(realw) * valid_length,
+                                         cudaMemcpyDeviceToHost),72002);
+    }
 
     // copies values into host array
     for (int irec=0; irec < mp->nrec_local; irec++){
@@ -257,4 +278,63 @@ void FC_FUNC_(compute_seismograms_cuda,
   }
 
  GPU_ERROR_CHECKING ("compute_seismograms_cuda");
+}
+
+extern "C"
+void FC_FUNC_(flush_seismograms_cuda,
+              FLUSH_SEISMOGRAMS_CUDA)(long* Mesh_pointer_f,
+                                       int* i_sigf,
+                                       double* sisux, double* sisuz,
+                                       int* seismo_currentf,
+                                       int* nlength_seismogramf) {
+
+  TRACE("flush_seismograms_cuda");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f);
+
+  synchronize_cuda();
+
+  if (mp->nrec_local == 0) return;
+
+  int i_sig = *i_sigf - 1;
+  int seismo_current = *seismo_currentf;
+  int nlength_seismogram = *nlength_seismogramf;
+
+  if (seismo_current <= 0) return;
+
+  if (seismo_current > nlength_seismogram) seismo_current = nlength_seismogram;
+
+  realw* h_seismo = mp->h_seismograms[i_sig];
+  realw* d_seismo = mp->d_seismograms[i_sig];
+
+  cudaStreamSynchronize(mp->compute_stream);
+
+  int size = mp->nrec_local * nlength_seismogram;
+
+  for (int i = 0; i < 2 * size; i++) {
+    h_seismo[i] = 0.0f;
+  }
+
+  for (int irec = 0; irec < mp->nrec_local; irec++) {
+    int device_offset = irec * nlength_seismogram;
+    int host_offset = irec * nlength_seismogram;
+
+    print_CUDA_error_if_any(cudaMemcpy(h_seismo + host_offset,
+                                       d_seismo + device_offset,
+                                       sizeof(realw) * seismo_current,
+                                       cudaMemcpyDeviceToHost),73001);
+    print_CUDA_error_if_any(cudaMemcpy(h_seismo + size + host_offset,
+                                       d_seismo + size + device_offset,
+                                       sizeof(realw) * seismo_current,
+                                       cudaMemcpyDeviceToHost),73002);
+  }
+
+  for (int irec = 0; irec < mp->nrec_local; irec++){
+    for (int j = 0; j < nlength_seismogram; j++){
+      sisux[j + nlength_seismogram * irec] = (double) h_seismo[j + nlength_seismogram * irec];
+      sisuz[j + nlength_seismogram * irec] = (double) h_seismo[j + nlength_seismogram * irec + size];
+    }
+  }
+
+  GPU_ERROR_CHECKING ("flush_seismograms_cuda");
 }
