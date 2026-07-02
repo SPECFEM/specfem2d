@@ -209,7 +209,7 @@
   ! output formats
 212 format(5x,'Source Type. . . . . . . . . . . . . . = Collocated Force',/5x, &
                   'X-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
-                  'Y-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
+                  'Z-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
                   'Fundamental frequency (Hz) . . . . . . =',1pe20.10,/5x, &
                   'Time delay (s) . . . . . . . . . . . . =',1pe20.10,/5x, &
                   'Multiplying factor . . . . . . . . . . =',1pe20.10,/5x, &
@@ -217,7 +217,7 @@
 
 213 format(5x,'Source Type. . . . . . . . . . . . . . = Collocated Force',/5x, &
                   'Initial X-position (meters). . . . . . =',1pe20.10,/5x, &
-                  'Initial Y-position (meters). . . . . . =',1pe20.10,/5x, &
+                  'Initial Z-position (meters). . . . . . =',1pe20.10,/5x, &
                   'X-velocity (meters/second). . .  . . . =',1pe20.10,/5x, &
                   'Z-velocity (meters/second). . .  . . . =',1pe20.10,/5x, &
                   'Fundamental frequency (Hz) . . . . . . =',1pe20.10,/5x, &
@@ -227,7 +227,7 @@
 
 222 format(5x,'Source Type. . . . . . . . . . . . . . = Moment-tensor',/5x, &
                   'X-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
-                  'Y-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
+                  'Z-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
                   'Fundamental frequency (Hz) . . . . . . =',1pe20.10,/5x, &
                   'Time delay (s) . . . . . . . . . . . . =',1pe20.10,/5x, &
                   'Multiplying factor . . . . . . . . . . =',1pe20.10,/5x, &
@@ -237,7 +237,7 @@
 
 223 format(5x,'Source Type. . . . . . . . . . . . . . = Moment-tensor',/5x, &
                   'Initial X-position (meters). . . . . . =',1pe20.10,/5x, &
-                  'Initial Y-position (meters). . . . . . =',1pe20.10,/5x, &
+                  'Initial Z-position (meters). . . . . . =',1pe20.10,/5x, &
                   'X-velocity (meters/second). . .  . . . =',1pe20.10,/5x, &
                   'Z-velocity (meters/second). . .  . . . =',1pe20.10,/5x, &
                   'Fundamental frequency (Hz) . . . . . . =',1pe20.10,/5x, &
