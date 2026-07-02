@@ -50,15 +50,37 @@ def define_bc_edges():
     print("# define_bc_edge: bounding box ymin/ymax = ",ymin_box,ymax_box)
     print("# define_bc_edge: bounding box zmin/zmax = ",zmin_box,zmax_box)
 
+    # mesh dimensions
+    dim_x = abs(xmax_box - xmin_box)
+    dim_y = abs(ymax_box - ymin_box)
+    dim_z = abs(zmax_box - zmin_box)
+
+    # maximum dimension
+    dim_max = max( dim_x, dim_y, dim_z )
+    print('# define_bc_edge: mesh dimensions: ',dim_x,dim_y,dim_z,' - maximum: ',dim_max)
+    print('#')
+
+    # we want to distinguish between NDT cases and others more seismic-like ones,
+    # assuming NDT uses much smaller mesh dimensions
+    if dim_max > 10000.0:
+        # seismic cases (like regional examples)
+        tol = 0.1
+    elif dim_max > 1000.0:
+        # seismic cases (more local examples)
+        tol = 0.001
+    else:
+        # NDT (non-destructive testing) cases
+        tol = 0.000001
+
     # cubit2specfem2d.py needs one block per border (abs_bottom, abs_right, abs_left, abs_top, topo, axis)
     #
     # 2D model should be defined in with top at maximum, bottom at minimum (e.g. z pointing up in positive direction, not depth)
-    if abs(xmax_box-xmin_box) < 0.001:
+    if dim_x < 1.e-9:
         print("# define_bc_edge: mesh in YZ plane")
-        border_t = zmax_box - 0.1 # top minus margin
-        border_b = zmin_box + 0.1 # bottom
-        border_l = ymin_box + 0.1 # left
-        border_r = ymax_box - 0.1 # right
+        border_t = zmax_box - tol # top minus margin
+        border_b = zmin_box + tol # bottom
+        border_l = ymin_box + tol # left
+        border_r = ymax_box - tol # right
 
         cubit.cmd('block 1001 edge in surf all with z_coord > ' + str(border_t))
         cubit.cmd('block 1001 name "topo"')
@@ -76,12 +98,12 @@ def define_bc_edges():
         cubit.cmd('block 1004 name "abs_right"')
         cubit.cmd('block 1004 element type BAR2')
 
-    if abs(ymax_box-ymin_box) < 0.001:
+    if dim_y < 1.e-9:
         print("# define_bc_edge: mesh in XZ plane")
-        border_t = zmax_box - 0.1 # top minus margin
-        border_b = zmin_box + 0.1 # bottom
-        border_l = xmin_box + 0.1 # left
-        border_r = xmax_box - 0.1 # right
+        border_t = zmax_box - tol # top minus margin
+        border_b = zmin_box + tol # bottom
+        border_l = xmin_box + tol # left
+        border_r = xmax_box - tol # right
 
         cubit.cmd('block 1001 edge in surf all with z_coord > ' + str(border_t))
         cubit.cmd('block 1001 name "topo"')
@@ -99,12 +121,12 @@ def define_bc_edges():
         cubit.cmd('block 1004 name "abs_right"')
         cubit.cmd('block 1004 element type BAR2')
 
-    if abs(zmax_box-zmin_box) < 0.001:
+    if dim_z < 1.e-9:
         print("# define_bc_edge: mesh in XY plane")
-        border_t = ymax_box - 0.1 # top minus margin
-        border_b = ymin_box + 0.1 # bottom
-        border_l = xmin_box + 0.1 # left
-        border_r = xmax_box - 0.1 # right
+        border_t = ymax_box - tol # top minus margin
+        border_b = ymin_box + tol # bottom
+        border_l = xmin_box + tol # left
+        border_r = xmax_box - tol # right
 
         cubit.cmd('block 1001 edge in surf all with y_coord > ' + str(border_t))
         cubit.cmd('block 1001 name "topo"')
