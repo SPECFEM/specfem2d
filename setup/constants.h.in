@@ -273,6 +273,16 @@
 ! This option is used when we want to enforce fields values somewhere
   logical, parameter :: USE_ENFORCE_FIELDS = .false.
 
+!!-----------------------------------------------------------
+!!
+!! Gravity
+!!
+!!-----------------------------------------------------------
+
+! standard gravity at the surface of the Earth
+  double precision, parameter :: STANDARD_GRAVITY = 9.80665d0 ! in m.s-2
+
+
 !------------------------------------------------------
 !----------- do not modify anything below -------------
 !------------------------------------------------------
