@@ -51,7 +51,6 @@
   double precision :: timeval, t_used
   double precision :: hdur, hdur_gauss, f0, f0_sampling
   double precision :: stf
-  real(kind=CUSTOM_REAL) :: stf_used
 
   integer :: it,isource,ier
   integer :: i_stage
@@ -121,9 +120,6 @@
     allocate(source_time_function(1,1,1))
     ! we're all done
     return
-  else
-    allocate(source_time_function(NSOURCES,NSTEP,NSTAGE_TIME_SCHEME),stat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Error allocating array source_time_function')
   endif
 
   ! checks if trick for better pressure can be applied
@@ -140,6 +136,8 @@
   enddo
 
   ! initializes stf array
+  allocate(source_time_function(NSOURCES,NSTEP,NSTAGE_TIME_SCHEME),stat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error allocating array source_time_function')
   source_time_function(:,:,:) = 0.0_CUSTOM_REAL
 
   ! loop over all the sources
@@ -152,6 +150,7 @@
 
       ! loop on all the time steps
       do it = 1,NSTEP
+
         ! compute current time
         select case(time_stepping_scheme)
         case (1)
@@ -181,7 +180,11 @@
           call exit_MPI(myrank,'Error invalid time stepping scheme chosen, please check...')
         end select
 
-        t_used = timeval - t0 - tshift_src(isource)
+        ! adjust current source time source time shift
+        timeval = timeval - tshift_src(isource)
+
+        ! adjust current source time by simulation start time t0
+        t_used = timeval - t0
 
         ! only process/partition containing source must set STF
         if (myrank == islice_selected_source(isource) .or. SOURCE_IS_MOVING) then
@@ -331,16 +334,16 @@
 
           end select
 
-          ! converts to custom real (working precision)
-          stf_used = real(stf,kind=CUSTOM_REAL)
-
           ! stores source time function values
-          source_time_function(isource,it,i_stage) = stf_used
+          source_time_function(isource,it,i_stage) = real(stf, kind=CUSTOM_REAL)  ! converts to custom real (working precision)
 
         endif
       enddo
     enddo
   enddo
+
+  ! prints source time function to file
+  if (PRINT_SOURCE_TIME_FUNCTION) call print_stf_file()
 
   ! source amplification
   ! amplifies source time function (STF) by a factor
@@ -374,9 +377,6 @@
     source_time_function(isource,:,:) = factor(isource) * source_time_function(isource,:,:)
   enddo
 
-  ! prints source time function to file
-  if (PRINT_SOURCE_TIME_FUNCTION) call print_stf_file()
-
   ! synchronizes all processes
   call synchronize_all()
 
@@ -399,7 +399,7 @@
 
   ! local parameters
   double precision :: timeval
-  real(kind=CUSTOM_REAL) :: stf_used, t_used
+  real(kind=CUSTOM_REAL) :: t_used, stf_used, stf_used_amplified
   integer :: it,ier
   integer :: isource,i_stage
   character(len=MAX_STRING_LEN) :: plot_file
@@ -430,15 +430,17 @@
       ! opens source time file for output
       open(unit=55,file=trim(OUTPUT_FILES)//trim(plot_file),status='unknown',iostat=ier)
       if (ier /= 0) call stop_the_code('Error opening source time function text-file')
+
       ! header
       write(55,'("# source time function")')
+      write(55,'("# source              : ",i0)') isource
       write(55,'("# time function type  : ",i0)') time_function_type(isource)
+      write(55,'("# time shift          : ",es12.5)') tshift_src(isource)
       write(55,'("# amplification factor: ",es12.5)') factor(isource)
       write(55,'("# DT                  : ",es12.5)') DT
       write(55,'("# t0                  : ",es12.5)') t0
-      write(55,'("# time shift          : ",es12.5)') tshift_src(isource)
       write(55,'("# format")')
-      write(55,'("#time  #used_STF  #initial_source_function_value")')
+      write(55,'("#time  #STF  #STF_amplified")')
 
       ! source function time values
       do it = 1,NSTEP
@@ -475,18 +477,19 @@
         ! note: earliest start time of the simulation is: (it-1)*DT - t0 - tshift_src(isource)
         t_used = real(timeval - t0 - tshift_src(isource),kind=CUSTOM_REAL)
 
+        ! initial STF
         stf_used = source_time_function(isource,it,i_stage)
+
+        ! amplified STF
+        stf_used_amplified = real(stf_used * factor(isource),kind=CUSTOM_REAL)
 
         ! we'll output both, the initial value given by the source time function (comp_source_time_function**)
         ! and the scaled value that uses the amplification factor as given in the SOURCE file.
-        ! note that the array source_time_function(..) has been scaled when calling this print routine.
-        ! thus, to print out the original value, we divide by the amplification factor.
+        !
+        ! note: we call this print-function before the array source_time_function(..) has been amplified.
 
-        ! to avoid division by zero
-        if (factor(isource) == 0.d0) cycle
-
-        ! format: #time #used_STF #initial_source_function_value
-        write(55,*) t_used, stf_used, stf_used / factor(isource)
+        ! format: #time #initial_source_function_value #used_STF_amplified
+        write(55,*) t_used, stf_used, stf_used_amplified
 
       enddo
 
