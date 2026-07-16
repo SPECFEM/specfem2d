@@ -411,8 +411,7 @@
   call write_fluidsolid_edges_database(IOUT, nedges_elporo_coupled, edges_elporo_coupled, nedges_elporo_coupled_loc, iproc, 1)
 
   ! counts number of axial elements
-  call write_axial_elements_database(IOUT, nelem_on_the_axis, ispec_of_axial_elements, &
-                                     nelem_on_the_axis_loc, iproc, 1, remove_min_to_start_at_zero)
+  call write_axial_elements_database(IOUT, nelem_on_the_axis, ispec_of_axial_elements, nelem_on_the_axis_loc, iproc, 1)
 
   ! 'nelemabs nelemacforcing nelem_acoustic_surface num_fluid_solid_edges'
   ! 'num_fluid_poro_edges num_solid_poro_edges'
@@ -716,8 +715,7 @@
   implicit none
 
   ! 'List of axial elements:'
-  call write_axial_elements_database(IOUT, nelem_on_the_axis, ispec_of_axial_elements, &
-                                     nelem_on_the_axis_loc, iproc, 2, remove_min_to_start_at_zero)
+  call write_axial_elements_database(IOUT, nelem_on_the_axis, ispec_of_axial_elements, nelem_on_the_axis_loc, iproc, 2)
 
   end subroutine save_databases_axial_elements
 
@@ -732,10 +730,14 @@
   use part_unstruct_par, only: part,elmnts,nodes_coords,nelmnts,nnodes
   use shared_parameters, only: NGNOD,num_material,NPROC,SAVE_MESH_FILES
 
+  ! for axisym
+  use shared_parameters, only: AXISYM
+  use part_unstruct_par, only: ispec_of_axial_elements
+
   implicit none
 
   ! vtk output
-  integer :: ispec,i,j,inum,iproc,nspec
+  integer :: ispec,i,j,inum,iproc,nspec,ier
   integer,dimension(:,:),allocatable :: tmp_elmnts
   integer, dimension(:),allocatable :: tmp_elem_flag
   double precision,dimension(:),allocatable :: xstore_dummy,zstore_dummy
@@ -751,20 +753,32 @@
   endif
 
   ! outputs material flag assignment on elements
-  allocate(tmp_elmnts(NGNOD,nelmnts))
-  allocate(tmp_elem_flag(nelmnts))
+  allocate(tmp_elmnts(NGNOD,nelmnts), &
+           tmp_elem_flag(nelmnts),stat=ier)
+  if (ier /= 0) call stop_the_code("Error allocating temporary arrays")
+  tmp_elmnts(:,:) = 0
+  tmp_elem_flag(:) = 0
+
+  ! setup elements
   do ispec = 1, nelmnts
     do j = 1, NGNOD
       tmp_elmnts(j,ispec) = elmnts((ispec-1)*NGNOD+(j-1))+1
     enddo
-    tmp_elem_flag(ispec) = num_material(ispec)
   enddo
 
-  allocate(xstore_dummy(nnodes),zstore_dummy(nnodes))
+  ! node point locations
+  allocate(xstore_dummy(nnodes), &
+           zstore_dummy(nnodes),stat=ier)
+  if (ier /= 0) call stop_the_code("Error allocating temporary xstore/zstore arrays")
   xstore_dummy(:) = nodes_coords(1,:)
   zstore_dummy(:) = nodes_coords(2,:)
 
   ! materials
+  tmp_elem_flag(:) = 0
+  do ispec = 1, nelmnts
+    tmp_elem_flag(ispec) = num_material(ispec)
+  enddo
+
   filename = trim(OUTPUT_FILES)//'/mesh_materials.vtk'
   call write_VTK_data_ngnod_elem_i(nelmnts,nnodes,NGNOD,xstore_dummy,zstore_dummy, &
                                    tmp_elmnts,tmp_elem_flag,filename)
@@ -772,15 +786,37 @@
   if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename)
 
   ! partitioning number
+  tmp_elem_flag(:) = 0
   do ispec = 1, nelmnts
-    tmp_elem_flag(ispec) = part(ispec-1)
+    tmp_elem_flag(ispec) = part(ispec-1)  ! part array starts numbering at 0
   enddo
+
   filename = trim(OUTPUT_FILES)//'/mesh_partition_number.vtk'
   call write_VTK_data_ngnod_elem_i(nelmnts,nnodes,NGNOD,xstore_dummy,zstore_dummy, &
                                    tmp_elmnts,tmp_elem_flag,filename)
   ! user output
   if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename)
 
+  if (AXISYM) then
+    ! ispec_of_axial_elements
+    do ispec = 1, nelmnts
+      ! note: ispec_of_axial_elements array starts numbering at 0
+      if (any(ispec_of_axial_elements(:) == ispec-1)) then
+        ! is on the axis
+        tmp_elem_flag(ispec) = 1
+      else
+        ! off-axis
+        tmp_elem_flag(ispec) = 0
+      endif
+    enddo
+    filename = trim(OUTPUT_FILES)//'/mesh_axial_elements.vtk'
+    call write_VTK_data_ngnod_elem_i(nelmnts,nnodes,NGNOD,xstore_dummy,zstore_dummy, &
+                                     tmp_elmnts,tmp_elem_flag,filename)
+    ! user output
+    if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename)
+  endif
+
+  ! free temporary arrays
   deallocate(tmp_elmnts,tmp_elem_flag)
   deallocate(xstore_dummy,zstore_dummy)
 

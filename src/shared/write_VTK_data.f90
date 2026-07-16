@@ -354,3 +354,88 @@
 
   end subroutine write_VTK_data_elem_dp
 
+!
+!------------------------------------------------------------------------------------
+!
+
+! routine for saving vtk file holding logical flag on each spectral element
+
+  subroutine write_VTK_data_elem_l(nspec,nglob, &
+                                   ibool,xstore,zstore, &
+                                   elem_flag,prname_file)
+
+  use constants, only: MAX_STRING_LEN,IOUT_VTK,NGLLX,NGLLZ
+
+  implicit none
+
+  integer, intent(in) :: nspec,nglob
+
+  ! global coordinates
+  integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
+  double precision, dimension(nglob), intent(in) :: xstore,zstore
+
+  ! element data values array
+  logical, dimension(nspec), intent(in) :: elem_flag
+
+  ! file name
+  character(len=MAX_STRING_LEN), intent(in) :: prname_file
+
+  ! local parameters
+  integer :: ispec,i,j,ier,iglob
+
+  ! file output
+  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',iostat=ier)
+  if (ier /= 0) stop 'Error opening VTK file'
+
+  write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
+  write(IOUT_VTK,'(a)') 'material model VTK file'
+  write(IOUT_VTK,'(a)') 'ASCII'
+  write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+
+  ! only corner points
+  write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nspec * 4, ' float'
+  do ispec = 1,nspec
+    do j = 1,NGLLZ,NGLLZ-1
+      do i = 1,NGLLX,NGLLX-1
+        iglob = ibool(i,j,ispec)
+        write(IOUT_VTK,'(3e18.6)') xstore(iglob),0.d0,zstore(iglob)  ! assuming Y-coordinate at zero
+      enddo
+    enddo
+  enddo
+  write(IOUT_VTK,*) ''
+
+  ! note: indices for vtk start at 0
+  !       each element is subdivided into (NGLLX-1)*(NGLLZ-1) sub-quads
+  ! only corner points
+  write(IOUT_VTK,'(a,i16,i16)') "CELLS ",nspec,nspec*5
+  do ispec = 1,nspec
+    ! quad4 element
+    write(IOUT_VTK,'(5i16)') 4,(ispec-1)*4, &
+                               (ispec-1)*4 + 1, &
+                               (ispec-1)*4 + 2, &
+                               (ispec-1)*4 + 3
+  enddo
+  write(IOUT_VTK,*) ''
+
+  ! type: VTK_QUAD == 8 type
+  ! only corner points
+  write(IOUT_VTK,'(a,i16)') "CELL_TYPES ",nspec
+  write(IOUT_VTK,'(6i16)') (8,ispec=1,nspec)
+  write(IOUT_VTK,*) ''
+
+  ! element data
+  write(IOUT_VTK,'(a,i12)') "CELL_DATA ",nspec
+  write(IOUT_VTK,'(a)') "SCALARS elem_data integer"
+  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
+  do ispec = 1,nspec
+    if (elem_flag(ispec) .eqv. .true.) then
+      write(IOUT_VTK,*) 1
+    else
+      write(IOUT_VTK,*) 0
+    endif
+  enddo
+  write(IOUT_VTK,*) ''
+  close(IOUT_VTK)
+
+  end subroutine write_VTK_data_elem_l
+

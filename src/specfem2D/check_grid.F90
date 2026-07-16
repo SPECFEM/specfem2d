@@ -604,6 +604,9 @@
       write(IMAIN,*)
       call flush_IMAIN()
     endif
+
+    ! free temporary arrays
+    deallocate(xstore,zstore)
   endif
 
   end subroutine check_grid

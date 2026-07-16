@@ -1239,7 +1239,7 @@
   !--------------------------------------------------
 
   subroutine write_axial_elements_database(IIN_database, nelem_on_the_axis, ispec_of_axial_elements, &
-                                           nelem_on_the_axis_loc, iproc, num_phase, remove_min_to_start_at_zero)
+                                           nelem_on_the_axis_loc, iproc, num_phase)
 
   use part_unstruct_par, only: part,glob2loc_elmnts
 
@@ -1255,8 +1255,6 @@
   integer, intent(in)  :: iproc
   integer, intent(in)  :: num_phase
 
-  integer, intent(in)  :: remove_min_to_start_at_zero
-
   ! local parameters
   integer  :: i,ispec
 
@@ -1264,20 +1262,28 @@
     ! only counts elements in this partition
     nelem_on_the_axis_loc = 0
     do i = 1, nelem_on_the_axis
-      if (part(ispec_of_axial_elements(i)) == iproc) then
+      ispec = ispec_of_axial_elements(i)
+      ! note: part array expects element number starting from 0
+      if (part(ispec) == iproc) then
           nelem_on_the_axis_loc = nelem_on_the_axis_loc + 1
       endif
     enddo
+
   else
+    ! writes out to database file
     do i = 1, nelem_on_the_axis
+      ispec = ispec_of_axial_elements(i)
+
+      !debug
       ! if (part(ispec_of_axial_elements(i)) == 0 .and. iproc == 1) then
       !  print *,"ispec_of_axial_elements :",ispec_of_axial_elements(i)," -----> glob2loc_elmnts :", &
       !     glob2loc_elmnts(ispec_of_axial_elements(i))
       ! endif
-
-      if (part(ispec_of_axial_elements(i)) == iproc) then
-        ispec = glob2loc_elmnts(ispec_of_axial_elements(i)) + remove_min_to_start_at_zero
-        write(IIN_database) ispec
+    
+      if (part(ispec) == iproc) then
+        ! note: glob2loc_elmnts array expects element number starting from 0,
+        !       and outputs local element number starting from 0
+        write(IIN_database) glob2loc_elmnts(ispec) + 1
       endif
     enddo
   endif

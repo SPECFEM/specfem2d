@@ -585,7 +585,7 @@
 
             if (abs(coord(1,ibool(i,j,ispec))) > TINYVAL) then ! Not first GLJ point
               if (i == 1) then
-                call stop_the_code("error: an axial element is rotated. The code should have been stopped before. &
+                call stop_the_code("Error: an axial element is rotated. The code should have been stopped before. &
                  &Check that your coordinates are greater than TINYVAL. Maybe you should also have a look to &
                  &doc/problematic_case_that_we_exclude_for_axisymmetric.pdf")
               endif
