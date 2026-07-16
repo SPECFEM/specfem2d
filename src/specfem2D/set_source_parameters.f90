@@ -40,7 +40,8 @@
   use specfem_par, only: myrank,NSOURCES,source_type,time_function_type, &
                          x_source,z_source,Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource, &
                          initialfield,vx_source,vz_source,SOURCE_IS_MOVING, &
-                         name_of_source_file,burst_band_width
+                         name_of_source_file,burst_band_width, &
+                         AXISYM
 
   implicit none
 
@@ -175,8 +176,14 @@
         ! simplified for 2D: Myy == 0, Mxy == 0, Myz == 0
         ! euclidean (or Frobenius) norm of a matrix: M0**2 = sum( Mij**2 )
         !  M0 = Mxx**2 + Myy**2 + Mzz**2 + 2.d0 * ( Mxy**2 + Mxz**2 + Myz**2 )
-        ! for 2D:
-        M0 = Mxx(i_source)**2 + Mzz(i_source)**2 + 2.d0 * (Mxz(i_source)**2)
+        if (AXISYM) then
+          ! axisymmetric 2.5D case only supports explosive moment tensors with Mxx == Myy == Mzz, and Mxy == Mxz == Myz == 0
+          M0 = 2.d0 * Mxx(i_source)**2 + Mzz(i_source)**2
+        else
+          ! for 2D:
+          M0 = Mxx(i_source)**2 + Mzz(i_source)**2 + 2.d0 * (Mxz(i_source)**2)
+        endif
+
         ! adds 1/2 to be coherent with double couple or point sources
         M0 = dsqrt(M0/2.0d0)
         ! note: CMTSOLUTION file values are in dyne.cm
@@ -187,19 +194,30 @@
         ! scalar moment in dyne-cm
         M0 = M0 * 1.d7
 
+        ! adds multiplying factor
+        M0 = M0 * factor(i_source)
+
         ! moment magnitude
         ! moment magnitude by Hanks & Kanamori, 1979
         ! Mw = 2/3 log( M0 ) - 10.7       (dyne-cm)
         if (M0 > 0.d0) then
-          Mw = 2.d0/3.d0 * log10( M0 ) - 10.7d0
+          Mw = 2.d0/3.d0 * log10( max(M0,tiny(M0)) ) - 10.7d0
         else
           Mw = 0.d0
         endif
+
         if (myrank == 0) then
-          write(IMAIN,*) '    2D seismic moment M0 = ',sngl(M0),'(dyne-cm)'
-          write(IMAIN,*) '        moment magnitude = ',sngl(Mw)
-          write(IMAIN,*)
-          call flush_IMAIN()
+          if (AXISYM) then
+            write(IMAIN,*) '    2.5D seismic moment M0 = ',sngl(M0),'(dyne-cm)'
+            write(IMAIN,*) '          moment magnitude = ',sngl(Mw)
+            write(IMAIN,*)
+            call flush_IMAIN()
+          else
+            write(IMAIN,*) '    2D seismic moment M0 = ',sngl(M0),'(dyne-cm)'
+            write(IMAIN,*) '        moment magnitude = ',sngl(Mw)
+            write(IMAIN,*)
+            call flush_IMAIN()
+          endif
         endif
       endif
     endif
