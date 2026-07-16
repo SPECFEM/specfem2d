@@ -405,16 +405,10 @@
   close(IIN)
 
   ! allocate seismogram arrays
-  if (nrecloc > 0) then
-    allocate(sisux(nlength_seismogram,nrecloc,NSIGTYPE), &
-             sisuz(nlength_seismogram,nrecloc,NSIGTYPE), &
-             siscurl(nlength_seismogram,nrecloc,NSIGTYPE),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating seismogram arrays')
-  else
-    ! dummy arrays
-    allocate(sisux(1,1,1),sisuz(1,1,1),siscurl(1,1,1),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating seismogram arrays')
-  endif
+  allocate(sisux(nlength_seismogram,nrecloc,NSIGTYPE), &
+           sisuz(nlength_seismogram,nrecloc,NSIGTYPE), &
+           siscurl(nlength_seismogram,nrecloc,NSIGTYPE),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating seismogram arrays')
   sisux(:,:,:) = ZERO ! double precision zero
   sisuz(:,:,:) = ZERO
   siscurl(:,:,:) = ZERO

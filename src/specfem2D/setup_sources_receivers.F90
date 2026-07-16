@@ -915,7 +915,7 @@
 
   subroutine setup_source_interpolation()
 
-  use constants, only: NDIM,NGLLX,NGLLZ,NGLJ,ZERO,PI,CUSTOM_REAL,IMAIN
+  use constants, only: NDIM,NGLLX,NGLLZ,NGLJ,ZERO,PI,CUSTOM_REAL,IMAIN,TINYVAL
 
   use specfem_par, only: myrank,nspec,NSOURCES,initialfield,source_type,anglesource,P_SV, &
     sourcearrays,Mxx,Mxz,Mzz, &
@@ -985,8 +985,6 @@
         call compute_arrays_source_forcesolution(ispec,hxis,hgammas,sourcearray,anglesource(i_source))
       case (2)
         ! moment-tensor source
-        call compute_arrays_source_cmt(ispec,hxis,hgammas,hpxis,hpgammas,sourcearray, &
-                                       Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,nspec)
         ! checks source
         if (ispec_is_acoustic(ispec)) then
           call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
@@ -998,6 +996,14 @@
         if (ispec_is_electromagnetic(ispec)) then
           if (.not. P_SV ) call exit_MPI(myrank,'cannot have moment tensor source in SH (membrane) waves calculation')
         endif
+        if (AXISYM) then
+          if (abs(Mxx(i_source) - Mzz(i_source)) > TINYVAL .or. abs(Mxz(i_source)) > TINYVAL) &
+            call exit_MPI(myrank,'AXISYM only supports an explosive CMT (Mxx == Mzz, Mxz = 0) for now')
+        endif
+
+        ! builds moment-tensor source array
+        call compute_arrays_source_cmt(ispec,hxis,hgammas,hpxis,hpgammas,sourcearray, &
+                                       Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,nspec)
       end select
 
       ! adding Axisymmetric source factor for monopole sources
@@ -1005,7 +1011,7 @@
       !       this is in agreement to Nissen-Meyer et al. (2007),
       !       A two-dimensional spectral-element method for computing spherical-earth seismograms – I. Moment-tensor source,
       !       GJI, doi: 10.1111/j.1365-246X.2006.03121.x
-      !       given by their equations (5) and (24) for monopole (force) sources.
+      !       given by their equations (5) and (24) for monopole (force/CMT) sources.
       if (AXISYM) then
         sourcearray(:,:,:) = 1.d0 / (2.d0 * PI) * sourcearray(:,:,:)
       endif
@@ -1114,16 +1120,10 @@
   nlength_seismogram = NTSTEP_BETWEEN_OUTPUT_SEISMOS/NTSTEP_BETWEEN_OUTPUT_SAMPLE
 
   ! allocate seismogram arrays
-  if (nrecloc > 0) then
-    allocate(sisux(nlength_seismogram,nrecloc,NSIGTYPE), &
-             sisuz(nlength_seismogram,nrecloc,NSIGTYPE), &
-             siscurl(nlength_seismogram,nrecloc,NSIGTYPE),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating seismogram arrays')
-  else
-    ! dummy arrays
-    allocate(sisux(1,1,1),sisuz(1,1,1),siscurl(1,1,1),stat=ier)
-    if (ier /= 0) call stop_the_code('Error allocating seismogram arrays')
-  endif
+  allocate(sisux(nlength_seismogram,nrecloc,NSIGTYPE), &
+           sisuz(nlength_seismogram,nrecloc,NSIGTYPE), &
+           siscurl(nlength_seismogram,nrecloc,NSIGTYPE),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating seismogram arrays')
   sisux(:,:,:) = ZERO ! double precision zero
   sisuz(:,:,:) = ZERO
   siscurl(:,:,:) = ZERO

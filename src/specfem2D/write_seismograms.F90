@@ -238,9 +238,8 @@
                                     seismo_current,nlength_seismogram)
       endif
 
-      call write_seismograms_to_file(sisux(:,:,i_sig),sisuz(:,:,i_sig),siscurl(:,:,i_sig),seismotype_l,seismo_current, &
-                                     seismo_offset)
-
+      call write_seismograms_to_file(sisux(:,:,i_sig),sisuz(:,:,i_sig),siscurl(:,:,i_sig), &
+                                     seismotype_l,seismo_current,seismo_offset)
     enddo ! loop on signal types (seismotype)
 
     ! updates current seismogram offsets
@@ -317,6 +316,9 @@
   ! safety stop
   if (.not. WRITE_SEISMOGRAMS_BY_MAIN) &
     stop 'Error writing seismograms in parallel not supported yet!'
+
+  ! checks if anything to do
+  if (myrank /= 0 .and. nrecloc == 0) return
 
 ! write seismograms
 
@@ -543,11 +545,12 @@
             ! make sure we never write more than the maximum number of time steps
             ! subtract offset of the source to make sure travel time is correct
             do isample = 1,seismo_current_l
-
               ! forward time
-              time_t = dble(seismo_offset_l + isample - 1) * DT * NTSTEP_BETWEEN_OUTPUT_SAMPLE - t0
-
-              write(11,*) time_t,' ',buffer_binary(isample,irec,iorientation)
+              time_t = dble(seismo_offset_l + isample - 1) * DT * NTSTEP_BETWEEN_OUTPUT_SAMPLE
+              ! adjust current time by simulation start time
+              time_t = time_t - t0
+              ! output to file
+              write(11,*) time_t,buffer_binary(isample,irec,iorientation)
             enddo
 
             close(11)
