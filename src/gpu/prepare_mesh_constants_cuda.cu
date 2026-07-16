@@ -38,13 +38,16 @@
 
 // additional pragma messages for compilation info
 #ifdef USE_TEXTURES_FIELDS
-#pragma message ("Compiling with: USE_TEXTURES_FIELDS enabled\n")
+#pragma message ("\nCompiling with: USE_TEXTURES_FIELDS enabled\n")
 #endif
 #ifdef USE_TEXTURES_CONSTANTS
-#pragma message ("Compiling with: USE_TEXTURES_CONSTANTS enabled\n")
+#pragma message ("\nCompiling with: USE_TEXTURES_CONSTANTS enabled\n")
 #endif
 #ifdef USE_LAUNCH_BOUNDS
 #pragma message ("\nCompiling with: USE_LAUNCH_BOUNDS enabled\n")
+#endif
+#ifdef USE_OLDER_CUDA4_GPU
+#pragma message ("\nCompiling with: USE_OLDER_CUDA4_GPU enabled\n")
 #endif
 
 // texture arrays
