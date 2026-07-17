@@ -127,7 +127,11 @@ jobs:
         echo ""
 
     - name: configure
-      run: ./configure
+      run: |
+        ./configure ; if [[ $? -ne 0 ]]; then cat config.log; exit 1; fi
+        # changes SCOTCH Makefile for macOS
+        echo "modifying external_libs/scotch/src/Makefile.inc"
+        cp -v external_libs/scotch/src/Make.inc/Makefile.inc.i686_mac_darwin8 external_libs/scotch/src/Makefile.inc
 
     # skipping - compilation check done as well in make tests
     #- name: make
@@ -229,21 +233,21 @@ jobs:
         echo "FC=ifort" >> $GITHUB_ENV
         echo ""
 
-    - name: configure debug
+    - name: configure serial debug
       run: |
         ./configure --enable-debug FC=ifort CC=icc
 
-    - name: make debug
+    - name: make serial debug
       run: |
         make -j2 all
         make -j2 all --always-make
         make clean
 
-    - name: configure
+    - name: configure serial
       run: |
         ./configure FC=ifort CC=icc
 
-    - name: make
+    - name: make serial
       run: |
         make -j2 all
         make clean
@@ -341,8 +345,8 @@ jobs:
         # debug
         #export I_MPI_DEBUG=5,pid,host
         #export I_MPI_LIBRARY_KIND=debug
-        # remove -ftrapuv which leads to issues for running tests
-        sed -i "s/-ftrapuv//g" flags.guess
+        # remove -ftrapuv in case it leads to issues for running tests
+        #sed -i "s/-ftrapuv//g" flags.guess
         # environment setting
         export TERM=xterm
         # export info
@@ -356,23 +360,23 @@ jobs:
         echo "FC=ifx" >> $GITHUB_ENV
         echo ""
 
-    - name: configure debug
+    - name: configure serial debug
       run: |
         set +e # revert the default `set -e`
-        ./configure --enable-debug FC=ifx CC=icx
+        ./configure --enable-debug FC=ifx CC=icx CXX=icx
         if [[ $? -ne 0 ]]; then echo "configuration failed:"; cat config.log; echo ""; echo "exiting..."; exit 1; fi
 
-    - name: make debug
+    - name: make serial debug
       run: |
         make -j2 all
         make -j2 all --always-make
         make clean
 
-    - name: configure
+    - name: configure serial
       run: |
-        ./configure FC=ifx CC=icx
+        ./configure FC=ifx CC=icx CXX=icx
 
-    - name: make
+    - name: make serial
       run: |
         make -j2 all
         make clean
@@ -380,7 +384,8 @@ jobs:
     - name: configure parallel debug
       run: |
         set +e # revert the default `set -e`
-        ./configure --enable-debug --with-mpi FC=ifx CC=icx MPIFC=mpiifx MPI_INC="${I_MPI_ROOT}/include"
+        # adds -std=gnu17 to CFLAGS otherwise it will by default use -std=gnu23 which leads to errors in Scotch compilation
+        ./configure --enable-debug --with-mpi FC=ifx CC=icx CXX=icx CFLAGS="-std=gnu17 -Wall" MPIFC=mpiifx MPI_INC="${I_MPI_ROOT}/include"
         if [[ $? -ne 0 ]]; then echo "configuration failed:"; cat config.log; echo ""; echo "exiting..."; exit 1; fi
 
     - name: make parallel debug
@@ -391,7 +396,7 @@ jobs:
 
     - name: configure parallel
       run: |
-        ./configure --with-mpi FC=ifx CC=icx MPIFC=mpiifx MPI_INC="${I_MPI_ROOT}/include"
+        ./configure --with-mpi FC=ifx CC=icx CXX=icx CFLAGS="-std=gnu17" MPIFC=mpiifx MPI_INC="${I_MPI_ROOT}/include"
 
     - name: make parallel
       run: |
@@ -402,6 +407,7 @@ jobs:
     - name: make tests
       run: |
         make tests
+
 
   linuxCheck:
     name: Test on ${{ matrix.os }}
@@ -423,7 +429,7 @@ jobs:
       run: ./configure
 
     - name: make
-      run: make -j2 all
+      run: make -j4 all
 
 
   linuxCheck-CUDA:
@@ -448,7 +454,7 @@ jobs:
       shell: bash
 
 
-  # intermediate workflow check
+  # intermediate group
   compilationChecks:
     needs: [linuxCheck,linuxCheck-CUDA]
     runs-on: ubuntu-latest
@@ -473,6 +479,7 @@ jobs:
 
     - name: make tests
       run: make tests
+
 
   linuxTest_1:
     name: Test 1 - benchmark claerbout kernel acoustic

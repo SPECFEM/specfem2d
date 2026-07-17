@@ -28,6 +28,13 @@ run_simple() {
 
   cd "${WORKDIR}/${rel_dir}"
 
+  # special example setup
+  if [ "${rel_dir}" == "EXAMPLES/reproducible_study/Tape2007/" ]; then
+    cp -v DATA/Par_file_Tape2007_132rec_checker DATA/Par_file
+    sed -i '/rm -f Par_file/s/^/#/' run_this_example.sh
+    sed -i '/ln -s Par_file/s/^/#/' run_this_example.sh
+  fi
+
   # setup
   cp -v DATA/Par_file DATA/Par_file.org
   sed -i "s:^NSTEP .*:NSTEP    = ${nstep}:" DATA/Par_file
@@ -121,7 +128,7 @@ case "$TESTID" in
     run_simple "EXAMPLES/benchmarks/semi_infinite_homogeneous/" 10
     run_simple "EXAMPLES/real_world/Marmousi2" 10
     run_simple "EXAMPLES/real_world/Industrial_Format_SEP/" 10
-    run_kernel "EXAMPLES/reproducible_study/Tromp2005_kernel/" 500
+    run_kernel "EXAMPLES/reproducible_study/Tromp2005_kernel/" 500 "default"
     ;;
   2) # parallel bunch 2 - vectorization
     run_simple "EXAMPLES/applications/Rayleigh_wave_no_crack/" 10
