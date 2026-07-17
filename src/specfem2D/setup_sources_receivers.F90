@@ -996,6 +996,7 @@
         if (ispec_is_electromagnetic(ispec)) then
           if (.not. P_SV ) call exit_MPI(myrank,'cannot have moment tensor source in SH (membrane) waves calculation')
         endif
+        ! checks CMT is an explosion (Mxx==Mzz, Mxz=0) for axisymmetric simulations
         if (AXISYM) then
           if (abs(Mxx(i_source) - Mzz(i_source)) > TINYVAL .or. abs(Mxz(i_source)) > TINYVAL) &
             call exit_MPI(myrank,'AXISYM only supports an explosive CMT (Mxx == Mzz, Mxz = 0) for now')

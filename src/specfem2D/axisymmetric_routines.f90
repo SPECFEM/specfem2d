@@ -202,25 +202,30 @@
         ! Warning (?)
         print *, '***** WARNING *****'
         print *, 'Axisymmetry: Source ',isource,' has CMT source type for AXISYM case.'
-        print *, '             Only monopole source (Mxx == Mzz and Mxz == 0) is possible.'
+        print *, '             Only explosion monopole source (Mxx == Mzz and Mxz == 0) is possible.'
         print *
       endif
+
       !   If the source is on an axial element
       if (is_on_the_axis(ispec_selected_source(isource))) then
         !  ... or if the source is (at r=0) on an elastic axial element.
         if (ispec_is_elastic(ispec_selected_source(isource))) then
-          ! note: anglesource has been converted to radians after reading in from SOURCE file
-          if (((anglesource(isource) > TINYVAL) .and. (anglesource(isource) < PI) ) &    ! ... and has a radial component.
-            .or. ( (anglesource(isource) > PI) .and. (anglesource(isource) < TWO*PI))) then
-            print *, '***** WARNING *****'
-            print *, 'Axisymmetry: U_r(r=0)=0, Radial component of axial source will be ignored (anglesource /= 0 modulo 180)'
-            print *
+          if (source_type(isource) == 1) then
+            ! point force source
+            ! for a force angle /= 0 or 180 degree the force becomes a ring source, where the radial component cancels out.
+            ! note: anglesource has been converted to radians after reading in from SOURCE file
+            if (((anglesource(isource) > TINYVAL) .and. (anglesource(isource) < PI) ) &    ! ... and has a radial component.
+              .or. ( (anglesource(isource) > PI) .and. (anglesource(isource) < TWO*PI))) then
+              print *, '***** WARNING *****'
+              print *, 'Axisymmetry: U_r(r=0)=0, Radial component of axial source will be ignored (anglesource /= 0 modulo 180)'
+              print *
+            endif
           endif
         endif
       else
         !   If the source is not on an axial element
         print *, '***** WARNING *****'
-        print *, 'Axisymmetry: physically a non axial source is a circular source!'
+        print *, 'Axisymmetry: physically a source off the symmetry axis becomes a circular ring source!'
         print *
       endif
     endif
