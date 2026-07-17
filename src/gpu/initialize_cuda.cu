@@ -38,15 +38,7 @@
 // gpu runtime flags (for future usage)
 int run_cuda = 0;
 
-/* ----------------------------------------------------------------------------------------------- */
-// CUDA initialization
-/* ----------------------------------------------------------------------------------------------- */
-
 // CUDA version output
-#ifdef USE_CUDA
-
-#pragma message ("\n\nCompiling with: USE_CUDA\n")
-
 // macros for version output
 #define VALUE_TO_STRING(x) #x
 #define VALUE(x) VALUE_TO_STRING(x)
@@ -62,7 +54,6 @@ int run_cuda = 0;
 #pragma message ("\n\nCompiling for CUDA version < 4.0\n")
 #endif
 
-#endif
 
 /* ----------------------------------------------------------------------------------------------- */
 
