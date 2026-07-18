@@ -46,6 +46,7 @@
     ONE,TWO,PI,TINYVAL,FOUR_THIRDS
 
   use specfem_par, only: nglob,P_SV, &
+                         GRAVITY,GRAVITY_CONST, &
                          ATTENUATION_VISCOELASTIC,nspec_ATT_el,N_SLS, &
                          ibool,ispec_is_elastic, &
                          deriv_mapping, &
@@ -136,7 +137,7 @@
 
   integer :: num_elements,ispec_p
 
-  ! this to avoid a warning at execution time about an undefined variable being used
+  ! this is to avoid a warning at execution time about an undefined variable being used
   ! for the SH component in the case of a P-SV calculation, and vice versa
   ! P_SV-case
   sigma_xx = 0._CUSTOM_REAL
@@ -613,6 +614,18 @@
             endif
           endif ! ATTENUATION
         endif ! PML_BOUNDARY_CONDITION
+
+        ! add gravity effect
+        if (GRAVITY) then
+          ! only for P-SV (in-plane) motion, as gravity acts vertically
+          ! note: gravity is assumed to be constant, thus grad(g) is zero and H-term can be omitted
+          if (P_SV) then
+            ! sigma_xx = sigma_xx - rho * u_z * g
+            sigma_xx = sigma_xx - rhol * dummy_loc(2,i,j) * GRAVITY_CONST
+            ! sigma_zx = sigma_zx + rho * u_x * g
+            sigma_zx = sigma_zx + rhol * dummy_loc(1,i,j) * GRAVITY_CONST
+          endif
+        endif
 
         ! weak formulation term based on stress tensor (non-symmetric form)
         xixl = deriv_mapping(1,i,j,ispec)

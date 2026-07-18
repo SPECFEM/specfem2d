@@ -64,7 +64,7 @@ module shared_input_parameters
 
 ! holds input parameters given in DATA/Par_file
 
-  use constants, only: MAX_STRING_LEN, RegInt_K
+  use constants, only: MAX_STRING_LEN, RegInt_K, STANDARD_GRAVITY
 
   implicit none
 
@@ -75,7 +75,7 @@ module shared_input_parameters
   character(len=MAX_STRING_LEN) :: title
 
   ! simulation type
-  integer :: SIMULATION_TYPE
+  integer :: SIMULATION_TYPE = 1
 
   ! NOISE_TOMOGRAPHY = 0 - turn noise tomography subroutines off; setting
   ! NOISE_TOMOGRAPHY equal to 0, in other words, results in an earthquake
@@ -96,45 +96,47 @@ module shared_input_parameters
   ! For an explanation of terms and concepts in noise tomography, see "Tromp et
   ! al., 2011, Noise Cross-Correlation Sensitivity Kernels, Geophysical Journal
   ! International"
-  integer :: NOISE_TOMOGRAPHY
+  integer :: NOISE_TOMOGRAPHY = 0
 
   ! save forward arrays at the end of the simulation
-  logical :: SAVE_FORWARD
+  logical :: SAVE_FORWARD = .false.
 
   ! variables used for partitioning
-  integer :: NPROC, PARTITIONING_TYPE
+  integer :: NPROC = 1
+  integer :: PARTITIONING_TYPE = 3     ! default SCOTCH == 3
 
   ! number of control nodes
-  integer :: NGNOD
+  integer :: NGNOD = 4
 
   ! number of time steps
-  integer (kind=RegInt_K) :: NSTEP
+  integer (kind=RegInt_K) :: NSTEP = 0
 
   ! time step size
-  double precision :: DT
+  double precision :: DT = 0.d0
 
   ! value of time_stepping_scheme to decide which time scheme will be used
   ! 1 = Newmark (2nd order),
   ! 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta),
   ! 3 = classical 4th-order 4-stage Runge-Kutta
-  integer :: time_stepping_scheme
+  integer :: time_stepping_scheme = 1
 
   ! simulation
-  logical :: AXISYM
+  logical :: AXISYM = .false.
 
-  logical :: P_SV
+  logical :: P_SV = .true.
 
   ! computational platform type
-  logical :: GPU_MODE
+  logical :: GPU_MODE = .false.
 
   ! creates/reads a binary database that allows to skip all time consuming setup steps in initialization
   ! 0 = does not read/create database
   ! 1 = creates database
   ! 2 = reads database
-  integer :: setup_with_binary_database
+  integer :: setup_with_binary_database = 0
 
   ! mesh files when using external mesh
-  character(len=MAX_STRING_LEN) :: MODEL, SAVE_MODEL
+  character(len=MAX_STRING_LEN) :: MODEL = "default"
+  character(len=MAX_STRING_LEN) :: SAVE_MODEL = "default"
 
   !#-----------------------------------------------------------------------------
   !#
@@ -142,22 +144,32 @@ module shared_input_parameters
   !#
   !#-----------------------------------------------------------------------------
   ! variables used for attenuation
-  logical :: ATTENUATION_VISCOELASTIC
-  logical :: ATTENUATION_PORO_FLUID_PART
-  logical :: ATTENUATION_VISCOACOUSTIC
-  logical :: ATTENUATION_PERMITTIVITY
-  logical :: ATTENUATION_CONDUCTIVITY
-  double precision :: Q0_poroelastic,freq0_poroelastic
+  logical :: ATTENUATION_VISCOELASTIC = .false.
+  logical :: ATTENUATION_PORO_FLUID_PART  = .false.
+  logical :: ATTENUATION_VISCOACOUSTIC  = .false.
+  logical :: ATTENUATION_PERMITTIVITY  = .false.
+  logical :: ATTENUATION_CONDUCTIVITY  = .false.
+  double precision :: Q0_poroelastic = 9999.d0
+  double precision :: freq0_poroelastic = 1.d0
 
-  integer :: N_SLS
-  double precision :: ATTENUATION_f0_REFERENCE,f0_electromagnetic
-  logical :: READ_VELOCITIES_AT_f0
-  logical :: USE_SOLVOPT
+  integer :: N_SLS = 3
+  double precision :: ATTENUATION_f0_REFERENCE = 1.d0
+  double precision :: f0_electromagnetic = 1.d0
+  logical :: READ_VELOCITIES_AT_f0 = .false.
+  logical :: USE_SOLVOPT = .false.
+
+  logical :: COMPUTE_FREQ_BAND_AUTOMATIC = .true.
+  double precision :: MIN_ATTENUATION_PERIOD = 9999.d0
+  double precision :: MAX_ATTENUATION_PERIOD = 9999.d0
 
   ! undo attenuation
-  logical :: UNDO_ATTENUATION_AND_OR_PML
+  logical :: UNDO_ATTENUATION_AND_OR_PML = .false.
   ! variables used for iteration
-  integer :: NT_DUMP_ATTENUATION
+  integer :: NT_DUMP_ATTENUATION = 0
+
+  ! gravity
+  logical :: GRAVITY = .false.
+  double precision :: GRAVITY_CONST    = STANDARD_GRAVITY
 
   !#-----------------------------------------------------------------------------
   !#
@@ -165,21 +177,24 @@ module shared_input_parameters
   !#
   !#-----------------------------------------------------------------------------
   ! variables used for source-receiver geometry
-  integer :: NSOURCES
-  logical :: force_normal_to_surface
+  integer :: NSOURCES = 0
+  logical :: force_normal_to_surface = .false.
 
   ! variables used for plane wave incidence
-  logical :: initialfield
-  logical :: add_Bielak_conditions_bottom,add_Bielak_conditions_right,add_Bielak_conditions_top,add_Bielak_conditions_left
+  logical :: initialfield = .false.
+  logical :: add_Bielak_conditions_bottom = .false.
+  logical :: add_Bielak_conditions_right = .false.
+  logical :: add_Bielak_conditions_top = .false.
+  logical :: add_Bielak_conditions_left = .false.
 
   ! acoustic forcing of an acoustic medium at a rigid interface
-  logical :: ACOUSTIC_FORCING
+  logical :: ACOUSTIC_FORCING = .false.
 
   ! noise simulations - source time function type
-  integer :: noise_source_time_function_type
+  integer :: noise_source_time_function_type = 0
 
   ! Flag for writing moving source databases or not
-  logical :: write_moving_sources_database
+  logical :: write_moving_sources_database = .false.
 
   ! outputs source time function to file
   logical :: PRINT_SOURCE_TIME_FUNCTION = .false.
@@ -189,37 +204,38 @@ module shared_input_parameters
   !# receivers
   !#
   !#-----------------------------------------------------------------------------
-  integer :: NSIGTYPE
-  character(len=MAX_STRING_LEN) :: seismotype
+  integer :: NSIGTYPE = 0
+  character(len=MAX_STRING_LEN) :: seismotype = ""
 
   ! subsampling
-  integer :: NTSTEP_BETWEEN_OUTPUT_SAMPLE ! depreated: subsamp_seismos, renamed to NTSTEP_BETWEEN_OUTPUT_SAMPLE
+  integer :: NTSTEP_BETWEEN_OUTPUT_SAMPLE = 1 ! depreated: subsamp_seismos, renamed to NTSTEP_BETWEEN_OUTPUT_SAMPLE
 
   ! for better accuracy of pressure output (uses 2nd time-derivatives of the initial source time function)
-  logical :: USE_TRICK_FOR_BETTER_PRESSURE
+  logical :: USE_TRICK_FOR_BETTER_PRESSURE = .false.
 
-  integer :: NTSTEP_BETWEEN_OUTPUT_SEISMOS ! deprecated: NSTEP_BETWEEN_OUTPUT_SEISMOS has been renamed
+  integer :: NTSTEP_BETWEEN_OUTPUT_SEISMOS = 100000 ! deprecated: NSTEP_BETWEEN_OUTPUT_SEISMOS has been renamed
 
   ! Integrated energy field output
-  logical :: COMPUTE_INTEGRATED_ENERGY_FIELD
+  logical :: COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
 
   ! use this t0 as earliest starting time rather than the automatically calculated one
   ! (must be positive and bigger than the automatically one to be effective;
   !  simulation will start at t = - t0)
-  double precision :: USER_T0
+  double precision :: USER_T0 = 0.d0
 
   ! seismogram format
-  logical :: save_ASCII_seismograms
-  logical :: save_binary_seismograms_single,save_binary_seismograms_double
+  logical :: save_ASCII_seismograms = .false.
+  logical :: save_binary_seismograms_single = .false.
+  logical :: save_binary_seismograms_double = .false.
   ! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
-  logical :: SU_FORMAT
+  logical :: SU_FORMAT = .false.
 
-  logical :: use_existing_STATIONS
+  logical :: use_existing_STATIONS = .false.
 
-  integer :: nreceiversets
+  integer :: nreceiversets = 0
 
-  double precision :: anglerec
-  logical :: rec_normal_to_surface
+  double precision :: anglerec = 0.d0
+  logical :: rec_normal_to_surface = .false.
 
   ! receiver sets
   integer, dimension(:),allocatable :: nrec_line
@@ -234,9 +250,9 @@ module shared_input_parameters
   ! kernel output in case of adjoint simulation
   logical :: save_ASCII_kernels = .false.
   logical :: SAVE_KERNEL_WEIGHTS = .false.
-  integer :: NTSTEP_BETWEEN_COMPUTE_KERNELS
-  logical :: APPROXIMATE_HESS_KL
-  logical :: NO_BACKWARD_RECONSTRUCTION
+  integer :: NTSTEP_BETWEEN_COMPUTE_KERNELS = 1
+  logical :: APPROXIMATE_HESS_KL = .false.
+  logical :: NO_BACKWARD_RECONSTRUCTION = .false.
 
   !#-----------------------------------------------------------------------------
   !#
@@ -245,23 +261,23 @@ module shared_input_parameters
   !#-----------------------------------------------------------------------------
 
   ! PML
-  logical :: PML_BOUNDARY_CONDITIONS
-  integer :: NELEM_PML_THICKNESS
-  logical :: ROTATE_PML_ACTIVATE
-  double precision :: ROTATE_PML_ANGLE
-  double precision :: K_MIN_PML
-  double precision :: K_MAX_PML
-  double precision :: damping_change_factor_acoustic
-  double precision :: damping_change_factor_elastic
-  logical :: PML_PARAMETER_ADJUSTMENT
+  logical :: PML_BOUNDARY_CONDITIONS = .false.
+  integer :: NELEM_PML_THICKNESS = 0
+  logical :: ROTATE_PML_ACTIVATE = .false.
+  double precision :: ROTATE_PML_ANGLE = 0.d0
+  double precision :: K_MIN_PML = 1.d0
+  double precision :: K_MAX_PML = 1.d0
+  double precision :: damping_change_factor_acoustic = 0.5d0
+  double precision :: damping_change_factor_elastic = 1.d0
+  logical :: PML_PARAMETER_ADJUSTMENT = .false.
 
   ! Stacey
-  logical :: STACEY_ABSORBING_CONDITIONS
+  logical :: STACEY_ABSORBING_CONDITIONS = .false.
 
   ! for horizontal periodic conditions: detect common points between left and right edges
-  logical :: ADD_PERIODIC_CONDITIONS
+  logical :: ADD_PERIODIC_CONDITIONS = .false.
   ! horizontal periodicity distance for periodic conditions
-  double precision :: PERIODIC_HORIZ_DIST
+  double precision :: PERIODIC_HORIZ_DIST = 0.d0
 
   !#-----------------------------------------------------------------------------
   !#
@@ -270,27 +286,29 @@ module shared_input_parameters
   !#-----------------------------------------------------------------------------
   ! to store density and velocity model
   ! (actual material table will be read in in src/meshfem2D/read_material_table.f90)
-  integer :: nbmodels
+  integer :: nbmodels = 0
 
   ! input file name of TOMOGRAPHY
-  character(len=MAX_STRING_LEN) :: TOMOGRAPHY_FILE
+  character(len=MAX_STRING_LEN) :: TOMOGRAPHY_FILE = ""
 
-  logical :: read_external_mesh
+  logical :: read_external_mesh = .false.
 
   !#-----------------------------------------------------------------------------
   !#
   !# PARAMETERS FOR EXTERNAL MESHING
   !#
   !#-----------------------------------------------------------------------------
-  character(len=MAX_STRING_LEN) :: mesh_file, nodes_coords_file, materials_file
-  character(len=MAX_STRING_LEN) :: free_surface_file
-  character(len=MAX_STRING_LEN) :: absorbing_surface_file
-  character(len=MAX_STRING_LEN) :: acoustic_forcing_surface_file
-  character(len=MAX_STRING_LEN) :: axial_elements_file
-  character(len=MAX_STRING_LEN) :: absorbing_cpml_file
-  character(len=MAX_STRING_LEN) :: tangential_detection_curve_file
+  character(len=MAX_STRING_LEN) :: mesh_file = "mesh_file"
+  character(len=MAX_STRING_LEN) :: nodes_coords_file = "nodes_coords_file"
+  character(len=MAX_STRING_LEN) :: materials_file = "materials_file"
+  character(len=MAX_STRING_LEN) :: free_surface_file = "free_surface_file"
+  character(len=MAX_STRING_LEN) :: absorbing_surface_file = "absorbing_surface_file"
+  character(len=MAX_STRING_LEN) :: acoustic_forcing_surface_file = "acoustic_forcing_surface_file"
+  character(len=MAX_STRING_LEN) :: axial_elements_file = "axial_elements_file"
+  character(len=MAX_STRING_LEN) :: absorbing_cpml_file = "absorbing_cpml_file"
+  character(len=MAX_STRING_LEN) :: tangential_detection_curve_file = "tangential_detection_curve_file"
 
-  character(len=MAX_STRING_LEN) :: nummaterial_velocity_file
+  character(len=MAX_STRING_LEN) :: nummaterial_velocity_file = "nummaterial_velocity_file"
   logical :: has_nummaterial_velocity_file = .false.
 
   !#-----------------------------------------------------------------------------
@@ -299,17 +317,21 @@ module shared_input_parameters
   !#
   !#-----------------------------------------------------------------------------
   ! input parameter for in-house mesher
-  character(len=MAX_STRING_LEN) :: interfacesfile
+  character(len=MAX_STRING_LEN) :: interfacesfile = "interfaces.dat"
 
-  double precision :: xmin_param,xmax_param
-  integer :: nx_param
+  double precision :: xmin_param = 0.d0
+  double precision :: xmax_param = 0.d0
+  integer :: nx_param = 0
 
   ! variables used for absorbing boundary condition
-  logical :: absorbbottom,absorbright,absorbtop,absorbleft
+  logical :: absorbbottom = .false.
+  logical :: absorbright = .false.
+  logical :: absorbtop = .false.
+  logical :: absorbleft = .false.
 
   ! number of regions
   ! (see reading in of regions table in read_regions.f90 file)
-  integer :: nbregions
+  integer :: nbregions = 0
 
   !#-----------------------------------------------------------------------------
   !#
@@ -317,7 +339,7 @@ module shared_input_parameters
   !#
   !#-----------------------------------------------------------------------------
   ! general information during the computation and for information of the stability behavior during the simulation
-  integer :: NTSTEP_BETWEEN_OUTPUT_INFO
+  integer :: NTSTEP_BETWEEN_OUTPUT_INFO = 1000
 
   ! saves mesh files for visualization
   logical :: SAVE_MESH_FILES = .false.
@@ -327,8 +349,8 @@ module shared_input_parameters
   logical :: output_grid_ASCII = .false.
 
   ! for plotting the curve of energy
-  logical :: OUTPUT_ENERGY
-  integer :: NTSTEP_BETWEEN_OUTPUT_ENERGY
+  logical :: OUTPUT_ENERGY = .false.
+  integer :: NTSTEP_BETWEEN_OUTPUT_ENERGY = 100
 
   !#-----------------------------------------------------------------------------
   !#
@@ -336,50 +358,53 @@ module shared_input_parameters
   !#
   !#-----------------------------------------------------------------------------
   ! time step interval for image output
-  integer :: NTSTEP_BETWEEN_OUTPUT_IMAGES
+  integer :: NTSTEP_BETWEEN_OUTPUT_IMAGES = 100
 
   ! threshold value
-  double precision :: cutsnaps
+  double precision :: cutsnaps = 1.d0
 
   ! JPEG image
-  logical :: output_color_image
-  integer :: imagetype_JPEG
+  logical :: output_color_image = .false.
+  integer :: imagetype_JPEG = 3   ! default 3 = displ_norm
   ! factor to subsample color images output by the code (useful for very large models)
-  double precision :: factor_subsample_image
+  double precision :: factor_subsample_image = 1.d0
   ! by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
-  logical :: USE_CONSTANT_MAX_AMPLITUDE
+  logical :: USE_CONSTANT_MAX_AMPLITUDE = .false.
   ! constant maximum amplitude to use for all color images if the USE_CONSTANT_MAX_AMPLITUDE option is true
-  double precision :: CONSTANT_MAX_AMPLITUDE_TO_USE
+  double precision :: CONSTANT_MAX_AMPLITUDE_TO_USE = 0.d0
   ! nonlinear display to enhance small amplitudes in color images
-  double precision :: POWER_DISPLAY_COLOR
-  logical :: DRAW_SOURCES_AND_RECEIVERS
+  double precision :: POWER_DISPLAY_COLOR = 0.3d0
+  logical :: DRAW_SOURCES_AND_RECEIVERS = .false.
   ! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
   ! or in the case of offshore oil industry experiments.
   ! (if off, display them as greyscale, as for elastic or poroelastic elements)
-  logical :: DRAW_WATER_IN_BLUE
+  logical :: DRAW_WATER_IN_BLUE = .false.
   ! use snapshot number in the file name of JPG color snapshots instead of the time step
-  logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME
+  logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.
 
   ! Postscript image
-  logical :: output_postscript_snapshot
-  integer :: imagetype_postscript
-  logical :: meshvect,modelvect,boundvect,interpol
+  logical :: output_postscript_snapshot = .false.
+  integer :: imagetype_postscript = 1  ! default 1 = displ vector
+  logical :: meshvect = .false.
+  logical :: modelvect = .false.
+  logical :: boundvect = .false.
+  logical :: interpol = .false.
   ! number of interpolation points
-  integer :: pointsdisp
+  integer :: pointsdisp = 1
   ! subsampling
-  integer :: subsamp_postscript
-  double precision :: sizemax_arrows
+  integer :: subsamp_postscript = 1
+  double precision :: sizemax_arrows = 1.d0
   ! US letter paper or European A4
-  logical :: US_LETTER
+  logical :: US_LETTER = .false.
 
   ! Wave field dumps
-  logical :: output_wavefield_dumps
-  integer :: imagetype_wavefield_dumps
-  logical :: use_binary_for_wavefield_dumps
+  logical :: output_wavefield_dumps = .false.
+  integer :: imagetype_wavefield_dumps = 1  ! default 1 = displ vector
+  logical :: use_binary_for_wavefield_dumps = .false.
 
   ! NUMBER_OF_SIMULTANEOUS_RUNS
-  integer :: NUMBER_OF_SIMULTANEOUS_RUNS
-  logical :: BROADCAST_SAME_MESH_AND_MODEL
+  integer :: NUMBER_OF_SIMULTANEOUS_RUNS = 1
+  logical :: BROADCAST_SAME_MESH_AND_MODEL = .true.
 
 end module shared_input_parameters
 
@@ -397,13 +422,13 @@ module shared_parameters
   implicit none
 
   ! for Bielak condition
-  logical :: add_Bielak_conditions
+  logical :: add_Bielak_conditions = .false.
 
   ! for PML or Stacey boundary condition
-  logical :: any_abs
+  logical :: any_abs = .false.
 
   ! for interpolated snapshot
-  logical :: plot_lowerleft_corner_only
+  logical :: plot_lowerleft_corner_only = .false.
 
   ! to store density and velocity model
   integer, dimension(:),allocatable :: num_material
@@ -435,19 +460,22 @@ module shared_parameters
 
   ! mesh setup
   ! total number of elements
-  integer :: nelmnts
+  integer :: nelmnts = 0
 
   ! interface file data
-  integer :: nx_elem_internal,nz_elem_internal
-  integer :: nxread,nzread
+  integer :: nx_elem_internal = 0
+  integer :: nz_elem_internal = 0
+  integer :: nxread = 0
+  integer :: nzread = 0
 
   ! from interfaces file
-  integer :: max_npoints_interface,number_of_interfaces
+  integer :: max_npoints_interface = 0
+  integer :: number_of_interfaces = 0
   integer, dimension(:), allocatable :: npoints_of_interfaces
   double precision, dimension(:,:), allocatable :: xinterface_coords,zinterface_coords
 
   ! vertical layers
-  integer :: number_of_layers
+  integer :: number_of_layers = 0
   integer, dimension(:), allocatable :: nz_layer
 
   ! seismogram output
@@ -492,6 +520,6 @@ module source_file_par
   character(len=MAX_STRING_LEN), dimension(:),allocatable :: name_of_source_file
 
   ! Flag for moving sources
-  logical :: SOURCE_IS_MOVING
+  logical :: SOURCE_IS_MOVING = .false.
 
 end module source_file_par

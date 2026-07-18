@@ -127,7 +127,11 @@ jobs:
         echo ""
 
     - name: configure
-      run: ./configure
+      run: |
+        ./configure ; if [[ $? -ne 0 ]]; then cat config.log; exit 1; fi
+        # changes SCOTCH Makefile for macOS
+        echo "modifying external_libs/scotch/src/Makefile.inc"
+        cp -v external_libs/scotch/src/Make.inc/Makefile.inc.i686_mac_darwin8 external_libs/scotch/src/Makefile.inc
 
     # skipping - compilation check done as well in make tests
     #- name: make
@@ -135,28 +139,6 @@ jobs:
 
     - name: make tests
       run: make tests
-
-  linuxCheck:
-    name: Test on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    needs: changesCheck
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest,ubuntu-22.04]
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Install packages
-      run: ./.github/scripts/run_install.sh
-      shell: bash
-
-    - name: configure
-      run: ./configure
-
-    - name: make
-      run: make -j2 all
 
 
   linuxCheck-Intel:
@@ -251,21 +233,21 @@ jobs:
         echo "FC=ifort" >> $GITHUB_ENV
         echo ""
 
-    - name: configure debug
+    - name: configure serial debug
       run: |
         ./configure --enable-debug FC=ifort CC=icc
 
-    - name: make debug
+    - name: make serial debug
       run: |
         make -j2 all
         make -j2 all --always-make
         make clean
 
-    - name: configure
+    - name: configure serial
       run: |
         ./configure FC=ifort CC=icc
 
-    - name: make
+    - name: make serial
       run: |
         make -j2 all
         make clean
@@ -363,8 +345,8 @@ jobs:
         # debug
         #export I_MPI_DEBUG=5,pid,host
         #export I_MPI_LIBRARY_KIND=debug
-        # remove -ftrapuv which leads to issues for running tests
-        sed -i "s/-ftrapuv//g" flags.guess
+        # remove -ftrapuv in case it leads to issues for running tests
+        #sed -i "s/-ftrapuv//g" flags.guess
         # environment setting
         export TERM=xterm
         # export info
@@ -378,23 +360,23 @@ jobs:
         echo "FC=ifx" >> $GITHUB_ENV
         echo ""
 
-    - name: configure debug
+    - name: configure serial debug
       run: |
         set +e # revert the default `set -e`
-        ./configure --enable-debug FC=ifx CC=icx
+        ./configure --enable-debug FC=ifx CC=icx CXX=icx
         if [[ $? -ne 0 ]]; then echo "configuration failed:"; cat config.log; echo ""; echo "exiting..."; exit 1; fi
 
-    - name: make debug
+    - name: make serial debug
       run: |
         make -j2 all
         make -j2 all --always-make
         make clean
 
-    - name: configure
+    - name: configure serial
       run: |
-        ./configure FC=ifx CC=icx
+        ./configure FC=ifx CC=icx CXX=icx
 
-    - name: make
+    - name: make serial
       run: |
         make -j2 all
         make clean
@@ -402,7 +384,8 @@ jobs:
     - name: configure parallel debug
       run: |
         set +e # revert the default `set -e`
-        ./configure --enable-debug --with-mpi FC=ifx CC=icx MPIFC=mpiifx MPI_INC="${I_MPI_ROOT}/include"
+        # adds -std=gnu17 to CFLAGS otherwise it will by default use -std=gnu23 which leads to errors in Scotch compilation
+        ./configure --enable-debug --with-mpi FC=ifx CC=icx CXX=icx CFLAGS="-std=gnu17 -Wall" MPIFC=mpiifx MPI_INC="${I_MPI_ROOT}/include"
         if [[ $? -ne 0 ]]; then echo "configuration failed:"; cat config.log; echo ""; echo "exiting..."; exit 1; fi
 
     - name: make parallel debug
@@ -413,7 +396,7 @@ jobs:
 
     - name: configure parallel
       run: |
-        ./configure --with-mpi FC=ifx CC=icx MPIFC=mpiifx MPI_INC="${I_MPI_ROOT}/include"
+        ./configure --with-mpi FC=ifx CC=icx CXX=icx CFLAGS="-std=gnu17" MPIFC=mpiifx MPI_INC="${I_MPI_ROOT}/include"
 
     - name: make parallel
       run: |
@@ -426,10 +409,63 @@ jobs:
         make tests
 
 
-  linuxTest_0:
-    name: Test run example 0 - make tests
+  linuxCheck:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: changesCheck
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest,ubuntu-22.04]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: configure
+      run: ./configure
+
+    - name: make
+      run: make -j4 all
+
+
+  linuxCheck-CUDA:
+    name: Test on linux w/ CUDA
+    runs-on: ubuntu-22.04
+    needs: changesCheck
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      env:
+        CUDA: true
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        CUDA: true
+        TESTFLAGS: --with-mpi --enable-debug
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+
+  # intermediate group
+  compilationChecks:
+    needs: [linuxCheck,linuxCheck-CUDA]
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    steps:
+    - run: echo "compilation tests passed"
+
+
+  linuxTest_0:
+    name: Test 0 - make tests
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -444,10 +480,11 @@ jobs:
     - name: make tests
       run: make tests
 
+
   linuxTest_1:
-    name: Test run example 1 - benchmark claerbout kernel acoustic
+    name: Test 1 - benchmark claerbout kernel acoustic
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -458,7 +495,7 @@ jobs:
 
     - name: Run build
       env:
-        TESTFLAGS: --with-mpi  # --enable-vectorization
+        TESTFLAGS: --with-mpi
       run: ./.github/scripts/run_build.sh
       shell: bash
 
@@ -469,9 +506,9 @@ jobs:
       shell: bash
 
   linuxTest_2:
-    name: Test run example 2 - benchmark claerbout kernel elastic P-SV
+    name: Test 2 - benchmark claerbout kernel elastic P-SV
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -482,7 +519,7 @@ jobs:
 
     - name: Run build
       env:
-        TESTFLAGS: --with-mpi  # --enable-vectorization
+        TESTFLAGS: --with-mpi
       run: ./.github/scripts/run_build.sh
       shell: bash
 
@@ -494,9 +531,9 @@ jobs:
       shell: bash
 
   linuxTest_3:
-    name: Test run example 3 - benchmark claerbout kernel elastic SH
+    name: Test 3 - benchmark claerbout kernel elastic SH
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -507,7 +544,7 @@ jobs:
 
     - name: Run build
       env:
-        TESTFLAGS: --with-mpi  # --enable-vectorization
+        TESTFLAGS: --with-mpi
       run: ./.github/scripts/run_build.sh
       shell: bash
 
@@ -519,9 +556,9 @@ jobs:
       shell: bash
 
   linuxTest_4:
-    name: Test run example 4 - benchmark claerbout kernel acoustic-elastic
+    name: Test 4 - benchmark claerbout kernel acoustic-elastic
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -532,7 +569,7 @@ jobs:
 
     - name: Run build
       env:
-        TESTFLAGS: --with-mpi  # --enable-vectorization
+        TESTFLAGS: --with-mpi
       run: ./.github/scripts/run_build.sh
       shell: bash
 
@@ -543,9 +580,9 @@ jobs:
       shell: bash
 
   linuxTest_5:
-    name: Test run example 5 - moving sources
+    name: Test 5 - moving sources
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -556,7 +593,7 @@ jobs:
 
     - name: Run build
       env:
-        TESTFLAGS: --with-mpi  # --enable-vectorization
+        TESTFLAGS: --with-mpi
       run: ./.github/scripts/run_build.sh
       shell: bash
 
@@ -567,9 +604,9 @@ jobs:
       shell: bash
 
   linuxTest_6:
-    name: Test run example 6 - anisotropy
+    name: Test 6 - anisotropy
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -580,7 +617,7 @@ jobs:
 
     - name: Run build
       env:
-        TESTFLAGS: --with-mpi  # --enable-vectorization
+        TESTFLAGS: --with-mpi
       run: ./.github/scripts/run_build.sh
       shell: bash
 
@@ -592,9 +629,9 @@ jobs:
 
 
   linuxTest_7:
-    name: Test run example 7 - Industrial_Format_SEP
+    name: Test 7 - Industrial_Format_SEP
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -605,7 +642,7 @@ jobs:
 
     - name: Run build
       env:
-        TESTFLAGS: --with-mpi  # --enable-vectorization
+        TESTFLAGS: --with-mpi
       run: ./.github/scripts/run_build.sh
       shell: bash
 
@@ -616,9 +653,9 @@ jobs:
       shell: bash
 
   linuxTest_8:
-    name: Test run example 8 - axisymmetric_case_AXISYM_option
+    name: Test 8 - axisymmetric_case_AXISYM_option
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -629,7 +666,7 @@ jobs:
 
     - name: Run build
       env:
-        TESTFLAGS: --with-mpi  # --enable-vectorization
+        TESTFLAGS: --with-mpi
       run: ./.github/scripts/run_build.sh
       shell: bash
 
@@ -640,9 +677,9 @@ jobs:
       shell: bash
 
   linuxTest_9:
-    name: Test run example 9 - simple_topography_and_also_a_simple_fluid_layer debug
+    name: Test 9 - simple_topography_and_also_a_simple_fluid_layer debug
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -664,9 +701,9 @@ jobs:
       shell: bash
 
   linuxTest_10:
-    name: Test run example 10 - simple_topography_and_also_a_simple_fluid_layer debug double_precision
+    name: Test 10 - simple_topography_and_also_a_simple_fluid_layer debug double_precision
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -689,9 +726,9 @@ jobs:
 
 
   linuxTest_11:
-    name: Test run example 11 - tomographic_ocean_model
+    name: Test 11 - tomographic_ocean_model
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -713,9 +750,9 @@ jobs:
       shell: bash
 
   linuxTest_12:
-    name: Test run example 12 - Marmousi2
+    name: Test 12 - Marmousi2
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -737,9 +774,9 @@ jobs:
       shell: bash
 
   linuxTest_13:
-    name: Test run example 13 - Gmsh w/ Stacey
+    name: Test 13 - Gmsh w/ Stacey
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -761,9 +798,9 @@ jobs:
       shell: bash
 
   linuxTest_14:
-    name: Test run example 14 - EM
+    name: Test 14 - EM
     runs-on: ubuntu-latest
-    needs: [linuxCheck]
+    needs: [compilationChecks]
 
     steps:
     - uses: actions/checkout@v4
@@ -785,3 +822,340 @@ jobs:
       run: ./.github/scripts/run_tests.sh
       shell: bash
 
+  linuxTest_15:
+    name: Test 15 - benchmark semi_infinite_homogeneous
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:      # default w/out MPI
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/benchmarks/semi_infinite_homogeneous
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_16:
+    name: Test 16 - benchmark check amplitude acoustic
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:      # default w/out MPI
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/benchmarks/check_absolute_amplitude_of_pressure_source_seismograms_acoustic
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_17:
+    name: Test 17 - benchmark check amplitude elastic
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:      # default w/out MPI
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/benchmarks/check_absolute_amplitude_of_force_source_seismograms_elastic
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_18:
+    name: Test 18 - benchmark check amplitude viscoelastic
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:      # default w/out MPI
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/benchmarks/check_absolute_amplitude_of_force_source_seismograms_viscoelastic
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_19:
+    name: Test 19 - benchmark infinite_homogeneous_moment_tensor_vertical_dip_slip
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:      # default w/out MPI
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/benchmarks/infinite_homogeneous_moment_tensor_vertical_dip_slip
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_20:
+    name: Test 20 - Tape2007
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:      # default w/out MPI
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/reproducible_study/Tape2007
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_21:
+    name: Test 21 - Morency2008_poroelastic_semi_infinite_homogeneous
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/reproducible_study/Morency2008_poroelastic_semi_infinite_homogeneous
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_22:
+    name: Test 22 - Komatitsch2000_fluid_solid
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/reproducible_study/Komatitsch2000_fluid_solid/fluid_solid_external_mesh
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_23:
+    name: Test 23 - Rayleigh_wave_no_crack
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/applications/Rayleigh_wave_no_crack
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_24:
+    name: Test 24 - Rayleigh_wave_with_crack
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/applications/Rayleigh_wave_with_crack
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+
+  # intermediate workflow check
+  exampleChecks:
+    needs: [linuxTest_0,linuxTest_1,linuxTest_2,linuxTest_3,linuxTest_4,linuxTest_5,
+            linuxTest_6,linuxTest_7,linuxTest_8,linuxTest_9,linuxTest_10,
+            linuxTest_11,linuxTest_12,linuxTest_13,linuxTest_14,linuxTest_15,
+            linuxTest_16,linuxTest_17,linuxTest_18,linuxTest_19,linuxTest_20,
+            linuxTest_21,linuxTest_22,linuxTest_23,linuxTest_24]
+    runs-on: ubuntu-latest
+    steps:
+    - run: echo "example tests passed"
+
+
+  linuxCoverageTests:
+    name: Coverage tests - ID ${{ matrix.testid }}
+    runs-on: ubuntu-latest
+    needs: [exampleChecks]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - testid: 0
+          testdir: EXAMPLES/applications/simple_topography_and_also_a_simple_fluid_layer/
+          testflags: --without-mpi
+        - testid: 1
+          testdir: EXAMPLES/applications/simple_topography_and_also_a_simple_fluid_layer/
+          testflags: --with-mpi
+        - testid: 2
+          testdir: EXAMPLES/applications/simple_topography_and_also_a_simple_fluid_layer/
+          testflags: --with-mpi --enable-vectorization
+        - testid: 3
+          testdir: EXAMPLES/applications/simple_topography_and_also_a_simple_fluid_layer/
+          testflags: --with-mpi
+          testngll: 6
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build (coverage)
+      env:
+        TESTCOV: true
+        TESTDIR: ${{ matrix.testdir }}
+        TESTFLAGS: ${{ matrix.testflags }}
+        TESTNGLL: ${{ matrix.testngll }}
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run base test (coverage)
+      env:
+        TESTCOV: true
+        TESTDIR: ${{ matrix.testdir }}
+        TESTID: ${{ matrix.testid }}
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+    - name: Run extra coverage examples
+      env:
+        TESTCOV: true
+        TESTID: ${{ matrix.testid }}
+      run: ./.github/scripts/run_coverage.sh
+      shell: bash
+
+    - name: Generate gcov reports
+      if: ${{ github.repository == 'SPECFEM/specfem2d' }}
+      run: |
+        gcov --version
+        echo `pwd`
+        ls -al obj/
+        # produces coverage reports (done manually because of different naming for source & object files)
+        find obj/ -iname '*.o' | sort | awk '{print "gcov -o obj/ "$1;}'
+        # executes gcov-commands
+        find obj/ -iname '*.o' | sort | awk '{print "gcov -o obj/ "$1;}' | sh
+      shell: bash
+
+    # code coverage:
+    # see script : https://github.com/codecov/codecov-bash/blob/master/codecov
+    # see example: https://github.com/codecov/example-fortran/blob/master/.travis.yml
+    #- name: Upload coverage to Codecov
+    #  if: ${{ github.repository == 'SPECFEM/specfem3d' }}
+    #  run: |
+    #    bash <(curl -s https://codecov.io/bash) -X gcov; fi
+    #  shell: bash
+
+    - name: Upload coverage to Codecov
+      if: ${{ github.repository == 'SPECFEM/specfem2d' }}
+      uses: codecov/codecov-action@v5
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      with:
+        fail_ci_if_error: true
+        verbose: true
+        flags: coverage-testname-${{ matrix.testname }}

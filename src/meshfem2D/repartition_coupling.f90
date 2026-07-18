@@ -88,7 +88,7 @@
   enddo
 
   ! user output
-  write(IMAIN,*) 'nedges_coupled (acoustic/elastic)     = ', nedges_coupled
+  write(IMAIN,*) '  nedges_coupled (acoustic/elastic)     = ', nedges_coupled
 
   allocate(edges_coupled(2,nedges_coupled),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating array edges_coupled')
@@ -163,7 +163,7 @@
   enddo
 
   ! user output
-  write(IMAIN,*) 'nedges_coupled (acoustic/poroelastic) = ', nedges_acporo_coupled
+  write(IMAIN,*) '  nedges_coupled (acoustic/poroelastic) = ', nedges_acporo_coupled
 
   allocate(edges_acporo_coupled(2,nedges_acporo_coupled),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating array edges_acporo_coupled')
@@ -237,7 +237,7 @@
   enddo
 
   ! user output
-  write(IMAIN,*) 'nedges_coupled (poroelastic/elastic)  = ', nedges_elporo_coupled
+  write(IMAIN,*) '  nedges_coupled (poroelastic/elastic)  = ', nedges_elporo_coupled
 
   allocate(edges_elporo_coupled(2,nedges_elporo_coupled),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating array edges_elporo_coupled')

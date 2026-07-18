@@ -347,15 +347,22 @@ class mesh(mesh_tools):
         #print("# bounding box xmin/xmax = ",xmin_box,xmax_box)
         #print("# bounding box ymin/ymax = ",ymin_box,ymax_box)
         #print("# bounding box zmin/zmax = ",zmin_box,zmax_box)
+        # mesh dimensions
+        dim_x = abs(xmax_box - xmin_box)
+        dim_y = abs(ymax_box - ymin_box)
+        dim_z = abs(zmax_box - zmin_box)
+        # maximum dimension
+        #dim_max = max( dim_x, dim_y, dim_z )
+        #print('# define_bc_edge: mesh dimensions: ',dim_x,dim_y,dim_z,' - maximum: ',dim_max)
         #print("")
         # plane identifier: 1 == XZ-plane, 2 == XY-plane, 3 == YZ-plane
-        if abs(ymax_box-ymin_box) < 0.001:
+        if dim_y < 1.e-9:
             print("# cubit2specfem2d: mesh in XZ plane")
             self.plane_id = 1
-        elif abs(zmax_box-zmin_box) < 0.001:
+        elif dim_z < 1.e-9:
             print("# cubit2specfem2d: mesh in XY plane")
             self.plane_id = 2
-        elif abs(xmax_box-xmin_box) < 0.001:
+        elif dim_x < 1.e-9:
             print("# cubit2specfem2d: mesh in YZ plane")
             self.plane_id = 3
         else:
@@ -845,6 +852,7 @@ class mesh(mesh_tools):
                                 #txt = '%10i %10i %10i %10i %10i\n' % (id_element,2,nodes_ok[0],nodes_ok[1],iabs+1)
                                 txt = '%10i %10i %10i %10i %10i\n' % (quad,2,nodes_ok[0],nodes_ok[1],iabs+1)
                                 # Write the id of the quad, 2 (number of nodes describing a free surface elements), the nodes and the type of boundary
+                                #print(f"#debug: abs_write: indexFile {indexFile} txt {txt}")
                                 toWritetoFile[indexFile] = txt
                                 indexFile = indexFile + 1
                                 #absedge.write(txt)

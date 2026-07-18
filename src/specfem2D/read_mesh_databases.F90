@@ -586,7 +586,7 @@
 207 format(5x,'Number of spectral elements . . . . . . . . .  (nspec) =',i7,/5x, &
                'Number of control nodes per element . . . . . (NGNOD) =',i7,/5x, &
                'Number of points in X-direction . . . . . . . (NGLLX) =',i7,/5x, &
-               'Number of points in Y-direction . . . . . . . (NGLLZ) =',i7,/5x, &
+               'Number of points in Z-direction . . . . . . . (NGLLZ) =',i7,/5x, &
                'Number of points per element. . . . . . (NGLLX*NGLLZ) =',i7,/5x, &
                'Number of points for display . . . . . . (pointsdisp) =',i7,/5x, &
                'Number of element material sets . . . . . . . (numat) =',i7,/5x, &

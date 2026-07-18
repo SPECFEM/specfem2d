@@ -340,10 +340,10 @@
           nelem_on_the_axis = nzread
           allocate(ispec_of_axial_elements(nelem_on_the_axis),stat=ier)
           if (ier /= 0) call stop_the_code('Error allocating array ispec_of_axial_elements')
-          ispec_of_axial_elements(:) = 0
-          i = 1
+          ispec_of_axial_elements(:) = -1
+          i = 1  ! first element in each horizontal mesh line (symmetry axis is on the left mesh side)
           do j = 1,nzread
-            ispec_of_axial_elements(j) = (j-1)*nxread + (i-1) + 1
+            ispec_of_axial_elements(j) = (j-1)*nxread + (i-1)    ! element numbering starts from 0
           enddo
 
         else

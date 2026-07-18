@@ -38,6 +38,7 @@
 ! determines source array for moment-tensor sources
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,ZERO
+  use specfem_par, only: AXISYM
 
   implicit none
 
@@ -70,6 +71,7 @@
   integer :: ir,iv
 
   ! interpolation
+  ! default interpolation
   dxis_dx = ZERO
   dxis_dz = ZERO
   dgammas_dx = ZERO
@@ -94,16 +96,36 @@
   ! calculate source array
   sourcearray(:,:,:) = 0.0_CUSTOM_REAL
 
-  do m = 1,NGLLZ
-    do k = 1,NGLLX
-        dsrc_dx = (hpxis(k)*dxis_dx)*hgammas(m) + hxis(k)*(hpgammas(m)*dgammas_dx)
-        dsrc_dz = (hpxis(k)*dxis_dz)*hgammas(m) + hxis(k)*(hpgammas(m)*dgammas_dz)
+  if (AXISYM) then
+    ! axisymmetric interpolation
+    ! assumes source lies on the symmetry axis, NGLJ == NGLLX, and hpxis are the GLJ-based derivatives.
+    !
+    ! Monopole source forces (Mxz == 0)
+    do m = 1, NGLLZ
+      do k = 1, NGLLX
+        dsrc_dx = (hpxis(k) * dxis_dx) * hgammas(m) + hxis(k) * (hpgammas(m) * dgammas_dx)
+        dsrc_dz = (hpxis(k) * dxis_dz) * hgammas(m) + hxis(k) * (hpgammas(m) * dgammas_dz)
+
+        ! this assumes an explosive source CMT with Mxx == Myy == Mzz, and Mxy == 0 == Myz
+        ! Radial force component (f_s) driven by (Mxx + Myy) == 2 Mxx
+        sourcearray(1,k,m) = sourcearray(1,k,m) + real(2.d0 * Mxx * dsrc_dx, kind=CUSTOM_REAL)
+        ! Vertical force component (f_z) driven by Mzz
+        sourcearray(2,k,m) = sourcearray(2,k,m) + real(Mzz * dsrc_dz, kind=CUSTOM_REAL)
+      enddo
+    enddo
+  else
+    ! CMT
+    do m = 1,NGLLZ
+      do k = 1,NGLLX
+        dsrc_dx = (hpxis(k) * dxis_dx) * hgammas(m) + hxis(k) * (hpgammas(m) * dgammas_dx)
+        dsrc_dz = (hpxis(k) * dxis_dz) * hgammas(m) + hxis(k) * (hpgammas(m) * dgammas_dz)
 
         ! formula: see notes in doc/notes_from_Youshan_Liu_The_point_moment_tensor_source_with_merged_loops_in_2D.pdf
-        sourcearray(1,k,m) = sourcearray(1,k,m) + real(Mxx*dsrc_dx + Mxz*dsrc_dz,kind=CUSTOM_REAL)
-        sourcearray(2,k,m) = sourcearray(2,k,m) + real(Mxz*dsrc_dx + Mzz*dsrc_dz,kind=CUSTOM_REAL)
+        sourcearray(1,k,m) = sourcearray(1,k,m) + real(Mxx * dsrc_dx + Mxz * dsrc_dz,kind=CUSTOM_REAL)
+        sourcearray(2,k,m) = sourcearray(2,k,m) + real(Mxz * dsrc_dx + Mzz * dsrc_dz,kind=CUSTOM_REAL)
+      enddo
     enddo
-  enddo
+  endif
 
   ! debugging
   if (DEBUG) then

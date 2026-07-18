@@ -34,7 +34,9 @@
 
   subroutine prepare_attenuation()
 
-  use constants, only: IMAIN,TWO,PI,FOUR_THIRDS,TWO_THIRDS,USE_A_STRONG_FORMULATION_FOR_E1
+  use constants, only: IMAIN,TWO,PI,FOUR_THIRDS,TWO_THIRDS,USE_A_STRONG_FORMULATION_FOR_E1, &
+                       USE_OLD_C_ATTENUATION_ROUTINE_INSTEAD,USE_FIXED_ATTENUATION_ABSORPTION_BAND, &
+                       TINYVAL
   use specfem_par
 
   implicit none
@@ -59,6 +61,10 @@
   ! info
   logical :: show_warning
   integer :: nelem_viscoacoustic,iproc
+
+  ! absorption band
+  double precision :: f_min_attenuation, f_max_attenuation, f_center
+  double precision :: T_min_period, T_max_period, min_resolved_period
 
   ! attenuation
   ! user output
@@ -106,11 +112,18 @@
   !
   ! mu(omega_c) = mu(omega_0)[ 1 + 2/(pi Q_mu) ln(omega_c / omega_0) ]
   !
-  ! if source is not a Dirac or Heavyside then ATTENUATION_f0_REFERENCE is f0 of the first source
-  if (.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
-    ATTENUATION_f0_REFERENCE = f0_source(1)
-
-    if (ATTENUATION_PERMITTIVITY) f0_electromagnetic = f0_source(1)
+  ! determines reference frequency
+  if (READ_VELOCITIES_AT_f0) then
+    ! velocity model given at user-specified reference frequency ATTENUATION_f0_REFERENCE
+    ! ATTENUATION_f0_REFERENCE given already
+    continue
+  else
+    ! shift reference frequency to dominant frequency of (first) source;
+    ! if source is not a Dirac or Heavyside then ATTENUATION_f0_REFERENCE is f0 of the first source
+    if (.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
+      ATTENUATION_f0_REFERENCE = f0_source(1)
+      if (ATTENUATION_PERMITTIVITY) f0_electromagnetic = f0_source(1)
+    endif
   endif
 
   ! user output
@@ -118,7 +131,6 @@
     write(IMAIN,*) "Preparing attenuation"
     write(IMAIN,*) "  The code uses a constant Q quality factor, but approximated"
     write(IMAIN,*) "  based on a series of Zener standard linear solids (SLS)."
-    write(IMAIN,*) "  Approximation is performed in the following frequency band:"
     write(IMAIN,*)
     write(IMAIN,*) "  number of SLS bodies: ",N_SLS
     write(IMAIN,*)
@@ -130,19 +142,117 @@
     ! user output
     if (myrank == 0) then
       write(IMAIN,*) '  Attenuation in viscoelastic or viscoacoustic parts of the model:'
-      write(IMAIN,*) "  reference frequency (Hz) : ",sngl(ATTENUATION_f0_REFERENCE)
-      write(IMAIN,*) "               period  (s) : ",sngl(1.d0/ATTENUATION_f0_REFERENCE)
-      write(IMAIN,*)
       if (READ_VELOCITIES_AT_f0) then
         write(IMAIN,*) '  reading velocity at f0 : ',READ_VELOCITIES_AT_f0
         write(IMAIN,*) '  assuming velocity model given at reference frequency'
+        write(IMAIN,*)
+        write(IMAIN,*) "  Reference frequency set by the user (Hz):",sngl(ATTENUATION_f0_REFERENCE), &
+                                                      " period (s):",sngl(1.0/ATTENUATION_f0_REFERENCE)
       else
         write(IMAIN,*) '  assuming velocity model given at unrelaxed state (infinite frequency)'
+        write(IMAIN,*)
+        if (.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
+          write(IMAIN,*) "  Reference frequency set by (first) source frequency (Hz):",sngl(ATTENUATION_f0_REFERENCE), &
+                                                                        " period (s):",sngl(1.0/ATTENUATION_f0_REFERENCE)
+        else
+          write(IMAIN,*) "  Reference frequency set by the user (Hz):",sngl(ATTENUATION_f0_REFERENCE), &
+                                                        " period (s):",sngl(1.0/ATTENUATION_f0_REFERENCE)
+        endif
+      endif
+      write(IMAIN,*)
+      write(IMAIN,*) "  Approximation is performed in the following frequency band:"
+      if (USE_FIXED_ATTENUATION_ABSORPTION_BAND) then
+        write(IMAIN,*) "  Using fixed frequency band selection"
+      else
+        if (COMPUTE_FREQ_BAND_AUTOMATIC) then
+          write(IMAIN,*) "  The following values are computed automatically by the code"
+          write(IMAIN,*) "  based on the estimated maximum frequency resolution of your mesh"
+          write(IMAIN,*) "  and can thus vary from what you have requested."
+        else
+          write(IMAIN,*) "  Using user specified min/max attenuation periods"
+        endif
       endif
       write(IMAIN,*)
       call flush_IMAIN()
     endif
     call synchronize_all()
+
+    ! safety check
+    if (N_SLS < 1) call stop_the_code('Invalid N_SLS value, must be at least 1')
+
+    ! attenuation constants for standard linear solids
+    ! nu1 is the dilatation/incompressibility mode (QKappa)
+    ! nu2 is the shear mode (Qmu)
+    ! array index (1) is the first standard linear solid, (2) is the second etc.
+
+    ! initializes frequency band
+    f_min_attenuation = 1.d0
+    f_max_attenuation = 1.d0
+
+    ! determine minimum/maximum frequency of attenuation band
+    if (USE_FIXED_ATTENUATION_ABSORPTION_BAND) then
+      ! old way - uses fixed decades
+      ! note: in both cases, fmin/max are chosen such that f0 is log-centered.
+      !       the spread between fmin and fmax in the old C-attenuation routine was ~1.08 decades
+      !       (given fmax = 12*fmin -> band width was log10(12)=1.08 decades),
+      !       in the newer case, it was 2 decades
+      !       (given fmax=f0*10,fmin=f0/10 and fmax = 10**2 fmin -> band width was log(10**2)=2 decades)
+      if (USE_OLD_C_ATTENUATION_ROUTINE_INSTEAD .and. .not. USE_SOLVOPT) then
+        ! f_min and f_max are computed as : f_max/f_min=12 and (log(f_min)+log(f_max))/2 = log(f0)
+        f_min_attenuation = exp(log(ATTENUATION_f0_REFERENCE) - log(12.d0)/2.d0)
+        f_max_attenuation = 12.d0 * f_min_attenuation
+        f_center = ATTENUATION_f0_REFERENCE
+      else
+        ! use a wide bandwidth (always OK when using three or more Standard Linear Solids, can be a bit inaccurate if using only two)
+        f_min_attenuation = ATTENUATION_f0_REFERENCE / 10.d0
+        f_max_attenuation = ATTENUATION_f0_REFERENCE * 10.d0
+        f_center = ATTENUATION_f0_REFERENCE
+      endif
+    else
+      ! new way - compatible w/ SPECFEM3D Cartesian
+      ! note: absorption band gets determined by number of SLS and minimum period the mesh resolves.
+      !       the minimum period is estimated in the check_grid() routine. a standard table of the band width (in decades)
+      !       is then used to determine min/max frequencies of the absorption band.
+      if (COMPUTE_FREQ_BAND_AUTOMATIC) then ! otherwise they were entered as input values by the user in the Par_file
+        ! mesh resolved minimum period
+        min_resolved_period = mesh_T_min
+        ! uses a small margin
+        min_resolved_period = 0.99 * min_resolved_period
+
+        ! determines absorption band (fmin/fmax) by number of SLS and minimum period
+        call get_attenuation_periods(N_SLS,min_resolved_period,T_min_period,T_max_period)
+
+        ! frequency band
+        f_min_attenuation = 1.d0 / T_max_period  ! minimum frequency
+        f_max_attenuation = 1.d0 / T_min_period  ! maximum frequency
+      else
+        ! user specified min/max attenuation periods in Par_file
+        ! check user values
+        if (MIN_ATTENUATION_PERIOD < TINYVAL) &
+          call stop_the_code("Invalid MIN_ATTENUATION_PERIOD in Par_file, must be > 0.0")
+        if (MAX_ATTENUATION_PERIOD < TINYVAL) &
+          call stop_the_code("Invalid MAX_ATTENUATION_PERIOD in Par_file, must be > 0.0")
+
+        ! frequency band
+        f_min_attenuation = 1.d0 / MAX_ATTENUATION_PERIOD
+        f_max_attenuation = 1.d0 / MIN_ATTENUATION_PERIOD
+      endif
+
+      ! determines center frequency of absorption band
+      call get_attenuation_center_freq(f_center,f_min_attenuation,f_max_attenuation)
+    endif
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) "  Attenuation frequency band min/max (Hz):",sngl(f_min_attenuation), &
+                                                              '/',sngl(f_max_attenuation)
+      write(IMAIN,*) "              period band    min/max (s) :",sngl(1.0/f_max_attenuation), &
+                                                              '/',sngl(1.0/f_min_attenuation)
+      write(IMAIN,*) "  Logarithmic center frequency (Hz):",sngl(f_center)
+      write(IMAIN,*) "                     period     (s):",sngl(1.0/f_center)
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
 
     ! temporary arrays for function argument
     allocate(tau_epsilon_nu1_sent(N_SLS), &
@@ -189,7 +299,8 @@
           if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
 
           ! determines attenuation factors
-          call attenuation_model(qkappal,qmul,ATTENUATION_f0_REFERENCE,N_SLS, &
+          call attenuation_model(qkappal,qmul,ATTENUATION_f0_REFERENCE,f_min_attenuation,f_max_attenuation, &
+                                 N_SLS, &
                                  tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
                                  tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
 
@@ -245,9 +356,9 @@
             vs = dble(rho_vsstore(i,j,ispec)/rhol)
 
             ! shifts vp and vs (according to f0 and attenuation band)
-            call shift_velocities_from_f0(vp,vs,rhol, &
-                                          ATTENUATION_f0_REFERENCE,N_SLS, &
-                                          tau_epsilon_nu1_sent,tau_epsilon_nu2_sent, &
+            call shift_velocities_from_f0(vp,vs,rhol,qkappal,qmul, &
+                                          ATTENUATION_f0_REFERENCE,f_center, &
+                                          N_SLS,tau_epsilon_nu1_sent,tau_epsilon_nu2_sent, &
                                           inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
 
             ! stores shifted values

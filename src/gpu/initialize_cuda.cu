@@ -35,9 +35,24 @@
 
 #include "mesh_constants_cuda.h"
 
-// CUDA version
 // gpu runtime flags (for future usage)
 int run_cuda = 0;
+
+// CUDA version output
+// macros for version output
+#define VALUE_TO_STRING(x) #x
+#define VALUE(x) VALUE_TO_STRING(x)
+#define VAR_NAME_VALUE(var) #var " = "  VALUE(var)
+
+#pragma message ("\n\nCompiling with: " VAR_NAME_VALUE(CUDA_VERSION) "\n")
+#if defined(__CUDA_ARCH__)
+#pragma message ("\n\nCompiling with: " VAR_NAME_VALUE(__CUDA_ARCH__) "\n")
+#endif
+
+// CUDA version >= 4.0 needed for cudaTextureType1D and cudaDeviceSynchronize()
+#if CUDA_VERSION < 4000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 4))
+#pragma message ("\n\nCompiling for CUDA version < 4.0\n")
+#endif
 
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -396,11 +411,16 @@ void FC_FUNC_(initialize_cuda_aware_mpi,
       }else{
         fprintf(fp,"  canMapHostMemory: FALSE\n");
       }
+#if CUDA_VERSION < 13000 || (defined (__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ < 13))
       if (deviceProp.deviceOverlap){
         fprintf(fp,"  deviceOverlap: TRUE\n");
       }else{
         fprintf(fp,"  deviceOverlap: FALSE\n");
       }
+#else
+      // CUDA version >= 13, deviceOverlap deprecated, replaced by asyncEngineCount
+      fprintf(fp,"  asyncEngineCount: %d\n", deviceProp.asyncEngineCount);
+#endif
       if (deviceProp.concurrentKernels){
         fprintf(fp,"  concurrentKernels: TRUE\n");
       }else{

@@ -109,6 +109,10 @@
     call bcast_all_singlel(READ_VELOCITIES_AT_f0)
     call bcast_all_singlel(USE_SOLVOPT)
 
+    call bcast_all_singlel(COMPUTE_FREQ_BAND_AUTOMATIC)
+    call bcast_all_singledp(MIN_ATTENUATION_PERIOD)
+    call bcast_all_singledp(MAX_ATTENUATION_PERIOD)
+
     call bcast_all_singlel(ATTENUATION_PORO_FLUID_PART)
     call bcast_all_singledp(Q0_poroelastic)
     call bcast_all_singledp(freq0_poroelastic)
@@ -119,6 +123,9 @@
 
     call bcast_all_singlel(UNDO_ATTENUATION_AND_OR_PML)
     call bcast_all_singlei(NT_DUMP_ATTENUATION)
+
+    call bcast_all_singlel(GRAVITY)
+    call bcast_all_singledp(GRAVITY_CONST)
 
     ! sources
     call bcast_all_singlei(NSOURCES)
@@ -302,6 +309,10 @@
   nbmodels = 0
   nbregions = 0
 
+  ! gravity
+  GRAVITY = .false.
+  GRAVITY_CONST = STANDARD_GRAVITY     ! default gravitational acceleration
+
   end subroutine read_parameter_file_init
 
 !
@@ -312,7 +323,7 @@
 
 ! reads only parameters without receiver-line section and material tables
 
-  use constants, only: IMAIN,myrank
+  use constants, only: IMAIN,myrank,USE_FIXED_ATTENUATION_ABSORPTION_BAND
   use shared_parameters
 
   implicit none
@@ -372,6 +383,65 @@
     write(*,*)
   endif
 
+  ! read time step parameters
+  call read_value_integer_p(NSTEP, 'NSTEP')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NSTEP                           = 3000'
+    write(*,*)
+  endif
+
+  call read_value_double_precision_p(DT, 'DT')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'DT                              = 1.0e-3'
+    write(*,*)
+  endif
+
+  call read_value_integer_p(time_stepping_scheme, 'time_stepping_scheme')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'time_stepping_scheme            = 1'
+    write(*,*)
+  endif
+
+  ! determine if body or surface (membrane) waves calculation
+  call read_value_logical_p(P_SV, 'P_SV')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'P_SV                            = .true.'
+    write(*,*)
+  endif
+
+  ! axisymmetric (2.5D) or Cartesian planar (2D) simulation
+  call read_value_logical_p(AXISYM, 'AXISYM')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'AXISYM                          = .false.'
+    write(*,*)
+  endif
+
+  ! (optional) gravity
+  call read_value_logical_p(GRAVITY, 'GRAVITY')
+  if (err_occurred() /= 0) then
+    ! couldn't find entry
+    GRAVITY = .false.               ! turns off gravity
+  endif
+  if (GRAVITY) then
+    ! checks if gravitational acceleration is specified
+    call read_value_double_precision_p(GRAVITY_CONST, 'GRAVITY_CONST')
+    if (err_occurred() /= 0) then
+      ! couldn't find entry
+      GRAVITY_CONST = STANDARD_GRAVITY          ! default gravitational acceleration
+    endif
+  endif
+
+  !--------------------------------------------------------------------
+  !
+  ! Mesh
+  !
+  !--------------------------------------------------------------------
+
   ! deprecated: call read_value_integer_p(partitioning_method, 'partitioning_method')
   call read_value_integer_p(PARTITIONING_TYPE, 'PARTITIONING_TYPE')
   if (err_occurred() /= 0) then
@@ -402,51 +472,6 @@
       write(*,'(a)') 'NGNOD                           = 9'
       write(*,*)
     endif
-  endif
-
-  ! read time step parameters
-  call read_value_integer_p(NSTEP, 'NSTEP')
-  if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'NSTEP                           = 3000'
-    write(*,*)
-  endif
-
-  call read_value_double_precision_p(DT, 'DT')
-  if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'DT                              = 1.0e-3'
-    write(*,*)
-  endif
-
-  call read_value_integer_p(time_stepping_scheme, 'time_stepping_scheme')
-  if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'time_stepping_scheme            = 1'
-    write(*,*)
-  endif
-
-  ! axisymmetric (2.5D) or Cartesian planar (2D) simulation
-  call read_value_logical_p(AXISYM, 'AXISYM')
-  if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'AXISYM                          = .false.'
-    write(*,*)
-  endif
-
-  ! determine if body or surface (membrane) waves calculation
-  call read_value_logical_p(P_SV, 'P_SV')
-  if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'P_SV                            = .true.'
-    write(*,*)
-  endif
-
-  call read_value_logical_p(GPU_MODE, 'GPU_MODE')
-  if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'GPU_MODE                        = .false.'
-    write(*,*)
   endif
 
   call read_value_integer_p(setup_with_binary_database, 'setup_with_binary_database')
@@ -538,6 +563,32 @@
     write(*,*)
   endif
 
+  ! attenuation frequency band
+  if (.not. USE_FIXED_ATTENUATION_ABSORPTION_BAND) then
+    ! frequency band selection
+    call read_value_logical_p(COMPUTE_FREQ_BAND_AUTOMATIC, 'COMPUTE_FREQ_BAND_AUTOMATIC')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'COMPUTE_FREQ_BAND_AUTOMATIC     = .true.'
+      write(*,*)
+    endif
+
+    ! period band
+    call read_value_double_precision_p(MIN_ATTENUATION_PERIOD, 'MIN_ATTENUATION_PERIOD')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'MIN_ATTENUATION_PERIOD          = 9999.d0'
+      write(*,*)
+    endif
+
+    call read_value_double_precision_p(MAX_ATTENUATION_PERIOD, 'MAX_ATTENUATION_PERIOD')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'MAX_ATTENUATION_PERIOD          = 9999.d0'
+      write(*,*)
+    endif
+  endif
+
   ! read viscous attenuation parameters (poroelastic media)
   call read_value_logical_p(ATTENUATION_PORO_FLUID_PART, 'ATTENUATION_PORO_FLUID_PART')
   if (err_occurred() /= 0) then
@@ -593,6 +644,13 @@
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
     write(*,'(a)') 'NT_DUMP_ATTENUATION             = 500'
+    write(*,*)
+  endif
+
+  call read_value_logical_p(NO_BACKWARD_RECONSTRUCTION,'NO_BACKWARD_RECONSTRUCTION')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NO_BACKWARD_RECONSTRUCTIO           = .false.'
     write(*,*)
   endif
 
@@ -839,13 +897,6 @@
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
     write(*,'(a)') 'APPROXIMATE_HESS_KL                 = .true.'
-    write(*,*)
-  endif
-
-  call read_value_logical_p(NO_BACKWARD_RECONSTRUCTION,'NO_BACKWARD_RECONSTRUCTION')
-  if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'NO_BACKWARD_RECONSTRUCTIO           = .false.'
     write(*,*)
   endif
 
@@ -1406,6 +1457,8 @@
     write(*,*)
   endif
 
+  !--------------------------------------------------------------------
+
   call read_value_integer_p(NUMBER_OF_SIMULTANEOUS_RUNS, 'NUMBER_OF_SIMULTANEOUS_RUNS')
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
@@ -1420,6 +1473,18 @@
     write(*,*)
   endif
 
+  !--------------------------------------------------------------------
+
+  call read_value_logical_p(GPU_MODE, 'GPU_MODE')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'GPU_MODE                        = .false.'
+    write(*,*)
+  endif
+
+  !--------------------------------------------------------------------
+
+  ! check for missing parameters
   if (some_parameters_missing_from_Par_file) then
     write(*,*)
     write(*,*) 'All the above parameters are either in a wrong number format or missing from your Par_file.'
@@ -1429,8 +1494,6 @@
     call stop_the_code('Error: some parameters are missing in your Par_file, it is incomplete or in an older format, &
        &see at the end of the standard output file of the run for detailed and easy instructions about how to fix that')
   endif
-
-  !--------------------------------------------------------------------
 
   ! converts all string characters to lowercase
   irange = iachar('a') - iachar('A')
@@ -1495,6 +1558,7 @@
 
   subroutine check_parameters()
 
+  use constants, only: TINYVAL,USE_FIXED_ATTENUATION_ABSORPTION_BAND
   use shared_parameters
 
   implicit none
@@ -1526,6 +1590,15 @@
 
   if (N_SLS < 2) &
     call stop_the_code('must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays')
+
+  if (.not. USE_FIXED_ATTENUATION_ABSORPTION_BAND) then
+    if (.not. COMPUTE_FREQ_BAND_AUTOMATIC) then
+      if (MIN_ATTENUATION_PERIOD < TINYVAL) &
+        call stop_the_code("Invalid MIN_ATTENUATION_PERIOD in Par_file, must be > 0.0")
+      if (MAX_ATTENUATION_PERIOD < TINYVAL) &
+        call stop_the_code("Invalid MAX_ATTENUATION_PERIOD in Par_file, must be > 0.0")
+    endif
+  endif
 
   if (NGNOD /= 4 .and. NGNOD /= 9) &
     call stop_the_code('NGNOD should be either 4 or 9!')

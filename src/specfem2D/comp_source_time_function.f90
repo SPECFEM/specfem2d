@@ -649,6 +649,7 @@
   integer :: file_unit,ier
   character(len=250) :: error_msg
   character(len=150), parameter :: error_msg1 = 'Error opening the file that contains the external source: '
+  character(len=256) :: line
 
   ! file unit for external source time function files
   file_unit = 800 + isource
@@ -666,7 +667,28 @@
 
   ! reads in 2-column file values (time value in first column will be ignored)
   ! format: #time #stf-value
-  read(file_unit,*,iostat=ier) dummy_t, stf_val
+  !read(file_unit,*,iostat=ier) dummy_t, stf_val
+  !
+  ! reads in either 2-column or single-column file values
+  ! 2-column format     : #time #stf-value
+  ! single-column format: #stf-value
+  !
+  ! reads line value(s) as a string
+  read(file_unit,'(A)',iostat=ier) line
+  if (ier == 0) then
+    ! suppress leading white spaces, if any
+    line = adjustl(line)
+
+    ! check if file contains single-column or 2-columns values
+    ! try first to read in 2-column line
+    read(line,*,iostat=ier) dummy_t, stf_val
+    if (ier /= 0) then
+      ! try single-column line
+      read(line,*,iostat=ier) stf_val
+    endif
+  endif
+
+  ! check if reading okay
   if (ier /= 0) then
     print *,'Error reading source time function file: ',trim(name_of_source_file(isource)),' at line ',it_index
     print *,'Please make sure the file contains the same number of lines as the number of timesteps NSTEP ',NSTEP
