@@ -31,7 +31,8 @@
 !
 !========================================================================
 
-  subroutine attenuation_model(QKappa_att,QMu_att,ATTENUATION_f0_REFERENCE,N_SLS, &
+  subroutine attenuation_model(QKappa_att,QMu_att,ATTENUATION_f0_REFERENCE,f_min_attenuation,f_max_attenuation, &
+                               N_SLS, &
                                tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
                                tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
 
@@ -43,7 +44,7 @@
   implicit none
 
   double precision,intent(in) :: QKappa_att,QMu_att
-  double precision,intent(in) :: ATTENUATION_f0_REFERENCE
+  double precision,intent(in) :: ATTENUATION_f0_REFERENCE,f_min_attenuation,f_max_attenuation
 
   integer,intent(in) :: N_SLS
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: inv_tau_sigma_nu1_sent,phi_nu1_sent  ! bulk attenuation (Qkappa)
@@ -54,40 +55,21 @@
   ! local parameters
   double precision, dimension(N_SLS) :: tau_epsilon_nu1_d,tau_epsilon_nu2_d
   double precision, dimension(N_SLS) :: tau_sigma_nu1,tau_sigma_nu2
-  double precision :: f_min_attenuation, f_max_attenuation
 
-  ! safety check
-  if (N_SLS < 1) call stop_the_code('Invalid N_SLS value, must be at least 1')
-
-! attenuation constants for standard linear solids
-! nu1 is the dilatation/incompressibility mode (QKappa)
-! nu2 is the shear mode (Qmu)
-! array index (1) is the first standard linear solid, (2) is the second etc.
-
-! can instead call the old C routine when USE_SOLVOPT is false, for compatibility with older benchmarks
+  ! can instead call the old C routine when USE_SOLVOPT is false, for compatibility with older benchmarks
   if (USE_OLD_C_ATTENUATION_ROUTINE_INSTEAD .and. .not. USE_SOLVOPT) then
-
-  ! f_min and f_max are computed as : f_max/f_min=12 and (log(f_min)+log(f_max))/2 = log(f0)
-    f_min_attenuation = exp(log(ATTENUATION_f0_REFERENCE)-log(12.d0)/2.d0)
-    f_max_attenuation = 12.d0 * f_min_attenuation
-
-  ! call of C function that computes attenuation parameters (function in file "attenuation_compute_param.c";
-  ! a main can be found in UTILS/attenuation directory).
+    ! call of C function that computes attenuation parameters (function in file "attenuation_compute_param.c";
+    ! a main can be found in UTILS/attenuation directory).
     call attenuation_compute_param(N_SLS,QKappa_att,QMu_att,f_min_attenuation,f_max_attenuation, &
                                    tau_sigma_nu1,tau_sigma_nu2,tau_epsilon_nu1_d,tau_epsilon_nu2_d)
-
   else
-
-  ! use a wide bandwidth (always OK when using three or more Standard Linear Solids, can be a bit inaccurate if using only two)
-    f_min_attenuation = ATTENUATION_f0_REFERENCE / 10.d0
-    f_max_attenuation = ATTENUATION_f0_REFERENCE * 10.d0
-
+    ! uses non-linear optimization
+    ! Qkappa
     call compute_attenuation_coeffs(N_SLS,QKappa_att,ATTENUATION_f0_REFERENCE,f_min_attenuation,f_max_attenuation, &
                                           tau_epsilon_nu1_d,tau_sigma_nu1)
-
+    ! Qmu
     call compute_attenuation_coeffs(N_SLS,QMu_att,ATTENUATION_f0_REFERENCE,f_min_attenuation,f_max_attenuation, &
                                           tau_epsilon_nu2_d,tau_sigma_nu2)
-
   endif
 
 ! print *
@@ -169,9 +151,87 @@
 !--------------------------------------------------------------------------------
 !
 
-  subroutine shift_velocities_from_f0(vp,vs,rho, &
-                                      ATTENUATION_f0_REFERENCE,N_SLS, &
-                                      tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1,inv_tau_sigma_nu2)
+  subroutine get_attenuation_periods(N_SLS,min_resolved_period,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
+
+! determines min/max periods for attenuation based upon mininum resolved period of mesh
+
+  use constants
+
+  implicit none
+
+  integer,intent(in) :: N_SLS
+  double precision,intent(in) :: min_resolved_period
+  double precision,intent(out) :: MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD
+
+  ! local parameters
+  double precision :: THETA(10)
+
+  ! checks number of standard linear solids
+  if (N_SLS < 2 .or. N_SLS > 10) then
+     stop 'N_SLS must be greater than 1 or less than 10'
+  endif
+
+  ! THETA defines the width of the Attenation Range in Decades
+  !   The number defined here were determined by minimizing
+  !   the "flatness" of the absoption spectrum.  Each THETA
+  !   is defined for a particular N_SLS (constants.h)
+  !   THETA(2) is for N_SLS = 2
+  THETA(1)           =   0.00d0
+  THETA(2)           =   0.75d0
+  THETA(3)           =   1.75d0
+  THETA(4)           =   2.25d0
+  THETA(5)           =   2.85d0
+
+  THETA(6:10)        =   2.85d0  ! keeps same width as for 5 solids
+
+  ! Compute Min Attenuation Period
+  !
+  ! The Minimum attenuation period = (Grid Spacing in km) / V_min
+  !  Grid spacing in km     = Width of an element in km * spacing for GLL point * points per wavelength
+
+  MIN_ATTENUATION_PERIOD = min_resolved_period
+
+  ! Compute Max Attenuation Period
+  !
+  ! The max attenuation period for 3 SLS is optimally
+  !   1.75 decades from the min attenuation period, see THETA above
+  !
+  ! this uses: theta = log( T_max / T_min ) to calculate T_max for a given T_min
+
+  MAX_ATTENUATION_PERIOD = MIN_ATTENUATION_PERIOD * 10.0d0**THETA(N_SLS)
+
+  ! safety check
+  if (abs(MIN_ATTENUATION_PERIOD) < 1.d-24) stop 'Invalid MIN_ATTENUATION_PERIOD is zero for absorption band'
+  if (abs(MAX_ATTENUATION_PERIOD) < 1.d-24) stop 'Invalid MAX_ATTENUATION_PERIOD is zero for absorption band'
+
+  end subroutine get_attenuation_periods
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine get_attenuation_center_freq(f_center,f_min,f_max)
+
+! determines the source frequency
+
+  implicit none
+
+  double precision,intent(out) :: f_center
+  double precision,intent(in) :: f_min, f_max  ! min/max frequencies
+
+  ! use the logarithmic central frequency
+  f_center = 10.0d0**(0.5d0 * (log10(f_min) + log10(f_max)))
+
+  end subroutine get_attenuation_center_freq
+
+
+!
+!--------------------------------------------------------------------------------
+!
+
+  subroutine shift_velocities_from_f0(vp,vs,rho,qkappa,qmu, &
+                                      ATTENUATION_f0_REFERENCE,f_center, &
+                                      N_SLS,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1,inv_tau_sigma_nu2)
 
 ! From Emmanuel Chaljub, ISTerre, OSU Grenoble, France:
 
@@ -213,7 +273,7 @@
 !  can be found for instance in file "Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf"
 !  in the "doc" directory of the code.
 
-  use constants, only: ONE,TWO,PI,TWO_THIRDS,CUSTOM_REAL
+  use constants, only: ONE,TWO,PI,TWO_PI,TWO_THIRDS,CUSTOM_REAL,USE_FIXED_ATTENUATION_ABSORPTION_BAND
 
   use specfem_par, only: AXISYM
 
@@ -222,8 +282,8 @@
 ! arguments
   double precision, intent(inout) :: vp,vs
 
-  double precision, intent(in) :: rho
-  double precision, intent(in) :: ATTENUATION_f0_REFERENCE
+  double precision, intent(in) :: rho,qkappa,qmu
+  double precision, intent(in) :: ATTENUATION_f0_REFERENCE,f_center
 
   integer,intent(in) :: N_SLS
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: tau_epsilon_nu1,tau_epsilon_nu2
@@ -234,7 +294,11 @@
   double precision :: xtmp1_nu1,xtmp1_nu2,xtmp2_nu1,xtmp2_nu2,xtmp_ak_nu1,xtmp_ak_nu2
   double precision :: factor_mu,factor_kappa
   double precision :: kappa,mu,lambda
+  double precision :: w_c_source
+  double precision :: factor_scale_mu0,factor_scale_mu
+  double precision :: factor_scale_kappa0,factor_scale_kappa
 
+  ! derives initial (kappa,mu) from (rho,vp,vs)
   mu = rho * vs*vs
   lambda = rho * vp*vp - TWO * mu
 
@@ -244,62 +308,102 @@
     kappa  = lambda + mu
   endif
 
-!daniel todo: check if we need first to shift moduli from reference frequency to center frequency,
-!             and then compute the unrelaxed moduli from the center (since tau values are computed around the center freq)
-!
-!
-! from 3D version: (see get_attenuation_model.f90 line 611)
-!  !--- compute central angular frequency of source (non dimensionalized)
-!  w_c_source = TWO_PI * f_c_source
-!
-!  !--- quantity by which to scale mu_0 to get mu
-!  ! this formula can be found for instance in
-!  ! Liu, H. P., Anderson, D. L. and Kanamori, H., Velocity dispersion due to
-!  ! anelasticity: implications for seismology and mantle composition,
-!  ! Geophys. J. R. Astron. Soc., vol. 47, pp. 41-58 (1976)
-!  ! and in Aki, K. and Richards, P. G., Quantitative seismology, theory and methods,
-!  ! W. H. Freeman, (1980), second edition, sections 5.5 and 5.5.2, eq. (5.81) p. 170
-!  factor_scale_mu0 = ONE + TWO * log(f_c_source / ATTENUATION_f0_REFERENCE ) / (PI * Q_val)
-!  ..
-!  !--- total factor by which to scale mu0 to get mu_unrelaxed
-!  scale_factor = factor_scale_mu * factor_scale_mu0
-!  ..
-!
-! note: f_c_source corresponds to the center of the logarithmic frequency band of the simulation.
-!       ATTENUATION_f0_REFERENCE is the reference frequency of the given velocities.
-!
-! here below, the code computes the unrelaxed moduli directly based on (kappa,mu)
-! given at the reference frequency ATTENUATION_f0_REFERENCE,
-! using the tau relaxation times computed for the frequency band of the simulation.
-!
-! thus, this omits the shift to the center frequency first.
-! this is probably still fine in case the reference and center freq's are close to each other.
+  if (USE_FIXED_ATTENUATION_ABSORPTION_BAND) then
+    ! old way - direct scaling using Zener-body approximation
+    !
+    ! here below, the code computes the unrelaxed moduli directly based on (kappa,mu)
+    ! given at the reference frequency ATTENUATION_f0_REFERENCE,
+    ! using the tau relaxation times computed for the frequency band of the simulation.
+    !
+    ! thus, this omits the shift to the center frequency first.
+    ! this is probably still fine in case the reference and center freq's are close to each other.
+    xtmp1_nu1 = ONE
+    xtmp2_nu1 = ONE
+    xtmp1_nu2 = ONE
+    xtmp2_nu2 = ONE
 
-  xtmp1_nu1 = ONE
-  xtmp2_nu1 = ONE
-  xtmp1_nu2 = ONE
-  xtmp2_nu2 = ONE
+    do i_sls = 1,N_SLS
+      ! shear attenuation
+      !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls) - ONE
+      xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2(i_sls) - ONE
+      xtmp1_nu2 = xtmp1_nu2 + xtmp_ak_nu2/N_SLS
+      xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + ONE/(TWO * PI * ATTENUATION_f0_REFERENCE / inv_tau_sigma_nu2(i_sls))**2)/N_SLS
 
-  do i_sls = 1,N_SLS
-    ! shear attenuation
-!! DK DK changed this to the pre-computed inverse     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls) - ONE
-    xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2(i_sls) - ONE
-    xtmp1_nu2 = xtmp1_nu2 + xtmp_ak_nu2/N_SLS
-    xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + ONE/(TWO * PI * ATTENUATION_f0_REFERENCE / inv_tau_sigma_nu2(i_sls))**2)/N_SLS
+      ! bulk attenuation
+      !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls) - ONE
+      xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1(i_sls) - ONE
+      xtmp1_nu1 = xtmp1_nu1 + xtmp_ak_nu1/N_SLS
+      xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + ONE/(TWO * PI * ATTENUATION_f0_REFERENCE / inv_tau_sigma_nu1(i_sls))**2)/N_SLS
+    enddo
 
-    ! bulk attenuation
-!! DK DK changed this to the pre-computed inverse     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls) - ONE
-    xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1(i_sls) - ONE
-    xtmp1_nu1 = xtmp1_nu1 + xtmp_ak_nu1/N_SLS
-    xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + ONE/(TWO * PI * ATTENUATION_f0_REFERENCE / inv_tau_sigma_nu1(i_sls))**2)/N_SLS
-  enddo
+    ! shear attenuation scaling
+    factor_mu = xtmp1_nu2/xtmp2_nu2
 
+    ! bulk attenuation scaling
+    factor_kappa = xtmp1_nu1/xtmp2_nu1
+
+  else
+    ! new way - similar to SPECFEM3D Cartesian
+    !
+    ! note: as in the 3D version, we first compute the shift factor from the reference frequency to center frequency
+    !       using the exact formula (analytic expression), and then compute the unrelaxed moduli using the Zener-body
+    !       approximation around the center frequency (since tau values are computed around the center freq).
+    !
+    !       f_center corresponds to the center of the logarithmic frequency band of the simulation.
+    !       ATTENUATION_f0_REFERENCE is the reference frequency of the given velocities.
+    !
+    ! from 3D version: (see get_attenuation_model.f90 line 611)
+    ! scaling from reference frequency to center frequency
+    !--- compute central angular frequency of source (non dimensionalized)
+    w_c_source = TWO_PI * f_center
+
+    !--- quantity by which to scale mu_0 to get mu
+    ! this formula can be found for instance in
+    ! Liu, H. P., Anderson, D. L. and Kanamori, H., Velocity dispersion due to
+    ! anelasticity: implications for seismology and mantle composition,
+    ! Geophys. J. R. Astron. Soc., vol. 47, pp. 41-58 (1976)
+    ! and in Aki, K. and Richards, P. G., Quantitative seismology, theory and methods,
+    ! W. H. Freeman, (1980), second edition, sections 5.5 and 5.5.2, eq. (5.81) p. 170
+    factor_scale_kappa0 = ONE + TWO * log(f_center / ATTENUATION_f0_REFERENCE ) / (PI * qkappa)
+    factor_scale_mu0 = ONE + TWO * log(f_center / ATTENUATION_f0_REFERENCE ) / (PI * qmu)
+
+    ! scaling from center frequency
+    xtmp1_nu1 = ONE
+    xtmp2_nu1 = ONE
+    xtmp1_nu2 = ONE
+    xtmp2_nu2 = ONE
+
+    do i_sls = 1,N_SLS
+      ! shear attenuation
+      !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls) - ONE
+      xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2(i_sls) - ONE
+      xtmp1_nu2 = xtmp1_nu2 + xtmp_ak_nu2/N_SLS
+      xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + ONE/(TWO * PI * f_center / inv_tau_sigma_nu2(i_sls))**2)/N_SLS
+
+      ! bulk attenuation
+      !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls) - ONE
+      xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1(i_sls) - ONE
+      xtmp1_nu1 = xtmp1_nu1 + xtmp_ak_nu1/N_SLS
+      xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + ONE/(TWO * PI * f_center / inv_tau_sigma_nu1(i_sls))**2)/N_SLS
+    enddo
+
+    ! shear attenuation scaling
+    factor_scale_mu = xtmp1_nu2/xtmp2_nu2
+
+    ! bulk attenuation scaling
+    factor_scale_kappa = xtmp1_nu1/xtmp2_nu1
+
+    !--- total factor by which to scale initial (kappa,mu) to get unrelaxed (kappa,mu)
+    factor_mu = factor_scale_mu * factor_scale_mu0
+    factor_kappa = factor_scale_kappa * factor_scale_kappa0
+
+  endif
+
+  ! shifts (kappa,mu) moduli
   ! shear attenuation
-  factor_mu = xtmp1_nu2/xtmp2_nu2
-  mu    = mu    * factor_mu
+  mu = mu * factor_mu
 
   ! bulk attenuation
-  factor_kappa = xtmp1_nu1/xtmp2_nu1
   kappa = kappa * factor_kappa
 
   if (AXISYM) then ! CHECK kappa
@@ -2342,10 +2446,10 @@
   double precision, intent(in) :: Qref,f0,f_min,f_max
   double precision, dimension(1:N), intent(out) :: point,poids
 
-  external func_mini,grad_func_mini,max_residu,grad_max_residu
+  external :: func_mini,grad_func_mini,max_residu,grad_max_residu
 
-  integer K,i
-  logical flg,flfc,flgc
+  integer :: K,i
+  logical :: flg,flfc,flgc
   double precision theta_min,theta_max,res
   double precision, dimension(1:2*N) :: x
   double precision, dimension(1:13) :: options

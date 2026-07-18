@@ -116,6 +116,10 @@
 !!
 !!-----------------------------------------------------------
 
+! flag to use a fixed absorption band selection (fixed decades by the code regardless of N_SLS);
+! if set to .false., user will need to specify frequency band selection in Par_file (similar to SPECFEM3D Cartesian)
+  logical, parameter :: USE_FIXED_ATTENUATION_ABSORPTION_BAND = .true.
+
 ! can call the old C routine to compute the Zener Standard Linear Solids (SLSs) attenuation relaxation times instead of
 ! the initial (least squares) step of the SolvOpt() routine when USE_SOLVOPT is false, for compatibility with older benchmarks
   logical, parameter :: USE_OLD_C_ATTENUATION_ROUTINE_INSTEAD = .false.

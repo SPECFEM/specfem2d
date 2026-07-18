@@ -158,6 +158,10 @@ module shared_input_parameters
   logical :: READ_VELOCITIES_AT_f0 = .false.
   logical :: USE_SOLVOPT = .false.
 
+  logical :: COMPUTE_FREQ_BAND_AUTOMATIC = .true.
+  double precision :: MIN_ATTENUATION_PERIOD = 9999.d0
+  double precision :: MAX_ATTENUATION_PERIOD = 9999.d0
+
   ! undo attenuation
   logical :: UNDO_ATTENUATION_AND_OR_PML = .false.
   ! variables used for iteration
