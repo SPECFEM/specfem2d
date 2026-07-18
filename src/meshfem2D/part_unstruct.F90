@@ -1279,7 +1279,7 @@
       !  print *,"ispec_of_axial_elements :",ispec_of_axial_elements(i)," -----> glob2loc_elmnts :", &
       !     glob2loc_elmnts(ispec_of_axial_elements(i))
       ! endif
-    
+
       if (part(ispec) == iproc) then
         ! note: glob2loc_elmnts array expects element number starting from 0,
         !       and outputs local element number starting from 0
