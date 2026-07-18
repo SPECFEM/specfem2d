@@ -68,7 +68,6 @@ if [ "${TESTDIR}" == "EXAMPLES/applications/Rayleigh_wave_with_crack" ]; then
 fi
 
 
-
 # debug
 if [ "${DEBUG}" == "true" ]; then
   # limit for debugging
