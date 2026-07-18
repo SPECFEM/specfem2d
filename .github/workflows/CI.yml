@@ -822,6 +822,247 @@ jobs:
       run: ./.github/scripts/run_tests.sh
       shell: bash
 
+  linuxTest_15:
+    name: Test 15 - benchmark semi_infinite_homogeneous
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:      # default w/out MPI
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/benchmarks/semi_infinite_homogeneous
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_16:
+    name: Test 16 - benchmark check amplitude acoustic
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:      # default w/out MPI
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/benchmarks/check_absolute_amplitude_of_pressure_source_seismograms_acoustic
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_17:
+    name: Test 17 - benchmark check amplitude elastic
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:      # default w/out MPI
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/benchmarks/check_absolute_amplitude_of_force_source_seismograms_elastic
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_18:
+    name: Test 18 - benchmark check amplitude viscoelastic
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:      # default w/out MPI
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/benchmarks/check_absolute_amplitude_of_force_source_seismograms_viscoelastic
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_19:
+    name: Test 19 - benchmark infinite_homogeneous_moment_tensor_vertical_dip_slip
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:      # default w/out MPI
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/benchmarks/infinite_homogeneous_moment_tensor_vertical_dip_slip
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_20:
+    name: Test 20 - Tape2007
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS:      # default w/out MPI
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/reproducible_study/Tape2007
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_21:
+    name: Test 21 - Morency2008_poroelastic_semi_infinite_homogeneous
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/reproducible_study/Morency2008_poroelastic_semi_infinite_homogeneous
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_22:
+    name: Test 22 - Komatitsch2000_fluid_solid
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/reproducible_study/Komatitsch2000_fluid_solid/fluid_solid_external_mesh
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_23:
+    name: Test 23 - Rayleigh_wave_no_crack
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/applications/Rayleigh_wave_no_crack
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_24:
+    name: Test 24 - Rayleigh_wave_with_crack
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --with-mpi
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/applications/Rayleigh_wave_with_crack
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+
   # intermediate workflow check
   exampleChecks:
     needs: [linuxTest_0,linuxTest_1,linuxTest_2,linuxTest_3,linuxTest_4,linuxTest_5,

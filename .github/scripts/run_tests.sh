@@ -54,6 +54,20 @@ if [ "${TESTDIR}" == "EXAMPLES/applications/axisymmetric_examples/axisymmetric_c
   sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
   sed -i "s:^NSTEP .*:NSTEP    = 1400:" DATA/Par_file
 fi
+if [ "${TESTDIR}" == "EXAMPLES/reproducible_study/Komatitsch2000_fluid_solid/fluid_solid_external_mesh" ]; then
+  sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
+fi
+if [ "${TESTDIR}" == "EXAMPLES/reproducible_study/Morency2008_poroelastic_semi_infinite_homogeneous" ]; then
+  sed -i "s:^NSTEP .*:NSTEP    = 2000:" DATA/Par_file
+fi
+if [ "${TESTDIR}" == "EXAMPLES/applications/Rayleigh_wave_no_crack" ]; then
+  sed -i "s:^NPROC .*:NPROC    = 4:" DATA/Par_file
+fi
+if [ "${TESTDIR}" == "EXAMPLES/applications/Rayleigh_wave_with_crack" ]; then
+  sed -i "s:^NPROC .*:NPROC    = 4:" DATA/Par_file
+fi
+
+
 
 # debug
 if [ "${DEBUG}" == "true" ]; then
