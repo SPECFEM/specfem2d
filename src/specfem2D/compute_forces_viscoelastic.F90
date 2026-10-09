@@ -286,12 +286,15 @@
       do i = 1,NGLLX
         ! get elastic parameters of current grid point
         mul_unrelaxed_elastic = mustore(i,j,ispec)
-        rhol = rhostore(i,j,ispec)
-        cpl = rho_vpstore(i,j,ispec)/rhol
 
-        lambdal_unrelaxed_elastic = rhol*cpl*cpl - 2._CUSTOM_REAL * mul_unrelaxed_elastic
-        lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
-        lambdalplusmul_unrelaxed_elastic = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
+        if (P_SV .or. AXISYM) then
+          rhol = rhostore(i,j,ispec)
+          cpl = rho_vpstore(i,j,ispec)/rhol
+
+          lambdal_unrelaxed_elastic = rhol*cpl*cpl - 2._CUSTOM_REAL * mul_unrelaxed_elastic
+          lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
+          lambdalplusmul_unrelaxed_elastic = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
+        endif
 
         ! compute stress tensor (include attenuation or anisotropy if needed)
         if (.not. ispec_is_anisotropic(ispec)) then
