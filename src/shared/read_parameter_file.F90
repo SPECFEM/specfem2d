@@ -337,6 +337,17 @@
 !! DK DK to detect discontinued parameters
   double precision :: f0_attenuation
 
+  ! This is necessary because the subroutine has allocatable variables and it 
+  ! is not within the module.
+  ! Explicit interface
+  interface
+    subroutine read_value_integer_ps(nvalues_to_read, values_to_read, name)
+      integer, intent(out) :: nvalues_to_read
+      integer, allocatable, intent(out) :: values_to_read(:)
+      character(len=*), intent(in) :: name
+    end subroutine read_value_integer_ps
+  end interface
+
   !--------------------------------------------------------------------
   !
   ! simulation input parameters
@@ -1361,6 +1372,28 @@
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
     write(*,'(a)') 'USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.'
+    write(*,*)
+  endif
+
+  ! VTI data
+  call read_value_logical_p(output_VTI, 'output_VTI')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'output_VTI              = .true.'
+    write(*,*)
+  endif
+
+  call read_value_integer_ps(nfield_ids_VTI,field_ids_VTI, 'field_ids_VTI')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'field_ids_VTI                  = ',field_ids_VTI
+    write(*,*)
+  endif
+
+  call read_value_double_precision_p(factor_subsample_VTI, 'factor_subsample_VTI')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'factor_subsample_VTI          = 1.0d0'
     write(*,*)
   endif
 

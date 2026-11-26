@@ -203,6 +203,50 @@
 
 !--------------------
 
+  subroutine read_value_integer_ps(nvalues_to_read, values_to_read, name)
+
+  use constants, only: MAX_STRING_LEN
+
+  implicit none
+
+  integer,intent(out) :: nvalues_to_read
+  integer,allocatable,intent(out) :: values_to_read(:)
+  character(len=*) :: name
+  character(len=MAX_STRING_LEN) :: string_read
+  integer :: i,ierr,ios
+  common /param_err_common/ ierr
+
+  call param_read(string_read, len(string_read), name, len(name), ierr)
+  if (ierr /= 0) return
+  !read(string_read,*) value_to_read
+
+  do i = 1, len_trim(string_read)
+      if (string_read(i:i) == ',') string_read(i:i) = ' '
+  end do
+
+  ! count integer string_read
+  nvalues_to_read = count([(string_read(i:i) /= ' ' .and. &
+      (i == 1 .or. string_read(i-1:i-1) == ' '), &
+      i = 1, len_trim(string_read))])
+
+  ! allocate and read
+  allocate(values_to_read(nvalues_to_read))
+
+  read(string_read, *, iostat=ios) values_to_read
+
+  if (ios /= 0) stop 'error: invalid vti field ids'
+
+  ! check for duplicates
+  do i = 1, nvalues_to_read-1
+      if (any(values_to_read(i+1:nvalues_to_read) == values_to_read(i))) &
+          stop 'error: duplicate vti field id'
+
+  end do
+
+  end subroutine read_value_integer_ps
+
+!--------------------
+
   subroutine read_value_double_precision_p(value_to_read, name)
 
   use constants, only: MAX_STRING_LEN
