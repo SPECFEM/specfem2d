@@ -382,6 +382,13 @@ module shared_input_parameters
   ! use snapshot number in the file name of JPG color snapshots instead of the time step
   logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.
 
+  ! VTI data
+  logical :: output_VTI
+  integer,allocatable :: field_ids_VTI(:)
+  integer :: nfield_ids_VTI
+  ! factor to subsample VTI output by the code (useful for very large models)
+  double precision :: factor_subsample_VTI
+
   ! Postscript image
   logical :: output_postscript_snapshot = .false.
   integer :: imagetype_postscript = 1  ! default 1 = displ vector

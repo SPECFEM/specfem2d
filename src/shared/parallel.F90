@@ -352,6 +352,32 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine bcast_all_singlei_array(buffer, countval)
+
+  use my_mpi
+
+  implicit none
+
+  integer, intent(in) :: countval
+  integer, intent(inout) :: buffer(countval)
+
+#ifndef WITH_MPI
+  integer :: dummy
+#endif
+
+#ifdef WITH_MPI
+  integer :: ier
+
+  call MPI_BCAST(buffer,countval,MPI_INTEGER,0,my_local_mpi_comm_world,ier)
+#else
+  ! to avoid compiler warning
+  dummy = buffer(1)
+#endif
+
+  end subroutine bcast_all_singlei_array
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine bcast_all_l(buffer, countval)
 

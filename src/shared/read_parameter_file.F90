@@ -238,6 +238,13 @@
     call bcast_all_singlel(DRAW_WATER_IN_BLUE)
     call bcast_all_singlel(USE_SNAPSHOT_NUMBER_IN_FILENAME)
 
+    call bcast_all_singlel(output_VTI)
+    call bcast_all_singlei(nfield_ids_VTI)
+    if (nfield_ids_VTI > 0) then
+      if (myrank /= 0)allocate(field_ids_VTI(nfield_ids_VTI))
+      call bcast_all_singlei_array(field_ids_VTI, nfield_ids_VTI)
+    endif
+    
     call bcast_all_singlel(output_postscript_snapshot)
     call bcast_all_singlei(imagetype_postscript)
     call bcast_all_singlel(meshvect)
@@ -336,6 +343,17 @@
 
 !! DK DK to detect discontinued parameters
   double precision :: f0_attenuation
+
+  ! This is necessary because the subroutine has allocatable variables and it 
+  ! is not within the module.
+  ! Explicit interface
+  interface
+    subroutine read_value_integer_ps(nvalues_to_read, values_to_read, name)
+      integer, intent(out) :: nvalues_to_read
+      integer, allocatable, intent(out) :: values_to_read(:)
+      character(len=*), intent(in) :: name
+    end subroutine read_value_integer_ps
+  end interface
 
   !--------------------------------------------------------------------
   !
@@ -1361,6 +1379,21 @@
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
     write(*,'(a)') 'USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.'
+    write(*,*)
+  endif
+
+  ! VTI data
+  call read_value_logical_p(output_VTI, 'output_VTI')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'output_VTI              = .true.'
+    write(*,*)
+  endif
+
+  call read_value_integer_ps(nfield_ids_VTI,field_ids_VTI, 'field_ids_VTI')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'field_ids_VTI                  = ',field_ids_VTI
     write(*,*)
   endif
 

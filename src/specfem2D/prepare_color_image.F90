@@ -139,13 +139,13 @@
   use specfem_par_movie, only: NX_IMAGE_color,NZ_IMAGE_color, &
                               xmin_color_image,xmax_color_image, &
                               zmin_color_image,zmax_color_image, &
+                              size_pixel_horizontal,size_pixel_vertical, &
                               nb_pixel_loc,iglob_image_color, &
                               ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver
 
   implicit none
 
   ! local parameters
-  double precision  :: size_pixel_horizontal,size_pixel_vertical
   double precision, dimension(2,4)  :: elmnt_coords
   double precision  :: i_coord, j_coord
   double precision  :: dist_pixel, dist_min_pixel

@@ -175,12 +175,14 @@ specfem2D_OBJECTS = \
 	$O/update_displacement_symplectic.spec.o \
 	$O/compute_kernels.spec.o \
 	$O/write_jpeg_image.cc.o \
+	$O/write_VTK_imageC.cc.o \
 	$O/attenuation_compute_param.cc.o \
 	$O/write_movie_output.spec.o \
 	$O/write_output_SU.spec.o \
 	$O/write_seismograms.spec.o \
 	$O/write_postscript_snapshot.spec.o \
 	$O/write_color_image_snaphot.spec.o \
+	$O/write_field_VTI.spec.o \
 	$O/write_wavefield_dumps.spec.o \
 	$O/save_read_array_for_undoatt.spec.o \
 	$(EMPTY_MACRO)

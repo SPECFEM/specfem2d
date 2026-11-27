@@ -203,6 +203,74 @@
 
 !--------------------
 
+  subroutine read_value_integer_ps(nvalues_to_read, values_to_read, name)
+
+  use constants, only: MAX_STRING_LEN
+
+  implicit none
+
+  integer,intent(out) :: nvalues_to_read
+  integer,allocatable,intent(out) :: values_to_read(:)
+  character(len=*),intent(in) :: name
+  character(len=MAX_STRING_LEN) :: string_read
+  integer :: i,ierr,ios
+  logical :: in_number
+  common /param_err_common/ ierr
+
+  nvalues_to_read=0
+
+  call param_read(string_read, len(string_read), name, len(name), ierr)
+  if (ierr /= 0) return
+  !read(string_read,*) value_to_read
+
+  ! Normalize separators and validate characters
+  do i = 1, len_trim(string_read)
+    select case (string_read(i:i))
+    case (',', ' ', achar(9))
+      string_read(i:i) = ' '
+    case ('0':'9')
+      cycle
+    case default
+      stop 'error: invalid character in field_ids_VTI'
+    end select
+  enddo
+
+  ! Count integer tokens
+  nvalues_to_read = 0
+  in_number = .false.
+
+  do i = 1, len_trim(string_read)
+    if (string_read(i:i) == ' ') then
+      in_number = .false.
+    else if (.not. in_number) then
+      nvalues_to_read = nvalues_to_read + 1
+      in_number = .true.
+    endif
+  enddo
+
+  ! Check for empty input
+  if (nvalues_to_read == 0) stop 'error: empty list for field_ids_VTI'
+
+  ! Allocate and read
+  allocate(values_to_read(nvalues_to_read))
+
+  read(string_read, *, iostat=ios) values_to_read
+
+  if (ios /= 0) stop 'error: invalid list for field_ids_VTI'
+
+  ! Check for nonpositive integers
+  if (any(values_to_read <= 0)) stop 'error: expected positive integers for field_ids_VTI'
+
+  ! Check for duplicates
+  do i = 1, nvalues_to_read-1
+    if (any(values_to_read(i+1:) == values_to_read(i))) &
+      stop 'error: duplicate values for field_ids_VTI'
+  enddo
+
+  end subroutine read_value_integer_ps
+
+!--------------------
+
   subroutine read_value_double_precision_p(value_to_read, name)
 
   use constants, only: MAX_STRING_LEN
