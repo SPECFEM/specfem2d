@@ -238,6 +238,13 @@
     call bcast_all_singlel(DRAW_WATER_IN_BLUE)
     call bcast_all_singlel(USE_SNAPSHOT_NUMBER_IN_FILENAME)
 
+    call bcast_all_singlel(output_VTI)
+    call bcast_all_singlei(nfield_ids_VTI)
+    if (nfield_ids_VTI > 0) then
+      if (myrank /= 0)allocate(field_ids_VTI(nfield_ids_VTI))
+      call bcast_all_singlei_array(field_ids_VTI, nfield_ids_VTI)
+    endif
+    
     call bcast_all_singlel(output_postscript_snapshot)
     call bcast_all_singlei(imagetype_postscript)
     call bcast_all_singlel(meshvect)
@@ -1387,13 +1394,6 @@
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
     write(*,'(a)') 'field_ids_VTI                  = ',field_ids_VTI
-    write(*,*)
-  endif
-
-  call read_value_double_precision_p(factor_subsample_VTI, 'factor_subsample_VTI')
-  if (err_occurred() /= 0) then
-    some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'factor_subsample_VTI          = 1.0d0'
     write(*,*)
   endif
 

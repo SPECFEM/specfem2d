@@ -51,7 +51,7 @@
   use specfem_par_gpu, only: Mesh_pointer,NGLOB_AB
 
   ! wavefield integration
-  use shared_parameters, only: DT
+  use shared_parameters, only: DT,output_VTI,nfield_ids_VTI,field_ids_VTI
   use specfem_par, only: coupled_acoustic_elastic,nglob_acoustic
   use specfem_par_movie, only: potential_adj_acoustic,potential_adj_int_acoustic,potential_adj_int_int_acoustic
 
@@ -64,7 +64,7 @@
   logical :: plot_b_wavefield_only
 
   ! wavefield integration
-  integer :: ier
+  integer :: i,ier
 
   ! checks plotting of backward wavefield
   if (UNDO_ATTENUATION_AND_OR_PML .and. get_b_wavefield .and. .not. NO_BACKWARD_RECONSTRUCTION) then
@@ -153,6 +153,13 @@
   ! display color image
   if (output_color_image) then
     call write_color_image_snaphot(plot_b_wavefield_only)
+  endif
+
+  ! display color image
+  if (output_VTI) then
+    do i=1,nfield_ids_VTI
+      call write_field_VTI(plot_b_wavefield_only,field_ids_VTI(i))
+    enddo
   endif
 
   ! dump the full (local) wavefield to a file

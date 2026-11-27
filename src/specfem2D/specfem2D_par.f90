@@ -916,9 +916,34 @@ module specfem_par_movie
   integer :: NX_IMAGE_color,NZ_IMAGE_color
   double precision :: xmin_color_image,xmax_color_image, &
                       zmin_color_image,zmax_color_image
+  double precision  :: size_pixel_horizontal,size_pixel_vertical
   integer, dimension(:,:), allocatable :: iglob_image_color,copy_iglob_image_color
   double precision, dimension(:,:), allocatable :: image_color_data
   double precision, dimension(:,:), allocatable :: image_color_vp_display
+  
+  !---------------------------------------------------------------------
+  ! for plot_post
+  !---------------------------------------------------------------------
+  character(len=32), parameter :: field_name(19) = [character(len=32) :: &
+    'disp_x',               &
+    'disp_z',               &
+    'disp_norm',            &
+    'vel_x',                &
+    'vel_z',                &
+    'vel_norm',             &
+    'accel_x',              &
+    'accel_z',              &
+    'accel_norm',           &
+    'pressure',             &
+    'normalized_disp_x',    &
+    'normalized_disp_z',    &
+    'normalized_disp_norm', &
+    'normalized_vel_x',     &
+    'normalized_vel_z',     &
+    'normalized_vel_norm',  &
+    'E_x',     &
+    'E_z',     &
+    'E_norm']
 
   !---------------------------------------------------------------------
   ! for plot_post
